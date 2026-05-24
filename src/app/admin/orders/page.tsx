@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdminPassword } from "@/lib/admin-auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
 import { Badge } from "@/components/ui/badge";
 import { formatKRW, formatDate } from "@/lib/utils";
 
@@ -14,33 +15,54 @@ const STATUS_LABEL: Record<string, string> = {
   failed: "실패",
 };
 
+type OrderRow = {
+  id: string;
+  order_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  user_id: string | null;
+  guest_email: string | null;
+  product_id: string;
+  toss_payment_key: string | null;
+};
+
 export default async function AdminOrdersPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdminPassword("/admin/orders");
 
   const { status } = await searchParams;
-  const service = createServiceClient();
+  const demoMode = !isSupabaseConfigured();
 
-  let query = service
-    .from("orders")
-    .select("id, order_id, amount, status, created_at, user_id, guest_email, product_id, toss_payment_key")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (status && ["pending", "paid", "failed"].includes(status)) {
-    query = query.eq("status", status as "pending" | "paid" | "failed");
+  let orders: OrderRow[] = [];
+  let productMap = new Map<string, string>();
+  let resultMap = new Map<string, string>();
+
+  if (!demoMode) {
+    const service = createServiceClient();
+
+    let query = service
+      .from("orders")
+      .select("id, order_id, amount, status, created_at, user_id, guest_email, product_id, toss_payment_key")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (status && ["pending", "paid", "failed"].includes(status)) {
+      query = query.eq("status", status as "pending" | "paid" | "failed");
+    }
+    const { data } = await query;
+    orders = (data ?? []) as OrderRow[];
+
+    const productIds = Array.from(new Set(orders.map((o) => o.product_id)));
+    const { data: products } = productIds.length
+      ? await service.from("products").select("id, name").in("id", productIds)
+      : { data: [] };
+    productMap = new Map((products ?? []).map((p) => [p.id, p.name]));
+
+    const orderIds = orders.map((o) => o.id);
+    const { data: results } = orderIds.length
+      ? await service.from("saju_results").select("id, order_id").in("order_id", orderIds)
+      : { data: [] };
+    resultMap = new Map((results ?? []).map((r) => [r.order_id, r.id]));
   }
-  const { data: orders } = await query;
-
-  const productIds = Array.from(new Set((orders ?? []).map((o) => o.product_id)));
-  const { data: products } = productIds.length
-    ? await service.from("products").select("id, name").in("id", productIds)
-    : { data: [] };
-  const productMap = new Map((products ?? []).map((p) => [p.id, p.name]));
-
-  const orderIds = (orders ?? []).map((o) => o.id);
-  const { data: results } = orderIds.length
-    ? await service.from("saju_results").select("id, order_id").in("order_id", orderIds)
-    : { data: [] };
-  const resultMap = new Map((results ?? []).map((r) => [r.order_id, r.id]));
 
   const filters = [
     { key: "", label: "전체" },
@@ -55,6 +77,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <p className="text-xs font-mono text-mute mb-2">ADMIN / ORDERS</p>
         <h1 className="text-2xl font-semibold tracking-tight">결제 내역</h1>
       </header>
+
+      {demoMode ? (
+        <div className="mb-6 rounded-lg border border-hairline bg-canvas p-4 text-xs text-body leading-relaxed">
+          <p className="font-semibold text-ink mb-1">데모 모드 — DB 미연결</p>
+          <code className="font-mono text-ink">.env.local</code> 의 <code className="font-mono text-ink">NEXT_PUBLIC_SUPABASE_URL</code> 가 placeholder 입니다.
+          실제 결제 내역을 보려면 Supabase 프로젝트를 연결하고 마이그레이션을 적용하세요.
+        </div>
+      ) : null}
 
       <div className="flex gap-2 mb-6">
         {filters.map((f) => {
@@ -71,9 +101,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         })}
       </div>
 
-      <p className="text-xs text-mute font-mono mb-3">{orders?.length ?? 0} ROWS</p>
+      <p className="text-xs text-mute font-mono mb-3">{orders.length} ROWS</p>
 
       <div className="border border-hairline rounded-lg overflow-hidden">
+        {orders.length === 0 ? (
+          <div className="py-16 text-center text-sm text-mute">
+            {demoMode ? "데모 모드에서는 결제 내역이 비어 있습니다." : "조건에 맞는 결제 내역이 없습니다."}
+          </div>
+        ) : (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-hairline">
@@ -87,7 +122,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             </tr>
           </thead>
           <tbody>
-            {(orders ?? []).map((o) => (
+            {orders.map((o) => (
               <tr key={o.id} className="border-b border-hairline last:border-0">
                 <td className="px-4 py-3 text-xs text-body">{formatDate(o.created_at)}</td>
                 <td className="px-4 py-3 font-mono text-xs">{o.order_id}</td>
@@ -116,6 +151,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );
