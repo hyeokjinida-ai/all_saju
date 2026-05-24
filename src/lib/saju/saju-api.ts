@@ -167,6 +167,34 @@ export async function generateManseryeok(birthInfo: BirthInfo): Promise<string> 
   return formatSajuToManseryeok(analysis, birthInfo);
 }
 
+// luckyloveme ganji 응답 → 기존 Myeongsik (4기둥 단순 형식)
+// MyeongsikTable 컴포넌트에 그대로 꽂아쓸 수 있는 형식으로 변환
+export type SimpleMyeongsik = {
+  year: { cheongan: string; jiji: string };
+  month: { cheongan: string; jiji: string };
+  day: { cheongan: string; jiji: string };
+  hour: { cheongan: string; jiji: string } | null;
+};
+
+export function ganjiToMyeongsik(analysis: SajuAnalysisResponse): SimpleMyeongsik | null {
+  const g = analysis.ganji as
+    | {
+        year: { gan: string; ji: string };
+        month: { gan: string; ji: string };
+        day: { gan: string; ji: string };
+        hour?: { gan: string; ji: string };
+      }
+    | undefined;
+  if (!g) return null;
+  const pillar = (p: { gan: string; ji: string }) => ({ cheongan: p.gan, jiji: p.ji });
+  return {
+    year: pillar(g.year),
+    month: pillar(g.month),
+    day: pillar(g.day),
+    hour: g.hour ? pillar(g.hour) : null,
+  };
+}
+
 // ── helpers ───────────────────────────────────────────
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));

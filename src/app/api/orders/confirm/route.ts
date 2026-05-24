@@ -2,15 +2,56 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
-import { computeMyeongsik } from "@/lib/saju/manseryeok";
+import { computeMyeongsik, type Myeongsik } from "@/lib/saju/manseryeok";
 import { buildSajuPrompt } from "@/lib/saju/prompt";
 import { generateInterpretation } from "@/lib/saju/llm";
+import {
+  isSajuApiConfigured,
+  fetchSajuAnalysis,
+  formatSajuToManseryeok,
+  ganjiToMyeongsik,
+  type BirthInfo,
+} from "@/lib/saju/saju-api";
 
 const bodySchema = z.object({
   paymentKey: z.string().min(1),
   orderId: z.string().min(1),
   amount: z.number().int().nonnegative(),
 });
+
+// saju_inputs row → BirthInfo (luckyloveme 입력 형식)
+type SajuInputRow = {
+  birth_date: string;            // "YYYY-MM-DD"
+  birth_time: string | null;     // "HH:mm"
+  time_unknown: boolean;
+  calendar: "solar" | "lunar";
+  gender: "male" | "female";
+  concerns: string[];
+};
+
+function toBirthInfo(input: SajuInputRow): BirthInfo {
+  const [y, m, d] = input.birth_date.split("-");
+  const hasTime = !input.time_unknown && !!input.birth_time;
+  const [hh, mm] = hasTime ? input.birth_time!.split(":") : [undefined, undefined];
+  return {
+    birthYear: y,
+    birthMonth: String(parseInt(m, 10)),
+    birthDay: String(parseInt(d, 10)),
+    ...(hasTime ? { birthHour: String(parseInt(hh!, 10)), birthMinute: String(parseInt(mm!, 10)) } : {}),
+    calendarType: input.calendar === "lunar" ? "음력" : "양력",
+    gender: input.gender,
+  };
+}
+
+function toComputeInput(input: SajuInputRow) {
+  return {
+    birthDate: input.birth_date,
+    birthTime: input.birth_time,
+    timeUnknown: input.time_unknown,
+    calendar: input.calendar,
+    gender: input.gender,
+  };
+}
 
 export async function POST(request: NextRequest) {
   const parsed = bodySchema.safeParse(await request.json());
@@ -81,18 +122,36 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const myeongsik = await computeMyeongsik({
-      birthDate: input.birth_date,
-      birthTime: input.birth_time,
-      timeUnknown: input.time_unknown,
-      calendar: input.calendar,
-      gender: input.gender,
-    });
+    // 만세력/풀 분석: luckyloveme 키가 있으면 실제 API, 없거나 실패하면 mock 으로 fallback
+    let myeongsik: Myeongsik;
+    let manseryeokText: string | undefined;
+
+    if (isSajuApiConfigured()) {
+      try {
+        const birthInfo = toBirthInfo(input);
+        const analysis = await fetchSajuAnalysis(birthInfo, []); // [] = 16종 전체
+        const converted = ganjiToMyeongsik(analysis);
+        if (converted) {
+          myeongsik = converted;
+          manseryeokText = formatSajuToManseryeok(analysis, birthInfo);
+        } else {
+          // ganji 필드 누락 — mock 으로 폴백
+          myeongsik = await computeMyeongsik(toComputeInput(input));
+        }
+      } catch (apiErr) {
+        // luckyloveme 호출 실패 — 결제는 이미 승인됐으므로 mock 으로 폴백해서 결과지는 무조건 생성
+        console.error("[saju-api] fallback to mock:", apiErr);
+        myeongsik = await computeMyeongsik(toComputeInput(input));
+      }
+    } else {
+      myeongsik = await computeMyeongsik(toComputeInput(input));
+    }
 
     const { system, user } = buildSajuPrompt({
       productSlug: product.slug,
       productName: product.name,
       myeongsik,
+      manseryeokText,
       birthDate: input.birth_date,
       birthTime: input.birth_time,
       timeUnknown: input.time_unknown,

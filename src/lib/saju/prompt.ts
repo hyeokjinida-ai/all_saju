@@ -9,6 +9,9 @@ export type PromptInput = {
   productSlug: string;
   productName: string;
   myeongsik: Myeongsik;
+  // luckyloveme 풀 분석이 있으면 4기둥 자리 대신 이 텍스트(천간지지/십성/대운/세운/12운성/신살 등 16종)로 교체.
+  // 없으면(데모 / 호출 실패 fallback) 단순 4기둥만 포함.
+  manseryeokText?: string;
   birthDate: string;
   birthTime: string | null;
   timeUnknown: boolean;
@@ -49,22 +52,33 @@ export function buildSajuPrompt(input: PromptInput): { system: string; user: str
   const pillar = (p: { cheongan: string; jiji: string } | null) =>
     p ? `${p.cheongan}${p.jiji}` : "(시 미상)";
 
+  // 풀 분석 텍스트가 있으면 그걸 우선 사용, 없으면 단순 4기둥
+  const sajuSection = input.manseryeokText
+    ? `[사주 풀 명식]\n${input.manseryeokText}`
+    : [
+        `[사주 4기둥]`,
+        `- 년주: ${pillar(m.year)}`,
+        `- 월주: ${pillar(m.month)}`,
+        `- 일주: ${pillar(m.day)}`,
+        `- 시주: ${pillar(m.hour)}`,
+      ].join("\n");
+
   const user = `[상품] ${input.productName}
 [분량] 약 ${style.length}
 [핵심 포커스] ${style.focus}
 
-[사주 4기둥]
-- 년주: ${pillar(m.year)}
-- 월주: ${pillar(m.month)}
-- 일주: ${pillar(m.day)}
-- 시주: ${pillar(m.hour)}
+${sajuSection}
 
 [기본 정보]
 - 생년월일: ${input.birthDate}${input.timeUnknown ? " (시 미상)" : input.birthTime ? ` ${input.birthTime}` : ""}
 - 성별: ${input.gender === "male" ? "남성" : "여성"}
 - 고민 키워드: ${input.concerns.length > 0 ? input.concerns.join(", ") : "(미입력)"}
 
-위 정보를 바탕으로 마크다운 리포트를 작성해 주세요.`;
+위 정보를 바탕으로 마크다운 리포트를 작성해 주세요.${
+    input.manseryeokText
+      ? " 천간지지/십성/대운/세운/신살 등 풀 명식 정보를 적극 활용하되, 단정적 표현은 피하고 가능성/경향으로 풀어 주세요."
+      : ""
+  }`;
 
   return { system: SYSTEM_BASE, user };
 }
