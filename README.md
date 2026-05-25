@@ -103,6 +103,68 @@ Clone = 단순 로컬 다운로드 (원본 repo 에 push 권한 없으면 막다
 수강생은 반드시 Fork → 그 다음 본인 fork 를 Clone.
 ```
 
+## Fork 동기화 — 원본 업데이트 받기
+
+본인 fork 를 떠놓고 작업하는 동안 원본 `cheese-mom/saju-boilerplate` 에 새 기능/버그픽스가 올라오면, 다음 방법으로 받아올 수 있습니다.
+
+### 방법 1: GitHub UI (가장 쉬움)
+
+```text
+1. github.com/<자기계정>/saju-boilerplate 접속
+2. 화면 상단 [Sync fork ▼] → [Update branch] 클릭
+   (원본보다 뒤처져 있으면 "This branch is N commits behind..." 안내가 뜸)
+3. 로컬에서:
+   git pull
+```
+
+### 방법 2: CLI — upstream remote 한 번만 등록
+
+본인 fork 작업 폴더에서 **최초 1회**:
+
+```bash
+git remote add upstream https://github.com/cheese-mom/saju-boilerplate.git
+```
+
+이후 업데이트 받을 때마다:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main      # 또는 git rebase upstream/main
+git push origin main         # 본인 fork 에도 반영
+```
+
+한 줄로:
+
+```bash
+git pull upstream main && git push origin main
+```
+
+### 충돌이 자주 나는 파일
+
+수강생은 본인 정보로 바꾸기 때문에 다음 파일들이 자주 충돌합니다.
+
+| 파일 | 처리 |
+|---|---|
+| `src/config/site.ts` (사이트명 · 사업자정보) | **본인 값 유지** |
+| `src/config/products.seed.ts` (상품 라인업) | 본인이 만든 것 유지 |
+| `src/components/landing/Hero.tsx` (랜딩 카피) | 본인 카피 유지 |
+| 추가한 본인 페이지 / 컴포넌트 | 그대로 둠 |
+| `.env.local` | git 추적 안 됨, 영향 없음 |
+
+충돌 시 일반 흐름:
+
+```bash
+git merge upstream/main
+# CONFLICT (content): Merge conflict in src/config/site.ts
+# → 편집기로 열어서 본인 값 선택 (또는 git checkout --ours <파일>)
+git add src/config/site.ts
+git commit
+git push origin main
+```
+
+> **권장**: 본인 사이트 운영용 변경(`site.ts`, `Hero.tsx`, 상품 시드 등) 은 별도 브랜치(`my-site`)에 두고, `main` 은 원본 추종용으로만 쓰면 충돌 빈도가 크게 줄어듭니다.
+
 ## 데모 모드 (.env 비워두고 둘러보기)
 
 `.env.local` 의 환경변수 키 조합에 따라 어떤 기능이 동작하는지 매트릭스:
