@@ -57,7 +57,7 @@ export default async function DemoPage({ searchParams }: { searchParams: SearchP
   } else {
     const t0 = Date.now();
     try {
-      const analysis = await fetchSajuAnalysis(birthInfo, []);
+      const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "demo" });
       elapsedApi = Date.now() - t0;
       myeongsik = ganjiToMyeongsik(analysis);
       manseryeokText = formatSajuToManseryeok(analysis, birthInfo);

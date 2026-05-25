@@ -8,6 +8,7 @@
 // 자세한 응답 스키마는 운세위키 API 문서 참고: https://luckyloveme.com/api-service
 
 import { serverEnv } from "@/lib/env";
+import { recordSajuApiCall, type SajuApiSource } from "./usage";
 
 export type AnalysisField =
   | "ganji"            // 천간지지 (사주 원국)
@@ -58,12 +59,18 @@ export function isSajuApiConfigured(): boolean {
   return !!(env.SAJU_API_URL && env.SAJU_API_KEY);
 }
 
+export type FetchSajuOptions = {
+  source?: SajuApiSource; // 누적 카운터에 기록될 호출 출처 (기본: "manual")
+};
+
 // 5xx / 네트워크 오류 / 타임아웃 → 최대 3회 재시도 (4xx 는 즉시 실패)
 export async function fetchSajuAnalysis(
   birthInfo: BirthInfo,
   fields: AnalysisField[] = [],
+  options: FetchSajuOptions = {},
 ): Promise<SajuAnalysisResponse> {
   const env = serverEnv();
+  const source: SajuApiSource = options.source ?? "manual";
   if (!env.SAJU_API_URL || !env.SAJU_API_KEY) {
     throw new SajuApiError("SAJU_API_URL / SAJU_API_KEY 환경변수가 설정되지 않았습니다.");
   }
@@ -95,12 +102,15 @@ export async function fetchSajuAnalysis(
       clearTimeout(timer);
 
       if (res.ok) {
-        return (await res.json()) as SajuAnalysisResponse;
+        const data = (await res.json()) as SajuAnalysisResponse;
+        await recordSajuApiCall(true, source);
+        return data;
       }
 
       // 4xx 는 입력 오류 — 재시도해도 의미 없으므로 즉시 실패
       if (res.status < 500) {
         const detail = await res.text().catch(() => "");
+        await recordSajuApiCall(false, source);
         throw new SajuApiError(`Saju API ${res.status}: ${detail || res.statusText}`, res.status);
       }
 
@@ -112,6 +122,8 @@ export async function fetchSajuAnalysis(
     }
   }
 
+  // 모든 재시도 소진 → 실패로 기록
+  await recordSajuApiCall(false, source);
   if (lastError instanceof Error) throw lastError;
   throw new SajuApiError("Saju API 요청이 최대 재시도 횟수를 초과했습니다.");
 }
@@ -162,8 +174,11 @@ export function formatSajuToManseryeok(
 }
 
 // API 호출 + 텍스트 변환을 한 번에 실행 (전체 fields 자동 요청)
-export async function generateManseryeok(birthInfo: BirthInfo): Promise<string> {
-  const analysis = await fetchSajuAnalysis(birthInfo, []); // [] = 전체
+export async function generateManseryeok(
+  birthInfo: BirthInfo,
+  options: FetchSajuOptions = {},
+): Promise<string> {
+  const analysis = await fetchSajuAnalysis(birthInfo, [], options); // [] = 전체
   return formatSajuToManseryeok(analysis, birthInfo);
 }
 

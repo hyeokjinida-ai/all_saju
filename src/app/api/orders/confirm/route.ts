@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     if (isSajuApiConfigured()) {
       try {
         const birthInfo = toBirthInfo(input);
-        const analysis = await fetchSajuAnalysis(birthInfo, []); // [] = 16종 전체
+        const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "confirm" }); // [] = 16종 전체
         const converted = ganjiToMyeongsik(analysis);
         if (converted) {
           myeongsik = converted;

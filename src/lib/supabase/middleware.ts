@@ -40,24 +40,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (path.startsWith("/admin")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", path);
-      return NextResponse.redirect(url);
-    }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (!profile?.is_admin) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
-  }
+  // /admin 은 ADMIN_PASSWORD (src/lib/admin-auth.ts) 단일 인증.
+  // middleware 에서 Supabase 검사 안 함 (회원/role 모델과 분리).
 
   return response;
 }

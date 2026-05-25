@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const manseryeok = await generateManseryeok(parsed.data.birthInfo);
+    const manseryeok = await generateManseryeok(parsed.data.birthInfo, { source: "manual" });
     return NextResponse.json({ status: "success" as const, manseryeok });
   } catch (err) {
     const upstreamStatus = err instanceof SajuApiError ? err.status : undefined;

@@ -12,6 +12,227 @@
 - ✅ 마이페이지, 관리자 결제 내역, 법적 페이지(약관/개인정보/환불/사업자정보)
 - ✅ shadcn/ui 기반 깔끔한 UI
 
+## 시스템 아키텍처
+
+```text
+                          ┌────────────────────┐
+                          │      Browser       │
+                          │  (Next.js 페이지)   │
+                          └─────────┬──────────┘
+                                    │
+                ┌───────────────────┼───────────────────┐
+                ▼                   ▼                   ▼
+        ┌──────────────┐   ┌──────────────┐   ┌────────────────┐
+        │  Supabase    │   │   토스       │   │  luckyloveme   │
+        │  (DB+Auth)   │   │  Payments    │   │  사주 API      │
+        └──────────────┘   └──────────────┘   └────────────────┘
+                                                       │
+                                                       ▼
+                                              ┌────────────────┐
+                                              │  LLM (1 of 3)  │
+                                              │  Anthropic /   │
+                                              │  OpenAI /      │
+                                              │  Gemini        │
+                                              └────────────────┘
+```
+
+외부 의존성 4개 — Supabase, 토스, luckyloveme, LLM (3 provider 중 택1). 환경변수만 채우면 모두 동작.
+
+## 수강생 가이드 — Fork 부터 운영까지
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  1. Fork                                                        │
+│     GitHub: cheese-mom/saju-boilerplate  ──▶  Fork              │
+│                                                                 │
+│  2. Clone                                                       │
+│     git clone https://github.com/<본인계정>/saju-boilerplate    │
+│     cd saju-boilerplate                                         │
+│                                                                 │
+│  3. 의존성 설치                                                 │
+│     pnpm install                                                │
+│                                                                 │
+│  4. .env.local 채우기                                           │
+│     cp .env.example .env.local                                  │
+│     # 편집기로 열어서 값 입력                                    │
+│     필수: NEXT_PUBLIC_SUPABASE_URL/ANON_KEY,                    │
+│          SUPABASE_SERVICE_ROLE_KEY,                             │
+│          NEXT_PUBLIC_TOSS_CLIENT_KEY (테스트 기본값 OK),         │
+│          TOSS_SECRET_KEY (테스트 기본값 OK),                     │
+│          ANTHROPIC_API_KEY (또는 OPENAI / GEMINI 키 1개)         │
+│     권장: SAJU_API_KEY (luckyloveme 발급),                       │
+│          ADMIN_PASSWORD (본인 임의)                              │
+│                                                                 │
+│  5. Supabase 마이그레이션 + 시드                                │
+│     npx supabase link --project-ref <프로젝트 ref>              │
+│     npx supabase db push                                        │
+│     pnpm seed:products                                          │
+│                                                                 │
+│  6. 로컬 확인                                                   │
+│     pnpm dev                                                    │
+│     ▶ http://localhost:3000                                     │
+│     ▶ /demo 로 명식 + 해석 동작 확인                            │
+│     ▶ /admin/login 비밀번호 입력 → /admin/orders                │
+│                                                                 │
+│  7. 사이트 정보 본인 것으로 교체                                │
+│     src/config/site.ts                                          │
+│       siteConfig.name, businessInfo.* 모두 수정                  │
+│       → 푸터 / 약관 / 개인정보처리방침 자동 반영                  │
+│                                                                 │
+│  8. Vercel 배포                                                 │
+│     vercel.com → Import → 본인 GitHub repo                       │
+│     Settings → Environment Variables → .env.local 값 그대로     │
+│     Deploy                                                      │
+│     Toss 콘솔: 콜백 URL 등록                                     │
+│       성공: https://<도메인>/checkout/success                    │
+│       실패: https://<도메인>/checkout/fail                       │
+│                                                                 │
+│  9. 이후 수정 사이클                                            │
+│     git add <변경 파일>                                          │
+│     git commit -m "메시지"                                       │
+│     git push                                                    │
+│     ▶ Vercel 자동 재배포 (1~2분)                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Fork vs Clone**
+
+```text
+Fork  = GitHub 서버에서 내 카피본 생성 (Vercel 연동·내 commit·내 도메인 가능)
+Clone = 단순 로컬 다운로드 (원본 repo 에 push 권한 없으면 막다른 길)
+수강생은 반드시 Fork → 그 다음 본인 fork 를 Clone.
+```
+
+## 데모 모드 (.env 비워두고 둘러보기)
+
+`.env.local` 의 환경변수 키 조합에 따라 어떤 기능이 동작하는지 매트릭스:
+
+```text
+                    SUPABASE_*   TOSS_*    SAJU_API_KEY   LLM 키 1개
+                    ─────────────────────────────────────────────────
+랜딩 / 상품              ─          ─            ─            ─
+/demo 명식               ─          ─            ●            ─
+/demo AI 해석            ─          ─            ●            ●
+/admin/orders            ─          ─            ─            ─
+결제 시작                ●          ●            ─            ─
+결제 confirm + 결과지     ●          ●            ●            ●
+마이페이지                ●          ─            ─            ─
+
+● = 필수,  ─ = 없어도 동작
+```
+
+| 기능 | 데모 (env 빈 상태) | 운영 (env 채움) |
+|---|---|---|
+| 랜딩 / 상품 리스트 / 상품 상세 | ✅ seed 데이터 fallback | ✅ Supabase 실데이터 |
+| `/demo` 페이지 (명식 + 풀 텍스트) | ✅ SAJU_API_KEY 있으면 | ✅ |
+| `/demo` 의 AI 해석 | ⚠️ LLM 키 있어야 표시 | ✅ |
+| Toss 위젯 v2 결제 시작 | ⚠️ Supabase 필요 | ✅ |
+| 결과지 생성 `/results/[id]` | ❌ Supabase 필요 | ✅ |
+| 마이페이지 / 후기 작성 | ❌ Supabase 필요 | ✅ |
+| `/admin/orders` | ✅ 빈 목록 + 안내 배너 | ✅ 실 결제 내역 |
+| `/api/generate-manseryeok` | SAJU_API_KEY 있으면 ✅ | ✅ |
+| `/api/orders/create` | ❌ Supabase 필요 | ✅ |
+
+**/demo 페이지** — DB 없이 명식 → 결과지 흐름을 확인하는 강의용 페이지. URL 쿼리로 입력 변경:
+```
+http://localhost:3000/demo?y=1990&m=5&d=15&h=14&min=30&cal=양력&g=male
+```
+
+명식 API 응답 시간, LLM 키 상태가 배지로 표시되고, MyeongsikTable + ResultBody (실제 결과지와 동일 컴포넌트) 로 렌더됩니다.
+
+## 사이트 맵
+
+```text
+/                         랜딩 (Hero / HowItWorks / ProductLineup / CTA)
+├─ /products              상품 리스트
+│  └─ /products/[slug]    상품 상세 + SajuForm
+├─ /checkout/[orderId]    Toss 위젯 v2
+├─ /checkout/success      confirm → /results/[id] 리다이렉트
+├─ /checkout/fail         실패 안내
+├─ /results/[resultId]    결과지 (명식표 + 마크다운)
+├─ /demo                  DB 없이 명식 + 해석 미리보기 (강의용)
+│
+├─ (auth)                 Supabase Auth
+│  ├─ /login              이메일/비밀번호 로그인
+│  ├─ /signup             회원가입
+│  └─ /reset              비밀번호 재설정
+│
+├─ /mypage                마이페이지 홈
+│  ├─ /mypage/orders      결제 내역
+│  ├─ /mypage/orders/[orderId]/review   후기 작성
+│  └─ /mypage/reviews     내 후기 목록
+│
+├─ /admin                 어드민 홈 (ADMIN_PASSWORD)
+│  ├─ /admin/login        비밀번호 입력
+│  ├─ /admin/orders       결제 내역
+│  └─ /admin/logout       쿠키 삭제
+│
+├─ /legal/terms           이용약관
+├─ /legal/privacy         개인정보처리방침
+└─ /legal/refund-policy   환불정책
+```
+
+## 결제 → 결과지 흐름
+
+```text
+사용자                Next.js                 토스           Supabase      luckyloveme    LLM
+  │                      │                      │              │              │           │
+  ├─ 상품 상세 진입 ────▶│                      │              │              │           │
+  │   /products/[slug]   │                      │              │              │           │
+  │◀─ 사주 입력 폼 ──────│                      │              │              │           │
+  │                      │                      │              │              │           │
+  ├─ 폼 제출 ───────────▶│                      │              │              │           │
+  │                      ├─ POST /api/orders/create ──────────▶│              │           │
+  │                      │◀─── orderId, amount ────────────────│              │           │
+  │                      │                      │              │              │           │
+  │◀─ /checkout/[id] ───│                      │              │              │           │
+  │   (Toss 위젯 v2)     │                      │              │              │           │
+  ├─ 결제 ──────────────────────────────────▶│              │              │           │
+  │◀─ /checkout/success?paymentKey=... ───────│              │              │           │
+  │                      │                      │              │              │           │
+  ├─ 자동 호출 ─────────▶│                      │              │              │           │
+  │                      ├─ POST /api/orders/confirm ──────────────────────────▶            │
+  │                      │   1) Toss confirm + 금액 검증       │              │           │
+  │                      │   2) orders.status = "paid"         │              │           │
+  │                      │   3) luckyloveme 호출 ─────────────────────────────▶            │
+  │                      │   4) 만세력 텍스트 + 4기둥 변환     │◀────────────────           │
+  │                      │   5) LLM 해석 ──────────────────────────────────────────────▶  │
+  │                      │   6) saju_results insert            │◀──── 마크다운 ───────────  │
+  │                      │◀─── resultId ────────                │              │           │
+  │                      │                      │              │              │           │
+  │◀─ /results/[resultId] ──────────────────│              │              │           │
+  │   (명식표 + 마크다운 해석)                                                              │
+```
+
+## 인증 모델
+
+두 가지 인증이 분리되어 있습니다.
+
+```text
+┌───────────────────────────────────────────────────────────────────┐
+│ 사용자 영역 (/mypage, /products, /checkout, /results, ...)        │
+│                                                                   │
+│   middleware.ts ──▶ supabase/middleware.ts                        │
+│                       └ /mypage 비로그인 → /login                 │
+│                                                                   │
+│   Supabase Auth (이메일·비밀번호 / OAuth)                          │
+│   ─ profiles 테이블 (auth.users 연결)                              │
+└───────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────┐
+│ 관리자 영역 (/admin/*)                                            │
+│                                                                   │
+│   각 페이지 상단: await requireAdminPassword(redirectFrom)        │
+│                       └ 쿠키 admin_session != ADMIN_PASSWORD      │
+│                             → /admin/login 리다이렉트              │
+│                                                                   │
+│   .env.local 의 ADMIN_PASSWORD 한 줄만 설정하면 됨                 │
+│   (회원가입 / pnpm create:admin 불필요)                            │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+middleware 는 `/mypage` 만 검사하고 `/admin` 은 통과시킵니다. `/admin` 은 페이지 단위에서 `requireAdminPassword()` 로 보호됩니다.
+
 ## 빠른 시작
 
 ### 1. 사전 준비물
@@ -98,7 +319,54 @@ ADMIN_PASSWORD=                       # /admin 진입 비밀번호
 - 어댑터: [`src/lib/saju/saju-api.ts`](./src/lib/saju/saju-api.ts)
 - 라우트: [`src/app/api/generate-manseryeok/route.ts`](./src/app/api/generate-manseryeok/route.ts)
 - 헤더: `X-SAJU-BOOK-API-KEY` + `User-Agent: SajuBookClient/1.0` (어댑터가 자동 처리)
-- Rate Limit: 분당 500회
+- Rate Limit: 분당 500회 / 누적 6,000회 (어드민에서 누적 카운터 확인 가능)
+
+**명식 생성 파이프라인** (결제 confirm 안에서 동일하게 호출됨)
+
+```text
+saju_inputs row
+  ├─ birth_date "1990-05-15"
+  ├─ birth_time "14:30"
+  ├─ calendar   "solar"
+  └─ gender     "male"
+        │
+        │  toBirthInfo()
+        ▼
+BirthInfo
+  ├─ birthYear "1990"
+  ├─ birthMonth "5"
+  ├─ birthDay "15"
+  ├─ birthHour "14"
+  ├─ birthMinute "30"
+  ├─ calendarType "양력"
+  └─ gender "male"
+        │
+        │  fetchSajuAnalysis(birthInfo, [], { source })
+        ▼
+SajuAnalysisResponse (16종)
+  ├─ ganji          ─────┐
+  ├─ sipseong             │
+  ├─ sinStrength          │
+  ├─ daeun                ├─ formatSajuToManseryeok() ─▶ manseryeokText
+  ├─ seun                 │                              (LLM 프롬프트용)
+  ├─ ... (총 16개)        │
+        │                 │
+        │  ganjiToMyeongsik()
+        ▼
+Myeongsik (4기둥)
+        │
+        ├──▶ MyeongsikTable (UI)
+        │
+        └──▶ saju_results.myeongsik (JSONB 저장)
+
+buildSajuPrompt({ myeongsik, manseryeokText, ... })
+        │
+        ▼
+generateInterpretation({ system, user }) ─▶ LLM
+        │
+        ▼
+saju_results.interpretation_md (마크다운)
+```
 
 **호출 예시**
 
@@ -218,32 +486,151 @@ src/
 │   ├── checkout/       # 토스 위젯 + success/fail
 │   ├── results/        # 결과지
 │   ├── mypage/         # 마이페이지
-│   ├── admin/          # 관리자 (is_admin 가드)
-│   ├── legal/          # 약관/개인정보/환불/사업자정보
+│   ├── admin/          # 관리자 (ADMIN_PASSWORD 가드)
+│   ├── demo/           # DB 없이 명식 + 해석 미리보기
+│   ├── legal/          # 약관/개인정보/환불
 │   └── api/            # 서버 라우트 핸들러
 ├── components/         # UI 컴포넌트 (shadcn 기반)
-├── lib/                # supabase / toss / saju / env 헬퍼
+├── lib/                # supabase / toss / saju / env / admin-auth 헬퍼
 ├── config/             # 사이트 설정 + 상품 시드
 └── types/              # DB / 도메인 타입
-supabase/migrations/    # 초기 스키마 / RLS / 시드
+supabase/migrations/    # 초기 스키마 / RLS / 시드 / API usage
 scripts/                # seed-products, create-admin
 ```
+
+## 데이터 모델 & RLS
+
+```text
+┌─────────────────────────┐
+│  auth.users  (Supabase) │
+│  ─ id  (uuid, PK)        │
+│  ─ email                │
+└───────────┬─────────────┘
+            │ 1:1 (trigger 자동 생성)
+            ▼
+┌─────────────────────────┐         ┌─────────────────────────┐
+│   profiles              │         │   products              │
+│   ─ id (PK = users.id)   │         │   ─ id (uuid, PK)        │
+│   ─ display_name         │         │   ─ slug (unique)        │
+│   ─ is_admin (bool)      │         │   ─ name                │
+└───────────┬─────────────┘         │   ─ price                │
+            │                       │   ─ description         │
+            │ user_id (nullable)    │   ─ is_active            │
+            │                       │   ─ display_order        │
+            ▼                       └────────────┬────────────┘
+┌─────────────────────────┐                      │
+│   orders                │                      │
+│   ─ id (uuid, PK)        │                      │
+│   ─ order_id (Toss용)    │                      │
+│   ─ user_id  ─────────── 둘 중 하나 not null    │
+│   ─ guest_email ─────────                       │
+│   ─ product_id  ─────────────────────────────────┘
+│   ─ amount (서버에서만 결정)                     │
+│   ─ status (pending|paid|failed)                │
+│   ─ toss_payment_key (paid 시)                   │
+└─────────┬───────────────┘
+          │ 1:1
+          ├───────────────────────┬──────────────────────┐
+          ▼                       ▼                      ▼
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+│  saju_inputs        │ │  saju_results       │ │  reviews            │
+│  ─ order_id (FK)    │ │  ─ order_id (FK)    │ │  ─ user_id          │
+│  ─ name             │ │  ─ myeongsik jsonb  │ │  ─ product_id       │
+│  ─ birth_date        │ │  ─ interpretation_md │ │  ─ order_id        │
+│  ─ birth_time        │ │  ─ llm_provider     │ │  ─ rating (1~5)     │
+│  ─ time_unknown     │ │  ─ llm_model        │ │  ─ content          │
+│  ─ gender            │ └─────────────────────┘ │  ─ is_public         │
+│  ─ calendar          │                         └─────────────────────┘
+│  ─ concerns (text[]) │
+└─────────────────────┘
+
+┌─────────────────────────┐
+│  saju_api_calls         │  ← 어드민 누적 카운터용 (RLS off, service_role 만)
+│  ─ id, called_at         │
+│  ─ success, source       │
+└─────────────────────────┘
+```
+
+**RLS 정책 핵심**
+
+```text
+profiles / orders / saju_inputs / saju_results
+  └ select : auth.uid() = user_id      (본인 데이터만)
+  └ guest 주문 (user_id = null) 은 RLS 통과 X
+       → 결제 confirm / admin 조회 는 서버에서 createServiceClient() 로만 접근
+
+products
+  └ select : is_active = true          (공개)
+
+reviews
+  └ select : is_public = true          (공개)
+  └ insert : auth.uid() = user_id 만   (본인 작성)
+
+saju_api_calls
+  └ RLS off — service_role 만 (어드민용)
+```
+
+**마이그레이션 적용 순서** (자동 정렬되지만 수동 시 주의):
+
+```text
+0001_init.sql          ← 6 개 테이블 + trigger
+0002_rls.sql           ← RLS 정책 + 권한
+0003_seed_products.sql ← 4 개 상품
+0004_api_usage.sql     ← saju_api_calls 카운터 테이블
+```
+
+## API 누적 사용량 카운터
+
+luckyloveme 누적 한도 6,000회. 어드민 홈에서 `/admin` 상단 카드로 표시.
+
+```text
+fetchSajuAnalysis(birthInfo, fields, { source })
+        │
+        ├─ luckyloveme API 호출 (재시도 포함)
+        │
+        ├─ 성공 ─▶ recordSajuApiCall(true,  source)  ─┐
+        │                                              │
+        └─ 실패 ─▶ recordSajuApiCall(false, source)  ─┤
+                                                       │
+                                              service_role 로
+                                              saju_api_calls 테이블에 1행 insert
+                                              (called_at, success, source)
+                                                       │
+                                                       ▼
+                                            ┌────────────────────────────┐
+                                            │  /admin 홈에서 누적 집계   │
+                                            │  SELECT count(*)           │
+                                            │    FROM saju_api_calls     │
+                                            │  (시작일 필터 없음 — 전체) │
+                                            │                            │
+                                            │  → 1,234 / 6,000 회 표시    │
+                                            └────────────────────────────┘
+```
+
+- `source` = `confirm` (결제 후 결과지) / `demo` (/demo 페이지) / `manual` (/api/generate-manseryeok)
+- 80% 도달 시 amber, 100% 도달 시 red 로 카드 강조
+- 한도 변경: [`src/lib/saju/usage.ts`](./src/lib/saju/usage.ts) 의 `TOTAL_LIMIT` 상수
+- Supabase 미설정(데모 모드) 에서는 카운터 표시 안 됨
 
 ## 검증 체크리스트
 
 - [ ] `pnpm dev` 가 정상 부팅됨
 - [ ] `pnpm typecheck` 통과
-- [ ] `/products` 에서 시드 상품 4개가 보임
-- [ ] 게스트로 4,900원 상품 결제 → `/results/...` 로 이동, 결과지 표시됨
-- [ ] 회원가입 → 마이페이지 → 결제 내역 확인됨
-- [ ] `pnpm create:admin <email>` 후 `/admin/orders` 진입 가능, 비어드민은 차단됨
+- [ ] `/products` 에서 시드 상품 4개가 보임 (데모 모드면 seed fallback)
+- [ ] `/demo` 진입 → 명식 + 풀 텍스트 표시 (SAJU_API_KEY 필요)
+- [ ] `/admin/login` 에서 `ADMIN_PASSWORD` 입력 → `/admin` 진입
+- [ ] (운영 모드) 회원가입 → 결제 → `/results/...` 로 이동, 결과지 표시
+- [ ] (운영 모드) 마이페이지 결제 내역 / 후기 작성 동작
+- [ ] (운영 모드) `/admin` 누적 카운터 카드가 실 숫자 표시
 
 ## 트러블슈팅
 
 - **결제 위젯이 안 보여요** → `NEXT_PUBLIC_TOSS_CLIENT_KEY` 확인, 콘솔에서 도메인 등록 확인
-- **결제 후 결과지가 안 떠요** → `LLM_PROVIDER` 와 해당 API 키 확인, 토스 대시보드에서 결제는 승인되었으나 결과 생성만 실패한 경우 `/admin/orders` 에서 토스 대시보드로 환불 처리
-- **`/admin` 이 자꾸 홈으로 튕겨요** → `pnpm create:admin <email>` 실행 후 로그아웃→재로그인
+- **결제 후 결과지가 안 떠요** → `LLM_PROVIDER` 와 해당 API 키 확인. 토스 결제는 승인됐으나 결과 생성만 실패한 경우 `/admin/orders` 에서 토스 대시보드로 환불 처리
+- **`/admin` 진입이 안 돼요** → `.env.local` 의 `ADMIN_PASSWORD` 설정 + 서버 재시작 → `/admin/login` 에서 입력
 - **Supabase RLS 에러** → service_role 키가 빠져있을 가능성. 서버 라우트에서만 `createServiceClient()` 사용
+- **사주 API 401** → 키 오타/만료. [`./운세위키_API_가이드.md`](./운세위키_API_가이드.md) §6 의 401 에러 메시지별 진단 참고
+- **데모 모드에서 결제가 안 돼요** → 정상. 결제 흐름은 Supabase 가 필요합니다. 명식·결과지 미리보기는 `/demo` 페이지에서 확인 가능
 
 ## 라이선스
 

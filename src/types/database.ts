@@ -80,6 +80,13 @@ type ReviewRow = {
   created_at: string;
 };
 
+type SajuApiCallRow = {
+  id: string;
+  called_at: string;
+  success: boolean;
+  source: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -172,6 +179,17 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<ReviewRow>;
+        Relationships: [];
+      };
+      saju_api_calls: {
+        Row: SajuApiCallRow;
+        Insert: {
+          id?: string;
+          called_at?: string;
+          success: boolean;
+          source?: string | null;
+        };
+        Update: Partial<SajuApiCallRow>;
         Relationships: [];
       };
     };
