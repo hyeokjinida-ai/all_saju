@@ -176,9 +176,9 @@ function HeroSection() {
           className="myeongjo glow-bone"
           style={{ fontSize: 28, color: "var(--bone)", fontWeight: 700, lineHeight: 1.5, letterSpacing: "0.04em" }}
         >
-          타고난 흐름이<br />
-          어디로 가는지<br />
-          <span style={{ color: "var(--gold-bright)" }}>읽어드립니다.</span>
+          지금 그 답답함엔<br />
+          분명한<br />
+          <span style={{ color: "var(--gold-bright)" }}>이유가 있습니다.</span>
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", margin: "22px 0" }}>
@@ -189,8 +189,8 @@ function HeroSection() {
           className="myeongjo"
           style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 2, letterSpacing: "0.18em" }}
         >
-          하늘과 땅이 새긴 여덟 글자<br />
-          그 안에 당신이 있습니다
+          돈·사람·때 — 여덟 글자가<br />
+          당신의 다음 길을 보여줍니다
         </div>
       </div>
 
@@ -209,7 +209,7 @@ function HeroSection() {
             color: "var(--bone-faint)",
           }}
         >
-          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.25em" }}>누적 11,300건 · 생년월일만 입력</span>
+          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.25em" }}>누적 11,300명 확인 · 생년월일만 · 1분</span>
         </div>
       </div>
 

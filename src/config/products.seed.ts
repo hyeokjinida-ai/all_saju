@@ -18,7 +18,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "basic-saju",
     name: "내 사주 기본 풀이",
-    description: "내 사주의 핵심과 올해 흐름, 지금 가장 마음 쓰이는 고민까지 풀어주는 기본 해설",
+    description: "왜 늘 같은 자리에서 멈출까 — 내 사주의 핵심과 올해 흐름, 지금 가장 큰 고민 하나를 짚어드립니다",
     price: 9900,
     display_order: 10,
     is_active: true,
@@ -27,7 +27,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "wealth-saju",
     name: "내 재물·돈 흐름 깊이보기",
-    description: "돈이 들어오고 새는 구조, 올해 조심해야 할 지출 흐름을 더 깊게 봅니다",
+    description: "버는데 왜 안 모일까 — 돈이 들어오는 길과 새는 구멍, 큰돈 들어올 시기까지 깊게 봅니다",
     price: 19900,
     display_order: 20,
     is_active: true,
@@ -36,7 +36,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "love-saju",
     name: "내 관계·가족 깊이보기",
-    description: "부부·연애·재혼·자녀 — 반복되는 관계 패턴과 잘 맞는 사람을 깊게 봅니다",
+    description: "왜 늘 비슷한 사람에게 끌릴까 — 부부·연애·재혼·자녀, 반복되는 관계 패턴과 내게 맞는 인연을 봅니다",
     price: 19900,
     display_order: 30,
     is_active: true,
@@ -45,7 +45,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "monthly-luck",
     name: "2026 월별 운 캘린더",
-    description: "1~12월 좋은 달·조심할 달과 큰 결정하기 좋은 시기를 따로 정리해드립니다",
+    description: "언제 움직이고 언제 멈출까 — 2026년 1~12월 좋은 달·위험한 달과 큰 결정의 때를 콕 집어드립니다",
     price: 24900,
     display_order: 40,
     is_active: true,
@@ -54,7 +54,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "premium-saju",
     name: "인생 종합 풀이",
-    description: "재물·직업·관계·건강에 대운 60년 흐름까지 통합한 가장 깊은 종합 해설",
+    description: "내 인생의 큰 그림 전부 — 재물·직업·관계·건강에 대운 60년 흐름까지, 가장 깊은 종합 풀이",
     price: 49900,
     display_order: 50,
     is_active: true,
@@ -63,7 +63,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "today-fortune",
     name: "오늘의 운세 한 줄",
-    description: "아침에 가볍게 보는 오늘 하루 흐름 한 문장",
+    description: "오늘 무엇을 조심하고 무엇을 잡을까 — 하루 흐름을 한 문장으로",
     price: 4900,
     display_order: 60,
     is_active: true,
