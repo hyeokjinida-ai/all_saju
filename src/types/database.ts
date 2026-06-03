@@ -66,6 +66,7 @@ type SajuResultRow = {
   interpretation_md: string;
   llm_provider: string;
   llm_model: string;
+  raw_analysis: Json | null; // 0005 마이그레이션 — luckyloveme 16종 원본 분석
   created_at: string;
 };
 
@@ -161,6 +162,7 @@ export type Database = {
           interpretation_md: string;
           llm_provider: string;
           llm_model: string;
+          raw_analysis?: Json | null;
           created_at?: string;
         };
         Update: Partial<SajuResultRow>;

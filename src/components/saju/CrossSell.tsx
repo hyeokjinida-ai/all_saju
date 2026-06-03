@@ -23,6 +23,22 @@ export type CrossSellProduct = {
   price: number;
 };
 
+// 명식 근거 개인화 신호 (saju-api extractCrossSellSignal 와 같은 형태 — 클라이언트용 로컬 타입)
+export type CrossSellSignal = {
+  jaeseongCount: number | null;
+  hasYearClash: boolean;
+};
+
+// 신호가 가리키는 상품의 "부드러운 근거" 한 줄 (공포 X, 호기심 O)
+function signalReasonFor(slug: string, signal?: CrossSellSignal | null): string | null {
+  if (!signal) return null;
+  if (slug === "wealth-saju" && signal.jaeseongCount === 0)
+    return "사주에 재물을 담는 기운(재성)이 약하게 잡혀요 — 돈이 들어오는 길과 머무는 구조를 따로 짚어보면 도움이 됩니다.";
+  if (slug === "monthly-luck" && signal.hasYearClash)
+    return "올해는 흐름의 변동이 큰 해로 보여요 — 어느 달에 움직이고 어느 달에 멈출지 미리 정리해두면 좋습니다.";
+  return null;
+}
+
 // 고민(concern) → 어떤 상품을 밀지 매핑 (freeReading.ts 의 4050 고민 키와 일치)
 const CONCERN_MATCH: Record<string, string[]> = {
   "wealth-saju": ["재물", "노후", "직장·사업"],
@@ -56,19 +72,30 @@ function reasonFor(slug: string, matched: string[]): string {
 export function CrossSell({
   products,
   input,
+  signal,
 }: {
   products: CrossSellProduct[];
   input: CrossSellInput;
+  signal?: CrossSellSignal | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
 
-  // 고민 기반 개인화 정렬: 매칭 수 우선, 그다음 프리미엄 업셀 가산점
+  // 정렬: ① 고민 매칭 ② 명식 신호(재성 약함·올해 변동) ③ 프리미엄 업셀 가산점
+  // 신호 근거가 있으면 그 한 줄을 이유로 우선 노출(고민을 안 골랐어도 추천이 비지 않게).
   const enriched = products
     .map((p) => {
       const matched = (CONCERN_MATCH[p.slug] ?? []).filter((c) => input.concerns.includes(c));
-      const score = matched.length * 10 + (p.slug === "premium-saju" ? 1 : 0);
-      return { ...p, matched, reason: reasonFor(p.slug, matched), score };
+      const sigReason = signalReasonFor(p.slug, signal);
+      const score =
+        matched.length * 10 + (sigReason ? 12 : 0) + (p.slug === "premium-saju" ? 1 : 0);
+      return {
+        ...p,
+        matched,
+        sigReason,
+        reason: sigReason ?? reasonFor(p.slug, matched),
+        score,
+      };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 3); // 크로스셀은 최대 3개까지만 노출
@@ -122,16 +149,18 @@ export function CrossSell({
           boxShadow: "0 0 24px rgba(212,175,106,0.15)",
         }}
       >
-        {primary.matched.length > 0 && (
+        {(primary.matched.length > 0 || primary.sigReason) && (
           <div className="seal absolute -top-3 right-4 w-11 h-11 text-[13px] flex items-center justify-center" style={{ transform: "rotate(-8deg)" }}>
             <span className="relative z-[2]">推</span>
           </div>
         )}
-        {primary.matched.length > 0 && (
+        {primary.sigReason ? (
+          <p className="font-mono text-[10px] text-gold tracking-[0.25em] mb-2">· 당신의 명식이 가리키는 것 ·</p>
+        ) : primary.matched.length > 0 ? (
           <p className="font-mono text-[10px] text-gold tracking-[0.25em] mb-2">
             · 당신이 궁금해한 {primary.matched.join("·")} ·
           </p>
-        )}
+        ) : null}
         <p className="font-myeongjo text-lg font-bold text-gold-bright">{primary.name}</p>
         <p className="mt-2 text-sm text-bone-soft leading-relaxed">{primary.reason}</p>
         <div className="mt-5 flex items-center justify-between gap-3">

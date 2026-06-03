@@ -4,6 +4,7 @@ import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
 import { ResultBody } from "@/components/saju/ResultBody";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
+import { extractCrossSellSignal, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
 import { formatDate } from "@/lib/utils";
 
 export const metadata = { title: "결과지" };
@@ -18,7 +19,7 @@ export default async function ResultPage({
 
   const { data: result } = await service
     .from("saju_results")
-    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id")
+    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id, raw_analysis")
     .eq("id", resultId)
     .maybeSingle();
 
@@ -71,6 +72,12 @@ export default async function ResultPage({
 
   const myeongsik = result.myeongsik as unknown as Myeongsik;
 
+  // 명식 근거 크로스셀 신호(있으면) — 재성 약함 / 올해 변동 큼을 부드럽게 추천에 반영
+  const rawAnalysis = (result as { raw_analysis?: unknown }).raw_analysis;
+  const crossSellSignal = rawAnalysis
+    ? extractCrossSellSignal(rawAnalysis as SajuAnalysisResponse)
+    : null;
+
   return (
     <div className="container py-12 max-w-2xl">
       {/* 증서 헤더 */}
@@ -118,7 +125,7 @@ export default async function ResultPage({
       </p>
 
       {crossSellInput && crossSellProducts.length > 0 && (
-        <CrossSell products={crossSellProducts} input={crossSellInput} />
+        <CrossSell products={crossSellProducts} input={crossSellInput} signal={crossSellSignal} />
       )}
     </div>
   );

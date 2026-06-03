@@ -345,6 +345,29 @@ export function buildKeyFactsBlock(
   return `[확정 사실 — 이미 계산된 값이다. 절대 다시 계산하지 말고 그대로 인용해 풀어쓸 것]\n${lines.join("\n")}`;
 }
 
+// ── 크로스셀 개인화 신호 ────────────────────────────
+// 결과지 하단 "이어서 보기" 추천을 명식 근거로 부드럽게 개인화하기 위한 작은 신호.
+// (공포 마케팅 금지: 단정적 약점 단언이 아니라 "더 깊이 보면 좋다"는 호기심 톤으로만 사용)
+export type CrossSellSignal = {
+  jaeseongCount: number | null; // 재성(財) 개수 — 0이면 재물 흐름을 따로 볼 만한 신호
+  hasYearClash: boolean;        // 올해 세운에 충/파/형 — 변동이 큰 해
+};
+
+export function extractCrossSellSignal(analysis: SajuAnalysisResponse): CrossSellSignal {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const summary = rec(rec(analysis.sipseong).summary);
+  const jaeseong = summary.jaeseong;
+  const jaeseongCount = typeof jaeseong === "number" ? jaeseong : null;
+
+  const rels = rec(rec(analysis.seun).currentSeun).hapChungRelations;
+  const hasYearClash = Array.isArray(rels)
+    ? rels.some((r) => /충|파|형/.test(String(rec(r).type ?? "")))
+    : false;
+
+  return { jaeseongCount, hasYearClash };
+}
+
 // API 호출 + 텍스트 변환을 한 번에 실행 (전체 fields 자동 요청)
 export async function generateManseryeok(
   birthInfo: BirthInfo,
