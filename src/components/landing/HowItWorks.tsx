@@ -8,19 +8,25 @@ export function HowItWorks() {
     { n: "04", t: "결과 확인", d: "AI가 작성한 맞춤 리포트 즉시 확인" },
   ];
   return (
-    <section id="how-it-works" className="container py-20 border-t border-hairline">
-      <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-12">
-        작동 방식
-      </h2>
-      <ol className="grid gap-10 md:grid-cols-4">
-        {steps.map((s) => (
-          <li key={s.n}>
-            <p className="text-xs font-mono text-mute mb-2">{s.n}</p>
-            <p className="text-base font-semibold mb-1.5">{s.t}</p>
-            <p className="text-sm text-body leading-relaxed">{s.d}</p>
-          </li>
-        ))}
-      </ol>
+    <section id="how-it-works" className="scene-wine border-t border-hairline">
+      <div className="container py-20">
+        <div className="text-center mb-14">
+          <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">順序</p>
+          <h2 className="font-myeongjo text-2xl md:text-3xl font-semibold tracking-[0.04em] text-bone">
+            작동 방식
+          </h2>
+        </div>
+        <ol className="grid gap-10 md:grid-cols-4">
+          {steps.map((s) => (
+            <li key={s.n} className="text-center md:text-left">
+              <p className="font-mono text-2xl text-gold/80 mb-3">{s.n}</p>
+              <div className="gold-rule mb-4 max-w-[40px] mx-auto md:mx-0" />
+              <p className="font-myeongjo text-base font-semibold text-bone mb-1.5">{s.t}</p>
+              <p className="text-sm text-bone-soft leading-relaxed">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }

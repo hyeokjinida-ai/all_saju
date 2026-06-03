@@ -9,13 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-ink text-canvas hover:bg-[#090909]",
+        // 명운록: 금빛 필 버튼 (어두운 와인 글자) — 화면의 주 강조점
+        default: "bg-gold text-wine-deep font-semibold hover:bg-gold-bright shadow-gold-glow",
         outline:
-          "border border-hairline-strong bg-canvas text-ink hover:bg-surface-soft",
-        ghost: "text-ink hover:bg-surface-soft",
+          "border border-hairline-strong bg-transparent text-bone hover:bg-wine-2 hover:border-gold",
+        ghost: "text-bone hover:bg-wine-2",
         destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
-        link: "text-ink underline-offset-4 hover:underline px-0 h-auto",
-        onDark: "bg-canvas text-ink hover:bg-[#f5f5f5]",
+        link: "text-gold underline-offset-4 hover:underline px-0 h-auto",
+        onDark: "bg-gold text-wine-deep font-semibold hover:bg-gold-bright",
       },
       size: {
         default: "h-9 px-5",

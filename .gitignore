@@ -1,12 +1,16 @@
 node_modules
 .next
 out
-.env
-.env.local
-.env*.local
+# 환경변수/비밀키 — .env.example(placeholder)만 추적, 나머지 .env* 는 전부 무시
+.env*
+!.env.example
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+# 로컬 스크래치 로그 (커밋 불필요)
+*.log
+_dev.log
+_pnpm_install.log
 .vercel
 supabase/.branches
 supabase/.temp

@@ -25,10 +25,11 @@ export default async function ProductsPage() {
 
   return (
     <div className="container py-12">
-      <header className="mb-10">
-        <p className="text-xs font-mono text-mute mb-2">PRODUCTS</p>
-        <h1 className="text-3xl font-semibold tracking-tight">상품</h1>
-        <p className="mt-2 text-sm text-body">가볍게 시작해서 깊이 있게 들어가세요.</p>
+      <header className="mb-10 text-center">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">命式</p>
+        <h1 className="font-myeongjo text-3xl font-semibold tracking-[0.04em] text-bone">상품</h1>
+        <p className="mt-3 text-sm text-bone-soft">가볍게 시작해서 깊이 있게 들어가세요.</p>
+        <div className="gold-diamond mx-auto mt-5" />
       </header>
 
       {!products || products.length === 0 ? (
@@ -39,13 +40,13 @@ export default async function ProductsPage() {
             <Link
               key={p.slug}
               href={`/products/${p.slug}`}
-              className="group block rounded-lg border border-hairline bg-canvas p-6 transition-colors hover:border-ink"
+              className="group block rounded-lg border border-hairline bg-wine-2/40 p-6 transition-all hover:border-gold hover:bg-wine-2/70 hover:shadow-gold-glow"
             >
-              <p className="text-base font-semibold text-ink">{p.name}</p>
-              <p className="mt-1.5 text-sm text-body leading-relaxed line-clamp-2">
+              <p className="font-myeongjo text-base font-semibold text-bone group-hover:text-gold-bright transition-colors">{p.name}</p>
+              <p className="mt-2 text-sm text-bone-soft leading-relaxed line-clamp-2">
                 {p.description}
               </p>
-              <p className="mt-5 text-lg font-mono font-medium text-ink">{formatKRW(p.price)}</p>
+              <p className="mt-5 text-lg font-mono font-medium text-gold">{formatKRW(p.price)}</p>
             </Link>
           ))}
         </div>

@@ -43,9 +43,10 @@ export default async function MyOrdersPage() {
 
   return (
     <div className="container py-12 max-w-3xl">
-      <header className="mb-8">
-        <p className="text-xs font-mono text-mute mb-2">ORDERS</p>
-        <h1 className="text-2xl font-semibold tracking-tight">결제 내역</h1>
+      <header className="mb-10 text-center">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">記錄</p>
+        <h1 className="font-myeongjo text-2xl font-semibold tracking-[0.04em] text-bone">결제 내역</h1>
+        <div className="gold-diamond mx-auto mt-5" />
       </header>
 
       {!orders || orders.length === 0 ? (

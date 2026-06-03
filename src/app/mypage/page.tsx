@@ -22,12 +22,13 @@ export default async function MyPage() {
 
   return (
     <div className="container py-12 max-w-xl">
-      <header className="mb-10">
-        <p className="text-xs font-mono text-mute mb-2">ACCOUNT</p>
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <header className="mb-10 text-center">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">命錄</p>
+        <h1 className="font-myeongjo text-2xl font-semibold tracking-[0.04em] text-bone">
           {profile?.display_name ?? user.email}
         </h1>
-        <p className="text-sm text-body mt-1">{profile?.email ?? user.email}</p>
+        <p className="text-sm text-bone-soft mt-2">{profile?.email ?? user.email}</p>
+        <div className="gold-diamond mx-auto mt-5" />
       </header>
 
       <ul className="divide-y divide-hairline border-y border-hairline">

@@ -1,0 +1,432 @@
+/* 명운록 — design tokens */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=Ma+Shan+Zheng&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Hanji (day) palette */
+  --paper: #e8dfd0;
+  --paper-warm: #ede4d4;
+  --paper-deep: #d4c8af;
+  --paper-edge: #c9bb9e;
+  --ink: #14110d;
+  --ink-soft: #3a2a1a;
+  --ink-faint: rgba(20, 17, 13, 0.55);
+  --brown: #7d5a3a;
+  --brown-soft: #a8896b;
+  --brown-pale: #c9b89a;
+  --seal: #8b1e1e;
+  --seal-dim: #6e1818;
+  --line: rgba(58, 42, 26, 0.22);
+  --line-soft: rgba(58, 42, 26, 0.10);
+
+  /* Night palette — DEEP WINE / OXBLOOD */
+  --night:    #0d0608;
+  --night-2:  #1a0810;
+  --night-3:  #2a0a14;
+  --wine:     #3a0d18;
+  --wine-2:   #4a0e1a;
+  --wine-deep:#2a0a12;
+  --wine-soft:#5a1822;
+  --night-edge: #050204;
+  --bone:    #f0e6d2;
+  --bone-soft: rgba(240,230,210,0.72);
+  --bone-faint: rgba(240,230,210,0.40);
+  --gold:    #d4af6a;
+  --gold-bright: #e8c878;
+  --gold-soft: #a88b53;
+  --gold-pale: rgba(212,175,106,0.18);
+  --gold-line: rgba(212,175,106,0.4);
+
+  /* Kakao */
+  --kakao: #FEE500;
+  --kakao-text: #191919;
+
+  /* 오행 (five elements) */
+  --o-wood:  #4a6b3a;
+  --o-fire:  #8b1e1e;
+  --o-earth: #a8896b;
+  --o-metal: #c9b896;
+  --o-water: #1f2937;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+  background: #1a1816;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Hanji paper texture ───────────────────────────────────── */
+.hanji {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(125,90,58,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 90% 95%, rgba(20,17,13,0.08) 0%, transparent 65%),
+    radial-gradient(circle at 50% 50%, rgba(168,137,107,0.06) 0%, transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' seed='3'/><feColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.17 0 0 0 0 0.10 0 0 0 0.10 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.30 0 0 0 0 0.15 0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23f)'/></svg>");
+  background-blend-mode: multiply, multiply, normal, multiply, multiply;
+}
+
+.hanji-fiber {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='ff'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.22 0 0 0 0 0.10 0 0 0 0.15 0'/></filter><rect width='100%25' height='100%25' filter='url(%23ff)'/></svg>");
+  background-size: 400px 400px;
+}
+
+/* ── Type utilities ──────────────────────────────────────── */
+.serif { font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif; }
+.myeongjo { font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; }
+.batang { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
+.brush { font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+.vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+/* ── Seal stamp ───────────────────────────────────────────── */
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--seal);
+  color: var(--paper-warm);
+  font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif;
+  letter-spacing: 0.04em;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 2px var(--paper-warm),
+    inset 0 0 0 3px var(--seal),
+    0 1px 0 rgba(20,17,13,0.15);
+  filter: contrast(1.05) saturate(1.05);
+}
+.seal::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='1.3' numOctaves='2' seed='2'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23s)'/></svg>");
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ── Ink line ─────────────────────────────────────────────── */
+.ink-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--line) 8%, var(--line) 92%, transparent 100%);
+}
+.ink-rule-thick {
+  height: 1.5px;
+  background: var(--ink-soft);
+  opacity: 0.7;
+}
+
+/* ── Brushed border ──────────────────────────────────────── */
+.brush-border {
+  position: relative;
+  border: 1px solid var(--line);
+}
+.brush-border::after {
+  content: '';
+  position: absolute; inset: -1px;
+  border: 1px solid var(--line-soft);
+  pointer-events: none;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+button { font-family: inherit; cursor: pointer; }
+
+.btn-ink {
+  background: var(--ink);
+  color: var(--paper-warm);
+  border: none;
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  padding: 18px 28px;
+  position: relative;
+}
+.btn-ink:hover { background: var(--ink-soft); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-family: 'Noto Serif KR', serif;
+  letter-spacing: 0.14em;
+  padding: 14px 22px;
+}
+
+/* ── Scroll ──────────────────────────────────────────────── */
+.screen-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.screen-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Subtle entrance ──────────────────────────────────────── */
+@keyframes inkFade {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+.ink-fade { animation: inkFade 0.7s ease-out both; }
+.ink-fade-d1 { animation-delay: 0.08s; }
+.ink-fade-d2 { animation-delay: 0.18s; }
+.ink-fade-d3 { animation-delay: 0.30s; }
+.ink-fade-d4 { animation-delay: 0.42s; }
+.ink-fade-d5 { animation-delay: 0.56s; }
+
+@keyframes brushDraw {
+  from { stroke-dashoffset: var(--len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   NIGHT theme — mystical detail-page background
+   ───────────────────────────────────────────────────────── */
+.night {
+  background-color: var(--night);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 20% 0%, rgba(212,175,106,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 100%, rgba(139,30,30,0.22) 0%, transparent 60%),
+    radial-gradient(circle at 50% 40%, rgba(42,10,18,0.7) 0%, transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' seed='5'/><feColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.9 0 0 0 0 0.85 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  color: var(--bone);
+}
+
+/* ── Scene: WINE — deep oxblood with gold dust ── */
+.scene-wine {
+  background-color: var(--wine);
+  background-image:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(212,175,106,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 70% at 50% 100%, rgba(13,6,8,0.7) 0%, transparent 70%),
+    radial-gradient(circle at 80% 30%, rgba(232,200,120,0.06) 0%, transparent 50%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' seed='8'/><feColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.7 0 0 0 0 0.4 0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  color: var(--bone);
+  position: relative;
+}
+
+/* ── Scene: COSMOS — black with galaxy nebula glow ── */
+.scene-cosmos {
+  background-color: #060306;
+  background-image:
+    radial-gradient(ellipse 80% 70% at 50% 50%, rgba(74, 30, 70, 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,106,0.20) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 60% at 50% 80%, rgba(74, 14, 26, 0.6) 0%, transparent 70%);
+  color: var(--bone);
+  position: relative;
+}
+
+/* Galaxy spiral SVG overlay */
+.galaxy {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><defs><radialGradient id='g1' cx='50%25' cy='50%25' r='50%25'><stop offset='0%25' stop-color='%23f0e6d2' stop-opacity='0.6'/><stop offset='30%25' stop-color='%23d4af6a' stop-opacity='0.3'/><stop offset='100%25' stop-color='%23d4af6a' stop-opacity='0'/></radialGradient></defs><circle cx='200' cy='200' r='18' fill='url(%23g1)'/><g stroke='%23d4af6a' stroke-opacity='0.18' fill='none' stroke-width='0.6'><path d='M200 200 Q 260 170 280 220 Q 295 270 240 290 Q 180 305 150 270 Q 120 230 160 195 Q 200 165 230 195'/><path d='M200 200 Q 245 188 268 215 Q 285 248 248 275 Q 200 290 170 265 Q 145 235 175 210'/><path d='M200 200 Q 235 192 252 215 Q 265 240 240 260 Q 210 275 185 255 Q 165 235 188 215'/></g></svg>");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 80% auto;
+  opacity: 0.9;
+}
+
+/* ── Star field (denser, more dramatic) ── */
+.starfield {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(240,230,210,0.95), transparent 50%),
+    radial-gradient(0.8px 0.8px at 78% 22%, rgba(240,230,210,0.7), transparent 50%),
+    radial-gradient(1.4px 1.4px at 32% 64%, rgba(212,175,106,0.9), transparent 50%),
+    radial-gradient(1px 1px at 88% 72%, rgba(240,230,210,0.8), transparent 50%),
+    radial-gradient(1.6px 1.6px at 56% 14%, rgba(240,230,210,0.95), transparent 50%),
+    radial-gradient(1px 1px at 22% 40%, rgba(240,230,210,0.55), transparent 50%),
+    radial-gradient(1px 1px at 64% 48%, rgba(212,175,106,0.7), transparent 50%),
+    radial-gradient(0.8px 0.8px at 8% 80%, rgba(240,230,210,0.75), transparent 50%),
+    radial-gradient(1.5px 1.5px at 92% 36%, rgba(240,230,210,0.9), transparent 50%),
+    radial-gradient(1px 1px at 44% 88%, rgba(212,175,106,0.6), transparent 50%),
+    radial-gradient(0.8px 0.8px at 72% 90%, rgba(240,230,210,0.55), transparent 50%),
+    radial-gradient(1px 1px at 18% 56%, rgba(240,230,210,0.5), transparent 50%),
+    radial-gradient(0.6px 0.6px at 38% 26%, rgba(240,230,210,0.7), transparent 50%),
+    radial-gradient(0.6px 0.6px at 84% 8%, rgba(240,230,210,0.6), transparent 50%),
+    radial-gradient(0.8px 0.8px at 6% 38%, rgba(240,230,210,0.55), transparent 50%),
+    radial-gradient(1px 1px at 96% 56%, rgba(212,175,106,0.5), transparent 50%);
+  background-size: 100% 100%;
+}
+.starfield::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(0.8px 0.8px at 30% 30%, rgba(240,230,210,0.8), transparent 50%),
+    radial-gradient(0.8px 0.8px at 70% 60%, rgba(240,230,210,0.7), transparent 50%),
+    radial-gradient(0.6px 0.6px at 50% 85%, rgba(240,230,210,0.6), transparent 50%),
+    radial-gradient(0.7px 0.7px at 20% 70%, rgba(240,230,210,0.65), transparent 50%);
+  animation: twinkle 4.5s ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: 0.3; }
+  to   { opacity: 0.95; }
+}
+
+.moon-bg {
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(240,230,210,0.10), rgba(240,230,210,0.02) 60%, transparent 75%);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.mist-band {
+  position: absolute; left: 0; right: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(201,168,110,0.05) 50%, transparent 100%);
+  filter: blur(20px);
+}
+
+/* Night text utilities */
+.night-h1 {
+  font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif;
+  color: var(--bone);
+  letter-spacing: 0.04em;
+}
+.glow-bone { text-shadow: 0 0 18px rgba(240,230,210,0.35), 0 0 2px rgba(240,230,210,0.6); }
+.glow-gold { text-shadow: 0 0 14px rgba(201,168,110,0.55), 0 0 2px rgba(201,168,110,0.8); }
+
+/* Section separator — ink-drip ornament */
+.ornament {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: center; opacity: 0.6;
+}
+.ornament .dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.ornament .line { width: 28px; height: 1px; background: currentColor; }
+.ornament .lozenge { width: 6px; height: 6px; background: currentColor; transform: rotate(45deg); }
+
+/* Gold ornamental frame border */
+.gold-frame {
+  position: relative;
+  padding: 24px 18px;
+  border: 1px solid var(--gold-line);
+}
+.gold-frame::before,
+.gold-frame::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  border: 1px solid var(--gold);
+}
+.gold-frame::before { top: -4px; left: -4px; border-right: none; border-bottom: none; }
+.gold-frame::after  { bottom: -4px; right: -4px; border-left: none; border-top: none; }
+
+/* Gold thin divider — vertical and horizontal */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-line) 15%, var(--gold) 50%, var(--gold-line) 85%, transparent 100%);
+}
+.gold-rule-vert {
+  width: 1px; height: 60px;
+  background: linear-gradient(180deg, transparent 0%, var(--gold-line) 30%, var(--gold-line) 70%, transparent 100%);
+  margin: 0 auto;
+}
+
+/* Decorative dot ornament — like ◆ between text */
+.gold-diamond {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  margin: 0 8px;
+  vertical-align: middle;
+}
+
+/* Cinematic vignette overlay for scenes */
+.vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%);
+}
+
+/* Buttons — Kakao */
+.btn-kakao {
+  width: 100%;
+  background: var(--kakao);
+  color: var(--kakao-text);
+  border: none;
+  padding: 18px 22px;
+  font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 6px 18px rgba(254,229,0,0.15);
+  cursor: pointer;
+}
+.btn-kakao:hover { filter: brightness(0.97); }
+.btn-kakao .chat {
+  width: 22px; height: 20px;
+  background: var(--kakao-text);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'><path d='M12 2C6 2 1.2 5.7 1.2 10.3c0 3 2 5.6 5 7.1l-1 3.6c-.1.4.3.7.7.5l4.3-2.7c.6.1 1.2.1 1.8.1 6 0 10.8-3.7 10.8-8.6S18 2 12 2z'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'><path d='M12 2C6 2 1.2 5.7 1.2 10.3c0 3 2 5.6 5 7.1l-1 3.6c-.1.4.3.7.7.5l4.3-2.7c.6.1 1.2.1 1.8.1 6 0 10.8-3.7 10.8-8.6S18 2 12 2z'/></svg>") center/contain no-repeat;
+}
+
+.btn-gold {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold-soft);
+  padding: 14px 20px;
+  font-family: 'Noto Serif KR', serif;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+}
+.btn-gold:hover { background: var(--gold-pale); }
+
+/* Card on night */
+.night-card {
+  background: rgba(34, 29, 44, 0.7);
+  border: 1px solid rgba(201, 168, 110, 0.18);
+  backdrop-filter: blur(4px);
+}
+
+/* Fade up on view — simple, always-on */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.fade-up { animation: fadeUp 0.8s ease-out both; }
+
+/* Slow drift */
+@keyframes drift {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-6px); }
+}
+.drift { animation: drift 6s ease-in-out infinite alternate; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Apply form inputs ── */
+.ap-input {
+  width: 100%; padding: 14px 14px;
+  background: rgba(13,6,8,0.45); border: 1px solid var(--gold-line);
+  color: var(--bone); outline: none;
+  font-family: 'Nanum Myeongjo', serif; font-size: 16px; letter-spacing: 0.03em;
+  transition: border-color 0.2s;
+}
+.ap-input:focus { border-color: var(--gold); }
+.ap-input::placeholder { color: var(--bone-faint); }
+.ap-input::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(2) hue-rotate(5deg); }
+

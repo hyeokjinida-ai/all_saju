@@ -81,9 +81,10 @@ export default async function WriteReviewPage({
 
   return (
     <div className="container py-12 max-w-xl">
-      <header className="mb-8">
-        <p className="text-xs font-mono text-mute mb-2">REVIEW</p>
-        <h1 className="text-2xl font-semibold tracking-tight">후기 작성</h1>
+      <header className="mb-10 text-center">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">筆評</p>
+        <h1 className="font-myeongjo text-2xl font-semibold tracking-[0.04em] text-bone">후기 작성</h1>
+        <div className="gold-diamond mx-auto mt-5" />
       </header>
       <Card>
         <CardContent className="pt-6">

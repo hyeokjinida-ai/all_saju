@@ -3,12 +3,13 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
 import { computeMyeongsik, type Myeongsik } from "@/lib/saju/manseryeok";
-import { buildSajuPrompt } from "@/lib/saju/prompt";
-import { generateInterpretation } from "@/lib/saju/llm";
+import { buildChapterPrompts } from "@/lib/saju/prompt";
+import { generateByChapters } from "@/lib/saju/llm";
 import {
   isSajuApiConfigured,
   fetchSajuAnalysis,
-  formatSajuToManseryeok,
+  formatSajuCompact,
+  buildKeyFactsBlock,
   ganjiToMyeongsik,
   type BirthInfo,
 } from "@/lib/saju/saju-api";
@@ -125,15 +126,19 @@ export async function POST(request: NextRequest) {
     // 만세력/풀 분석: luckyloveme 키가 있으면 실제 API, 없거나 실패하면 mock 으로 fallback
     let myeongsik: Myeongsik;
     let manseryeokText: string | undefined;
+    let keyFacts: string | undefined;       // 확정 사실 카드(떠먹이기)
+    let rawAnalysis: unknown = null; // 자체 만세력 전환 대비 — 16종 원본 보관
 
     if (isSajuApiConfigured()) {
       try {
         const birthInfo = toBirthInfo(input);
         const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "confirm" }); // [] = 16종 전체
+        rawAnalysis = analysis;
         const converted = ganjiToMyeongsik(analysis);
         if (converted) {
           myeongsik = converted;
-          manseryeokText = formatSajuToManseryeok(analysis, birthInfo);
+          manseryeokText = formatSajuCompact(analysis, birthInfo); // 추린 입력(8k) — 비용↓·정확도 유지
+          keyFacts = buildKeyFactsBlock(analysis, birthInfo);      // 나이·대운·세운·용신 등 확정값 떠먹이기
         } else {
           // ganji 필드 누락 — mock 으로 폴백
           myeongsik = await computeMyeongsik(toComputeInput(input));
@@ -147,9 +152,10 @@ export async function POST(request: NextRequest) {
       myeongsik = await computeMyeongsik(toComputeInput(input));
     }
 
-    const { system, user } = buildSajuPrompt({
+    const { title, chapters } = buildChapterPrompts({
       productSlug: product.slug,
       productName: product.name,
+      name: input.name,
       myeongsik,
       manseryeokText,
       birthDate: input.birth_date,
@@ -157,9 +163,10 @@ export async function POST(request: NextRequest) {
       timeUnknown: input.time_unknown,
       gender: input.gender,
       concerns: input.concerns,
+      keyFacts,
     });
 
-    const llm = await generateInterpretation({ system, user });
+    const llm = await generateByChapters(title, chapters);
 
     const { data: result, error: resultErr } = await service
       .from("saju_results")
@@ -169,6 +176,7 @@ export async function POST(request: NextRequest) {
         interpretation_md: llm.text,
         llm_provider: llm.provider,
         llm_model: llm.model,
+        raw_analysis: rawAnalysis as never, // 자체 만세력 검증용 원본 (0005 마이그레이션)
       })
       .select("id")
       .single();

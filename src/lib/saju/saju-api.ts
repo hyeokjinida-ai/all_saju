@@ -173,6 +173,178 @@ export function formatSajuToManseryeok(
   return [head, ...sections].join("\n\n");
 }
 
+// ── LLM 입력 다이어트 ────────────────────────────────
+// 전체(formatSajuToManseryeok)는 ~31k 토큰이라 좋은 모델에서 분당 한도에 걸리고 비용도 큼.
+// 결과지 생성에 실제로 필요한 핵심만 추려 ~6~9k 토큰으로 줄인 버전.
+// - 세운: 수십 년치 배열 대신 '올해(currentSeun)' + 향후 몇 년만
+// - 대운: all_daeun 전체·계산 메타 제거, current/next 와 간단 목록만
+// - 월운: 12개월 핵심만
+export function formatSajuCompact(
+  analysis: SajuAnalysisResponse,
+  birthInfo: BirthInfo,
+): string {
+  const head = [
+    `[명식 기본 정보]`,
+    `생년월일: ${birthInfo.birthYear}-${pad2(birthInfo.birthMonth)}-${pad2(birthInfo.birthDay)} (${birthInfo.calendarType}${birthInfo.isLeapMonth ? ", 윤달" : ""})`,
+    birthInfo.birthHour != null && birthInfo.birthHour !== ""
+      ? `출생시각: ${pad2(birthInfo.birthHour)}:${pad2(birthInfo.birthMinute ?? "00")}`
+      : `출생시각: 모름`,
+    `성별: ${birthInfo.gender === "male" ? "남성" : "여성"}`,
+  ].join("\n");
+
+  const sections: string[] = [];
+  const push = (label: string, value: unknown) => {
+    if (value == null) return;
+    const text = stringifyValue(value).trim();
+    if (text) sections.push(`[${label}]\n${text}`);
+  };
+
+  // 그대로 넣어도 작은 핵심 분석들
+  push("천간지지 (사주 원국)", analysis.ganji);
+  push("십성", analysis.sipseong);
+  push("신강/신약", analysis.sinStrength);
+  push("격국 (억부용신)", analysis.gyeokguk);
+  push("격국용신 (자평진전)", analysis.gyeokgukYongsin);
+  push("12운성", analysis.twelveFortune);
+
+  // 대운: 무거운 메타/전체배열 제거, 핵심만
+  const daeun = analysis.daeun as Record<string, unknown> | undefined;
+  if (daeun) {
+    const slim: Record<string, unknown> = {
+      현재나이: daeun.current_age,
+      대운시작나이: daeun.daeun_start_age,
+      방향: daeun.direction,
+      현재대운: daeun.current_daeun,
+      다음대운: daeun.next_daeun,
+    };
+    // 전체 대운 목록은 'ganji + 나이구간'만 한 줄로 요약
+    const all = daeun.all_daeun as Array<Record<string, unknown>> | undefined;
+    if (Array.isArray(all)) {
+      slim["대운목록"] = all
+        .map((d) => `${d.age_start}~${d.age_end}세 ${d.ganji ?? ""}`)
+        .join(" / ");
+    }
+    push("대운", slim);
+  }
+
+  // 세운: 올해(currentSeun) + (있으면) 향후 몇 년만
+  const seun = analysis.seun as Record<string, unknown> | undefined;
+  if (seun) {
+    const slim: Record<string, unknown> = { 올해: seun.currentSeun };
+    const list = (seun.seunList ?? seun.list ?? seun.upcomingSeun) as
+      | Array<Record<string, unknown>>
+      | undefined;
+    if (Array.isArray(list)) {
+      const cur = (seun.currentSeun as Record<string, unknown>)?.year as number | undefined;
+      const future = list
+        .filter((s) => typeof s.year === "number" && (cur == null || (s.year as number) >= cur))
+        .slice(0, 4)
+        .map((s) => `${s.year} ${s.ganji ?? ""}: ${s.interpretation ?? ""}`.trim());
+      if (future.length) slim["향후흐름"] = future;
+    }
+    push("세운(올해 중심)", slim);
+  }
+
+  // 월운: 핵심만 (이미 12개월 정도라 그대로)
+  push("월운", analysis.weolun);
+
+  // 신살류는 간단해서 그대로
+  push("도화살", analysis.dohwa);
+  push("귀인", analysis.guiin);
+  push("12신살", analysis.sibisinsals);
+  push("합·충·형·해·파", analysis.hapchung);
+
+  return [head, ...sections].join("\n\n");
+}
+
+// ── 확정 사실 카드 ("떠먹이기") ──────────────────────
+// 명식/대운/세운/용신은 AI가 직접 추론하면 자주 틀리거나(환각) 두루뭉술해진다.
+// 이미 계산된 핵심 사실을 한눈에 박아 넣어, 모델은 추론 대신 "그대로 인용해 풀어쓰기"만 하게 한다.
+// (덜 똑똑한 모델일수록 효과 큼. 강의안 3교시 "명식·대운은 프로그램으로 고정" 원칙.)
+export function buildKeyFactsBlock(
+  analysis: SajuAnalysisResponse,
+  birthInfo: BirthInfo,
+): string {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const s = (v: unknown): string => (v == null ? "" : String(v));
+  const lines: string[] = [];
+
+  // 일간(나 자신) + 오행/음양
+  const day = rec(rec(analysis.ganji).day);
+  if (day.gan) {
+    const oh = s(rec(day.ohaeng).gan);
+    const eum = s(rec(day.eumyang).gan);
+    lines.push(
+      `- 일간(나 자신): ${s(day.gan)}${day.ganHanja ? `(${s(day.ganHanja)})` : ""}` +
+        (oh ? ` — ${eum}${oh}(오행 ${oh})` : ""),
+    );
+  }
+
+  // 오행 분포 (없는 기운 강조)
+  const oc = rec(rec(rec(rec(analysis.sipseong).cheonganHap).ohaengImpact).originalCount);
+  if (Object.keys(oc).length) {
+    const order = ["목", "화", "토", "금", "수"];
+    const parts = order.map((k) => `${k}${s(oc[k] ?? 0)}`).join(" ");
+    const missing = order.filter((k) => !Number(oc[k]));
+    lines.push(`- 오행 분포: ${parts}${missing.length ? ` (없는 기운: ${missing.join("·")})` : ""}`);
+  }
+
+  // 십성 분포
+  const sum = rec(rec(analysis.sipseong).summary);
+  if (Object.keys(sum).length) {
+    lines.push(
+      `- 십성 분포: 인성${s(sum.inseong ?? 0)} 식상${s(sum.siksang ?? 0)} 비겁${s(sum.bigyeop ?? 0)} 재성${s(sum.jaeseong ?? 0)} 관성${s(sum.gwanseong ?? 0)}`,
+    );
+  }
+
+  // 신강/신약
+  const sin = rec(analysis.sinStrength);
+  if (sin.strength) {
+    lines.push(
+      `- 신강도: ${s(sin.strength)}${sin.level ? `(${s(sin.level)}/7단계)` : ""}${sin.qualitativeType ? ` · ${s(sin.qualitativeType)}` : ""}`,
+    );
+  }
+
+  // 격국 · 용신 · 희신 · 기신
+  const gg = rec(analysis.gyeokguk);
+  const yong = rec(gg.yongsin);
+  const ggBits: string[] = [];
+  if (gg.name) ggBits.push(`격국 ${s(gg.name)}`);
+  if (yong.오행) ggBits.push(`용신 ${s(yong.오행)}${yong.십신 ? `(${s(yong.십신)})` : ""}`);
+  if (gg.희신오행) ggBits.push(`희신 ${s(gg.희신오행)}`);
+  if (gg.기신오행) ggBits.push(`기신 ${s(gg.기신오행)}`);
+  if (ggBits.length) lines.push(`- ${ggBits.join(" · ")}`);
+
+  // 만 나이 · 현재/다음 대운
+  const daeun = rec(analysis.daeun);
+  if (daeun.current_age != null) lines.push(`- 현재 만나이: ${s(daeun.current_age)}세`);
+  const cd = rec(daeun.current_daeun);
+  if (cd.ganji)
+    lines.push(
+      `- 현재 대운: ${s(cd.ganji)}${cd.ganji_hanja ? `(${s(cd.ganji_hanja)})` : ""} · ${s(cd.age_start)}~${s(cd.age_end)}세(${s(cd.year_start)}~${s(cd.year_end)})`,
+    );
+  const nd = rec(daeun.next_daeun);
+  if (nd.ganji) lines.push(`- 다음 대운: ${s(nd.ganji)} · ${s(nd.age_start)}~${s(nd.age_end)}세부터(${s(nd.year_start)}~)`);
+
+  // 올해 세운
+  const cs = rec(rec(analysis.seun).currentSeun);
+  if (cs.ganji) {
+    const rel = rec(cs.sipseongRelation);
+    const relStr = rel.gan || rel.ji ? ` · 십성 ${s(rel.gan)}/${s(rel.ji)}` : "";
+    const tf = s(rec(cs.twelveFortune).fortune);
+    lines.push(
+      `- 올해(${s(cs.year)}) 세운: ${s(cs.ganji)}${cs.ganji_hanja ? `(${s(cs.ganji_hanja)})` : ""}${relStr}${tf ? ` · 12운성 ${tf}` : ""}`,
+    );
+  }
+
+  // birthInfo 는 시그니처 일관성용(추후 절기·진태양시 보정 표기 등에 사용). 현재는 미사용.
+  void birthInfo;
+
+  if (!lines.length) return "";
+  return `[확정 사실 — 이미 계산된 값이다. 절대 다시 계산하지 말고 그대로 인용해 풀어쓸 것]\n${lines.join("\n")}`;
+}
+
 // API 호출 + 텍스트 변환을 한 번에 실행 (전체 fields 자동 요청)
 export async function generateManseryeok(
   birthInfo: BirthInfo,

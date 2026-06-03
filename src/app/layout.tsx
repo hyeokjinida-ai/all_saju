@@ -37,22 +37,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 // Ollama: 56px utility nav, primary nav on canvas, no shadow.
 function SiteHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
-    <header className="border-b border-hairline bg-canvas">
-      <div className="container flex h-14 items-center justify-between">
-        <Link href="/" className="font-semibold text-[15px] text-ink">
-          {siteConfig.name}
+    <header className="border-b border-hairline bg-night/60 backdrop-blur-sm sticky top-0 z-50">
+      <div className="container flex h-16 items-center justify-between">
+        <Link href="/" className="flex items-baseline gap-2 group">
+          <span className="font-myeongjo font-semibold text-[19px] tracking-[0.04em] text-gold-bright group-hover:text-gold transition-colors">
+            {siteConfig.name}
+          </span>
+          <span className="font-brush text-[15px] text-gold-soft/80 hidden sm:inline">
+            {siteConfig.nameHanja}
+          </span>
         </Link>
-        <nav className="flex items-center gap-6 text-[13px] font-medium">
-          <Link href="/products" className="text-ink hover:text-body">상품</Link>
+        <nav className="flex items-center gap-7 text-[13px] tracking-[0.04em]">
+          <Link href="/products" className="text-bone-soft hover:text-gold transition-colors">상품</Link>
           {isLoggedIn ? (
             <>
-              <Link href="/mypage" className="text-ink hover:text-body">마이페이지</Link>
+              <Link href="/mypage" className="text-bone-soft hover:text-gold transition-colors">마이페이지</Link>
               <form action="/api/auth/signout" method="post">
-                <button type="submit" className="text-ink hover:text-body">로그아웃</button>
+                <button type="submit" className="text-bone-soft hover:text-gold transition-colors">로그아웃</button>
               </form>
             </>
           ) : (
-            <Link href="/login" className="text-ink hover:text-body">로그인</Link>
+            <Link href="/login" className="text-bone-soft hover:text-gold transition-colors">로그인</Link>
           )}
         </nav>
       </div>

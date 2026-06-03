@@ -29,6 +29,28 @@ export async function generateInterpretation(req: LlmRequest): Promise<LlmRespon
   }
 }
 
+// 챕터별 병렬 생성 — 각 챕터를 따로 호출(집중도↑)한 뒤 제목 + 본문들을 합쳐 하나의 마크다운으로.
+// 한 챕터가 실패해도 나머지로 결과지는 완성되도록 개별 실패를 흡수한다.
+export async function generateByChapters(
+  title: string,
+  chapters: { system: string; user: string }[],
+): Promise<LlmResponse> {
+  const parts = await Promise.all(
+    chapters.map((c) =>
+      generateInterpretation(c)
+        .then((r) => ({ text: r.text, provider: r.provider, model: r.model }))
+        .catch(() => ({ text: "", provider: "", model: "" })),
+    ),
+  );
+  const body = parts.map((p) => p.text.trim()).filter(Boolean).join("\n\n");
+  const ok = parts.find((p) => p.provider);
+  return {
+    text: `## ${title}\n\n${body}`,
+    provider: ok?.provider ?? "",
+    model: ok?.model ?? "",
+  };
+}
+
 async function callOpenAI(req: LlmRequest, model: string, key: string | undefined): Promise<LlmResponse> {
   if (!key) throw new Error("OPENAI_API_KEY is required when LLM_PROVIDER=openai");
   const { default: OpenAI } = await import("openai");

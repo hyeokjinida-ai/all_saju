@@ -33,9 +33,10 @@ export default async function MyReviewsPage() {
 
   return (
     <div className="container py-12 max-w-2xl">
-      <header className="mb-8">
-        <p className="text-xs font-mono text-mute mb-2">REVIEWS</p>
-        <h1 className="text-2xl font-semibold tracking-tight">내 후기</h1>
+      <header className="mb-10 text-center">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">品評</p>
+        <h1 className="font-myeongjo text-2xl font-semibold tracking-[0.04em] text-bone">내 후기</h1>
+        <div className="gold-diamond mx-auto mt-5" />
       </header>
 
       {!reviews || reviews.length === 0 ? (

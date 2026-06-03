@@ -100,7 +100,7 @@ export function SajuForm({ productId, productSlug, isLoggedIn }: Props) {
                 type="button"
                 key={g}
                 onClick={() => setGender(g)}
-                className={`flex-1 h-10 rounded-full border text-sm transition-colors ${gender === g ? "border-ink bg-ink text-canvas" : "border-hairline text-ink hover:border-ink"}`}
+                className={`flex-1 h-10 rounded-full border text-sm transition-colors ${gender === g ? "border-gold bg-gold text-wine-deep font-medium" : "border-hairline text-bone-soft hover:border-gold hover:text-bone"}`}
               >
                 {g === "male" ? "남성" : "여성"}
               </button>
@@ -115,7 +115,7 @@ export function SajuForm({ productId, productSlug, isLoggedIn }: Props) {
                 type="button"
                 key={c}
                 onClick={() => setCalendar(c)}
-                className={`flex-1 h-10 rounded-full border text-sm transition-colors ${calendar === c ? "border-ink bg-ink text-canvas" : "border-hairline text-ink hover:border-ink"}`}
+                className={`flex-1 h-10 rounded-full border text-sm transition-colors ${calendar === c ? "border-gold bg-gold text-wine-deep font-medium" : "border-hairline text-bone-soft hover:border-gold hover:text-bone"}`}
               >
                 {c === "solar" ? "양력" : "음력"}
               </button>
@@ -132,7 +132,7 @@ export function SajuForm({ productId, productSlug, isLoggedIn }: Props) {
               type="button"
               key={c}
               onClick={() => toggleConcern(c)}
-              className={`px-4 h-8 rounded-full border text-sm transition-colors ${concerns.includes(c) ? "border-ink bg-ink text-canvas" : "border-hairline text-ink hover:border-ink"}`}
+              className={`px-4 h-8 rounded-full border text-sm transition-colors ${concerns.includes(c) ? "border-gold bg-gold text-wine-deep font-medium" : "border-hairline text-bone-soft hover:border-gold hover:text-bone"}`}
             >
               {c}
             </button>
@@ -152,8 +152,8 @@ export function SajuForm({ productId, productSlug, isLoggedIn }: Props) {
           >
             로그인하고 결제하기
           </Link>
-          <p className="text-xs text-body text-center">
-            결과는 로그인 후 <span className="text-ink">마이페이지</span> 에서 확인할 수 있어요.
+          <p className="text-xs text-bone-soft text-center">
+            결과는 로그인 후 <span className="text-gold">마이페이지</span> 에서 확인할 수 있어요.
           </p>
         </div>
       )}

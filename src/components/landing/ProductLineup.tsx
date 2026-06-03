@@ -33,22 +33,26 @@ export async function ProductLineup() {
   }
 
   return (
-    <section className="container py-16 border-t border-hairline">
-      <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-10">
-        상품 라인업
-      </h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <section className="container py-20 border-t border-hairline">
+      <div className="text-center mb-12">
+        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">命式</p>
+        <h2 className="font-myeongjo text-2xl md:text-3xl font-semibold tracking-[0.04em] text-bone">
+          상품 라인업
+        </h2>
+        <div className="gold-diamond mx-auto mt-5" />
+      </div>
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {products.map((p) => (
           <Link
             key={p.slug}
             href={`/products/${p.slug}`}
-            className="group block rounded-lg border border-hairline bg-canvas p-6 transition-colors hover:border-ink"
+            className="group block rounded-lg border border-hairline bg-wine-2/40 p-6 transition-all hover:border-gold hover:bg-wine-2/70 hover:shadow-gold-glow"
           >
-            <p className="text-base font-semibold text-ink">{p.name}</p>
-            <p className="mt-1.5 text-sm text-body leading-relaxed line-clamp-2">
+            <p className="font-myeongjo text-base font-semibold text-bone group-hover:text-gold-bright transition-colors">{p.name}</p>
+            <p className="mt-2 text-sm text-bone-soft leading-relaxed line-clamp-2">
               {p.description}
             </p>
-            <p className="mt-5 text-lg font-mono font-medium text-ink">
+            <p className="mt-5 text-lg font-mono font-medium text-gold">
               {formatKRW(p.price)}
             </p>
           </Link>

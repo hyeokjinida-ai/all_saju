@@ -11,12 +11,14 @@ import { ResultBody } from "@/components/saju/ResultBody";
 import {
   fetchSajuAnalysis,
   formatSajuToManseryeok,
+  formatSajuCompact,
+  buildKeyFactsBlock,
   ganjiToMyeongsik,
   isSajuApiConfigured,
   type BirthInfo,
 } from "@/lib/saju/saju-api";
-import { buildSajuPrompt } from "@/lib/saju/prompt";
-import { generateInterpretation } from "@/lib/saju/llm";
+import { buildChapterPrompts } from "@/lib/saju/prompt";
+import { generateByChapters } from "@/lib/saju/llm";
 
 export const metadata = { title: "데모 — 명식·결과지" };
 export const dynamic = "force-dynamic"; // 항상 서버에서 새로 생성
@@ -25,6 +27,7 @@ type SearchParams = Promise<{
   y?: string; m?: string; d?: string;
   h?: string; min?: string;
   cal?: string; g?: string;
+  slug?: string; concern?: string; nm?: string; compact?: string;
 }>;
 
 const DEFAULTS = {
@@ -49,6 +52,7 @@ export default async function DemoPage({ searchParams }: { searchParams: SearchP
   let stageDetail = "";
   let myeongsik: Awaited<ReturnType<typeof ganjiToMyeongsik>> = null;
   let manseryeokText = "";
+  let keyFactsText = "";
   let elapsedApi = 0;
 
   if (!isSajuApiConfigured()) {
@@ -60,7 +64,10 @@ export default async function DemoPage({ searchParams }: { searchParams: SearchP
       const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "demo" });
       elapsedApi = Date.now() - t0;
       myeongsik = ganjiToMyeongsik(analysis);
-      manseryeokText = formatSajuToManseryeok(analysis, birthInfo);
+      manseryeokText = sp.compact === "1"
+        ? formatSajuCompact(analysis, birthInfo)
+        : formatSajuToManseryeok(analysis, birthInfo);
+      keyFactsText = buildKeyFactsBlock(analysis, birthInfo);
     } catch (err) {
       stage = "api-error";
       stageDetail = err instanceof Error ? err.message : String(err);
@@ -75,19 +82,21 @@ export default async function DemoPage({ searchParams }: { searchParams: SearchP
 
   if (myeongsik && manseryeokText) {
     try {
-      const { system, user } = buildSajuPrompt({
-        productSlug: "basic-saju",
-        productName: "데모 — 기본 사주 풀이",
+      const { title, chapters } = buildChapterPrompts({
+        productSlug: sp.slug || "basic-saju",
+        productName: `데모 — ${sp.slug || "basic-saju"}`,
+        name: sp.nm || null,
         myeongsik,
         manseryeokText,
         birthDate: `${birthInfo.birthYear}-${birthInfo.birthMonth.padStart(2, "0")}-${birthInfo.birthDay.padStart(2, "0")}`,
         birthTime: birthInfo.birthHour ? `${birthInfo.birthHour.padStart(2, "0")}:${(birthInfo.birthMinute ?? "00").padStart(2, "0")}` : null,
         timeUnknown: !birthInfo.birthHour,
         gender: birthInfo.gender,
-        concerns: [],
+        concerns: sp.concern ? [sp.concern] : [],
+        keyFacts: keyFactsText,
       });
       const t0 = Date.now();
-      const llm = await generateInterpretation({ system, user });
+      const llm = await generateByChapters(title, chapters);
       elapsedLlm = Date.now() - t0;
       interpretation = llm.text;
       llmInfo = { provider: llm.provider, model: llm.model };
