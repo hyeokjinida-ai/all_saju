@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { SAJU_INPUT_KEY } from "@/components/saju/FreeResult";
+import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 
 type Gender = "male" | "female";
 type Calendar = "solar" | "lunar";
@@ -461,22 +462,22 @@ export function SajuWizard({
             {!submitting && <span className="font-brush text-xl text-wine-deep">受</span>}
           </button>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
+            {/* 카카오 원탭 — 마찰 최소화(입력은 저장돼 로그인 후 그대로 복원) */}
+            <KakaoLoginButton
+              redirect={`/products/${productSlug}`}
+              label={`카카오로 3초 로그인 후 결제 · ${formatKRW(price)}`}
+              onBeforeRedirect={saveDraft}
+            />
             <Link
               href={`/login?redirect=${encodeURIComponent(`/products/${productSlug}`)}`}
               onClick={saveDraft}
-              className="w-full min-h-[58px] flex items-center justify-center gap-3 font-bold text-base tracking-[0.16em]"
-              style={{
-                fontFamily: "'Noto Serif KR', serif",
-                background: "linear-gradient(180deg,#e8c878,#d4af6a)",
-                color: "var(--wine-deep)",
-                boxShadow: "0 0 24px rgba(212,175,106,0.3)",
-              }}
+              className="block text-center text-xs text-bone-soft underline underline-offset-4 tracking-[0.04em] py-1"
             >
-              로그인하고 결제하기
+              이메일로 로그인하고 결제하기
             </Link>
-            <p className="text-xs text-bone-soft text-center">
-              결과는 로그인 후 <span className="text-gold">마이페이지</span>에서 확인할 수 있어요.
+            <p className="text-[11px] text-bone-faint text-center">
+              입력하신 내용은 그대로 저장돼요. 로그인 후 바로 이어서 결제합니다.
             </p>
           </div>
         )}

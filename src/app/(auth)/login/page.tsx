@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 
 export default function LoginPage() {
   return (
@@ -49,6 +50,12 @@ function LoginForm() {
           <CardDescription>이메일과 비밀번호로 로그인하세요.</CardDescription>
         </CardHeader>
         <CardContent>
+          <KakaoLoginButton redirect={redirectTo} label="카카오로 로그인" />
+          <div className="my-5 flex items-center gap-3 text-xs text-bone-faint">
+            <span className="h-px flex-1 bg-hairline" />
+            또는 이메일로
+            <span className="h-px flex-1 bg-hairline" />
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>

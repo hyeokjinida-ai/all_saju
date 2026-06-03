@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 import { publicEnv } from "@/lib/env";
 
 export default function SignupPage() {
@@ -48,6 +49,12 @@ export default function SignupPage() {
           <CardDescription>이메일 인증 없이 즉시 가입됩니다.</CardDescription>
         </CardHeader>
         <CardContent>
+          <KakaoLoginButton redirect="/mypage" label="카카오로 3초 만에 시작하기" />
+          <div className="my-5 flex items-center gap-3 text-xs text-bone-faint">
+            <span className="h-px flex-1 bg-hairline" />
+            또는 이메일로
+            <span className="h-px flex-1 bg-hairline" />
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">이름</Label>
