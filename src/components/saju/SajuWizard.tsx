@@ -56,6 +56,9 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
 
 const TOTAL = STEPS.length;
 
+// 비로그인 → 로그인 왕복 동안 위저드 입력을 보존하는 세션 키 (read-once)
+const ORDER_DRAFT_KEY = "myeongunrok:order-wizard-draft";
+
 export function SajuWizard({
   productId,
   productSlug,
@@ -76,6 +79,35 @@ export function SajuWizard({
     calendar: "",
     concerns: [],
   });
+
+  // 로그인 왕복 후 복귀 시 입력 복원 (read-once: 복원하면 즉시 비움)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ORDER_DRAFT_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(ORDER_DRAFT_KEY);
+      const draft = JSON.parse(raw) as { slug?: string; step?: number; form?: FormState };
+      if (draft?.slug === productSlug && draft.form) {
+        setForm(draft.form);
+        setStep(
+          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), TOTAL - 1) : TOTAL - 1,
+        );
+      }
+    } catch {
+      /* 손상된 draft 는 무시 */
+    }
+    // 마운트 시 1회만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 로그인으로 떠나기 직전, 현재 입력을 세션에 저장해 복귀 후 복원되게 함
+  const saveDraft = useCallback(() => {
+    try {
+      sessionStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify({ slug: productSlug, step, form }));
+    } catch {
+      /* 저장 실패해도 흐름은 계속 */
+    }
+  }, [productSlug, step, form]);
 
   const up = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -432,6 +464,7 @@ export function SajuWizard({
           <div className="space-y-2">
             <Link
               href={`/login?redirect=${encodeURIComponent(`/products/${productSlug}`)}`}
+              onClick={saveDraft}
               className="w-full min-h-[58px] flex items-center justify-center gap-3 font-bold text-base tracking-[0.16em]"
               style={{
                 fontFamily: "'Noto Serif KR', serif",
