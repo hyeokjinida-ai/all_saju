@@ -43,7 +43,10 @@ function CheckoutSuccessInner() {
           router.replace(`/results/${json.resultId}`);
         } else {
           setState("ok");
-          setMessage("결제는 완료되었으나 결과 생성에 실패했습니다. 고객센터로 문의해 주세요.");
+          setMessage(
+            json.message ??
+              "결제는 완료되었으나 결과 생성에 실패했습니다. 고객센터로 문의해 주세요.",
+          );
         }
       } catch (err) {
         setState("error");

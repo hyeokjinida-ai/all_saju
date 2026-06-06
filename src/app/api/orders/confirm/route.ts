@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
-import { computeMyeongsik, type Myeongsik } from "@/lib/saju/manseryeok";
+import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildChapterPrompts } from "@/lib/saju/prompt";
 import { generateByChapters } from "@/lib/saju/llm";
 import {
@@ -40,16 +40,6 @@ function toBirthInfo(input: SajuInputRow): BirthInfo {
     birthDay: String(parseInt(d, 10)),
     ...(hasTime ? { birthHour: String(parseInt(hh!, 10)), birthMinute: String(parseInt(mm!, 10)) } : {}),
     calendarType: input.calendar === "lunar" ? "음력" : "양력",
-    gender: input.gender,
-  };
-}
-
-function toComputeInput(input: SajuInputRow) {
-  return {
-    birthDate: input.birth_date,
-    birthTime: input.birth_time,
-    timeUnknown: input.time_unknown,
-    calendar: input.calendar,
     gender: input.gender,
   };
 }
@@ -123,8 +113,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // 만세력/풀 분석: luckyloveme 키가 있으면 실제 API, 없거나 실패하면 mock 으로 fallback
-    let myeongsik: Myeongsik;
+    // 만세력/풀 분석: luckyloveme(정확)만 사용. 부정확한 mock 폴백은 쓰지 않는다.
+    let myeongsik: Myeongsik | null = null;
     let manseryeokText: string | undefined;
     let keyFacts: string | undefined;       // 확정 사실 카드(떠먹이기)
 
@@ -137,17 +127,21 @@ export async function POST(request: NextRequest) {
           myeongsik = converted;
           manseryeokText = formatSajuCompact(analysis, birthInfo); // 추린 입력(8k) — 비용↓·정확도 유지
           keyFacts = buildKeyFactsBlock(analysis, birthInfo);      // 나이·대운·세운·용신 등 확정값 떠먹이기
-        } else {
-          // ganji 필드 누락 — mock 으로 폴백
-          myeongsik = await computeMyeongsik(toComputeInput(input));
         }
       } catch (apiErr) {
-        // luckyloveme 호출 실패 — 결제는 이미 승인됐으므로 mock 으로 폴백해서 결과지는 무조건 생성
-        console.error("[saju-api] fallback to mock:", apiErr);
-        myeongsik = await computeMyeongsik(toComputeInput(input));
+        console.error("[saju-api] 명식 산출 실패 — 결과 생성 보류:", apiErr);
       }
-    } else {
-      myeongsik = await computeMyeongsik(toComputeInput(input));
+    }
+
+    // 정확한 명식을 못 얻으면(API 미설정/실패/ganji 누락) 부정확한 결과를 저장하지 않고 '보류'.
+    // 결제는 이미 승인됨 → /admin/orders 에서 재생성, 또는 결제창 재진입으로 재시도.
+    if (!myeongsik) {
+      console.error("[confirm] 정확한 명식 확보 실패 — 결과 생성 보류. order:", order.id);
+      return NextResponse.json({
+        resultId: null,
+        pending: true,
+        message: "결제는 완료됐어요. 결과지는 잠시 후 생성되어 마이페이지에서 확인하실 수 있습니다.",
+      });
     }
 
     const { title, chapters } = buildChapterPrompts({
