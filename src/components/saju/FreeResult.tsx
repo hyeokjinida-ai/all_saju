@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { ganToHanja, jiToHanja, type FreeReading } from "@/lib/saju/freeReading";
+import { TrustStrip } from "@/components/saju/TrustStrip";
 import type { Myeongsik, Pillar } from "@/lib/saju/manseryeok";
 
 export type SimpleProduct = { productId: string; slug: string; name: string; price: number };
@@ -307,6 +308,7 @@ export function FreeResult({
               고민 하나를 더 깊게 보고 싶다면 — 인생 종합 풀이 {formatKRW(premium.price)}
             </button>
           )}
+          <TrustStrip className="mt-6" />
         </section>
       )}
 

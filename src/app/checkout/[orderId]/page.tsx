@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { TossWidget } from "@/components/checkout/TossWidget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrustStrip } from "@/components/saju/TrustStrip";
 import { formatKRW } from "@/lib/utils";
 
 export const metadata = { title: "결제" };
@@ -58,6 +59,7 @@ export default async function CheckoutPage({
           />
         </CardContent>
       </Card>
+      <TrustStrip className="mt-5" />
     </div>
   );
 }
