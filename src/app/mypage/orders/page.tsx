@@ -76,6 +76,14 @@ export default async function MyOrdersPage() {
                   >
                     {STATUS_LABEL[o.status] ?? o.status}
                   </Badge>
+                  {o.status === "pending" && (
+                    <Link
+                      href={`/checkout/${o.order_id}`}
+                      className="text-sm font-bold underline underline-offset-4 text-gold-bright"
+                    >
+                      결제 계속하기 →
+                    </Link>
+                  )}
                   {resultId && (
                     <Link href={`/results/${resultId}`} className="text-sm font-medium underline underline-offset-4 text-ink">
                       결과 보기
