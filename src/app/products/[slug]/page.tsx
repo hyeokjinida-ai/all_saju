@@ -111,7 +111,7 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const isFreeEntry = product.slug === "basic-saju";
+  const isFreeEntry = false; // 무료 흐름 제거 — basic 도 일반 결제 상품으로
 
   return (
     <div className="container py-12 max-w-2xl">
@@ -166,7 +166,7 @@ export default async function ProductDetailPage({
           productName={product.name}
           price={product.price}
           isLoggedIn={!!user}
-          flow={product.slug === "basic-saju" ? "free" : "order"}
+          flow="order"
           tiers={tiers}
         />
       </section>

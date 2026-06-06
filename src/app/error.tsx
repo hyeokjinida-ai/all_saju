@@ -27,7 +27,7 @@ export default function ErrorPage({ error, reset }: { error: Error; reset: () =>
           href="/products/basic-saju"
           className="text-xs text-bone-soft underline underline-offset-4 hover:text-gold"
         >
-          무료로 내 명식 확인하기
+          내 사주 풀이 보기
         </Link>
       </div>
     </div>

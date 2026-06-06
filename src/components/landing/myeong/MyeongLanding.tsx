@@ -60,7 +60,7 @@ function SectionLabel({
 }
 
 // 골드 CTA — 무료 명식 퍼널 입구(/products/basic-saju)로 이동
-function CTAButton({ sub, label = "무료로 내 명식 확인하기" }: { sub?: string; label?: string }) {
+function CTAButton({ sub, label = "내 사주 풀이 보기" }: { sub?: string; label?: string }) {
   return (
     <Link
       href={FUNNEL_HREF}
@@ -197,7 +197,7 @@ function HeroSection() {
       <div style={{ flex: 1, minHeight: 40 }} />
 
       <div className="fade-up ink-fade-d2" style={{ marginTop: 40, position: "relative", zIndex: 2 }}>
-        <CTAButton sub="· 무료" />
+        <CTAButton sub="· 9,900원" />
         <SecondaryLink label="결과 예시 먼저 보기 →" />
         <div
           style={{
@@ -884,7 +884,7 @@ function ChaptersSection() {
 function HowItWorksSection() {
   const steps = [
     { n: "一", en: "STEP 01", title: "생년월일을 입력하세요", desc: "이름·생년월일·시각·고민을\n한 단계씩 가볍게 입력합니다.", hanja: "記" },
-    { n: "二", en: "STEP 02", title: "무료 명식을 바로 확인", desc: "내 사주 여덟 글자와 오행 균형,\n올해 흐름까지 무료로 봅니다.", hanja: "覽" },
+    { n: "二", en: "STEP 02", title: "정통 만세력으로 명식 산출", desc: "절기·진태양시까지 반영해\n내 사주 여덟 글자를 정밀하게 세웁니다.", hanja: "覽" },
     { n: "三", en: "STEP 03", title: "더 자세한 풀이를 선택", desc: "마음에 들면 기본 풀이 결과지로\n성향·올해·고민을 깊게 풉니다.", hanja: "解" },
     { n: "四", en: "STEP 04", title: "결과지를 즉시 확인", desc: "정통 만세력 엔진과 AI가\n수 분 내 기록을 생성합니다.", hanja: "受" },
   ];
@@ -906,7 +906,7 @@ function HowItWorksSection() {
         </div>
 
         <div className="myeongjo" style={{ marginTop: 14, fontSize: 12, color: "var(--bone-faint)", letterSpacing: "0.2em" }}>
-          입력 → 무료 명식 → 자세한 풀이까지 수 분이면 충분합니다
+          입력 → 명식 산출 → 자세한 풀이까지 수 분이면 충분합니다
         </div>
 
         <GoldDivider width={60} />
@@ -1086,29 +1086,29 @@ function PricingSection() {
       <div className="starfield" style={{ opacity: 0.45 }} />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        <SectionLabel index="十一" hanja="覽" label="무료로 시작" />
+        <SectionLabel index="十一" hanja="覽" label="9,900원으로 시작" />
 
         <div
           className="myeongjo glow-bone"
           style={{ fontSize: 26, color: "var(--bone)", fontWeight: 700, lineHeight: 1.55, letterSpacing: "0.04em" }}
         >
-          먼저 <span style={{ color: "var(--gold-bright)" }}>무료</span>로<br />
-          내 명식을 확인하세요
+          <span style={{ color: "var(--gold-bright)" }}>9,900원</span>으로<br />
+          내 사주를 풀어보세요
         </div>
 
         <div className="myeongjo" style={{ marginTop: 12, fontSize: 12, color: "var(--bone-faint)", letterSpacing: "0.1em", lineHeight: 1.7 }}>
-          생년월일만 입력하면 바로 볼 수 있어요.<br />결제는 결과를 본 다음에 결정하셔도 됩니다.
+          생년월일만 입력하면<br />정통 만세력으로 바로 풀이를 받아보실 수 있어요.
         </div>
 
         <GoldDivider width={60} />
 
-        {/* 무료로 확인할 수 있는 것 */}
+        {/* 기본 풀이에 담기는 것 */}
         <div style={{ padding: "22px 20px", border: "1px solid var(--gold-pale)", background: "rgba(13,6,8,0.55)", textAlign: "left" }}>
           <div className="myeongjo" style={{ fontSize: 13, color: "var(--gold-bright)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 4 }}>
-            무료로 확인할 수 있는 것
+            기본 풀이에 담기는 것
           </div>
           <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.04em", marginBottom: 14 }}>
-            결제 없이 지금 바로
+            내 사주 기본 풀이 · 9,900원
           </div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             {freeItems.map((d, j) => (
@@ -1121,7 +1121,7 @@ function PricingSection() {
         </div>
 
         <div style={{ marginTop: 18 }}>
-          <CTAButton sub="· 무료" />
+          <CTAButton sub="· 9,900원" />
           <SecondaryLink label="결과 예시 먼저 보기 →" />
         </div>
 
@@ -1142,7 +1142,7 @@ function PricingSection() {
             <span className="brush glow-gold" style={{ fontSize: 32, color: "var(--gold-bright)", lineHeight: 1 }}>簡命</span>
             <div>
               <div className="myeongjo" style={{ fontSize: 16, color: "var(--bone)", fontWeight: 700, letterSpacing: "0.1em" }}>내 사주 기본 풀이</div>
-              <div className="myeongjo" style={{ fontSize: 10.5, color: "var(--bone-faint)", letterSpacing: "0.1em", marginTop: 2 }}>무료 결과를 더 깊게 풀어드립니다</div>
+              <div className="myeongjo" style={{ fontSize: 10.5, color: "var(--bone-faint)", letterSpacing: "0.1em", marginTop: 2 }}>내 사주를 깊이 있게 풀어드립니다</div>
             </div>
           </div>
 
@@ -1183,7 +1183,7 @@ function PricingSection() {
             · 안심하고 시작하세요 ·
           </div>
           <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-soft)", letterSpacing: "0.03em", lineHeight: 1.7 }}>
-            무료 결과는 결제 없이 바로 확인 · 입력 정보는 명식 계산에만 사용됩니다
+            정통 만세력으로 정밀 산출 · 입력 정보는 명식 계산에만 사용됩니다
           </div>
         </div>
       </div>
@@ -1292,9 +1292,9 @@ function FinalCTASection() {
 
         <GoldDivider width={60} />
 
-        <CTAButton sub="· 무료" label="지금 내 흐름 확인하기" />
+        <CTAButton sub="· 9,900원" label="지금 내 흐름 확인하기" />
 
-        <div className="mono" style={{ marginTop: 18, fontSize: 9, color: "var(--bone-faint)", letterSpacing: "0.3em" }}>· 무료 명식 · 결제는 그 다음에 ·</div>
+        <div className="mono" style={{ marginTop: 18, fontSize: 9, color: "var(--bone-faint)", letterSpacing: "0.3em" }}>· 9,900원 · 정통 만세력 풀이 ·</div>
 
         <div className="myeongjo" style={{ marginTop: 40, fontSize: 10, color: "var(--bone-faint)", letterSpacing: "0.15em", lineHeight: 1.9, opacity: 0.5 }}>
           ⓒ 命運錄 · 2026<br />
@@ -1351,10 +1351,10 @@ function StickyBar() {
       >
         <div style={{ flex: 1 }}>
           <div className="myeongjo" style={{ fontSize: 11, color: "var(--gold-bright)", letterSpacing: "0.2em", lineHeight: 1.2, fontWeight: 700 }}>
-            무료로 내 명식 확인
+            내 사주 풀이 보기
           </div>
           <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.1em", marginTop: 2 }}>
-            생년월일만 · 결제는 그 다음
+            생년월일만 · 9,900원
           </div>
         </div>
         <Link
@@ -1377,7 +1377,7 @@ function StickyBar() {
             whiteSpace: "nowrap",
           }}
         >
-          무료로 보기
+          풀이 보기
         </Link>
       </div>
     </div>
