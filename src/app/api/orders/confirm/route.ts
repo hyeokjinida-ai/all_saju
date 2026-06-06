@@ -127,13 +127,11 @@ export async function POST(request: NextRequest) {
     let myeongsik: Myeongsik;
     let manseryeokText: string | undefined;
     let keyFacts: string | undefined;       // 확정 사실 카드(떠먹이기)
-    let rawAnalysis: unknown = null; // 자체 만세력 전환 대비 — 16종 원본 보관
 
     if (isSajuApiConfigured()) {
       try {
         const birthInfo = toBirthInfo(input);
         const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "confirm" }); // [] = 16종 전체
-        rawAnalysis = analysis;
         const converted = ganjiToMyeongsik(analysis);
         if (converted) {
           myeongsik = converted;
@@ -176,7 +174,6 @@ export async function POST(request: NextRequest) {
         interpretation_md: llm.text,
         llm_provider: llm.provider,
         llm_model: llm.model,
-        raw_analysis: rawAnalysis as never, // 자체 만세력 검증용 원본 (0005 마이그레이션)
       })
       .select("id")
       .single();
