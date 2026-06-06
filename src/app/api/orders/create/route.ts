@@ -7,7 +7,7 @@ const bodySchema = z.object({
   productId: z.string().uuid(),
   name: z.string().max(50).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  birthTime: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  birthTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable(), // HH:mm 또는 DB time 타입의 HH:mm:ss 둘 다 허용
   timeUnknown: z.boolean(),
   gender: z.enum(["male", "female"]),
   calendar: z.enum(["solar", "lunar"]),

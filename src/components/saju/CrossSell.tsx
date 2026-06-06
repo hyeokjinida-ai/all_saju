@@ -113,7 +113,7 @@ export function CrossSell({
           productId: p.productId,
           name: input.name ?? "",
           birthDate: input.birthDate,
-          birthTime: input.timeUnknown ? null : input.birthTime,
+          birthTime: input.timeUnknown ? null : (input.birthTime?.slice(0, 5) ?? null), // HH:mm:ss → HH:mm
           timeUnknown: input.timeUnknown,
           gender: input.gender,
           calendar: input.calendar,
