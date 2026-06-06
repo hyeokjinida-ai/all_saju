@@ -59,6 +59,15 @@ export const productsSeed: ProductSeed[] = [
     display_order: 50,
     is_active: true,
   },
+  // 끝판왕 위 앵커 — 인생 VIP 정밀 풀이 (검증 후 is_active true 로 전환)
+  {
+    slug: "vip-saju",
+    name: "인생 VIP 정밀 풀이",
+    description: "내 인생 전부를 한 권으로 — 대운 60년 연표와 향후 10년 해마다의 로드맵, 결정적 시기 3가지까지 가장 깊게",
+    price: 99000,
+    display_order: 55,
+    is_active: false,
+  },
   // 가벼운 재방문용 — 입구에서 강조하지 않고 보조로만 노출
   {
     slug: "today-fortune",
