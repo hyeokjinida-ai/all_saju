@@ -153,6 +153,10 @@ export function FreeResult({
 
   if (!myeongsik || !reading) return null;
 
+  // ⚠️ 자체 만세력(computeMyeongsik) 정확도 수정 전까지, 계산에 의존하는 무료 노출(명식표·일간·오행·올해)을 보류.
+  // 엔진을 luckyloveme 로 교체/수정하면 true 로 되돌리면 됩니다.
+  const SHOW_MYEONGSIK = false;
+
   const name = input?.name?.trim();
   const cols: [string, Pillar | null][] = [
     ["時", myeongsik.hour],
@@ -170,11 +174,13 @@ export function FreeResult({
           {name ? `${name}님의 무료 명식` : "내 무료 명식"}
         </h1>
         <p className="mt-3 text-xs text-bone-soft tracking-[0.04em]">
-          아래는 무료로 보는 흐름이에요. 더 자세한 풀이는 기본 풀이 결과지에서 이어집니다.
+          정확한 명식과 풀이는 결제 후 정통 만세력으로 정밀하게 풀어드려요. 아래는 미리보기예요.
         </p>
         <div className="gold-diamond mx-auto mt-5" />
       </header>
 
+      {SHOW_MYEONGSIK && (
+      <>
       {/* 1. 명식 8글자 */}
       <section className="mb-9">
         <h2 className="font-myeongjo text-sm font-semibold mb-3 text-gold-bright">내 사주 여덟 글자</h2>
@@ -245,6 +251,8 @@ export function FreeResult({
         </h2>
         <p className="text-sm text-bone-soft leading-relaxed border-l-2 border-gold pl-4">{reading.yearFlow.line}</p>
       </section>
+      </>
+      )}
 
       {/* 5. 고민 맛보기 — 첫 문장만 무료, 나머지는 잠금(갈증 유발) */}
       {reading.concernTeaser && (
