@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { SajuWizard, type Tier } from "@/components/saju/SajuWizard";
@@ -16,6 +18,41 @@ function buildTiers(rows: { id: string; slug: string; name: string; price: numbe
   return FUNNEL_TIER_SLUGS.map((s) => rows.find((r) => r.slug === s))
     .filter((r): r is { id: string; slug: string; name: string; price: number } => !!r)
     .map((r) => ({ productId: r.id, slug: r.slug, name: r.name, price: r.price }));
+}
+
+// 상품별 SEO 메타데이터 — 검색/공유 시 상품명·설명이 그대로 노출되게(기존엔 전부 "명운록")
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  let p: { name: string; description: string } | null = null;
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("products")
+      .select("name, description")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    p = data;
+  } else {
+    const s = productsSeed.find((x) => x.slug === slug && x.is_active);
+    p = s ? { name: s.name, description: s.description } : null;
+  }
+  if (!p) return { title: "상품" };
+  return {
+    title: p.name,
+    description: p.description,
+    openGraph: {
+      title: `${p.name} | ${siteConfig.name}`,
+      description: p.description,
+      type: "website",
+      locale: "ko_KR",
+    },
+    twitter: { card: "summary_large_image", title: p.name, description: p.description },
+  };
 }
 
 export default async function ProductDetailPage({
@@ -78,6 +115,26 @@ export default async function ProductDetailPage({
 
   return (
     <div className="container py-12 max-w-2xl">
+      {/* 검색 리치스니펫용 구조화 데이터 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            description: product.description,
+            brand: { "@type": "Brand", name: siteConfig.name },
+            offers: {
+              "@type": "Offer",
+              price: product.price,
+              priceCurrency: "KRW",
+              availability: "https://schema.org/InStock",
+              url: `${siteConfig.url}/products/${product.slug}`,
+            },
+          }),
+        }}
+      />
       <header className="mb-10">
         <p className="text-xs font-mono text-gold-soft/70 mb-3 tracking-[0.2em]">命 / {product.slug}</p>
         {isFreeEntry ? (
