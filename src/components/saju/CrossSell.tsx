@@ -139,45 +139,32 @@ export function CrossSell({
         </p>
       </header>
 
-      {/* 1순위 추천 — 고민에 가장 잘 맞는 상품을 강조 */}
-      <div
-        className="relative rounded-md p-6"
-        style={{
-          border: "1.5px solid var(--gold)",
-          background:
-            "linear-gradient(180deg, rgba(212,175,106,0.10) 0%, rgba(13,6,8,0.65) 100%)",
-          boxShadow: "0 0 24px rgba(212,175,106,0.15)",
-        }}
-      >
+      {/* 1순위 추천 — 깔끔한 추천 칩 + 에디토리얼 카드 */}
+      <div className="rounded-lg border border-gold-line bg-[rgba(212,175,106,0.04)] p-6 sm:p-7">
         {(primary.matched.length > 0 || primary.sigReason) && (
-          <div className="seal absolute -top-3 right-4 w-11 h-11 text-[13px] flex items-center justify-center" style={{ transform: "rotate(-8deg)" }}>
-            <span className="relative z-[2]">推</span>
-          </div>
+          <span className="inline-block mb-3.5 rounded-sm bg-gold-soft px-2.5 py-1 text-[11px] font-myeongjo font-semibold tracking-[0.08em] text-wine-deep">
+            {primary.sigReason ? "명식이 가리키는 풀이" : `${primary.matched.join("·")}에 맞는 풀이`}
+          </span>
         )}
-        {primary.sigReason ? (
-          <p className="font-mono text-[10px] text-gold tracking-[0.25em] mb-2">· 당신의 명식이 가리키는 것 ·</p>
-        ) : primary.matched.length > 0 ? (
-          <p className="font-mono text-[10px] text-gold tracking-[0.25em] mb-2">
-            · 당신이 궁금해한 {primary.matched.join("·")} ·
-          </p>
-        ) : null}
-        <p className="font-myeongjo text-lg font-bold text-gold-bright">{primary.name}</p>
-        <p className="mt-2 text-sm text-bone-soft leading-relaxed">{primary.reason}</p>
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <span className="font-serif text-2xl font-bold text-gold-bright">{formatKRW(primary.price)}</span>
+        <p className="font-myeongjo text-xl font-bold text-gold-bright tracking-[0.02em]">{primary.name}</p>
+        <p className="mt-2.5 text-sm text-bone-soft leading-relaxed">{primary.reason}</p>
+        <div className="mt-6 flex items-end justify-between gap-3">
+          <div>
+            <span className="block text-[10px] text-bone-faint tracking-[0.08em] mb-1">같은 명식 · 재입력 없이</span>
+            <span className="font-serif text-[26px] font-bold text-gold-bright leading-none">{formatKRW(primary.price)}</span>
+          </div>
           <button
             type="button"
             onClick={() => buy(primary)}
             disabled={!!busy}
-            className="shrink-0 px-6 py-3 text-sm font-bold tracking-[0.12em] disabled:opacity-60"
+            className="shrink-0 px-6 py-3.5 text-sm font-bold tracking-[0.06em] disabled:opacity-60"
             style={{
               fontFamily: "'Noto Serif KR', serif",
               background: "linear-gradient(180deg,#e8c878,#d4af6a)",
               color: "var(--wine-deep)",
-              boxShadow: "0 0 20px rgba(212,175,106,0.3)",
             }}
           >
-            {busy === primary.productId ? "이동 중…" : "바로 보기 受"}
+            {busy === primary.productId ? "이동 중…" : "바로 보기 →"}
           </button>
         </div>
       </div>
@@ -188,13 +175,8 @@ export function CrossSell({
           {rest.map((p) => (
             <div
               key={p.productId}
-              className="border border-gold-pale bg-[rgba(13,6,8,0.5)] rounded-md p-5 flex flex-col"
+              className="border border-gold-pale bg-[rgba(13,6,8,0.4)] rounded-lg p-5 flex flex-col"
             >
-              {p.matched.length > 0 && (
-                <p className="font-mono text-[9px] text-gold tracking-[0.2em] mb-1.5">
-                  · {p.matched.join("·")} ·
-                </p>
-              )}
               <p className="font-myeongjo text-base font-semibold text-bone">{p.name}</p>
               <p className="mt-2 text-xs text-bone-soft leading-relaxed flex-1">{p.reason}</p>
               <div className="mt-4 flex items-center justify-between gap-3">
@@ -203,10 +185,10 @@ export function CrossSell({
                   type="button"
                   onClick={() => buy(p)}
                   disabled={!!busy}
-                  className="shrink-0 px-4 py-2.5 text-sm font-bold tracking-[0.08em] border border-gold text-gold disabled:opacity-60"
+                  className="shrink-0 px-4 py-2.5 text-sm font-semibold tracking-[0.04em] text-gold hover:text-gold-bright disabled:opacity-60"
                   style={{ fontFamily: "'Noto Serif KR', serif", background: "transparent" }}
                 >
-                  {busy === p.productId ? "이동 중…" : "바로 보기"}
+                  {busy === p.productId ? "이동 중…" : "바로 보기 →"}
                 </button>
               </div>
             </div>
