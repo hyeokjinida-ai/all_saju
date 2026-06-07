@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
 import { OhaengChart } from "@/components/saju/OhaengChart";
+import { SipseongChart, DaeunTimeline } from "@/components/saju/PremiumCharts";
 import { ResultBody } from "@/components/saju/ResultBody";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
+import { extractCrossSellSignal, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
 import { formatDate } from "@/lib/utils";
 
 export const metadata = { title: "결과지" };
@@ -19,7 +21,7 @@ export default async function ResultPage({
 
   const { data: result } = await service
     .from("saju_results")
-    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id")
+    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id, raw_analysis")
     .eq("id", resultId)
     .maybeSingle();
 
@@ -31,7 +33,7 @@ export default async function ResultPage({
     .eq("id", result.order_id)
     .single();
   const { data: product } = order
-    ? await service.from("products").select("name").eq("id", order.product_id).single()
+    ? await service.from("products").select("name, slug").eq("id", order.product_id).single()
     : { data: null };
 
   // 결제 후 크로스셀: 저장된 명식 정보 + 방금 산 것 외 다른 활성 상품
@@ -72,6 +74,15 @@ export default async function ResultPage({
 
   const myeongsik = result.myeongsik as unknown as Myeongsik;
 
+  // 차트/크로스셀용 원본 분석(있으면). 상품 티어별로 보여줄 차트 차등.
+  const rawAnalysis = (result as { raw_analysis?: unknown }).raw_analysis ?? null;
+  const slug = (product as { slug?: string } | null)?.slug ?? "";
+  const showSipseong = !!rawAnalysis && !["basic-saju", "today-fortune"].includes(slug); // 심화·종합
+  const showDaeun = !!rawAnalysis && slug === "premium-saju"; // 인생 종합 끝판왕
+  const crossSellSignal = rawAnalysis
+    ? extractCrossSellSignal(rawAnalysis as SajuAnalysisResponse)
+    : null;
+
   return (
     <div className="container py-12 max-w-2xl">
       {/* 증서 헤더 */}
@@ -96,8 +107,12 @@ export default async function ResultPage({
         </div>
       </section>
 
-      {/* 오행 균형 차트 — 명식 8글자로 계산한 시각화 */}
+      {/* 오행 균형 차트 — 명식 8글자로 계산한 시각화 (모든 결과지) */}
       <OhaengChart myeongsik={myeongsik} />
+
+      {/* 심화/종합 전용 차트 — 십성 분포 + 대운 60년 타임라인 */}
+      {showSipseong && <SipseongChart analysis={rawAnalysis} />}
+      {showDaeun && <DaeunTimeline analysis={rawAnalysis} />}
 
       {/* 본문 — 한지/와인 카드로 감싼 결과지 */}
       <article
@@ -122,7 +137,7 @@ export default async function ResultPage({
       </p>
 
       {crossSellInput && crossSellProducts.length > 0 && (
-        <CrossSell products={crossSellProducts} input={crossSellInput} />
+        <CrossSell products={crossSellProducts} input={crossSellInput} signal={crossSellSignal} />
       )}
     </div>
   );
