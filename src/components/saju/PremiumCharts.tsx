@@ -60,6 +60,72 @@ export function SipseongChart({ analysis }: { analysis: unknown }) {
   );
 }
 
+// ── 2026 월별 운 흐름 그래프 ──
+// 각 달의 오행을 용신·희신(좋음) / 기신·구신(조심) 과 대조해 좋음·보통·조심 산출(명리 근거).
+export function MonthlyLuckChart({ analysis }: { analysis: unknown }) {
+  const a = rec(analysis);
+  const w = rec(a.weolun);
+  const raw = [w.recentWeoluns, [w.currentWeolun], w.upcomingWeoluns].flatMap((x) => (Array.isArray(x) ? x : []));
+  const map = new Map<string, Record<string, unknown>>();
+  for (const m of raw) {
+    const o = rec(m);
+    if (o.year && o.month) map.set(`${o.year}-${o.month}`, o);
+  }
+  const months = [...map.values()].sort((x, y) => num(x.year) * 12 + num(x.month) - (num(y.year) * 12 + num(y.month)));
+  if (months.length < 6) return null;
+
+  // 현재 달부터 향후 흐름(최대 12개월)
+  const curIdx = months.findIndex((m) => m.isCurrentMonth);
+  const window = (curIdx >= 0 ? months.slice(curIdx) : months).slice(0, 12);
+
+  const gg = rec(a.gyeokguk);
+  const good = new Set([str(rec(gg.yongsin).오행), str(gg.희신오행)].filter(Boolean));
+  const bad = new Set([str(gg.기신오행), str(gg.구신오행)].filter(Boolean));
+  const rate = (m: Record<string, unknown>): -1 | 0 | 1 => {
+    let s = 0;
+    for (const el of [str(m.ganElement), str(m.jiElement)]) {
+      if (good.has(el)) s += 1;
+      if (bad.has(el)) s -= 1;
+    }
+    return s > 0 ? 1 : s < 0 ? -1 : 0;
+  };
+  const STYLE = {
+    1: { h: 100, color: "#6fae5e", label: "좋음" },
+    0: { h: 52, color: "#cda86a", label: "보통" },
+    [-1]: { h: 30, color: "#bd6a52", label: "조심" },
+  } as const;
+
+  return (
+    <section className="mb-11">
+      <SectionTitle title="2026 월별 운 흐름 · 月運" />
+      <div className="rounded-md border border-gold-line bg-[rgba(13,6,8,0.4)] p-5 sm:p-6">
+        <div className="flex items-end justify-between gap-1.5 h-[120px]">
+          {window.map((m, i) => {
+            const r = rate(m);
+            const s = STYLE[r];
+            const now = !!m.isCurrentMonth;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                <div
+                  className="w-full max-w-[22px] rounded-t-sm"
+                  style={{ height: `${s.h}%`, background: s.color, opacity: now ? 1 : 0.78, boxShadow: now ? "0 0 10px rgba(212,175,106,0.5)" : "none" }}
+                />
+                <span className={`mt-1.5 font-mono text-[9px] ${now ? "text-gold-bright font-bold" : "text-bone-faint"}`}>{str(m.month)}월</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 pt-4 border-t border-gold-pale flex items-center gap-4 text-[10px] text-bone-faint">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#6fae5e" }} />좋음</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#cda86a" }} />보통</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#bd6a52" }} />조심</span>
+          <span className="ml-auto text-bone-soft">큰 결정은 좋은 달에, 무리는 조심할 달을 피해서</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── 대운 60년 타임라인 ──
 export function DaeunTimeline({ analysis }: { analysis: unknown }) {
   const daeun = rec(rec(analysis).daeun);

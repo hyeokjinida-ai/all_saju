@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
 import { OhaengChart } from "@/components/saju/OhaengChart";
-import { SipseongChart, DaeunTimeline } from "@/components/saju/PremiumCharts";
+import { SipseongChart, MonthlyLuckChart, DaeunTimeline } from "@/components/saju/PremiumCharts";
 import { ResultBody } from "@/components/saju/ResultBody";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
@@ -78,6 +78,7 @@ export default async function ResultPage({
   const rawAnalysis = (result as { raw_analysis?: unknown }).raw_analysis ?? null;
   const slug = (product as { slug?: string } | null)?.slug ?? "";
   const showSipseong = !!rawAnalysis && !["basic-saju", "today-fortune"].includes(slug); // 심화·종합
+  const showMonthly = !!rawAnalysis && ["monthly-luck", "premium-saju"].includes(slug); // 월별 캘린더·종합
   const showDaeun = !!rawAnalysis && slug === "premium-saju"; // 인생 종합 끝판왕
   const crossSellSignal = rawAnalysis
     ? extractCrossSellSignal(rawAnalysis as SajuAnalysisResponse)
@@ -112,6 +113,7 @@ export default async function ResultPage({
 
       {/* 심화/종합 전용 차트 — 십성 분포 + 대운 60년 타임라인 */}
       {showSipseong && <SipseongChart analysis={rawAnalysis} />}
+      {showMonthly && <MonthlyLuckChart analysis={rawAnalysis} />}
       {showDaeun && <DaeunTimeline analysis={rawAnalysis} />}
 
       {/* 본문 — 한지/와인 카드로 감싼 결과지 */}
