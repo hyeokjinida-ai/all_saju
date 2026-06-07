@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
+import { OhaengChart } from "@/components/saju/OhaengChart";
 import { ResultBody } from "@/components/saju/ResultBody";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
@@ -94,6 +95,9 @@ export default async function ResultPage({
           <MyeongsikTable myeongsik={myeongsik} />
         </div>
       </section>
+
+      {/* 오행 균형 차트 — 명식 8글자로 계산한 시각화 */}
+      <OhaengChart myeongsik={myeongsik} />
 
       {/* 본문 — 한지/와인 카드로 감싼 결과지 */}
       <article
