@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { SajuWizard, type Tier } from "@/components/saju/SajuWizard";
 import { TrustStrip } from "@/components/saju/TrustStrip";
+import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -117,6 +119,12 @@ export default async function ProductDetailPage({
   const eyebrow = pitch?.eyebrow ?? `命 · ${product.name}`;
   const headline = pitch?.headline ?? [product.name];
 
+  // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
+  const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
+  const timeliness = ["monthly-luck", "premium-saju"].includes(product.slug)
+    ? `오늘 ${today} 기준 — 2026 남은 흐름을 점검하기 좋은 때입니다`
+    : `오늘 ${today} 기준 흐름까지 반영해 풀어드려요`;
+
   return (
     <div className="container py-12 max-w-2xl">
       {/* 검색 리치스니펫용 구조화 데이터 */}
@@ -163,6 +171,19 @@ export default async function ProductDetailPage({
             </>
           )}
         </div>
+
+        {/* 결과물 칩 + 즉시성 배지 — 첫 화면에서 '뭘·몇 분·얼마' 못박기 */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          {["내 사주 8글자", "올해 흐름", pitch?.hasCharts ? "오행 그래프" : "고민 풀이"].map((c) => (
+            <span key={c} className="rounded-full border border-gold-pale px-3 py-1 text-[11px] text-bone-soft">
+              ✦ {c}
+            </span>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] text-bone-faint tracking-[0.02em]">
+          생년월일만 · <span className="text-gold-bright">2분</span> 입력 · <span className="text-gold-bright">{formatKRW(product.price)}</span> · 결제 후 수 분 내 결과지 도착
+        </p>
+
         <div className="gold-diamond mx-auto mt-6" />
       </header>
 
@@ -205,16 +226,58 @@ export default async function ProductDetailPage({
         </section>
       )}
 
+      {/* ── 결과지 미리보기 (블러 잠금 — 자이가르닉) ── */}
+      <section className="mb-9">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <span className="gold-rule flex-1 max-w-[50px] opacity-70" />
+          <span className="font-brush text-gold-soft text-sm tracking-[0.2em]">覽</span>
+          <span className="gold-rule flex-1 max-w-[50px] opacity-70" />
+        </div>
+        <a href="#start" className="block relative rounded-md overflow-hidden p-6 sm:p-7" style={{ background: "linear-gradient(180deg,#f4ecd8,#ece1c8)", border: "1px solid rgba(212,175,106,0.5)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)" }}>
+          <div className="text-center mb-4">
+            <p className="font-brush text-[#8b1e1e] text-lg tracking-[0.2em]">命 運 錄</p>
+            <p className="font-myeongjo text-[#3a2a1a] text-sm font-bold mt-1">내 결과지 미리보기</p>
+            <p className="font-mono text-[10px] text-[#7d5a3a] mt-0.5">성격 · 관계 · 재물 · 애정</p>
+          </div>
+          <div className="space-y-3 text-[#3a2a1a]">
+            <p className="text-[13px] leading-relaxed"><b>PART 1 · 성격의 결</b><br />겉으로는 차분해 보여도, 속으로는 자기 기준이 분명한 분입니다. 한번 정하면 끝을 보는 힘이 강합니다.</p>
+            <p className="text-[13px] leading-relaxed"><b>PART 2 · 관계의 반복</b><br />빠른 친밀감보다 신뢰가 쌓이는 시간을 더 중요하게 여기는 흐름이 나타납니다.</p>
+          </div>
+          <div className="relative mt-3">
+            <div className="space-y-3 text-[#3a2a1a] select-none" style={{ filter: "blur(5px)" }} aria-hidden>
+              <p className="text-[13px] leading-relaxed"><b>PART 3 · 재물의 흐름</b><br />돈이 들어오는 순간보다, 머무는 구조를 만드는 것이 더 중요하게 작동합니다. 올해는 특히…</p>
+              <p className="text-[13px] leading-relaxed"><b>PART 4 · 애정의 온도</b><br />마음이 열리기까지 시간이 필요하지만, 한 번 깊어진 관계는…</p>
+            </div>
+            <div className="absolute inset-0 flex items-end justify-center" style={{ background: "linear-gradient(180deg, rgba(236,225,200,0), #ece1c8)" }}>
+              <span className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-[#8b1e1e]/40 bg-[#f4ecd8] px-3 py-1 font-myeongjo text-[11px] text-[#8b1e1e]">⌥ 결제 후 전체 열림</span>
+            </div>
+          </div>
+          <p className="mt-4 text-center font-myeongjo text-[11px] text-[#7d5a3a]">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
+        </a>
+      </section>
+
+      {/* ── 방법론 (권위·실재성) ── */}
+      <section className="mb-9 text-center">
+        <span className="font-brush text-gold-soft text-base tracking-[0.2em]">解</span>
+        <p className="mt-2 font-myeongjo text-sm text-bone-soft leading-relaxed max-w-md mx-auto">
+          수백 년 이어진 <b className="text-gold-bright">정통 만세력</b> 명식 계산에 기반합니다. 진태양시·절기까지 보정해 여덟 글자를 세우고{pitch?.hasCharts ? ", 오행·십성·대운을 데이터로 시각화해" : ""} 풀어드려요.
+        </p>
+      </section>
+
       {/* ── 4. 가격 + 입력 시작 ── */}
       <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(212,175,106,0.10), rgba(13,6,8,0.6))" }}>
+        <p className="text-[11px] text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
         <p className="font-myeongjo text-bone text-[15px] mb-1">{product.name}</p>
         <p className="font-serif text-3xl font-bold text-gold-bright mb-1">{formatKRW(product.price)}</p>
         <p className="text-[11px] text-bone-faint">생년월일만 입력하면 · 정통 만세력으로 풀어드려요</p>
       </section>
 
-      <section>
+      <section id="start" className="scroll-mt-4">
         <h2 className="font-myeongjo text-base font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
-        <p className="text-xs text-bone-soft mb-4 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
+        <p className="text-xs text-bone-soft mb-2 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
+        <p className="text-[11px] text-bone-faint mb-4 text-center">
+          <span className="text-gold">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold">✓</span> 마이페이지에 보관
+        </p>
         <SajuWizard
           productId={product.id}
           productSlug={product.slug}
@@ -224,6 +287,20 @@ export default async function ProductDetailPage({
           flow="order"
           tiers={tiers}
         />
+
+        {/* 안심 — 리스크 역전 (실제 환불정책 범위 내) */}
+        <div className="mt-6 rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-5">
+          <p className="font-brush text-gold-soft text-sm tracking-[0.2em] mb-3 text-center">安心</p>
+          <ul className="space-y-2 text-xs text-bone-soft leading-relaxed">
+            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
+            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
+            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+          </ul>
+          <Link href="/legal/refund-policy" className="mt-3 inline-block text-[11px] text-gold-soft underline underline-offset-2 hover:text-gold">
+            환불 안내 자세히 →
+          </Link>
+        </div>
+
         <TrustStrip className="mt-5" />
       </section>
 
@@ -250,6 +327,18 @@ export default async function ProductDetailPage({
         </ul>
       </section>
 
+      {/* 신뢰 절정 재진입 CTA */}
+      <div className="mt-10 text-center">
+        <p className="text-sm text-bone-soft mb-3">11,300명이 먼저 받아본 그 풀이 — {formatKRW(product.price)}</p>
+        <a
+          href="#start"
+          className="inline-flex items-center gap-2 rounded-md px-7 py-3.5 font-bold text-sm tracking-[0.06em]"
+          style={{ background: "linear-gradient(180deg,#e8c878,#d4af6a)", color: "var(--wine-deep)", fontFamily: "'Noto Serif KR', serif" }}
+        >
+          나도 지금 받아보기 <span className="font-brush">命</span>
+        </a>
+      </div>
+
       {/* ── 6. FAQ(망설임 처리) ── */}
       <section className="mt-12">
         <p className="font-myeongjo text-sm font-semibold text-gold-bright mb-4 text-center">자주 묻는 물음</p>
@@ -259,6 +348,8 @@ export default async function ProductDetailPage({
             { q: "음력 생일만 알아요.", a: "괜찮습니다. 입력 때 음력을 선택하면 정밀하게 양력으로 환산해 명식을 세웁니다." },
             { q: "결과는 언제 받나요?", a: "결제 직후 수 분 내로 결과지가 생성되어 바로 확인하실 수 있어요. 마이페이지에도 보관됩니다." },
             { q: "결제는 안전한가요?", a: "토스페이먼츠 안전결제로 진행됩니다. 입력 정보는 명식 계산과 결과 생성에만 사용됩니다." },
+            { q: "결과가 기대와 다르면요?", a: "구매 후 7일 이내 청약철회가 가능합니다(전자상거래법 기준). 결과가 정상적으로 생성되지 않는 등 회사 귀책 사유는 전액 환불해 드립니다. 자세한 기준은 환불 안내를 참고해 주세요." },
+            { q: "전부 자동으로 생성되나요?", a: "정통 만세력 엔진으로 명식을 정밀 산출한 뒤, 그 결과를 바탕으로 풀이를 정리해 드립니다. 같은 생일이라도 시각·성별·고민에 따라 결과가 달라집니다." },
           ].map((f, i) => (
             <li key={i} className="py-4">
               <p className="font-myeongjo text-sm font-semibold text-bone mb-1.5">Q. {f.q}</p>
@@ -267,6 +358,9 @@ export default async function ProductDetailPage({
           ))}
         </ul>
       </section>
+
+      {/* 모바일 상시 결제바 */}
+      <StickyBuyBar name={product.name} price={product.price} />
     </div>
   );
 }
