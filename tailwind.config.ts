@@ -50,10 +50,10 @@ const config: Config = {
         "surface-soft": "#4a0e1a",               // was #fafafa — wine-2 (살짝 더 밝은 표면)
         "surface-dark": "#0d0608",               // was #171717 — night (가장 어두운 배경)
         charcoal: "#d8cdb6",                     // was #525252 — 짙은 본 (서브 텍스트)
-        body: "rgba(240, 230, 210, 0.72)",       // was #737373 — bone-soft (본문 회색 톤)
-        mute: "rgba(240, 230, 210, 0.40)",       // was #a3a3a3 — bone-faint (희미한 텍스트)
+        body: "rgba(243, 235, 218, 0.88)",       // bone-soft (본문) — 4050 가독성 대비 상향
+        mute: "rgba(243, 235, 218, 0.64)",       // bone-faint (보조) — 대비 상향
         hairline: "rgba(212, 175, 106, 0.4)",    // was #e5e5e5 — gold-line (구분선)
-        "hairline-strong": "#a88b53",            // was #d4d4d4 — gold-soft (강한 구분선)
+        "hairline-strong": "#c2a25f",            // gold-soft (강한 구분선) — 밝게
 
         // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold 등) ──
         wine: "#3a0d18",
@@ -66,12 +66,12 @@ const config: Config = {
         "night-edge": "#050204",
 
         bone: "#f0e6d2",
-        "bone-soft": "rgba(240, 230, 210, 0.72)",
-        "bone-faint": "rgba(240, 230, 210, 0.40)",
+        "bone-soft": "rgba(243, 235, 218, 0.88)", // 4050 가독성 — 본문 대비 상향
+        "bone-faint": "rgba(243, 235, 218, 0.64)", // 보조 텍스트 대비 상향
 
         gold: "#d4af6a",
         "gold-bright": "#e8c878",
-        "gold-soft": "#a88b53",
+        "gold-soft": "#c2a25f", // 어두운 와인 위 텍스트 대비 상향
         "gold-pale": "rgba(212, 175, 106, 0.18)",
         "gold-line": "rgba(212, 175, 106, 0.4)",
 

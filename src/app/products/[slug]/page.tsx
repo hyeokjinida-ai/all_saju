@@ -149,9 +149,9 @@ export default async function ProductDetailPage({
       />
 
       {/* ── 1. 후킹 헤더 ── */}
-      <header className="text-center mb-8">
-        <p className="font-brush text-gold-soft/70 text-base tracking-[0.3em] mb-3">{eyebrow}</p>
-        <h1 className="font-myeongjo text-[28px] sm:text-3xl font-bold leading-snug tracking-[0.02em] text-bone glow-bone">
+      <header className="text-center mb-10">
+        <p className="font-brush text-gold-soft text-lg tracking-[0.3em] mb-4">{eyebrow}</p>
+        <h1 className="font-myeongjo text-[32px] sm:text-[40px] font-bold leading-[1.3] tracking-[0.01em] text-bone glow-bone">
           {headline.map((line, i) => (
             <span key={i} className={i === headline.length - 1 ? "text-gold-bright" : undefined}>
               {line}
@@ -159,44 +159,41 @@ export default async function ProductDetailPage({
             </span>
           ))}
         </h1>
-        <p className="mt-4 text-sm text-bone-soft leading-relaxed">{product.description}</p>
-        <div className="mt-5 flex items-center justify-center gap-3 text-xs text-bone-faint">
-          <span className="text-gold-soft">★ <span className="text-bone-soft">4.96</span></span>
-          <span className="opacity-50">·</span>
-          <span>누적 <span className="text-bone-soft">11,300명</span></span>
-          {pitch?.forWhom && (
-            <>
-              <span className="opacity-50">·</span>
-              <span>{pitch.forWhom}</span>
-            </>
-          )}
-        </div>
+        <p className="mt-5 text-base sm:text-[17px] text-bone-soft leading-relaxed max-w-md mx-auto">{product.description}</p>
 
-        {/* 결과물 칩 + 즉시성 배지 — 첫 화면에서 '뭘·몇 분·얼마' 못박기 */}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        {/* 신뢰 한 줄 — 여백 주고 또렷하게 */}
+        <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-gold-pale px-4 py-2 text-sm text-bone-soft">
+          <span className="text-gold-bright">★ 4.96</span>
+          <span className="text-bone-faint">·</span>
+          <span>누적 <span className="text-bone">11,300명</span></span>
+        </div>
+        {pitch?.forWhom && <p className="mt-3 text-sm text-bone-soft">{pitch.forWhom}</p>}
+
+        {/* 결과물 칩 — 첫 화면에서 '뭘 받는지' 못박기 */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           {["내 사주 8글자", "올해 흐름", pitch?.hasCharts ? "오행 그래프" : "고민 풀이"].map((c) => (
-            <span key={c} className="rounded-full border border-gold-pale px-3 py-1 text-[11px] text-bone-soft">
+            <span key={c} className="rounded-full border border-gold-line px-3.5 py-1.5 text-[13px] text-bone">
               ✦ {c}
             </span>
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-bone-faint tracking-[0.02em]">
-          생년월일만 · <span className="text-gold-bright">2분</span> 입력 · <span className="text-gold-bright">{formatKRW(product.price)}</span> · 결제 후 수 분 내 결과지 도착
+        <p className="mt-4 text-[13px] text-bone-soft tracking-[0.02em]">
+          생년월일만 · <span className="text-gold-bright font-semibold">2분</span> 입력 · <span className="text-gold-bright font-semibold">{formatKRW(product.price)}</span> · 결제 후 수 분 내 도착
         </p>
 
-        <div className="gold-diamond mx-auto mt-6" />
+        <div className="gold-diamond mx-auto mt-7" />
       </header>
 
       {/* ── 2. 공감(통증) ── */}
       {pitch?.pains && pitch.pains.length > 0 && (
         <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-6">
-          <p className="font-myeongjo text-sm font-semibold text-gold-bright mb-4 text-center">
+          <p className="font-myeongjo text-base font-semibold text-gold-bright mb-4 text-center">
             혹시, 이런 마음 아니신가요
           </p>
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {pitch.pains.map((p, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm text-bone-soft leading-relaxed">
-                <span className="text-gold-soft shrink-0 mt-0.5">“</span>
+              <li key={i} className="flex items-start gap-2.5 text-[15px] text-bone-soft leading-relaxed">
+                <span className="text-gold-bright shrink-0 mt-0.5 text-lg leading-none">“</span>
                 {p}
               </li>
             ))}
@@ -207,20 +204,20 @@ export default async function ProductDetailPage({
       {/* ── 3. 가치(담기는 것) ── */}
       {pitch?.includes && pitch.includes.length > 0 && (
         <section className="mb-9">
-          <p className="font-myeongjo text-sm font-semibold text-gold-bright mb-4 text-center">
+          <p className="font-myeongjo text-base font-semibold text-gold-bright mb-4 text-center">
             이 풀이에 담기는 것
           </p>
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {pitch.includes.map((it, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm text-bone-soft leading-relaxed">
-                <span className="shrink-0 mt-1 text-[9px] text-gold">◆</span>
+              <li key={i} className="flex items-start gap-3 text-[15px] text-bone-soft leading-relaxed">
+                <span className="shrink-0 mt-1.5 text-[10px] text-gold-bright">◆</span>
                 {it}
               </li>
             ))}
           </ul>
           {pitch.hasCharts && (
-            <p className="mt-4 text-xs text-bone-faint text-center tracking-[0.02em]">
-              ＋ 오행·십성 균형을 <span className="text-gold-soft">그래프</span>로 한눈에 — 글로만 보던 사주를 시각으로
+            <p className="mt-4 text-[13px] text-bone-soft text-center tracking-[0.02em]">
+              ＋ 오행·십성 균형을 <span className="text-gold-bright">그래프</span>로 한눈에 — 글로만 보던 사주를 시각으로
             </p>
           )}
         </section>
@@ -237,7 +234,7 @@ export default async function ProductDetailPage({
           <div className="text-center mb-4">
             <p className="font-brush text-[#8b1e1e] text-lg tracking-[0.2em]">命 運 錄</p>
             <p className="font-myeongjo text-[#3a2a1a] text-sm font-bold mt-1">내 결과지 미리보기</p>
-            <p className="font-mono text-[10px] text-[#7d5a3a] mt-0.5">성격 · 관계 · 재물 · 애정</p>
+            <p className="font-mono text-[12px] text-[#6b4a2c] mt-0.5">성격 · 관계 · 재물 · 애정</p>
           </div>
           <div className="space-y-3 text-[#3a2a1a]">
             <p className="text-[13px] leading-relaxed"><b>PART 1 · 성격의 결</b><br />겉으로는 차분해 보여도, 속으로는 자기 기준이 분명한 분입니다. 한번 정하면 끝을 보는 힘이 강합니다.</p>
@@ -266,17 +263,17 @@ export default async function ProductDetailPage({
 
       {/* ── 4. 가격 + 입력 시작 ── */}
       <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(212,175,106,0.10), rgba(13,6,8,0.6))" }}>
-        <p className="text-[11px] text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
-        <p className="font-myeongjo text-bone text-[15px] mb-1">{product.name}</p>
-        <p className="font-serif text-3xl font-bold text-gold-bright mb-1">{formatKRW(product.price)}</p>
-        <p className="text-[11px] text-bone-faint">생년월일만 입력하면 · 정통 만세력으로 풀어드려요</p>
+        <p className="text-xs text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
+        <p className="font-myeongjo text-bone text-base mb-1">{product.name}</p>
+        <p className="font-serif text-4xl font-bold text-gold-bright mb-1.5">{formatKRW(product.price)}</p>
+        <p className="text-[13px] text-bone-soft">생년월일만 입력하면 · 정통 만세력으로 풀어드려요</p>
       </section>
 
       <section id="start" className="scroll-mt-4">
-        <h2 className="font-myeongjo text-base font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
-        <p className="text-xs text-bone-soft mb-2 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
-        <p className="text-[11px] text-bone-faint mb-4 text-center">
-          <span className="text-gold">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold">✓</span> 마이페이지에 보관
+        <h2 className="font-myeongjo text-lg font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
+        <p className="text-sm text-bone-soft mb-3 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
+        <p className="text-[13px] text-bone-soft mb-4 text-center leading-relaxed">
+          <span className="text-gold-bright">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 마이페이지에 보관
         </p>
         <SajuWizard
           productId={product.id}
@@ -290,13 +287,13 @@ export default async function ProductDetailPage({
 
         {/* 안심 — 리스크 역전 (실제 환불정책 범위 내) */}
         <div className="mt-6 rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-5">
-          <p className="font-brush text-gold-soft text-sm tracking-[0.2em] mb-3 text-center">安心</p>
-          <ul className="space-y-2 text-xs text-bone-soft leading-relaxed">
-            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
-            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
-            <li className="flex gap-2"><span className="text-gold shrink-0">✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+          <p className="font-brush text-gold-soft text-base tracking-[0.2em] mb-3 text-center">安心</p>
+          <ul className="space-y-2.5 text-[13px] text-bone-soft leading-relaxed">
+            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
+            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
+            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
           </ul>
-          <Link href="/legal/refund-policy" className="mt-3 inline-block text-[11px] text-gold-soft underline underline-offset-2 hover:text-gold">
+          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs text-gold-soft underline underline-offset-2 hover:text-gold">
             환불 안내 자세히 →
           </Link>
         </div>
@@ -352,8 +349,8 @@ export default async function ProductDetailPage({
             { q: "전부 자동으로 생성되나요?", a: "정통 만세력 엔진으로 명식을 정밀 산출한 뒤, 그 결과를 바탕으로 풀이를 정리해 드립니다. 같은 생일이라도 시각·성별·고민에 따라 결과가 달라집니다." },
           ].map((f, i) => (
             <li key={i} className="py-4">
-              <p className="font-myeongjo text-sm font-semibold text-bone mb-1.5">Q. {f.q}</p>
-              <p className="text-xs text-bone-soft leading-relaxed">{f.a}</p>
+              <p className="font-myeongjo text-base font-semibold text-bone mb-1.5">Q. {f.q}</p>
+              <p className="text-sm text-bone-soft leading-relaxed">{f.a}</p>
             </li>
           ))}
         </ul>

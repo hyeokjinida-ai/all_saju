@@ -42,11 +42,12 @@
     --wine-deep: #2a0a12;
     --wine-soft: #5a1822;
     --bone: #f0e6d2;
-    --bone-soft: rgba(240, 230, 210, 0.72);
-    --bone-faint: rgba(240, 230, 210, 0.40);
+    /* 4050 가독성 — 본문/보조 텍스트 대비 상향(어두운 와인 위에서 또렷하게) */
+    --bone-soft: rgba(243, 235, 218, 0.88);
+    --bone-faint: rgba(243, 235, 218, 0.64);
     --gold: #d4af6a;
     --gold-bright: #e8c878;
-    --gold-soft: #a88b53;
+    --gold-soft: #c2a25f;
     --gold-pale: rgba(212, 175, 106, 0.18);
     --gold-line: rgba(212, 175, 106, 0.4);
     --seal: #8b1e1e;
