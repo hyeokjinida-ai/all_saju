@@ -15,6 +15,8 @@ export type LlmResponse = {
   text: string;
   provider: string;
   model: string;
+  successCount?: number; // 성공한 챕터 수 (generateByChapters 에서만 채움)
+  totalCount?: number; // 전체 챕터 수
 };
 
 export async function generateInterpretation(req: LlmRequest): Promise<LlmResponse> {
@@ -43,11 +45,14 @@ export async function generateByChapters(
     ),
   );
   const body = parts.map((p) => p.text.trim()).filter(Boolean).join("\n\n");
-  const ok = parts.find((p) => p.provider);
+  const succeeded = parts.filter((p) => p.provider);
+  const ok = succeeded[0];
   return {
     text: `## ${title}\n\n${body}`,
     provider: ok?.provider ?? "",
     model: ok?.model ?? "",
+    successCount: succeeded.length,
+    totalCount: chapters.length,
   };
 }
 

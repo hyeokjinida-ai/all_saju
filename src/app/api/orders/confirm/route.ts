@@ -2,47 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
-import type { Myeongsik } from "@/lib/saju/manseryeok";
-import { buildChapterPrompts } from "@/lib/saju/prompt";
-import { generateByChapters } from "@/lib/saju/llm";
-import {
-  isSajuApiConfigured,
-  fetchSajuAnalysis,
-  formatSajuCompact,
-  buildKeyFactsBlock,
-  ganjiToMyeongsik,
-  type BirthInfo,
-} from "@/lib/saju/saju-api";
+import { generateResultForOrder } from "@/lib/saju/generate-result";
 
 const bodySchema = z.object({
   paymentKey: z.string().min(1),
   orderId: z.string().min(1),
   amount: z.number().int().nonnegative(),
 });
-
-// saju_inputs row → BirthInfo (luckyloveme 입력 형식)
-type SajuInputRow = {
-  birth_date: string;            // "YYYY-MM-DD"
-  birth_time: string | null;     // "HH:mm"
-  time_unknown: boolean;
-  calendar: "solar" | "lunar";
-  gender: "male" | "female";
-  concerns: string[];
-};
-
-function toBirthInfo(input: SajuInputRow): BirthInfo {
-  const [y, m, d] = input.birth_date.split("-");
-  const hasTime = !input.time_unknown && !!input.birth_time;
-  const [hh, mm] = hasTime ? input.birth_time!.split(":") : [undefined, undefined];
-  return {
-    birthYear: y,
-    birthMonth: String(parseInt(m, 10)),
-    birthDay: String(parseInt(d, 10)),
-    ...(hasTime ? { birthHour: String(parseInt(hh!, 10)), birthMinute: String(parseInt(mm!, 10)) } : {}),
-    calendarType: input.calendar === "lunar" ? "음력" : "양력",
-    gender: input.gender,
-  };
-}
 
 export async function POST(request: NextRequest) {
   const parsed = bodySchema.safeParse(await request.json());
@@ -64,130 +30,64 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "주문을 찾을 수 없습니다" }, { status: 404 });
   }
   if (order.status === "paid") {
-    // idempotent: 이미 결제된 주문 — 결과 페이지로 안내
-    const { data: result } = await service
-      .from("saju_results")
-      .select("id")
-      .eq("order_id", order.id)
-      .maybeSingle();
-    return NextResponse.json({ resultId: result?.id ?? null, alreadyPaid: true });
+    // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
+    const outcome = await generateResultForOrder(order.id, { service });
+    if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true });
+    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, reason: outcome.reason });
   }
   if (order.amount !== amount) {
     return NextResponse.json({ error: "금액이 일치하지 않습니다" }, { status: 400 });
   }
 
-  // 2. 토스 confirm
+  // 2. 토스 confirm (결제 승인)
   const toss = await confirmTossPayment({ paymentKey, orderId, amount });
   if (!toss.ok) {
-    await service.from("orders").update({ status: "failed" }).eq("id", order.id);
+    // status 가드 — 동시 중복 요청이 먼저 써넣은 paid 를 failed 로 덮어쓰지 않도록.
+    await service.from("orders").update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
     return NextResponse.json({ error: toss.error.message, code: toss.error.code }, { status: 402 });
   }
   if (toss.data.totalAmount !== amount) {
-    await service.from("orders").update({ status: "failed" }).eq("id", order.id);
+    await service.from("orders").update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
     return NextResponse.json({ error: "토스 응답 금액 불일치" }, { status: 400 });
   }
 
+  // 가상계좌처럼 status 가 DONE 이 아니면(예: WAITING_FOR_DEPOSIT) 아직 입금 전이다.
+  // paid 로 확정하지 않고 결제수단 식별자만 저장 → 입금 완료 웹훅 때 paid 전환.
+  // 이 쓰기는 무가드(여기 도달 = 토스 승인 성공) — 패배한 동시요청의 failed 쓰기가
+  // 먼저 도착해도 이 paid 쓰기가 항상 이기도록(failed 쪽만 status 가드).
+  const isDone = toss.data.status === "DONE";
   await service
     .from("orders")
     .update({
-      status: "paid",
+      status: isDone ? "paid" : "pending",
       toss_payment_key: paymentKey,
-      paid_at: toss.data.approvedAt,
+      paid_at: isDone ? toss.data.approvedAt : null,
     })
     .eq("id", order.id);
 
-  // 3. 사주 생성
-  const { data: input } = await service
-    .from("saju_inputs")
-    .select("*")
-    .eq("order_id", order.id)
-    .single();
-  const { data: product } = await service
-    .from("products")
-    .select("slug, name")
-    .eq("id", order.product_id)
-    .single();
-
-  if (!input || !product) {
-    return NextResponse.json({ error: "사주 입력 또는 상품 조회 실패" }, { status: 500 });
-  }
-
-  try {
-    // 만세력/풀 분석: luckyloveme(정확)만 사용. 부정확한 mock 폴백은 쓰지 않는다.
-    let myeongsik: Myeongsik | null = null;
-    let manseryeokText: string | undefined;
-    let keyFacts: string | undefined;       // 확정 사실 카드(떠먹이기)
-    let rawAnalysis: unknown = null;        // 16종 원본 — 결과지 차트/크로스셀 신호용
-
-    if (isSajuApiConfigured()) {
-      try {
-        const birthInfo = toBirthInfo(input);
-        const analysis = await fetchSajuAnalysis(birthInfo, [], { source: "confirm" }); // [] = 16종 전체
-        rawAnalysis = analysis;
-        const converted = ganjiToMyeongsik(analysis);
-        if (converted) {
-          myeongsik = converted;
-          manseryeokText = formatSajuCompact(analysis, birthInfo); // 추린 입력(8k) — 비용↓·정확도 유지
-          keyFacts = buildKeyFactsBlock(analysis, birthInfo);      // 나이·대운·세운·용신 등 확정값 떠먹이기
-        }
-      } catch (apiErr) {
-        console.error("[saju-api] 명식 산출 실패 — 결과 생성 보류:", apiErr);
-      }
-    }
-
-    // 정확한 명식을 못 얻으면(API 미설정/실패/ganji 누락) 부정확한 결과를 저장하지 않고 '보류'.
-    // 결제는 이미 승인됨 → /admin/orders 에서 재생성, 또는 결제창 재진입으로 재시도.
-    if (!myeongsik) {
-      console.error("[confirm] 정확한 명식 확보 실패 — 결과 생성 보류. order:", order.id);
-      return NextResponse.json({
-        resultId: null,
-        pending: true,
-        message: "결제는 완료됐어요. 결과지는 잠시 후 생성되어 마이페이지에서 확인하실 수 있습니다.",
-      });
-    }
-
-    const { title, chapters } = buildChapterPrompts({
-      productSlug: product.slug,
-      productName: product.name,
-      name: input.name,
-      myeongsik,
-      manseryeokText,
-      birthDate: input.birth_date,
-      birthTime: input.birth_time,
-      timeUnknown: input.time_unknown,
-      gender: input.gender,
-      concerns: input.concerns,
-      keyFacts,
+  if (!isDone) {
+    return NextResponse.json({
+      resultId: null,
+      pending: true,
+      orderId,
+      reason: "awaiting_deposit",
+      message: "입금이 확인되면 결과지를 생성해 드려요. 마이페이지에서 확인하실 수 있습니다.",
     });
-
-    const llm = await generateByChapters(title, chapters);
-
-    const { data: result, error: resultErr } = await service
-      .from("saju_results")
-      .insert({
-        order_id: order.id,
-        myeongsik: myeongsik as never,
-        interpretation_md: llm.text,
-        llm_provider: llm.provider,
-        llm_model: llm.model,
-        raw_analysis: rawAnalysis as never, // 차트/크로스셀 신호용 원본
-      })
-      .select("id")
-      .single();
-
-    if (resultErr || !result) {
-      return NextResponse.json({ error: "결과 저장 실패", detail: resultErr?.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ resultId: result.id });
-  } catch (err) {
-    return NextResponse.json(
-      {
-        error: "사주 해석 생성 실패",
-        detail: err instanceof Error ? err.message : String(err),
-        hint: "결제는 정상 승인되었습니다. /admin/orders 에서 수동 재생성하거나 환불을 진행하세요.",
-      },
-      { status: 500 },
-    );
   }
+
+  // 3. 결과 생성(멱등 공유 함수). 실패해도 결제는 이미 승인됨 → '보류'로 응답하고
+  //    클라 자가복구 폴링 + 복구 크론 + 토스 웹훅이 백업으로 마무리한다.
+  const outcome = await generateResultForOrder(order.id, { service });
+  if (outcome.ok) {
+    return NextResponse.json({ resultId: outcome.resultId });
+  }
+
+  console.error("[confirm] 결과 생성 보류:", order.id, outcome.reason, outcome.detail ?? "");
+  return NextResponse.json({
+    resultId: null,
+    pending: true,
+    orderId,
+    reason: outcome.reason,
+    message: "결제는 완료됐어요. 결과지를 마무리하는 중이에요 — 잠시만 기다려 주세요.",
+  });
 }

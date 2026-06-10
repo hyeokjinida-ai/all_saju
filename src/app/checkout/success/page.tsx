@@ -48,6 +48,30 @@ function CheckoutSuccessInner() {
       setMessage("필수 파라미터가 누락되었습니다.");
       return;
     }
+    // 결제 보류 시 결과지 생성을 몇 차례 재시도(자가복구) — 사용자가 떠나기 전에
+    // 일시적 API/LLM 장애를 흡수한다. 끝내 실패하면 크론/웹훅이 백업으로 마무리.
+    const selfHeal = async (oid: string): Promise<boolean> => {
+      for (let i = 0; i < 4; i++) {
+        await new Promise((r) => setTimeout(r, 6000));
+        try {
+          const r = await fetch("/api/orders/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: oid }),
+          });
+          const j = await r.json();
+          if (j.resultId) {
+            setResultId(j.resultId);
+            setState("ready");
+            return true;
+          }
+        } catch {
+          // 폴링 일시 실패는 무시하고 다음 시도
+        }
+      }
+      return false;
+    };
+
     (async () => {
       try {
         const res = await fetch("/api/orders/confirm", {
@@ -60,11 +84,14 @@ function CheckoutSuccessInner() {
         if (json.resultId) {
           setResultId(json.resultId);
           setState("ready");
-        } else {
+          return;
+        }
+        // 결제는 완료, 결과지는 보류 → 자가복구 폴링
+        const healed = await selfHeal(orderId);
+        if (!healed) {
           setState("ok");
           setMessage(
-            json.message ??
-              "결제는 완료되었으나 결과 생성에 실패했습니다. 고객센터로 문의해 주세요.",
+            "결제는 완료됐어요. 결과지는 곧 자동으로 완성되어 마이페이지에 도착해요. 잠시 후 마이페이지에서 확인해 주세요.",
           );
         }
       } catch (err) {

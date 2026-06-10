@@ -14,6 +14,8 @@ const serverSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional().default(""),
+  // 복구 크론(/api/cron/recover-results) 인증용. 비우면 크론 엔드포인트는 비활성(401).
+  CRON_SECRET: z.string().optional().default(""),
 });
 
 const publicSchema = z.object({
@@ -57,6 +59,7 @@ export function serverEnv() {
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
       GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+      CRON_SECRET: process.env.CRON_SECRET,
     });
   }
   return _serverEnv;
