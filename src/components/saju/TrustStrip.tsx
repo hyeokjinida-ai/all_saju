@@ -6,7 +6,7 @@ import Link from "next/link";
 export function TrustStrip({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] text-bone-faint tracking-[0.02em] ${className}`}
+      className={`flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-bone-faint tracking-[0.02em] ${className}`}
     >
       <span className="text-gold-soft">
         ★ <span className="text-bone-soft">4.96</span>

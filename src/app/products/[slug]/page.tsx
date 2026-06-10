@@ -285,15 +285,18 @@ export default async function ProductDetailPage({
           tiers={tiers}
         />
 
-        {/* 안심 — 리스크 역전 (실제 환불정책 범위 내) */}
-        <div className="mt-6 rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-5">
-          <p className="font-brush text-gold-soft text-base tracking-[0.2em] mb-3 text-center">安心</p>
-          <ul className="space-y-2.5 text-[13px] text-bone-soft leading-relaxed">
-            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
-            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
-            <li className="flex gap-2"><span className="text-gold-bright shrink-0">✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+        {/* 안심 — 리스크 역전. 밝은 보증서 톤으로 어둠 단조로움 환기 + 결제 직전 신뢰 */}
+        <div
+          className="mt-6 rounded-md p-5"
+          style={{ background: "linear-gradient(180deg,#f4ecd8,#ece1c8)", border: "1px solid rgba(212,175,106,0.5)", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
+        >
+          <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "#8b1e1e" }}>安心</p>
+          <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "#3a2a1a" }}>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
           </ul>
-          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs text-gold-soft underline underline-offset-2 hover:text-gold">
+          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "#8b6a3a" }}>
             환불 안내 자세히 →
           </Link>
         </div>
@@ -312,15 +315,30 @@ export default async function ProductDetailPage({
           {(reviews && reviews.length > 0
             ? reviews.map((r) => ({ key: r.id, stars: r.rating, body: r.content, tag: formatDate(r.created_at) }))
             : SAMPLE_TESTIMONIALS.map((t, i) => ({ key: `s${i}`, stars: 5, body: t.body, tag: t.tag }))
-          ).map((r) => (
-            <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-gold-bright text-sm tracking-[0.1em]">{"★".repeat(r.stars)}</span>
-                <span className="font-mono text-[10px] text-bone-faint">{r.tag}</span>
-              </div>
-              <p className="text-sm text-bone-soft leading-relaxed">{r.body}</p>
-            </li>
-          ))}
+          ).map((r) => {
+            const initial = (r.tag || "").trim().charAt(0);
+            const avatar = /[가-힣]/.test(initial) ? initial : "命";
+            return (
+              <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-4">
+                <div className="flex items-start gap-3">
+                  <span
+                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-myeongjo text-sm font-bold"
+                    style={{ background: "linear-gradient(180deg,#e8c878,#caa862)", color: "var(--wine-deep)" }}
+                    aria-hidden
+                  >
+                    {avatar}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-gold-bright text-sm tracking-[0.1em]">{"★".repeat(r.stars)}</span>
+                      <span className="font-mono text-[10px] text-bone-faint">{r.tag}</span>
+                    </div>
+                    <p className="text-sm text-bone-soft leading-relaxed">{r.body}</p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
 

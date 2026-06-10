@@ -187,7 +187,7 @@ function HeroSection() {
 
         <div
           className="myeongjo"
-          style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 2, letterSpacing: "0.18em" }}
+          style={{ fontSize: 15, color: "var(--bone-soft)", lineHeight: 2, letterSpacing: "0.16em" }}
         >
           돈·사람·때 — 여덟 글자가<br />
           당신의 다음 길을 보여줍니다
@@ -412,7 +412,7 @@ function CosmosSection() {
         >
           八字
         </div>
-        <div className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 2, letterSpacing: "0.15em" }}>
+        <div className="myeongjo" style={{ fontSize: 14.5, color: "var(--bone-soft)", lineHeight: 2, letterSpacing: "0.14em" }}>
           年 · 月 · 日 · 時<br />
           하늘의 글자(天干) 넷<br />
           땅의 글자(地支) 넷<br />
@@ -536,7 +536,7 @@ function ProblemSection() {
               </div>
               <div>
                 <div className="myeongjo" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: "0.3em", marginBottom: 4 }}>{w.label}</div>
-                <div className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 1.7, letterSpacing: "0.02em" }}>{w.text}</div>
+                <div className="myeongjo" style={{ fontSize: 14.5, color: "var(--bone-soft)", lineHeight: 1.75, letterSpacing: "0.02em" }}>{w.text}</div>
               </div>
             </div>
           ))}
@@ -628,7 +628,7 @@ function ConceptSection() {
           <span className="gold-diamond" />
         </div>
 
-        <div className="myeongjo" style={{ fontSize: 13.5, color: "var(--bone)", lineHeight: 1.95, letterSpacing: "0.04em", marginTop: 20 }}>
+        <div className="myeongjo" style={{ fontSize: 15, color: "var(--bone)", lineHeight: 1.95, letterSpacing: "0.04em", marginTop: 20 }}>
           명운록은 이 여덟 글자를<br />
           <strong style={{ color: "var(--gold-bright)" }}>당신의 언어</strong>로<br />
           풀어드립니다.
@@ -763,7 +763,7 @@ function PrecisionSection() {
               </div>
               <div style={{ flex: 1, paddingTop: 4 }}>
                 <div className="myeongjo" style={{ fontSize: 14, fontWeight: 700, color: "var(--bone)", letterSpacing: "0.03em" }}>{s.t}</div>
-                <div className="myeongjo" style={{ fontSize: 12, color: "var(--bone-soft)", lineHeight: 1.65, marginTop: 4 }}>{s.d}</div>
+                <div className="myeongjo" style={{ fontSize: 13.5, color: "var(--bone-soft)", lineHeight: 1.7, marginTop: 4 }}>{s.d}</div>
               </div>
             </div>
           ))}
@@ -794,7 +794,7 @@ function PrecisionSection() {
               </div>
               <div>
                 <div className="myeongjo" style={{ fontSize: 13, color: "var(--bone)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
-                <div className="myeongjo" style={{ fontSize: 11.5, color: "var(--bone-soft)", lineHeight: 1.6, letterSpacing: "0.02em" }}>{m.desc}</div>
+                <div className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 1.65, letterSpacing: "0.02em" }}>{m.desc}</div>
               </div>
             </div>
           ))}
@@ -868,7 +868,7 @@ function ChaptersSection() {
               <div style={{ flex: 1 }}>
                 <div className="mono" style={{ fontSize: 9, color: "var(--gold-soft)", letterSpacing: "0.25em", marginBottom: 4 }}>{c.n}</div>
                 <div className="myeongjo" style={{ fontSize: 15, fontWeight: 700, color: "var(--bone)", letterSpacing: "0.04em" }}>{c.t}</div>
-                <div className="myeongjo" style={{ fontSize: 12, color: "var(--bone-soft)", lineHeight: 1.6, marginTop: 3 }}>{c.d}</div>
+                <div className="myeongjo" style={{ fontSize: 13.5, color: "var(--bone-soft)", lineHeight: 1.65, marginTop: 3 }}>{c.d}</div>
               </div>
             </div>
           ))}
@@ -923,7 +923,7 @@ function HowItWorksSection() {
                 <span className="mono" style={{ fontSize: 9, color: "var(--gold-soft)", letterSpacing: "0.3em" }}>{s.en}</span>
               </div>
               <div className="myeongjo" style={{ fontSize: 16, color: "var(--bone)", fontWeight: 600, letterSpacing: "0.04em", marginBottom: 8 }}>{s.title}</div>
-              <div className="myeongjo" style={{ fontSize: 12.5, color: "var(--bone-soft)", lineHeight: 1.85, letterSpacing: "0.02em", whiteSpace: "pre-line" }}>{s.desc}</div>
+              <div className="myeongjo" style={{ fontSize: 14, color: "var(--bone-soft)", lineHeight: 1.85, letterSpacing: "0.02em", whiteSpace: "pre-line" }}>{s.desc}</div>
             </div>
           ))}
         </div>
@@ -1033,25 +1033,46 @@ function ReviewsSection() {
           {reviews.map((r, i) => (
             <div key={i} style={{ background: "rgba(13,6,8,0.55)", border: "1px solid var(--gold-pale)", padding: "18px 16px", position: "relative" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span
+                    aria-hidden
                     style={{
-                      background: "var(--gold)",
+                      width: 38,
+                      height: 38,
+                      flexShrink: 0,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(180deg,#e8c878,#caa862)",
                       color: "var(--wine-deep)",
-                      fontSize: 10,
-                      padding: "3px 8px",
-                      letterSpacing: "0.2em",
                       fontFamily: "'Nanum Myeongjo', serif",
                       fontWeight: 700,
+                      fontSize: 15,
                     }}
                   >
-                    {r.tag}
+                    {r.tag.charAt(0)}
                   </span>
-                  <span className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.15em" }}>{r.age}</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-start" }}>
+                    <span
+                      style={{
+                        background: "var(--gold)",
+                        color: "var(--wine-deep)",
+                        fontSize: 10,
+                        padding: "2px 8px",
+                        letterSpacing: "0.2em",
+                        fontFamily: "'Nanum Myeongjo', serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {r.tag}
+                    </span>
+                    <span className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.15em" }}>{r.age}</span>
+                  </div>
                 </div>
                 <div className="brush glow-gold" style={{ fontSize: 18, color: "var(--gold-bright)", letterSpacing: 0 }}>{r.pillar}</div>
               </div>
-              <div className="myeongjo" style={{ fontSize: 13.5, color: "var(--bone)", lineHeight: 1.9, letterSpacing: "0.02em", whiteSpace: "pre-line" }}>
+              <div className="myeongjo" style={{ fontSize: 14.5, color: "var(--bone)", lineHeight: 1.95, letterSpacing: "0.02em", whiteSpace: "pre-line" }}>
                 {r.quote}
               </div>
               <div className="mono" style={{ marginTop: 10, fontSize: 10, color: "var(--gold)", letterSpacing: "0.25em" }}>★★★★★</div>
@@ -1112,7 +1133,7 @@ function PricingSection() {
           </div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             {freeItems.map((d, j) => (
-              <li key={j} className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", letterSpacing: "0.02em", display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <li key={j} className="myeongjo" style={{ fontSize: 14.5, color: "var(--bone-soft)", letterSpacing: "0.02em", display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ flexShrink: 0, color: "var(--gold)", marginTop: 2, fontSize: 9 }}>◆</span>
                 {d}
               </li>
@@ -1150,7 +1171,7 @@ function PricingSection() {
 
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 7 }}>
             {basicItems.map((d, j) => (
-              <li key={j} className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", letterSpacing: "0.02em", display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <li key={j} className="myeongjo" style={{ fontSize: 14.5, color: "var(--bone-soft)", letterSpacing: "0.02em", display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ flexShrink: 0, color: "var(--gold)", marginTop: 2, fontSize: 9 }}>◆</span>
                 {d}
               </li>
@@ -1214,7 +1235,7 @@ function FAQItem({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: bo
         }}
       >
         <span className="brush glow-gold" style={{ fontSize: 18, color: "var(--gold-bright)", lineHeight: 1.1, flexShrink: 0, minWidth: 16 }}>問</span>
-        <span className="myeongjo" style={{ flex: 1, fontSize: 13.5, color: "var(--bone)", lineHeight: 1.6, letterSpacing: "0.02em", fontWeight: 600 }}>{q}</span>
+        <span className="myeongjo" style={{ flex: 1, fontSize: 14.5, color: "var(--bone)", lineHeight: 1.6, letterSpacing: "0.02em", fontWeight: 600 }}>{q}</span>
         <span
           className="myeongjo"
           style={{ fontSize: 18, color: "var(--gold-soft)", lineHeight: 1, marginTop: 2, transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.3s" }}
@@ -1225,7 +1246,7 @@ function FAQItem({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: bo
       {open && (
         <div style={{ padding: "0 4px 20px 28px", display: "flex", gap: 12, alignItems: "flex-start" }}>
           <span className="brush" style={{ fontSize: 18, color: "var(--gold-soft)", lineHeight: 1.1, flexShrink: 0, minWidth: 16 }}>答</span>
-          <span className="myeongjo" style={{ fontSize: 13, color: "var(--bone-soft)", lineHeight: 1.85, letterSpacing: "0.02em" }}>{a}</span>
+          <span className="myeongjo" style={{ fontSize: 14, color: "var(--bone-soft)", lineHeight: 1.85, letterSpacing: "0.02em" }}>{a}</span>
         </div>
       )}
     </div>
@@ -1285,7 +1306,7 @@ function FinalCTASection() {
           이미 정해진 것이 아닙니다.
         </div>
 
-        <div className="myeongjo" style={{ marginTop: 14, fontSize: 13, color: "var(--bone-soft)", letterSpacing: "0.04em", lineHeight: 1.95 }}>
+        <div className="myeongjo" style={{ marginTop: 14, fontSize: 14.5, color: "var(--bone-soft)", letterSpacing: "0.04em", lineHeight: 1.95 }}>
           어떻게 흐를지<br />
           <span style={{ color: "var(--gold-bright)" }}>지금</span> 함께 헤아립시다.
         </div>
@@ -1350,10 +1371,10 @@ function StickyBar() {
         }}
       >
         <div style={{ flex: 1 }}>
-          <div className="myeongjo" style={{ fontSize: 11, color: "var(--gold-bright)", letterSpacing: "0.2em", lineHeight: 1.2, fontWeight: 700 }}>
+          <div className="myeongjo" style={{ fontSize: 12.5, color: "var(--gold-bright)", letterSpacing: "0.18em", lineHeight: 1.2, fontWeight: 700 }}>
             내 사주 풀이 보기
           </div>
-          <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.1em", marginTop: 2 }}>
+          <div className="myeongjo" style={{ fontSize: 12, color: "var(--bone-soft)", letterSpacing: "0.1em", marginTop: 2 }}>
             생년월일만 · 9,900원
           </div>
         </div>
