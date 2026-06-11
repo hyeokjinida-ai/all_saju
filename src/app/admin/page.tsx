@@ -28,6 +28,15 @@ export default async function AdminHome() {
       <ul className="divide-y divide-hairline border-y border-hairline mt-8">
         <li>
           <Link
+            href="/admin/analytics"
+            className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
+          >
+            <span>방문/행동 분석 <span className="text-mute text-xs">· 방문자·퍼널 이탈</span></span>
+            <span className="text-mute">→</span>
+          </Link>
+        </li>
+        <li>
+          <Link
             href="/admin/orders"
             className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
           >

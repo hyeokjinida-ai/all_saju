@@ -90,6 +90,18 @@ type SajuApiCallRow = {
   source: string | null;
 };
 
+type AnalyticsEventRow = {
+  id: number;
+  visitor_id: string | null;
+  session_id: string | null;
+  event: string;
+  path: string | null;
+  referrer: string | null;
+  props: Json;
+  ua: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -194,6 +206,22 @@ export type Database = {
           source?: string | null;
         };
         Update: Partial<SajuApiCallRow>;
+        Relationships: [];
+      };
+      analytics_events: {
+        Row: AnalyticsEventRow;
+        Insert: {
+          id?: number;
+          visitor_id?: string | null;
+          session_id?: string | null;
+          event: string;
+          path?: string | null;
+          referrer?: string | null;
+          props?: Json;
+          ua?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<AnalyticsEventRow>;
         Relationships: [];
       };
     };

@@ -143,12 +143,6 @@ export default function PrivacyPage() {
               <td className="py-2 px-3">서비스 이용 시점에 한하여 처리(별도 저장하지 않음)</td>
             </tr>
             <tr className="border-b border-hairline">
-              <td className="py-2 px-3">Google LLC (Google Analytics)</td>
-              <td className="py-2 px-3">방문자 통계 및 서비스 이용 형태 분석</td>
-              <td className="py-2 px-3">미국</td>
-              <td className="py-2 px-3">수집일로부터 최대 14개월 또는 위탁 계약 종료 시까지</td>
-            </tr>
-            <tr className="border-b border-hairline">
               <td className="py-2 px-3">Microsoft Corporation (Microsoft Clarity)</td>
               <td className="py-2 px-3">서비스 이용 형태 분석(클릭·스크롤·페이지 이동 등 행동 기록, 입력 내용은 마스킹)</td>
               <td className="py-2 px-3">미국</td>
@@ -184,13 +178,12 @@ export default function PrivacyPage() {
 
       <h2>9. 쿠키(Cookie) 및 분석 도구의 운영과 거부</h2>
       <p>
-        회사는 이용자 맞춤형 서비스 제공 및 서비스 이용 형태 분석을 위해 쿠키를 사용합니다. 또한 방문 통계와
-        사용성 개선을 위해 Google Analytics 및 Microsoft Clarity를 이용할 수 있습니다. 이들 도구는 페이지 방문,
-        클릭·스크롤·페이지 이동 등 행동 데이터를 수집하며, Microsoft Clarity의 세션 기록은 입력 필드의 내용을
-        마스킹 처리하여 이름·생년월일 등 입력값 자체는 기록되지 않습니다. 이용자는 웹 브라우저 설정을 통해 쿠키
-        저장을 거부하거나{" "}
-        <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noreferrer">Google Analytics 차단 도구</a>로
-        분석 수집을 거부할 수 있습니다. 다만 이 경우 일부 서비스 이용에 어려움이 있을 수 있습니다.
+        회사는 이용자 맞춤형 서비스 제공 및 서비스 이용 형태 분석을 위해 쿠키 및 유사 기술을 사용합니다. 회사는
+        방문 통계와 사용성 개선을 위해 페이지 방문·클릭·스크롤·페이지 이동 등 비식별 행동 데이터를 자사 서버에
+        수집하며, 이름·생년월일 등 입력값 자체는 수집하지 않습니다. 또한 사용성 분석을 위해 Microsoft Clarity를
+        이용할 수 있으며, Clarity의 세션 기록은 입력 필드의 내용을 마스킹 처리하여 입력값 자체는 기록되지
+        않습니다. 이용자는 웹 브라우저 설정을 통해 쿠키 저장을 거부할 수 있으나, 이 경우 일부 서비스 이용에
+        어려움이 있을 수 있습니다.
       </p>
 
       <h2>10. 개인정보 보호책임자</h2>
