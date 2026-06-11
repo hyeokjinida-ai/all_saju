@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 export default function CheckoutSuccessPage() {
   return (
@@ -38,6 +39,13 @@ function CheckoutSuccessInner() {
     const t = setInterval(() => setIdx((i) => (i + 1) % REVIEWS.length), 3500);
     return () => clearInterval(t);
   }, [state]);
+
+  // 결제 완료 전환 추적(결과지 생성 성공 시 1회). 금액·통화만, 개인정보 없음.
+  useEffect(() => {
+    if (!resultId) return;
+    const amount = Number(search.get("amount"));
+    track("purchase", { value: Number.isFinite(amount) && amount > 0 ? amount : undefined, currency: "KRW" });
+  }, [resultId, search]);
 
   useEffect(() => {
     const paymentKey = search.get("paymentKey");

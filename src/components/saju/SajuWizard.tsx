@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import { SAJU_INPUT_KEY } from "@/components/saju/FreeResult";
 import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 
@@ -110,6 +111,15 @@ export function SajuWizard({
     }
   }, [productSlug, step, form]);
 
+  // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
+  useEffect(() => {
+    track("wizard_step", { step: step + 1, total: TOTAL, slug: productSlug });
+    if (step === TOTAL - 1 && flow === "order" && !isLoggedIn) {
+      track("checkout_login_wall", { slug: productSlug, value: price });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   const up = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
   const toggleConcern = (c: string) =>
@@ -184,6 +194,7 @@ export function SajuWizard({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "주문 생성 실패");
+      track("begin_checkout", { slug: productSlug, value: price, currency: "KRW" });
       router.push(`/checkout/${json.orderId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
