@@ -14,12 +14,12 @@ export type ProductSeed = {
 };
 
 export const productsSeed: ProductSeed[] = [
-  // 메인 진입 상품 — 무료 명식에서 이어지는 ₩9,900 종합 1장
+  // 메인 진입 상품 — ₩7,900 종합 1장
   {
     slug: "basic-saju",
     name: "내 사주 기본 풀이",
     description: "왜 늘 같은 자리에서 멈출까 — 내 사주의 핵심과 올해 흐름, 지금 가장 큰 고민 하나를 짚어드립니다",
-    price: 9900,
+    price: 7900,
     display_order: 10,
     is_active: true,
   },
@@ -68,13 +68,13 @@ export const productsSeed: ProductSeed[] = [
     display_order: 55,
     is_active: false,
   },
-  // 가벼운 재방문용 — 입구에서 강조하지 않고 보조로만 노출
+  // 오늘의 운세 — 라인업에서 제외(비활성). 되살리려면 is_active: true.
   {
     slug: "today-fortune",
     name: "오늘의 운세 한 줄",
     description: "오늘 무엇을 조심하고 무엇을 잡을까 — 하루 흐름을 한 문장으로",
     price: 4900,
     display_order: 60,
-    is_active: true,
+    is_active: false,
   },
 ];

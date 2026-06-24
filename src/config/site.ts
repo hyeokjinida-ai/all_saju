@@ -7,7 +7,7 @@ export const siteConfig = {
   name: "명운록",
   nameHanja: "命運錄",
   tagline: "운명을 기록하다",
-  description: "정통 만세력과 AI 해석이 만나, 가볍게 보는 오늘의 운세부터 깊이 있는 종합 풀이까지.",
+  description: "정통 만세력과 AI 해석이 만나, 내 사주의 핵심부터 깊이 있는 인생 종합 풀이까지.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   email: "support@example.com",
 };

@@ -197,7 +197,7 @@ function HeroSection() {
       <div style={{ flex: 1, minHeight: 40 }} />
 
       <div className="fade-up ink-fade-d2" style={{ marginTop: 40, position: "relative", zIndex: 2 }}>
-        <CTAButton sub="· 9,900원" />
+        <CTAButton sub="· 7,900원" />
         <SecondaryLink label="결과 예시 먼저 보기 →" />
         <div
           style={{
@@ -1095,7 +1095,7 @@ function PricingSection() {
     "오행 균형 · 강한/부족한 기운",
     "올해 흐름 한 줄 · 고민 맛보기",
   ];
-  // 기본 풀이 결과지 (메인 ₩9,900) 에 담기는 것
+  // 기본 풀이 결과지 (메인 ₩7,900) 에 담기는 것
   const basicItems = [
     "성향의 결을 내 언어로 자세히",
     "올해 흐름과 조심할 시기",
@@ -1107,13 +1107,13 @@ function PricingSection() {
       <div className="starfield" style={{ opacity: 0.45 }} />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        <SectionLabel index="十一" hanja="覽" label="9,900원으로 시작" />
+        <SectionLabel index="十一" hanja="覽" label="7,900원으로 시작" />
 
         <div
           className="myeongjo glow-bone"
           style={{ fontSize: 26, color: "var(--bone)", fontWeight: 700, lineHeight: 1.55, letterSpacing: "0.04em" }}
         >
-          <span style={{ color: "var(--gold-bright)" }}>9,900원</span>으로<br />
+          <span style={{ color: "var(--gold-bright)" }}>7,900원</span>으로<br />
           내 사주를 풀어보세요
         </div>
 
@@ -1129,7 +1129,7 @@ function PricingSection() {
             기본 풀이에 담기는 것
           </div>
           <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.04em", marginBottom: 14 }}>
-            내 사주 기본 풀이 · 9,900원
+            내 사주 기본 풀이 · 7,900원
           </div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             {freeItems.map((d, j) => (
@@ -1142,13 +1142,13 @@ function PricingSection() {
         </div>
 
         <div style={{ marginTop: 18 }}>
-          <CTAButton sub="· 9,900원" />
+          <CTAButton sub="· 7,900원" />
           <SecondaryLink label="결과 예시 먼저 보기 →" />
         </div>
 
         <GoldDivider width={60} />
 
-        {/* 내 사주 기본 풀이 — 메인 유료(₩9,900). 가격은 한글 라벨, 한자는 장식만. */}
+        {/* 내 사주 기본 풀이 — 메인 유료(₩7,900). 가격은 한글 라벨, 한자는 장식만. */}
         <div
           style={{
             padding: "24px 20px",
@@ -1179,7 +1179,7 @@ function PricingSection() {
           </ul>
 
           <div style={{ marginTop: 18, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-            <div className="myeongjo" style={{ fontSize: 28, fontWeight: 700, color: "var(--gold-bright)", letterSpacing: "0.02em" }}>9,900원</div>
+            <div className="myeongjo" style={{ fontSize: 28, fontWeight: 700, color: "var(--gold-bright)", letterSpacing: "0.02em" }}>7,900원</div>
             <div className="mono" style={{ fontSize: 9, color: "var(--gold-soft)", letterSpacing: "0.2em" }}>즉시 결과 생성</div>
           </div>
         </div>
@@ -1313,9 +1313,9 @@ function FinalCTASection() {
 
         <GoldDivider width={60} />
 
-        <CTAButton sub="· 9,900원" label="지금 내 흐름 확인하기" />
+        <CTAButton sub="· 7,900원" label="지금 내 흐름 확인하기" />
 
-        <div className="mono" style={{ marginTop: 18, fontSize: 9, color: "var(--bone-faint)", letterSpacing: "0.3em" }}>· 9,900원 · 정통 만세력 풀이 ·</div>
+        <div className="mono" style={{ marginTop: 18, fontSize: 9, color: "var(--bone-faint)", letterSpacing: "0.3em" }}>· 7,900원 · 정통 만세력 풀이 ·</div>
 
         <div className="myeongjo" style={{ marginTop: 40, fontSize: 10, color: "var(--bone-faint)", letterSpacing: "0.15em", lineHeight: 1.9, opacity: 0.5 }}>
           ⓒ 命運錄 · 2026<br />
@@ -1375,7 +1375,7 @@ function StickyBar() {
             내 사주 풀이 보기
           </div>
           <div className="myeongjo" style={{ fontSize: 12, color: "var(--bone-soft)", letterSpacing: "0.1em", marginTop: 2 }}>
-            생년월일만 · 9,900원
+            생년월일만 · 7,900원
           </div>
         </div>
         <Link
