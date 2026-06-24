@@ -41,7 +41,8 @@ const SYSTEM_BASE = `당신은 40~50대 중년의 현실 고민을 사주로 풀
 
 [문체 — 가장 중요]
 1) 단정적으로 씁니다. "~입니다 / ~합니다"로 끝맺습니다. 모호함은 'AI 냄새'의 1순위 원인이고, 단정적이어야 사람 냄새가 나고 용해 보입니다.
-   ★ 금지 표현(절대 쓰지 말 것): "수 있습니다", "수도 있습니다", "~한 편입니다", "가능성이 있습니다", "가능성을 보여줍니다", "가능성을 시사합니다", "경향이 있습니다", "보입니다", "~일지도 모릅니다", "비칠 수 있습니다". 이런 책임 회피형 표현이 떠오르면, 그 문장을 통째로 단정형("~입니다")으로 바꿔 쓰세요.
+   ★ 다음 표현은 쓰지 마세요: "~일지도 모릅니다", "가능성을 시사합니다", "가능성을 보여줍니다", "비칠 수 있습니다", "~해 보입니다".
+   ★ "~수 있습니다"는 꼭 필요한 한두 곳에만 허용합니다. 기본값은 단정형 — 헷갈리면 "~입니다/~합니다"로 끝내세요.
 2) 성격이 아니라 '행동'을 묘사합니다. "독립적이다 / 자아가 강하다 / 고집이 세다 / 자존감이 높다" 같은 추상적 성격 단어로 끝내지 말고, 그 사람이 실제 상황에서 어떻게 행동하는지로 풀어 쓰세요. (X) "독립적인 성향입니다" → (O) "누가 이래라저래라 하면 일단 반발심부터 드는데, 막상 혼자 결정하려면 또 주변 의견을 듣고 싶어 합니다."
 3) 두괄식. 각 문단 첫 문장에서 결론부터 치고 나갑니다. 서설·이론 설명으로 시작하지 마세요.
 4) 한 문장에 메시지 하나. 짧고 또렷하게.
@@ -270,6 +271,22 @@ ${concernLine}
 // =====================================================
 export type ChapterPrompt = { system: string; user: string; heading: string };
 
+// 시기(대운·세운·월운) 데이터 분리 — 구조/성격 챕터에 시기 데이터를 주면 모델이 자꾸
+// "6월·10월"을 끌어다 써서 전 챕터가 같은 말을 반복한다(실측). 지시("쓰지 마")만으론 안 막혀서
+// 데이터 자체를 시기 챕터에만 준다. (부수 효과: 비-시기 챕터 입력 토큰 대폭 절약 — 월운 12개월 등)
+function stripTimingFromKeyFacts(keyFacts: string): string {
+  return keyFacts
+    .split("\n")
+    .filter((l) => !/^- (현재 대운|다음 대운|올해\()/.test(l))
+    .join("\n");
+}
+function stripTimingSections(saju: string): string {
+  return saju
+    .split(/\n\n(?=\[)/)
+    .filter((block) => !/^\[(대운|세운|월운)/.test(block))
+    .join("\n\n");
+}
+
 export function buildChapterPrompts(input: PromptInput): {
   title: string;
   chapters: ChapterPrompt[];
@@ -289,7 +306,12 @@ export function buildChapterPrompts(input: PromptInput): {
         `- 시주: ${pillar(m.hour)}`,
       ].join("\n");
   // 확정 사실 카드를 맨 위에 둬서, 모델이 나이·대운·세운·일간·용신을 추론하지 않고 그대로 인용하게 함.
-  const sajuSection = input.keyFacts ? `${input.keyFacts}\n\n${baseSaju}` : baseSaju;
+  const sajuSectionFull = input.keyFacts ? `${input.keyFacts}\n\n${baseSaju}` : baseSaju;
+  // 비-시기 챕터용: 대운·세운·월운 데이터를 뺀 버전(구조·성격에 집중시키고 시기 반복 차단)
+  const baseSajuCore = stripTimingSections(baseSaju);
+  const sajuSectionCore = input.keyFacts
+    ? `${stripTimingFromKeyFacts(input.keyFacts)}\n\n${baseSajuCore}`
+    : baseSajuCore;
 
   const displayName = input.name?.trim();
   const title = displayName
@@ -332,7 +354,10 @@ export function buildChapterPrompts(input: PromptInput): {
         ? " 위 [확정 사실]의 나이·대운·세운·시기(예: 6·10월)를 콕 집어 구체적으로 쓰세요. 단, 숫자·간지 값은 새로 지어내지 마세요."
         : isAction
           ? " 위 [확정 사실]을 근거로 하되 대운·세운 설명을 다시 늘어놓지 말고, 바로 실천 가능한 행동에 집중하세요."
-          : " 위 [확정 사실]의 일간·오행 분포·십성·용신을 근거로 쓰세요. ■ 단, 대운·세운·올해(2026)·특정 월(6·10월) 같은 '시기' 이야기는 여기서 반복하지 마세요 — 그건 '올해 흐름'·'조심할 시기' 챕터에서만 다룹니다. 이 챕터는 타고난 구조·성격·패턴 자체에 집중하세요.";
+          : " 위 [확정 사실]의 일간·오행 분포·십성·용신을 근거로 쓰세요. 오행의 강·약·유무는 [확정 사실]의 '오행 분포' 숫자와 다르게 말하지 마세요. 이 챕터는 타고난 구조·성격·패턴 자체에 집중하세요.";
+
+    // 시기 챕터에만 대운·세운·월운 데이터를 준다(비-시기 챕터의 시기 반복을 데이터 차원에서 차단).
+    const sajuSection = isTiming || isAction ? sajuSectionFull : sajuSectionCore;
 
     const user = `${sajuSection}
 

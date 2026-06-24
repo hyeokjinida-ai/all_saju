@@ -5,6 +5,7 @@
 // 각 SDK는 lazy import 하여 미사용 패키지의 init 비용을 줄임.
 
 import { serverEnv } from "@/lib/env";
+import { findFamilyAssertions, stripFamilyAssertions } from "@/lib/saju/quality-gate";
 
 export type LlmRequest = {
   system: string;
@@ -31,22 +32,45 @@ export async function generateInterpretation(req: LlmRequest): Promise<LlmRespon
   }
 }
 
+// 가족 단정 재생성 지시 — 검출 시 1회만 다시 시도.
+const FAMILY_RETRY_NOTE = `
+
+⚠️ 다시 씁니다: 자녀·배우자·결혼·가족의 유무나 상태를 단정하는 문장을 쓰지 마세요. 가족 이야기를 꼭 해야 하면 '자녀가 있으시다면', '배우자가 계시다면'처럼 조건형으로만 쓰세요. 가장 안전한 방법은 가족 대신 본인의 행동·성향으로 풀어 쓰는 것입니다.`;
+
 // 챕터별 병렬 생성 — 각 챕터를 따로 호출(집중도↑)한 뒤 제목 + 본문들을 합쳐 하나의 마크다운으로.
 // 한 챕터가 실패해도 나머지로 결과지는 완성되도록 개별 실패를 흡수한다.
+// 결정론적 품질 게이트(quality-gate.ts): 가족 단정 문장 검출 → 1회 재생성, 그래도 남으면 문장 제거.
+// (나이 정확도는 프롬프트의 [확정 사실] 주입으로 처리 — 출력 후 "NN세" 자동치환은
+//  '현재 나이 오기'와 '대운 N세 시점 언급'을 구분 못 해 정당한 값을 망가뜨려서 제거함)
 export async function generateByChapters(
   title: string,
   chapters: { system: string; user: string }[],
 ): Promise<LlmResponse> {
-  const parts = await Promise.all(
-    chapters.map((c) =>
-      generateInterpretation(c)
-        .then((r) => ({ text: r.text, provider: r.provider, model: r.model }))
-        .catch(() => ({ text: "", provider: "", model: "" })),
-    ),
-  );
+  const genOne = async (c: { system: string; user: string }) => {
+    try {
+      let r = await generateInterpretation(c);
+      if (findFamilyAssertions(r.text).length > 0) {
+        try {
+          const retry = await generateInterpretation({ system: c.system, user: c.user + FAMILY_RETRY_NOTE });
+          if (retry.text.trim()) r = retry;
+        } catch {
+          /* 재시도 실패 시 원본 유지 → 아래에서 문장 제거 */
+        }
+        if (findFamilyAssertions(r.text).length > 0) {
+          r = { ...r, text: stripFamilyAssertions(r.text).text };
+        }
+      }
+      return { text: r.text, provider: r.provider, model: r.model };
+    } catch {
+      return { text: "", provider: "", model: "" };
+    }
+  };
+
+  const parts = await Promise.all(chapters.map(genOne));
   const body = parts.map((p) => p.text.trim()).filter(Boolean).join("\n\n");
   const succeeded = parts.filter((p) => p.provider);
   const ok = succeeded[0];
+
   return {
     text: `## ${title}\n\n${body}`,
     provider: ok?.provider ?? "",
