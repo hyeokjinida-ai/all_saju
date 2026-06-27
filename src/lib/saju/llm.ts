@@ -57,7 +57,7 @@ export async function generateByChapters(
           /* 재시도 실패 시 원본 유지 → 아래에서 문장 제거 */
         }
         if (findFamilyAssertions(r.text).length > 0) {
-          r = { ...r, text: stripFamilyAssertions(r.text).text };
+          r = { ...r, text: stripFamilyAssertions(r.text) };
         }
       }
       return { text: r.text, provider: r.provider, model: r.model };

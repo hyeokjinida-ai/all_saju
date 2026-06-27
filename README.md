@@ -436,10 +436,10 @@ Myeongsik (4기둥)
         │
         └──▶ saju_results.myeongsik (JSONB 저장)
 
-buildSajuPrompt({ myeongsik, manseryeokText, ... })
+buildChapterPrompts({ myeongsik, manseryeokText, ... })
         │
         ▼
-generateInterpretation({ system, user }) ─▶ LLM
+generateByChapters(title, chapters) ─▶ LLM (챕터별 병렬 생성)
         │
         ▼
 saju_results.interpretation_md (마크다운)

@@ -46,21 +46,14 @@ export function findFamilyAssertions(text: string): string[] {
 }
 
 // 재생성으로도 안 잡힌 단정형 가족 문장을 문장 단위로 제거(최후 수단).
-export function stripFamilyAssertions(text: string): { text: string; removed: number } {
-  let removed = 0;
-  const out = text
+export function stripFamilyAssertions(text: string): string {
+  return text
     .split("\n")
     .map((line) => {
       if (line.startsWith("#")) return line;
-      const kept = splitSentences(line).filter((s) => {
-        if (isFamilyAssertion(s)) {
-          removed++;
-          return false;
-        }
-        return true;
-      });
-      return kept.join(" ");
+      return splitSentences(line)
+        .filter((s) => !isFamilyAssertion(s))
+        .join(" ");
     })
     .join("\n");
-  return { text: out, removed };
 }

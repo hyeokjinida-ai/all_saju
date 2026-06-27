@@ -19,11 +19,7 @@ const VISITOR_KEY = "mr_vid"; // localStorage — 고유 방문자(영속)
 const SESSION_KEY = "mr_sid"; // sessionStorage — 방문 1회
 
 function uid(): string {
-  try {
-    return crypto.randomUUID();
-  } catch {
-    return `${Date.now().toString(36)}${Math.round(performance.now()).toString(36)}x`;
-  }
+  return crypto.randomUUID();
 }
 
 // 스토리지가 차단된 경우(프라이빗·웹뷰 등) 페이지 수명 동안 유지되는 임시 ID로 폴백.

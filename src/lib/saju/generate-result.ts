@@ -74,7 +74,7 @@ export type GenerateOutcome =
 //   복구 크론이 여러 번 실패한 주문(attempts↑)엔 true 로 호출해, 끝내 부분 결과라도 제공한다.
 export async function generateResultForOrder(
   orderUuid: string,
-  opts?: { service?: SupabaseClient; force?: boolean; allowPartial?: boolean },
+  opts?: { service?: SupabaseClient; allowPartial?: boolean },
 ): Promise<GenerateOutcome> {
   const service = opts?.service ?? createServiceClient();
 
@@ -84,7 +84,7 @@ export async function generateResultForOrder(
     .select("id, interpretation_md")
     .eq("order_id", orderUuid)
     .maybeSingle();
-  if (existing && !opts?.force && hasRealInterpretation(existing.interpretation_md)) {
+  if (existing && hasRealInterpretation(existing.interpretation_md)) {
     return { ok: true, resultId: existing.id, reused: true };
   }
 

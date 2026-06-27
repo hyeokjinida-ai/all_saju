@@ -4,8 +4,6 @@ const serverSchema = z.object({
   // sb_secret_... (구 service_role JWT 도 동작 — 2026 말 deprecated)
   SUPABASE_SECRET_KEY: z.string().min(1),
   TOSS_SECRET_KEY: z.string().min(1),
-  MANSERYEOK_API_URL: z.string().url().optional().or(z.literal("")),
-  MANSERYEOK_API_KEY: z.string().optional(),
   SAJU_API_URL: z.string().url().optional().or(z.literal("")),
   SAJU_API_KEY: z.string().optional(),
   LLM_PROVIDER: z.enum(["openai", "anthropic", "gemini"]).default("anthropic"),
@@ -49,8 +47,6 @@ export function serverEnv() {
     _serverEnv = serverSchema.parse({
       SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
       TOSS_SECRET_KEY: process.env.TOSS_SECRET_KEY,
-      MANSERYEOK_API_URL: process.env.MANSERYEOK_API_URL,
-      MANSERYEOK_API_KEY: process.env.MANSERYEOK_API_KEY,
       SAJU_API_URL: process.env.SAJU_API_URL,
       SAJU_API_KEY: process.env.SAJU_API_KEY,
       LLM_PROVIDER: process.env.LLM_PROVIDER,
