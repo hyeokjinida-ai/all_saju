@@ -198,7 +198,7 @@ export function SajuLabLanding() {
         {/* CTA + live pill */}
         <div className="relative z-20 flex-none px-[18px] pb-6">
           <Link
-            href="/products/premium-saju"
+            href="/funnel"
             className="block w-full text-center transition-transform active:scale-[0.98]"
             style={{
               padding: 18,
