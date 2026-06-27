@@ -40,10 +40,17 @@ export type ViewKey =
   | "analysis"
   | "payment";
 
+export interface FunnelProduct {
+  id: string;
+  price: number;
+  name: string;
+}
+
 export interface FunnelCtx {
   state: FunnelState;
   view: ViewKey;
   step: number; // 1..6 진행 인디케이터(해당 없으면 0)
+  product: FunnelProduct | null; // 결제 대상 상품(서버 해석). null이면 기존 상품페이지로 폴백.
   setLifeStage: (s: LifeStage) => void;
   toggleConcern: (c: Concern) => void;
   setField: <K extends keyof FunnelState>(k: K, v: FunnelState[K]) => void;

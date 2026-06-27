@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import { useRouter } from "next/navigation";
-import type { FunnelState, FunnelCtx, ViewKey, FunnelProfile } from "@/lib/funnel/types";
+import type { FunnelState, FunnelCtx, ViewKey, FunnelProfile, FunnelProduct } from "@/lib/funnel/types";
 import {
   LoginScreen,
   StateScreen,
@@ -58,10 +58,11 @@ const initialState: FunnelState = {
   profile: { nickname: "", gender: undefined, birthDate: "", calendar: "solar", birthTime: "", unknownTime: false },
 };
 
-export function FunnelFlow() {
+export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: boolean; product?: FunnelProduct | null }) {
   const router = useRouter();
   const [state, setState] = useState<FunnelState>(initialState);
-  const [view, setView] = useState<ViewKey>("login");
+  // 이미 로그인돼 있으면(카카오 왕복 복귀 포함) 로그인 화면을 건너뛰고 질문부터.
+  const [view, setView] = useState<ViewKey>(isAuthed ? "state" : "login");
   const [returnTo, setReturnTo] = useState<ViewKey | null>(null);
   const loaded = useRef(false);
 
@@ -100,6 +101,7 @@ export function FunnelFlow() {
     state,
     view,
     step: STEP[view] ?? 0,
+    product,
     setLifeStage: (s) => setState((p) => ({ ...p, lifeStage: s })),
     toggleConcern: (c) =>
       setState((p) => ({

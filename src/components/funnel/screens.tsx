@@ -1,7 +1,12 @@
 "use client";
 
 // 인생사주 퍼널 9화면 — 핸드오프 인생사주 전체플로우 디자인.dc.html 재구현.
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/env";
+import { formatKRW } from "@/lib/utils";
 import type { FunnelCtx, Gender, Calendar } from "@/lib/funnel/types";
 import { LIFE_STAGES, CONCERNS, lifeStageShort, concernShort } from "@/lib/funnel/options";
 import {
@@ -35,8 +40,35 @@ const SIJU = [
   { v: "21:30", label: "해시 (21:30~23:30)" },
 ];
 
-// ② 카카오 로그인
+// ② 카카오 로그인 — Supabase OAuth(기존 구현 재사용). 성공 시 /auth/callback → /funnel 복귀.
+// Supabase 미설정/프로바이더 미활성(개발 중)일 땐 그냥 다음 단계로 진행.
 export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
+  const [loading, setLoading] = useState(false);
+  const kakao = async () => {
+    if (!isSupabaseConfigured()) {
+      ctx.next();
+      return;
+    }
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/funnel` },
+      });
+      if (error) {
+        if (error.message?.includes("provider is not enabled")) {
+          ctx.next(); // 아직 카카오 미활성 — 흐름은 막지 않음
+        } else {
+          toast.error("카카오 로그인을 시작하지 못했어요: " + error.message);
+          setLoading(false);
+        }
+      }
+      // 성공 시 카카오로 리다이렉트되어 아래는 실행되지 않음
+    } catch {
+      ctx.next();
+    }
+  };
   return (
     <ScreenScaffold
       bg={LANDING_BG}
@@ -44,11 +76,12 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
         <>
           <button
             type="button"
-            onClick={ctx.next}
-            className="flex w-full items-center justify-center gap-2.5 transition-transform active:scale-[0.98]"
+            onClick={kakao}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2.5 transition-transform active:scale-[0.98] disabled:opacity-70"
             style={{ padding: 16, borderRadius: 14, background: "#FEE500", color: "#2b2b2b", fontWeight: 800, fontSize: 15.5, border: "none", cursor: "pointer", boxShadow: "0 12px 26px rgba(180,160,0,.25)" }}
           >
-            <span style={{ fontSize: 18 }}>💬</span> 카카오로 계속하기
+            <span style={{ fontSize: 18 }}>💬</span> {loading ? "카카오로 이동 중…" : "카카오로 계속하기"}
           </button>
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 11, color: "#9a8cd0", lineHeight: 1.5 }}>
             재방문 시 입력값이 자동 복원돼요
@@ -329,21 +362,81 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ⑥ 무료 기본 분석 — ⚠️ 명식/오행은 대표값(placeholder). 실제 명식 API 연동은 후속.
-const PILLARS = [
-  { ch: "己", fire: false },
-  { ch: "丙", fire: true },
-  { ch: "壬", fire: false },
-  { ch: "甲", fire: false },
-];
-const OHAENG = [
-  { label: "木", h: 60, c: "linear-gradient(180deg,#7fc8a0,#3a9a6c)" },
-  { label: "火", h: 90, c: "linear-gradient(180deg,#ff9a7a,#d0563c)" },
-  { label: "土", h: 45, c: "linear-gradient(180deg,#e4c878,#b4933a)" },
-  { label: "金", h: 32, c: "linear-gradient(180deg,#c8cdd4,#9098a4)" },
-  { label: "水", h: 70, c: "linear-gradient(180deg,#88a8e0,#4868c0)" },
-];
+// ⑥ 무료 기본 분석 — 실제 명식/오행 fetch(/api/saju/chart), 실패·미설정 시 대표값 폴백.
+const EL_BAR: Record<string, string> = {
+  목: "linear-gradient(180deg,#7fc8a0,#3a9a6c)",
+  화: "linear-gradient(180deg,#ff9a7a,#d0563c)",
+  토: "linear-gradient(180deg,#e4c878,#b4933a)",
+  금: "linear-gradient(180deg,#c8cdd4,#9098a4)",
+  수: "linear-gradient(180deg,#88a8e0,#4868c0)",
+};
+const EL_TINT: Record<string, { bg: string; border: string; color: string }> = {
+  목: { bg: "rgba(127,200,160,.18)", border: "rgba(127,200,160,.45)", color: "#aef0cc" },
+  화: { bg: "rgba(255,150,110,.2)", border: "rgba(255,160,120,.4)", color: "#ffc4b8" },
+  토: { bg: "rgba(228,200,120,.18)", border: "rgba(228,200,120,.4)", color: "#f0dca0" },
+  금: { bg: "rgba(200,205,212,.18)", border: "rgba(200,205,212,.4)", color: "#e6ebf2" },
+  수: { bg: "rgba(136,168,224,.18)", border: "rgba(136,168,224,.4)", color: "#bcd0f5" },
+};
+const NEUTRAL = { bg: "rgba(180,140,255,.16)", border: "rgba(180,140,255,.3)", color: "#e6dbff" };
+const EL_HANJA: Record<string, string> = { 목: "木", 화: "火", 토: "土", 금: "金", 수: "水" };
+const EL_TYPE: Record<string, string> = {
+  목: "木 기운이 뻗어가는 성장형",
+  화: "火 기운이 강한 추진력형",
+  토: "土 기운이 단단한 중심형",
+  금: "金 기운이 또렷한 결단형",
+  수: "水 기운이 깊은 지혜형",
+};
+
+type Chart = { cheongan: { ch: string; el: string; ilgan: boolean }[]; ohaeng: { el: string; pct: number }[] };
+const REP_CHART: Chart = {
+  cheongan: [
+    { ch: "己", el: "토", ilgan: false },
+    { ch: "丙", el: "화", ilgan: true },
+    { ch: "壬", el: "수", ilgan: false },
+    { ch: "甲", el: "목", ilgan: false },
+  ],
+  ohaeng: [
+    { el: "목", pct: 60 },
+    { el: "화", pct: 90 },
+    { el: "토", pct: 45 },
+    { el: "금", pct: 32 },
+    { el: "수", pct: 70 },
+  ],
+};
+
 export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
+  const p = ctx.state.profile;
+  const [chart, setChart] = useState<Chart>(REP_CHART);
+
+  useEffect(() => {
+    if (!p.birthDate || !p.gender) return;
+    let alive = true;
+    fetch("/api/saju/chart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        birthDate: p.birthDate,
+        birthTime: p.birthTime || null,
+        timeUnknown: p.unknownTime,
+        gender: p.gender === "M" ? "male" : "female",
+        calendar: p.calendar,
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && d?.ok && Array.isArray(d.cheongan) && Array.isArray(d.ohaeng)) {
+          setChart({ cheongan: d.cheongan, ohaeng: d.ohaeng });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [p.birthDate, p.birthTime, p.unknownTime, p.gender, p.calendar]);
+
+  const nick = p.nickname || "회원";
+  const dominant = [...chart.ohaeng].sort((a, b) => b.pct - a.pct)[0]?.el ?? "화";
+
   return (
     <ScreenScaffold
       header={
@@ -355,32 +448,33 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
       }
       footer={<PrimaryCTA label="전체 풀이 받기" onClick={ctx.next} />}
     >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 22 }}>
-        {ctx.state.profile.nickname || "회원"}님의 사주 원국
-      </div>
+      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 22 }}>{nick}님의 사주 원국</div>
       <div className="mt-4 grid grid-cols-4 gap-2">
-        {PILLARS.map((p, i) => (
-          <div
-            key={i}
-            style={{ aspectRatio: "0.78", borderRadius: 12, background: p.fire ? "rgba(255,150,110,.2)" : "rgba(180,140,255,.16)", border: `1px solid ${p.fire ? "rgba(255,160,120,.4)" : "rgba(180,140,255,.3)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Ma Shan Zheng', cursive", fontSize: 30, color: p.fire ? "#ffc4b8" : "#e6dbff" }}
-          >
-            {p.ch}
-          </div>
-        ))}
+        {chart.cheongan.map((c, i) => {
+          const t = c.ilgan ? EL_TINT[c.el] ?? EL_TINT["화"] : NEUTRAL;
+          return (
+            <div
+              key={i}
+              style={{ aspectRatio: "0.78", borderRadius: 12, background: t.bg, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Ma Shan Zheng', cursive", fontSize: 30, color: t.color }}
+            >
+              {c.ch}
+            </div>
+          );
+        })}
       </div>
       <div className="mt-[18px]" style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0" }}>오행 분포</div>
       <div className="mt-2 flex items-end gap-1.5" style={{ height: 46 }}>
-        {OHAENG.map((o) => (
-          <div key={o.label} style={{ flex: 1, height: `${o.h}%`, background: o.c, borderRadius: "5px 5px 0 0" }} />
+        {chart.ohaeng.map((o) => (
+          <div key={o.el} style={{ flex: 1, height: `${Math.max(8, o.pct)}%`, background: EL_BAR[o.el], borderRadius: "5px 5px 0 0" }} />
         ))}
       </div>
       <div className="mt-1.5 flex gap-1.5" style={{ fontSize: 11, color: "#9a8cd0" }}>
-        {OHAENG.map((o) => (
-          <span key={o.label} style={{ flex: 1, textAlign: "center" }}>{o.label}</span>
+        {chart.ohaeng.map((o) => (
+          <span key={o.el} style={{ flex: 1, textAlign: "center" }}>{EL_HANJA[o.el] ?? o.el}</span>
         ))}
       </div>
       <div className="mt-4" style={{ background: "rgba(255,255,255,.05)", borderRadius: 12, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6, color: "#cbb8f0" }}>
-        {ctx.state.profile.nickname || "회원"}님은 <b style={{ color: "#ffc4b8" }}>火 기운이 강한 추진력형</b> — 재물운부터 풀어드릴게요…
+        {nick}님은 <b style={{ color: EL_TINT[dominant]?.color ?? "#ffc4b8" }}>{EL_TYPE[dominant] ?? EL_TYPE["화"]}</b> — 재물운부터 풀어드릴게요…
       </div>
       <div className="mt-3.5" style={{ position: "relative", borderRadius: 14, border: "1px dashed rgba(180,140,255,.4)", padding: 18, textAlign: "center", background: "rgba(20,8,50,.4)" }}>
         <div style={{ fontSize: 22 }}>🔒</div>
@@ -394,9 +488,50 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ⑦ 결제 — 결제 연동은 후속. 지금은 기존 체크아웃으로 연결.
+// ⑦ 결제 — 퍼널 데이터로 주문 생성(/api/orders/create) → 기존 체크아웃(토스 위젯).
+// 상품 미해석/실패 시 기존 상품페이지로 폴백. 결제수단은 체크아웃 위젯에서 선택.
 export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
   const benefits = ["재물·애정·직업·건강 전 영역", "대운 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
+  const price = ctx.product?.price ?? 14900;
+
+  const pay = async () => {
+    if (busy) return;
+    const p = ctx.state.profile;
+    if (!ctx.product || !p.birthDate || !p.gender) {
+      router.push("/products/premium-saju");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: ctx.product.id,
+          name: p.nickname || undefined,
+          birthDate: p.birthDate,
+          birthTime: p.unknownTime ? null : p.birthTime || null,
+          timeUnknown: p.unknownTime,
+          gender: p.gender === "M" ? "male" : "female",
+          calendar: p.calendar,
+          concerns: ctx.state.concerns.map(concernShort),
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.orderId) {
+        router.push(`/checkout/${json.orderId}`);
+        return;
+      }
+      toast.error(json.error ?? "주문 생성에 실패했어요");
+      setBusy(false);
+    } catch {
+      toast.error("주문 생성 중 오류가 발생했어요");
+      setBusy(false);
+    }
+  };
+
   return (
     <ScreenScaffold
       header={
@@ -408,22 +543,33 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
       }
       footer={
         <>
-          <Link href="/products/premium-saju" className="flex w-full items-center justify-center gap-2 transition-transform active:scale-[0.98]" style={{ padding: 16, borderRadius: 14, background: "#FEE500", color: "#2b2b2b", fontWeight: 800, fontSize: 15, textDecoration: "none" }}>
-            💬 카카오페이로 결제
-          </Link>
-          <Link href="/products/premium-saju" className="mt-2.5 block w-full text-center" style={{ padding: 13, borderRadius: 14, border: "1.5px solid rgba(180,140,255,.4)", fontSize: 14, fontWeight: 700, color: "#dcc8ff", textDecoration: "none" }}>
+          <button
+            type="button"
+            onClick={pay}
+            disabled={busy}
+            className="flex w-full items-center justify-center gap-2 transition-transform active:scale-[0.98] disabled:opacity-70"
+            style={{ padding: 16, borderRadius: 14, background: "#FEE500", color: "#2b2b2b", fontWeight: 800, fontSize: 15, border: "none", cursor: "pointer" }}
+          >
+            💬 {busy ? "처리 중…" : "카카오페이로 결제"}
+          </button>
+          <button
+            type="button"
+            onClick={pay}
+            disabled={busy}
+            className="mt-2.5 block w-full text-center disabled:opacity-70"
+            style={{ padding: 13, borderRadius: 14, border: "1.5px solid rgba(180,140,255,.4)", background: "none", fontSize: 14, fontWeight: 700, color: "#dcc8ff", cursor: "pointer" }}
+          >
             다른 결제수단
-          </Link>
+          </button>
           <div className="mt-2.5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>결제 즉시 전체 풀이가 열려요</div>
         </>
       }
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>전체 풀이 한 번에</div>
       <div className="mt-5" style={{ borderRadius: 18, border: "2px solid #b794ff", background: "rgba(150,90,255,.16)", padding: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#dcc8ff" }}>인생사주 종합 풀이</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#dcc8ff" }}>{ctx.product?.name ?? "인생사주 종합 풀이"}</div>
         <div className="mt-1.5 flex items-baseline gap-2">
-          <span style={{ fontWeight: 800, fontSize: 30, color: "#fff" }}>14,900원</span>
-          <span style={{ fontSize: 14, color: "#9a8cd0", textDecoration: "line-through" }}>29,000원</span>
+          <span style={{ fontWeight: 800, fontSize: 30, color: "#fff" }}>{formatKRW(price)}</span>
         </div>
         <div className="mt-1" style={{ fontSize: 11.5, color: "#b8a4e0" }}>단일가 · 평생 다시 보기</div>
       </div>
