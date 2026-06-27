@@ -44,6 +44,11 @@ const SIJU = [
 // Supabase 미설정/프로바이더 미활성(개발 중)일 땐 그냥 다음 단계로 진행.
 export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
   const [loading, setLoading] = useState(false);
+  // 이미 로그인된 상태(예: 카카오 OAuth 왕복 복귀)면 결제로 바로 넘긴다.
+  useEffect(() => {
+    if (ctx.isAuthed) ctx.next();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const kakao = async () => {
     if (!isSupabaseConfigured()) {
       ctx.next();
@@ -96,12 +101,12 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
           命
         </div>
         <div style={{ marginTop: 24, fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>
-          3초 만에 시작하기
+          로그인하고 전체 풀이 받기
         </div>
         <p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6, color: "#cdb8f5" }}>
-          로그인하면 입력하던 내용이
+          카카오로 로그인하면 결과를
           <br />
-          자동으로 저장돼요
+          안전하게 받아볼 수 있어요
         </p>
       </div>
     </ScreenScaffold>

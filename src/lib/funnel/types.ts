@@ -51,6 +51,7 @@ export interface FunnelCtx {
   view: ViewKey;
   step: number; // 1..6 진행 인디케이터(해당 없으면 0)
   product: FunnelProduct | null; // 결제 대상 상품(서버 해석). null이면 기존 상품페이지로 폴백.
+  isAuthed: boolean; // 로그인 여부 — 결제 직전 로그인 게이트 건너뛰기용
   setLifeStage: (s: LifeStage) => void;
   toggleConcern: (c: Concern) => void;
   setField: <K extends keyof FunnelState>(k: K, v: FunnelState[K]) => void;

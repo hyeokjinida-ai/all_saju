@@ -17,8 +17,8 @@ import {
   PaymentScreen,
 } from "./screens";
 
+// 로그인은 맨 앞이 아니라 결제 직전 게이트(무료 퍼널은 로그인 없이 다 보게).
 const ORDER: ViewKey[] = [
-  "login",
   "state",
   "concerns",
   "situation",
@@ -26,6 +26,7 @@ const ORDER: ViewKey[] = [
   "profile",
   "confirm",
   "analysis",
+  "login",
   "payment",
 ];
 const STEP: Partial<Record<ViewKey, number>> = {
@@ -38,6 +39,7 @@ const STEP: Partial<Record<ViewKey, number>> = {
 };
 // 기존 사용자 스토리지 키와 겹치지 않게 네임스페이스 고정.
 const STORAGE_KEY = "myeongbom_funnel_v1";
+const VIEW_KEY = "myeongbom_funnel_view_v1"; // OAuth 왕복 후 같은 화면으로 복귀
 
 const SCREENS: Record<ViewKey, ComponentType<{ ctx: FunnelCtx }>> = {
   login: LoginScreen,
@@ -61,8 +63,7 @@ const initialState: FunnelState = {
 export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: boolean; product?: FunnelProduct | null }) {
   const router = useRouter();
   const [state, setState] = useState<FunnelState>(initialState);
-  // 이미 로그인돼 있으면(카카오 왕복 복귀 포함) 로그인 화면을 건너뛰고 질문부터.
-  const [view, setView] = useState<ViewKey>(isAuthed ? "state" : "login");
+  const [view, setView] = useState<ViewKey>("state");
   const [returnTo, setReturnTo] = useState<ViewKey | null>(null);
   const loaded = useRef(false);
 
@@ -76,21 +77,24 @@ export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: bo
           setState((s) => ({ ...s, ...d, profile: { ...s.profile, ...(d.profile ?? {}) } }));
         }
       }
+      const v = sessionStorage.getItem(VIEW_KEY) as ViewKey | null;
+      if (v && ORDER.includes(v)) setView(v);
     } catch {
       /* 스토리지 차단 시 무시 */
     }
     loaded.current = true;
   }, []);
 
-  // draft 저장
+  // draft + 현재 화면 저장
   useEffect(() => {
     if (!loaded.current) return;
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      sessionStorage.setItem(VIEW_KEY, view);
     } catch {
       /* no-op */
     }
-  }, [state]);
+  }, [state, view]);
 
   // 뷰 전환 시 상단으로
   useEffect(() => {
@@ -102,6 +106,7 @@ export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: bo
     view,
     step: STEP[view] ?? 0,
     product,
+    isAuthed,
     setLifeStage: (s) => setState((p) => ({ ...p, lifeStage: s })),
     toggleConcern: (c) =>
       setState((p) => ({
@@ -123,7 +128,9 @@ export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: bo
         return;
       }
       const i = ORDER.indexOf(view);
-      setView(ORDER[Math.min(i + 1, ORDER.length - 1)]);
+      let nextView = ORDER[Math.min(i + 1, ORDER.length - 1)];
+      if (nextView === "login" && isAuthed) nextView = "payment"; // 이미 로그인했으면 결제로 직행
+      setView(nextView);
     },
     prev: () => {
       setReturnTo(null);
