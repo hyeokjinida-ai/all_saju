@@ -141,5 +141,9 @@ export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: bo
   };
 
   const Screen = SCREENS[view];
-  return <Screen ctx={ctx} />;
+  return (
+    <div key={view} className="view-fade">
+      <Screen ctx={ctx} />
+    </div>
+  );
 }
