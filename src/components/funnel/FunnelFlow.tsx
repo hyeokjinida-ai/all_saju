@@ -55,7 +55,7 @@ const initialState: FunnelState = {
   profile: { nickname: "", gender: undefined, birthDate: "", calendar: "solar", birthTime: "", unknownTime: false },
 };
 
-export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: boolean; product?: FunnelProduct | null }) {
+export function FunnelFlow({ isAuthed = false, product = null, products = [] }: { isAuthed?: boolean; product?: FunnelProduct | null; products?: FunnelProduct[] }) {
   const router = useRouter();
   const [state, setState] = useState<FunnelState>(initialState);
   const [view, setView] = useState<ViewKey>("concerns");
@@ -101,6 +101,7 @@ export function FunnelFlow({ isAuthed = false, product = null }: { isAuthed?: bo
     view,
     step: STEP[view] ?? 0,
     product,
+    products,
     isAuthed,
     setLifeStage: (s) => setState((p) => ({ ...p, lifeStage: s })),
     toggleConcern: (c) =>

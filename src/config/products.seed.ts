@@ -17,9 +17,9 @@ export const productsSeed: ProductSeed[] = [
   // 자수정 퍼널(/funnel) 종합 상품 — ₩14,900 인생사주 종합 풀이
   {
     slug: "life-saju",
-    name: "인생사주 종합 풀이",
-    description: "재물·애정·직업·건강 전 영역 + 대운 흐름과 올해 월별 운세, 내가 적은 고민까지 한 번에 풀어드립니다",
-    price: 14900,
+    name: "사주 기본 풀이",
+    description: "내 사주 핵심 + 올해 흐름과 가장 큰 고민에 대한 답을 한 번에 풀어드립니다",
+    price: 6900,
     display_order: 5,
     is_active: true,
   },

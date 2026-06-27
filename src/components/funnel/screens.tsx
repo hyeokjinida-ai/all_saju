@@ -465,19 +465,29 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ⑦ 결제 — 퍼널 데이터로 주문 생성(/api/orders/create) → 기존 체크아웃(토스 위젯).
-// 상품 미해석/실패 시 기존 상품페이지로 폴백. 결제수단은 체크아웃 위젯에서 선택.
+// ⑦ 결제 — 옵션(상품) 선택형. 기본 6,900 / 회원 −1,900(표시) / 비회원 이메일.
+// 주문 생성(/api/orders/create) → 체크아웃. ⚠️ 실제 할인 차감·이메일 저장은 주문 API 후속(현재 contract 미지원).
 export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const options = ctx.products.length ? ctx.products : ctx.product ? [ctx.product] : [];
+  const [selId, setSelId] = useState<string | undefined>(ctx.product?.id ?? options[0]?.id);
+  const [email, setEmail] = useState("");
+  const sel = options.find((o) => o.id === selId) ?? ctx.product ?? options[0] ?? null;
+  const basePrice = sel?.price ?? 6900;
+  const discount = ctx.isAuthed ? 1900 : 0;
+  const total = Math.max(0, basePrice - discount);
   const benefits = ["재물·애정·직업·건강 전 영역", "대운 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
-  const price = ctx.product?.price ?? 14900;
 
   const pay = async () => {
     if (busy) return;
     const p = ctx.state.profile;
-    if (!ctx.product || !p.birthDate || !p.gender) {
+    if (!sel || !p.birthDate || !p.gender) {
       router.push("/products/premium-saju");
+      return;
+    }
+    if (!ctx.isAuthed && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error("결과 받을 이메일을 입력해 주세요");
       return;
     }
     setBusy(true);
@@ -486,7 +496,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: ctx.product.id,
+          productId: sel.id,
           name: p.nickname || undefined,
           birthDate: p.birthDate,
           birthTime: p.unknownTime ? null : p.birthTime || null,
@@ -494,6 +504,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
           gender: p.gender === "M" ? "male" : "female",
           calendar: p.calendar,
           concerns: ctx.state.concerns.map(concernShort),
+          email: ctx.isAuthed ? undefined : email, // 비회원 이메일(현 contract 미저장 — 후속)
         }),
       });
       const json = await res.json();
@@ -509,7 +520,6 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
     }
   };
 
-  // 결제 페이지에서 선택적으로 카카오 로그인(결과를 계정에 저장). 로그인 안 해도 결제 가능.
   const loginKakao = async () => {
     if (!isSupabaseConfigured()) return;
     try {
@@ -541,7 +551,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
             className="flex w-full items-center justify-center gap-2 transition-transform active:scale-[0.98] disabled:opacity-70"
             style={{ padding: 16, borderRadius: 14, background: "#FEE500", color: "#2b2b2b", fontWeight: 800, fontSize: 15, border: "none", cursor: "pointer" }}
           >
-            💬 {busy ? "처리 중…" : "카카오페이로 결제"}
+            💬 {busy ? "처리 중…" : `카카오페이로 ${formatKRW(total)} 결제`}
           </button>
           <button
             type="button"
@@ -557,30 +567,80 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
       }
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>전체 풀이 한 번에</div>
-      <div className="mt-5" style={{ borderRadius: 18, border: "2px solid #b794ff", background: "rgba(150,90,255,.16)", padding: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#dcc8ff" }}>{ctx.product?.name ?? "인생사주 종합 풀이"}</div>
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <span style={{ fontWeight: 800, fontSize: 30, color: "#fff" }}>{formatKRW(price)}</span>
-        </div>
-        <div className="mt-1" style={{ fontSize: 11.5, color: "#b8a4e0" }}>단일가 · 평생 다시 보기</div>
+
+      {/* 옵션 선택 */}
+      <div className="mt-4 flex flex-col gap-2.5">
+        {options.map((o) => {
+          const on = o.id === sel?.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => setSelId(o.id)}
+              className="w-full text-left transition-transform active:scale-[0.99]"
+              style={{ padding: "15px 16px", borderRadius: 16, background: on ? "rgba(150,90,255,.18)" : "rgba(255,255,255,.05)", border: on ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)", cursor: "pointer" }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: on ? "#fff" : "#cbb8f0" }}>{o.name}</span>
+                <span style={{ fontSize: 17, fontWeight: 800, color: on ? "#fff" : "#dcc8ff", flex: "none" }}>{formatKRW(o.price)}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
-      <div className="mt-5 flex flex-col gap-[11px]">
+
+      {/* 가격 요약 */}
+      <div className="mt-4" style={{ borderRadius: 14, background: "rgba(255,255,255,.05)", border: "1px solid rgba(180,140,255,.2)", padding: 14 }}>
+        <div className="flex items-center justify-between" style={{ fontSize: 13, color: "#cbb8f0" }}>
+          <span>상품가</span>
+          <span>{formatKRW(basePrice)}</span>
+        </div>
+        {ctx.isAuthed && (
+          <div className="mt-1.5 flex items-center justify-between" style={{ fontSize: 13, color: "#aef0cc" }}>
+            <span>회원 할인</span>
+            <span>- {formatKRW(1900)}</span>
+          </div>
+        )}
+        <div className="mt-2 flex items-center justify-between" style={{ borderTop: "1px solid rgba(180,140,255,.18)", paddingTop: 10 }}>
+          <span style={{ fontSize: 13, color: "#cbb8f0" }}>최종 결제금액</span>
+          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{formatKRW(total)}</span>
+        </div>
+      </div>
+
+      {/* 비회원 이메일 / 회원 안내 */}
+      {!ctx.isAuthed ? (
+        <div className="mt-4">
+          <FieldLabel required>결과 받을 이메일</FieldLabel>
+          <input
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            style={frostedInputStyle}
+          />
+          <button
+            type="button"
+            onClick={loginKakao}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
+            style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(180,140,255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            💬 카카오로 로그인하면 <b style={{ color: "#fff" }}>1,900원 할인</b>
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4" style={{ borderRadius: 12, background: "rgba(60,200,140,.12)", border: "1px solid rgba(120,220,170,.35)", padding: "11px 14px", fontSize: 12.5, color: "#aef0cc" }}>
+          회원 할인 1,900원이 적용됐어요
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-[11px]">
         {benefits.map((b) => (
           <div key={b} className="flex items-center gap-2.5" style={{ fontSize: 13, color: "#cbb8f0" }}>
             <span style={{ color: "#c9a8ff" }}>✓</span> {b}
           </div>
         ))}
       </div>
-      {!ctx.isAuthed && (
-        <button
-          type="button"
-          onClick={loginKakao}
-          className="mt-5 flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
-          style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(180,140,255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          💬 카카오로 로그인 <span style={{ color: "#9a8cd0", fontWeight: 500 }}>· 결과 저장(선택)</span>
-        </button>
-      )}
     </ScreenScaffold>
   );
 }
