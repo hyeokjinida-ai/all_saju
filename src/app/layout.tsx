@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { Analytics } from "@/components/analytics/Analytics";
+import { ChromeGate } from "@/components/layout/ChromeGate";
 import { siteConfig, businessInfo } from "@/config/site";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUser } from "@/lib/auth";
@@ -27,9 +28,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ko">
       <body suppressHydrationWarning>
         <Analytics />
-        <SiteHeader isLoggedIn={isLoggedIn} />
-        <main className="min-h-[calc(100vh-7rem)]">{children}</main>
-        <SiteFooter />
+        <ChromeGate header={<SiteHeader isLoggedIn={isLoggedIn} />} footer={<SiteFooter />}>
+          <main className="min-h-[calc(100vh-7rem)]">{children}</main>
+        </ChromeGate>
         <Toaster position="top-center" />
       </body>
     </html>

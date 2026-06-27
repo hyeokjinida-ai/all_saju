@@ -2,7 +2,8 @@
    디자인 핸드오프: design_handoff_saju_funnel/README.md */
 
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Ma+Shan+Zheng&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@latest/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Ma+Shan+Zheng&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -472,4 +473,16 @@
     text-decoration: underline;
     text-decoration-color: var(--gold-line);
   }
+}
+
+/* ── 자수정 랜딩(SAJU LAB) — 나경반/글로우 애니메이션 ──────────── */
+@keyframes orbfloat  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes glowpulse { 0%,100%{opacity:.55} 50%{opacity:.95} }
+@keyframes livedot   { 0%,100%{opacity:1} 50%{opacity:.25} }
+@keyframes spinwheel { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+@keyframes rspin     { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+
+/* 접근성 — 모션 최소화 설정 시 나경반 회전/부유 정지 */
+@media (prefers-reduced-motion: reduce) {
+  .naegyeong, .naegyeong * { animation: none !important; }
 }

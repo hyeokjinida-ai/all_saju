@@ -1,5 +1,5 @@
-import { MyeongLanding } from "@/components/landing/myeong/MyeongLanding";
+import { SajuLabLanding } from "@/components/landing/saju-lab/SajuLabLanding";
 
 export default function HomePage() {
-  return <MyeongLanding />;
+  return <SajuLabLanding />;
 }
