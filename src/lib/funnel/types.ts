@@ -31,7 +31,6 @@ export interface FunnelState {
 // 화면(뷰) 순서: 로그인 → 状惑述望 → 명식 → 확인 → 무료분석 → 결제
 export type ViewKey =
   | "login"
-  | "state"
   | "concerns"
   | "situation"
   | "wish"

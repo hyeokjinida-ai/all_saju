@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatKRW } from "@/lib/utils";
 import type { FunnelCtx, Gender, Calendar } from "@/lib/funnel/types";
-import { LIFE_STAGES, CONCERNS, lifeStageShort, concernShort } from "@/lib/funnel/options";
+import { CONCERNS, concernShort } from "@/lib/funnel/options";
 import {
   ScreenScaffold,
   ProgressHeader,
@@ -113,39 +113,12 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ③-A 状 · 인생 단계 (단일 선택 → 220ms 자동 진행)
-export function StateScreen({ ctx }: { ctx: FunnelCtx }) {
-  const pick = (key: (typeof LIFE_STAGES)[number]["key"]) => {
-    ctx.setLifeStage(key);
-    setTimeout(() => ctx.next(), 220);
-  };
-  return (
-    <ScreenScaffold
-      header={<ProgressHeader step={1} onBack={ctx.prev} />}
-      footer={<div style={{ textAlign: "center", fontSize: 12, color: "#9a8cd0" }}>고르면 다음으로 자동 이동해요</div>}
-    >
-      <QuestionHead hanja="状" title={<>지금, 인생의<br />어느 길목에 계신가요?</>} sub="한 가지만 골라 주세요" />
-      <div className="mt-7 flex flex-col gap-[11px]">
-        {LIFE_STAGES.map((s) => (
-          <OptionRow
-            key={s.key}
-            selected={ctx.state.lifeStage === s.key}
-            label={s.label}
-            onClick={() => pick(s.key)}
-            trailing={ctx.state.lifeStage === s.key ? <span style={{ fontSize: 16 }}>›</span> : undefined}
-          />
-        ))}
-      </div>
-    </ScreenScaffold>
-  );
-}
-
-// ③-B 惑 · 고민 (복수, 최소 1)
+// ③-B 惑 · 고민 (복수, 최소 1) — 첫 화면
 export function ConcernsScreen({ ctx }: { ctx: FunnelCtx }) {
   const has = ctx.state.concerns.length > 0;
   return (
     <ScreenScaffold
-      header={<ProgressHeader step={2} onBack={ctx.prev} />}
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={
         <>
           <div className="mb-3">
@@ -181,7 +154,7 @@ export function ConcernsScreen({ ctx }: { ctx: FunnelCtx }) {
 export function SituationScreen({ ctx }: { ctx: FunnelCtx }) {
   return (
     <ScreenScaffold
-      header={<ProgressHeader step={3} onBack={ctx.prev} />}
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={
         <>
           <PrimaryCTA label="다음" onClick={ctx.next} />
@@ -210,7 +183,7 @@ export function SituationScreen({ ctx }: { ctx: FunnelCtx }) {
 export function WishScreen({ ctx }: { ctx: FunnelCtx }) {
   return (
     <ScreenScaffold
-      header={<ProgressHeader step={4} onBack={ctx.prev} />}
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={
         <>
           <PrimaryCTA label="다음" onClick={ctx.next} />
@@ -241,7 +214,7 @@ export function ProfileScreen({ ctx }: { ctx: FunnelCtx }) {
   const ready = !!p.gender && !!p.birthDate && !!p.calendar;
   return (
     <ScreenScaffold
-      header={<ProgressHeader step={5} onBack={ctx.prev} />}
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={<PrimaryCTA label="입력 확인하기" onClick={ctx.next} disabled={!ready} />}
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 23, lineHeight: 1.3 }}>
@@ -278,30 +251,29 @@ export function ProfileScreen({ ctx }: { ctx: FunnelCtx }) {
             style={{ ...frostedInputStyle, colorScheme: "dark" }}
           />
         </div>
-        <div className="flex gap-2.5">
-          <div className="flex-1">
-            <FieldLabel required>양/음력</FieldLabel>
-            <SegmentToggle<Calendar>
-              compact
-              options={[{ key: "solar", label: "양" }, { key: "lunar", label: "음" }]}
-              value={p.calendar}
-              onChange={(v) => ctx.setProfile("calendar", v)}
-            />
-          </div>
-          <div className="flex-1">
-            <FieldLabel>태어난 시각</FieldLabel>
-            <select
-              value={p.birthTime}
-              disabled={p.unknownTime}
-              onChange={(e) => ctx.setProfile("birthTime", e.target.value)}
-              style={{ ...frostedInputStyle, padding: 9, fontSize: 13, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark" }}
-            >
-              <option value="">선택</option>
-              {SIJU.map((s) => (
-                <option key={s.v} value={s.v}>{s.label}</option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <FieldLabel required>양/음력</FieldLabel>
+          <SegmentToggle<Calendar>
+            options={[{ key: "solar", label: "양력" }, { key: "lunar", label: "음력" }]}
+            value={p.calendar}
+            onChange={(v) => ctx.setProfile("calendar", v)}
+          />
+        </div>
+        <div>
+          <FieldLabel>태어난 시각</FieldLabel>
+          <select
+            value={p.birthTime}
+            disabled={p.unknownTime}
+            onChange={(e) => ctx.setProfile("birthTime", e.target.value)}
+            style={{ ...frostedInputStyle, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark", accentColor: "#8a5cf0" }}
+          >
+            <option value="" style={{ background: "#1b0d3c", color: "#9a8cd0" }}>시간 선택 (모르면 아래 체크)</option>
+            {SIJU.map((s) => (
+              <option key={s.v} value={s.v} style={{ background: "#1b0d3c", color: "#F1EEF9" }}>
+                {s.label}
+              </option>
+            ))}
+          </select>
         </div>
         <button
           type="button"
@@ -326,14 +298,13 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   const { state } = ctx;
   const p = state.profile;
   const rows: { label: string; value: string; to: Parameters<typeof ctx.goTo>[0] }[] = [
-    { label: "인생 단계", value: lifeStageShort(state.lifeStage) || "선택 안 함", to: "state" },
     { label: "고민", value: state.concerns.map(concernShort).join(" · ") || "선택 안 함", to: "concerns" },
     { label: "생년월일", value: p.birthDate ? p.birthDate.replace(/-/g, ".") : "—", to: "profile" },
     { label: "성별 · 달력", value: `${p.gender === "M" ? "남" : p.gender === "F" ? "여" : "—"} · ${p.calendar === "lunar" ? "음력" : "양력"}`, to: "profile" },
   ];
   return (
     <ScreenScaffold
-      header={<ProgressHeader step={6} onBack={ctx.prev} />}
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={<PrimaryCTA label="무료 기본 분석 받기" onClick={ctx.next} />}
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>이대로 분석할게요</div>
@@ -537,6 +508,20 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
     }
   };
 
+  // 결제 페이지에서 선택적으로 카카오 로그인(결과를 계정에 저장). 로그인 안 해도 결제 가능.
+  const loginKakao = async () => {
+    if (!isSupabaseConfigured()) return;
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/funnel` },
+      });
+    } catch {
+      toast.error("카카오 로그인을 시작하지 못했어요");
+    }
+  };
+
   return (
     <ScreenScaffold
       header={
@@ -585,6 +570,16 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
           </div>
         ))}
       </div>
+      {!ctx.isAuthed && (
+        <button
+          type="button"
+          onClick={loginKakao}
+          className="mt-5 flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
+          style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(180,140,255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        >
+          💬 카카오로 로그인 <span style={{ color: "#9a8cd0", fontWeight: 500 }}>· 결과 저장(선택)</span>
+        </button>
+      )}
     </ScreenScaffold>
   );
 }
