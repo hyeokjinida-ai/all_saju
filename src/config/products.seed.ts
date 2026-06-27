@@ -64,7 +64,7 @@ export const productsSeed: ProductSeed[] = [
     slug: "premium-saju",
     name: "인생 종합 풀이",
     description: "내 인생의 큰 그림 전부 — 재물·직업·관계·건강에 대운 60년 흐름까지, 가장 깊은 종합 풀이",
-    price: 49900,
+    price: 15900,
     display_order: 50,
     is_active: true,
   },

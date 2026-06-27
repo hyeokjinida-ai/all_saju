@@ -467,6 +467,14 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
 
 // ⑦ 결제 — 옵션(상품) 선택형. 기본 6,900 / 회원 −1,900(표시) / 비회원 이메일.
 // 주문 생성(/api/orders/create) → 체크아웃. ⚠️ 실제 할인 차감·이메일 저장은 주문 API 후속(현재 contract 미지원).
+// 옵션 카드 설명·추천 배지(slug별). 가짜 할인앵커는 쓰지 않음(과장/표시광고법 금지).
+const PAY_META: Record<string, { desc: string; badge?: string }> = {
+  "life-saju": { desc: "내 사주 핵심 · 올해 흐름 · 고민 답" },
+  "wealth-saju": { desc: "돈 들어오는 길 · 새는 구멍 · 재물 시기" },
+  "love-saju": { desc: "부부·연애·자녀, 관계 패턴과 인연" },
+  "monthly-luck": { desc: "2026 월별 좋은 달 · 조심할 달" },
+  "premium-saju": { desc: "전 영역 + 대운 60년 흐름까지", badge: "추천" },
+};
 export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -568,20 +576,36 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>전체 풀이 한 번에</div>
 
+      {/* 회원 할인 안내 배지 (실제 할인만) */}
+      {!ctx.isAuthed && (
+        <div className="mt-4 inline-flex items-center gap-1.5" style={{ padding: "7px 13px", borderRadius: 999, background: "rgba(255,143,168,.14)", border: "1px solid rgba(255,143,168,.4)", fontSize: 12, fontWeight: 700, color: "#ffb3c4" }}>
+          🎁 회원가입하면 <b style={{ color: "#fff" }}>1,900원 할인</b>
+        </div>
+      )}
+
       {/* 옵션 선택 */}
-      <div className="mt-4 flex flex-col gap-2.5">
+      <div className="mt-3 flex flex-col gap-2.5">
         {options.map((o) => {
           const on = o.id === sel?.id;
+          const m = PAY_META[o.slug];
           return (
             <button
               key={o.id}
               type="button"
               onClick={() => setSelId(o.id)}
               className="w-full text-left transition-transform active:scale-[0.99]"
-              style={{ padding: "15px 16px", borderRadius: 16, background: on ? "rgba(150,90,255,.18)" : "rgba(255,255,255,.05)", border: on ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)", cursor: "pointer" }}
+              style={{ padding: "14px 16px", borderRadius: 16, background: on ? "rgba(150,90,255,.18)" : "rgba(255,255,255,.05)", border: on ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)", cursor: "pointer", boxShadow: on ? "0 8px 22px rgba(120,60,240,.28)" : "none" }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span style={{ fontSize: 14.5, fontWeight: 700, color: on ? "#fff" : "#cbb8f0" }}>{o.name}</span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontSize: 14.5, fontWeight: 700, color: on ? "#fff" : "#e6dbff" }}>{o.name}</span>
+                    {m?.badge && (
+                      <span style={{ fontSize: 10, fontWeight: 800, color: "#241047", background: "#c9a8ff", borderRadius: 6, padding: "2px 6px", flex: "none" }}>{m.badge}</span>
+                    )}
+                  </div>
+                  {m?.desc && <div style={{ marginTop: 4, fontSize: 11.5, color: "#9a8cd0", lineHeight: 1.4 }}>{m.desc}</div>}
+                </div>
                 <span style={{ fontSize: 17, fontWeight: 800, color: on ? "#fff" : "#dcc8ff", flex: "none" }}>{formatKRW(o.price)}</span>
               </div>
             </button>
