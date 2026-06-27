@@ -300,6 +300,7 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   const rows: { label: string; value: string; to: Parameters<typeof ctx.goTo>[0] }[] = [
     { label: "고민", value: state.concerns.map(concernShort).join(" · ") || "선택 안 함", to: "concerns" },
     { label: "생년월일", value: p.birthDate ? p.birthDate.replace(/-/g, ".") : "—", to: "profile" },
+    { label: "태어난 시각", value: p.unknownTime ? "모름 (시 제외)" : p.birthTime ? SIJU.find((s) => s.v === p.birthTime)?.label ?? p.birthTime : "선택 안 함", to: "profile" },
     { label: "성별 · 달력", value: `${p.gender === "M" ? "남" : p.gender === "F" ? "여" : "—"} · ${p.calendar === "lunar" ? "음력" : "양력"}`, to: "profile" },
   ];
   return (
