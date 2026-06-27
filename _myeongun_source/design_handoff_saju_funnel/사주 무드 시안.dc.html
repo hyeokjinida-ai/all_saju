@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Nanum+Brush+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  .serif{font-family:'Gowun Batang',serif}
+  .brush{font-family:'Nanum Brush Script',cursive;font-weight:400}
+  .myung{font-family:'Song Myung',serif}
+  .sans{font-family:'Pretendard',-apple-system,sans-serif}
+  .glow{position:relative;overflow:hidden}
+  .glow::before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(138,107,242,.32),transparent 68%);top:-90px;right:-70px;pointer-events:none}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5}
+  .gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(225,193,123,.55),transparent)}
+  .phone{background:#13152A;border:1px solid #2C2F52;border-radius:30px;box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);width:100%;box-sizing:border-box;overflow:hidden}
+</style>
+</helmet>
+
+<div style="position:absolute;left:80px;top:40px;width:900px">
+  <div class="serif" style="font-weight:700;font-size:40px;color:#1c1c28">사주 감성 무드 시안</div>
+  <div class="sans" style="font-size:16px;color:#6b6880;margin-top:4px">밤하늘 · 먹과 금 · 자수정 빛. 고요하고 신비롭지만, 따뜻한 상담가의 목소리.</div>
+</div>
+
+<!-- ===== STYLE TILE ===== -->
+<div style="position:absolute;left:80px;top:130px;width:560px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">스타일 타일</div>
+  <div class="glow" style="background:linear-gradient(160deg,#0E1020,#15172E 60%,#1A1430);border-radius:24px;padding:30px 30px 34px;box-shadow:0 24px 60px rgba(0,0,0,.4)">
+    <div class="star" style="top:40px;left:120px"></div><div class="star" style="top:70px;left:300px;opacity:.7"></div><div class="star" style="top:30px;left:430px;opacity:.4"></div><div class="star" style="top:110px;left:240px;opacity:.35"></div>
+    <!-- 브랜드 디스플레이 -->
+    <div class="brush" style="font-size:74px;color:#F1EEF9;line-height:.9">명운봄</div>
+    <div class="serif" style="font-size:17px;color:#E1C17B;margin-top:8px;letter-spacing:.04em">命運 — 당신의 운을 읽다</div>
+
+    <div class="gold-line" style="margin:26px 0"></div>
+
+    <!-- 팔레트 -->
+    <div class="sans" style="font-size:12px;font-weight:600;color:#8E8BA8;letter-spacing:.08em;margin-bottom:12px">PALETTE</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="text-align:center"><div style="width:54px;height:54px;border-radius:14px;background:#0E1020;border:1px solid #2C2F52"></div><div class="sans" style="font-size:10px;color:#8E8BA8;margin-top:5px">깊은 밤</div></div>
+      <div style="text-align:center"><div style="width:54px;height:54px;border-radius:14px;background:#1B1E36;border:1px solid #2C2F52"></div><div class="sans" style="font-size:10px;color:#8E8BA8;margin-top:5px">먹빛 표면</div></div>
+      <div style="text-align:center"><div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#E7C27D,#C9974A)"></div><div class="sans" style="font-size:10px;color:#8E8BA8;margin-top:5px">금</div></div>
+      <div style="text-align:center"><div style="width:54px;height:54px;border-radius:14px;background:#8A6BF2"></div><div class="sans" style="font-size:10px;color:#8E8BA8;margin-top:5px">자수정</div></div>
+      <div style="text-align:center"><div style="width:54px;height:54px;border-radius:14px;background:#4D8BFF"></div><div class="sans" style="font-size:10px;color:#8E8BA8;margin-top:5px">별빛 블루</div></div>
+    </div>
+    <!-- 오행 5색 -->
+    <div class="sans" style="font-size:12px;font-weight:600;color:#8E8BA8;letter-spacing:.08em;margin:22px 0 12px">오행 (五行)</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;text-align:center"><div style="height:38px;border-radius:10px;background:#5BA877"></div><div class="serif" style="font-size:13px;color:#C9C6DC;margin-top:6px">木</div></div>
+      <div style="flex:1;text-align:center"><div style="height:38px;border-radius:10px;background:#C75C4A"></div><div class="serif" style="font-size:13px;color:#C9C6DC;margin-top:6px">火</div></div>
+      <div style="flex:1;text-align:center"><div style="height:38px;border-radius:10px;background:#C99A52"></div><div class="serif" style="font-size:13px;color:#C9C6DC;margin-top:6px">土</div></div>
+      <div style="flex:1;text-align:center"><div style="height:38px;border-radius:10px;background:#C9C9D6"></div><div class="serif" style="font-size:13px;color:#C9C6DC;margin-top:6px">金</div></div>
+      <div style="flex:1;text-align:center"><div style="height:38px;border-radius:10px;background:#4F7CC2"></div><div class="serif" style="font-size:13px;color:#C9C6DC;margin-top:6px">水</div></div>
+    </div>
+
+    <div class="gold-line" style="margin:26px 0"></div>
+
+    <!-- 타이포 -->
+    <div class="sans" style="font-size:12px;font-weight:600;color:#8E8BA8;letter-spacing:.08em;margin-bottom:14px">TYPE</div>
+    <div class="brush" style="font-size:40px;color:#F1EEF9;line-height:1.15">올해, 당신의 사주는<br>무엇을 말할까요</div>
+    <div class="serif" style="font-size:12px;color:#8E8BA8;margin-top:6px">Nanum Brush Script · 감성 헤드라인 (붓글씨 캘리그래피)</div>
+    <div class="sans" style="font-size:14px;color:#C9C6DC;margin-top:16px;line-height:1.6">본문은 Pretendard로 또렷하게. 차분하고 신뢰감 있게, 상담가가 곁에서 짚어주듯 읽혀요.</div>
+    <div class="sans" style="font-size:12px;color:#8E8BA8;margin-top:4px">Pretendard · 본문 / UI</div>
+
+    <div class="gold-line" style="margin:26px 0"></div>
+
+    <!-- 무드 키워드 -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 14px;font-size:12px">신비롭지만 차분한</div>
+      <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 14px;font-size:12px">따뜻한 빛</div>
+      <div class="sans" style="border:1px solid #5A4A2E;color:#E1C17B;border-radius:999px;padding:7px 14px;font-size:12px">금빛 포인트</div>
+      <div class="sans" style="border:1px solid #4A3A6E;color:#B7A0F5;border-radius:999px;padding:7px 14px;font-size:12px">상담가의 목소리</div>
+      <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 14px;font-size:12px">고요한 여백</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LANDING ===== -->
+<div style="position:absolute;left:700px;top:130px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">① 랜딩 (감성)</div>
+  <div class="phone">
+    <div class="glow" style="padding:0">
+      <!-- hero -->
+      <div style="background:linear-gradient(180deg,#161228,#13152A);padding:26px 22px 30px;position:relative">
+        <div class="star" style="top:30px;left:50px"></div><div class="star" style="top:54px;left:230px;opacity:.7"></div><div class="star" style="top:90px;left:140px;opacity:.4"></div>
+        <div style="display:flex;justify-content:center;margin-bottom:18px"><div class="brush" style="font-size:30px;color:#E1C17B;line-height:1">명운봄</div></div>
+        <!-- 달/원 모티프 -->
+        <div style="width:96px;height:96px;border-radius:50%;margin:6px auto 18px;background:radial-gradient(circle at 38% 35%,#3A2E5E,#171430);box-shadow:0 0 50px rgba(138,107,242,.45),inset 0 0 30px rgba(225,193,123,.18);border:1px solid #4A3A6E"></div>
+        <div class="brush" style="font-size:38px;color:#F1EEF9;text-align:center;line-height:1.15">올해, 당신의 사주는<br>무엇을 말할까요</div>
+        <div class="sans" style="font-size:13px;color:#9C99B5;text-align:center;margin-top:10px">3분이면 끝나는 무료 기본 분석</div>
+        <div class="sans" style="margin-top:20px;background:linear-gradient(135deg,#E7C27D,#C9974A);color:#241a08;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px;box-shadow:0 8px 24px rgba(201,151,74,.35)">내 사주 무료로 확인하기</div>
+        <div class="sans" style="font-size:11px;color:#8E8BA8;text-align:center;margin-top:12px">★★★★★ 4.9 · 누적 12,800명이 받았어요</div>
+      </div>
+      <div class="gold-line"></div>
+      <!-- 받을 것 -->
+      <div style="background:#13152A;padding:24px 22px">
+        <div class="serif" style="font-size:18px;color:#F1EEF9;font-weight:700;margin-bottom:14px">이런 이야기를 들려드려요</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:12px;align-items:flex-start"><div class="serif" style="color:#E1C17B;font-size:15px;flex:none">壹</div><div><div class="sans" style="font-size:13.5px;color:#E8E6F2;font-weight:600">타고난 기질과 성향</div><div class="sans" style="font-size:12px;color:#8E8BA8;margin-top:2px">사주팔자가 말하는 나라는 사람</div></div></div>
+          <div style="display:flex;gap:12px;align-items:flex-start"><div class="serif" style="color:#E1C17B;font-size:15px;flex:none">貳</div><div><div class="sans" style="font-size:13.5px;color:#E8E6F2;font-weight:600">올해의 흐름과 운</div><div class="sans" style="font-size:12px;color:#8E8BA8;margin-top:2px">재물 · 연애 · 직업의 결</div></div></div>
+          <div style="display:flex;gap:12px;align-items:flex-start"><div class="serif" style="color:#E1C17B;font-size:15px;flex:none">參</div><div><div class="sans" style="font-size:13.5px;color:#E8E6F2;font-weight:600">내 고민에 대한 답</div><div class="sans" style="font-size:12px;color:#8E8BA8;margin-top:2px">"올해 이직해도 될까요?"</div></div></div>
+        </div>
+      </div>
+      <!-- 후기 -->
+      <div style="background:#15172E;padding:22px;border-top:1px solid #24264A">
+        <div style="background:#1B1E38;border:1px solid #2C2F52;border-radius:16px;padding:15px">
+          <div class="sans" style="font-size:12px;color:#E1C17B">★★★★★</div>
+          <div class="serif" style="font-size:14px;color:#D8D5E6;margin-top:8px;line-height:1.5">"성향 부분 읽다가 소름 돋았어요. 따뜻하게 짚어줘서 위로받는 느낌."</div>
+          <div class="sans" style="font-size:11px;color:#8E8BA8;margin-top:8px">— 회원님 · 30대</div>
+        </div>
+        <div class="sans" style="margin-top:18px;text-align:center;font-size:12px;color:#6FBE8B">제작·발송 전 100% 환불 보장</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 무료 기본 분석 ===== -->
+<div style="position:absolute;left:1080px;top:130px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">④ 무료 기본 분석 (감성)</div>
+  <div class="phone">
+    <div style="padding:24px 22px;background:#13152A">
+      <div class="sans" style="font-size:12px;color:#8E8BA8">회원님의 사주</div>
+      <div class="brush" style="font-size:36px;color:#F1EEF9;margin-top:6px;line-height:1.1">하늘이 내린 당신의<br>여덟 글자</div>
+
+      <!-- 사주팔자 차트 -->
+      <div class="glow" style="margin-top:20px;background:linear-gradient(160deg,#181530,#15172E);border:1px solid #2C2F52;border-radius:18px;padding:18px 14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div class="sans" style="text-align:center;font-size:10px;color:#8E8BA8">시</div><div class="sans" style="text-align:center;font-size:10px;color:#8E8BA8">일</div><div class="sans" style="text-align:center;font-size:10px;color:#8E8BA8">월</div><div class="sans" style="text-align:center;font-size:10px;color:#8E8BA8">년</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">癸</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#241a08;background:linear-gradient(135deg,#E7C27D,#C9974A);border-radius:10px;box-shadow:0 0 18px rgba(225,193,123,.4)">甲</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">己</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">乙</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">亥</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">子</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">卯</div>
+          <div class="serif" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8E6F2;background:#1E2140;border:1px solid #343865;border-radius:10px">未</div>
+        </div>
+      </div>
+
+      <!-- 오행 -->
+      <div class="serif" style="font-size:15px;color:#E8E6F2;font-weight:700;margin:22px 0 12px">오행의 균형</div>
+      <div style="display:flex;align-items:flex-end;gap:10px;height:72px;padding:0 6px">
+        <div style="flex:1;text-align:center"><div style="height:46px;background:#5BA877;border-radius:5px 5px 0 0;box-shadow:0 0 14px rgba(91,168,119,.4)"></div><div class="serif" style="font-size:12px;color:#9C99B5;margin-top:6px">木</div></div>
+        <div style="flex:1;text-align:center"><div style="height:64px;background:#C75C4A;border-radius:5px 5px 0 0;box-shadow:0 0 14px rgba(199,92,74,.4)"></div><div class="serif" style="font-size:12px;color:#9C99B5;margin-top:6px">火</div></div>
+        <div style="flex:1;text-align:center"><div style="height:28px;background:#C99A52;border-radius:5px 5px 0 0"></div><div class="serif" style="font-size:12px;color:#9C99B5;margin-top:6px">土</div></div>
+        <div style="flex:1;text-align:center"><div style="height:18px;background:#C9C9D6;border-radius:5px 5px 0 0"></div><div class="serif" style="font-size:12px;color:#9C99B5;margin-top:6px">金</div></div>
+        <div style="flex:1;text-align:center"><div style="height:38px;background:#4F7CC2;border-radius:5px 5px 0 0;box-shadow:0 0 14px rgba(79,124,194,.4)"></div><div class="serif" style="font-size:12px;color:#9C99B5;margin-top:6px">水</div></div>
+      </div>
+
+      <!-- 성향 한 줄 -->
+      <div style="margin-top:22px;background:#1B1E38;border:1px solid #2C2F52;border-radius:16px;padding:16px">
+        <div class="sans" style="font-size:11px;color:#E1C17B;font-weight:600">일주가 말하는 당신</div>
+        <div class="serif" style="font-size:15px;color:#E8E6F2;margin-top:8px;line-height:1.55">불의 기운이 강해, 한번 마음먹으면 끝을 보는 사람. 그 열정이 올해 빛을 봅니다.</div>
+      </div>
+
+      <!-- 잠긴 -->
+      <div class="sans" style="font-size:11px;color:#8E8BA8;margin:20px 0 10px">아직 절반의 이야기가 남아 있어요</div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:#181530;border:1px solid #2C2F52;border-radius:14px;padding:14px;position:relative;overflow:hidden">
+          <div style="height:8px;width:80%;background:#2C2F52;border-radius:5px;filter:blur(2px);margin-bottom:7px"></div><div style="height:8px;width:55%;background:#2C2F52;border-radius:5px;filter:blur(2px)"></div>
+          <div style="position:absolute;top:10px;right:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1C17B" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <div class="sans" style="font-size:11px;color:#9C99B5;margin-top:8px">올해 운세</div>
+        </div>
+        <div style="flex:1;background:#181530;border:1px solid #2C2F52;border-radius:14px;padding:14px;position:relative;overflow:hidden">
+          <div style="height:8px;width:75%;background:#2C2F52;border-radius:5px;filter:blur(2px);margin-bottom:7px"></div><div style="height:8px;width:65%;background:#2C2F52;border-radius:5px;filter:blur(2px)"></div>
+          <div style="position:absolute;top:10px;right:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1C17B" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <div class="sans" style="font-size:11px;color:#9C99B5;margin-top:8px">재물 · 연애 · 직업</div>
+        </div>
+      </div>
+
+      <div class="sans" style="margin-top:20px;background:linear-gradient(135deg,#E7C27D,#C9974A);color:#241a08;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px;box-shadow:0 8px 24px rgba(201,151,74,.3)">전체 풀이 보기 · ₩6,900</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 업셀 ===== -->
+<div style="position:absolute;left:1460px;top:130px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">⑥ 업셀 (감성)</div>
+  <div style="background:#07060F;border-radius:30px;padding:48px 12px 12px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div class="phone glow" style="border-radius:24px">
+      <div style="padding:24px 22px 26px;position:relative">
+        <div class="star" style="top:30px;left:40px"></div><div class="star" style="top:60px;left:220px;opacity:.6"></div>
+        <div style="width:44px;height:5px;border-radius:3px;background:#2C2F52;margin:0 auto 22px"></div>
+        <div class="sans" style="display:inline-block;background:rgba(138,107,242,.15);border:1px solid #4A3A6E;color:#B7A0F5;border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600">단 한 번만 보이는 제안</div>
+        <div class="brush" style="font-size:38px;color:#F1EEF9;margin-top:14px;line-height:1.1">방금 본 이야기,<br>끝까지 들어보실래요?</div>
+        <div class="sans" style="font-size:13px;color:#9C99B5;margin-top:10px;line-height:1.6">요약만으론 아쉬운 깊은 결까지, 풀버전으로 정성껏 풀어드려요.</div>
+
+        <div style="margin-top:20px;background:linear-gradient(160deg,#1C1838,#191530);border:1px solid #4A3A6E;border-radius:18px;padding:18px">
+          <div class="serif" style="font-size:16px;color:#B7A0F5;font-weight:700;margin-bottom:14px">심화 풀버전</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:10px;align-items:center"><div class="serif" style="color:#E1C17B;font-size:13px">◆</div><div class="sans" style="font-size:13px;color:#D8D5E6">재물 · 연애 · 직업운 상세</div></div>
+            <div style="display:flex;gap:10px;align-items:center"><div class="serif" style="color:#E1C17B;font-size:13px">◆</div><div class="sans" style="font-size:13px;color:#D8D5E6">대운 — 인생의 큰 줄기</div></div>
+            <div style="display:flex;gap:10px;align-items:center"><div class="serif" style="color:#E1C17B;font-size:13px">◆</div><div class="sans" style="font-size:13px;color:#D8D5E6">고민에 대한 맞춤 조언</div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:baseline;gap:10px;margin-top:20px">
+          <span class="sans" style="text-decoration:line-through;color:#6B6880;font-size:14px">₩29,900</span>
+          <span class="serif" style="font-size:26px;color:#E1C17B;font-weight:700">₩19,900</span>
+          <span class="sans" style="background:rgba(225,193,123,.14);color:#E1C17B;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600">지금만</span>
+        </div>
+
+        <div class="sans" style="margin-top:18px;background:linear-gradient(135deg,#8A6BF2,#6541F2);color:#fff;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px;box-shadow:0 10px 26px rgba(138,107,242,.4)">네, 풀버전으로 받을게요</div>
+        <div class="sans" style="text-align:center;font-size:13px;color:#8E8BA8;margin-top:14px;font-weight:600">괜찮아요, 기본만 받을게요</div>
+        <div class="sans" style="text-align:center;font-size:11px;color:#6B6880;margin-top:12px">거절해도 ₩6,900 기본 리포트는 정상 전달돼요</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ROW 2 HEADER ===== -->
+<div class="brush" style="position:absolute;left:80px;top:840px;font-size:34px;color:#1c1c28">결제 · 전달 · 재유입 루프</div>
+
+<!-- ===== ② 카카오 로그인 ===== -->
+<div style="position:absolute;left:80px;top:900px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">② 카카오 로그인</div>
+  <div class="phone glow">
+    <div style="padding:34px 24px 26px;position:relative">
+      <div class="star" style="top:30px;left:60px"></div><div class="star" style="top:64px;left:240px;opacity:.6"></div>
+      <div style="display:flex;justify-content:center;margin-top:10px">
+        <svg width="40" height="40" viewBox="0 0 64 64"><path d="M44 12 A24 24 0 1 0 44 52 A19 19 0 1 1 44 12 Z" fill="#E7C27D"/></svg>
+      </div>
+      <div class="brush" style="font-size:30px;color:#E1C17B;text-align:center;margin-top:10px;line-height:1">명운봄</div>
+      <div class="brush" style="font-size:34px;color:#F1EEF9;text-align:center;margin-top:18px;line-height:1.15">3초 만에 시작하고<br>내 사주 받기</div>
+      <div class="sans" style="font-size:13px;color:#9C99B5;text-align:center;margin-top:10px">가입 없이 카카오로 바로 시작해요</div>
+
+      <div class="sans" style="margin-top:26px;display:flex;align-items:center;justify-content:center;gap:9px;background:#FEE500;color:#3c1e1e;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#3c1e1e"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.9 5.3 4.7 6.7-.2.7-.7 2.6-.8 3-.1.5.2.5.4.4.2-.1 2.6-1.8 3.6-2.5.7.1 1.4.2 2.1.2 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg>
+        카카오로 시작하기
+      </div>
+      <div class="sans" style="font-size:11px;color:#8E8BA8;text-align:center;margin-top:12px">재방문이면 입력 정보를 자동으로 불러와요</div>
+
+      <div class="gold-line" style="margin:24px 0"></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:18px;height:18px;border-radius:5px;background:#E7C27D;flex:none;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#241a08" stroke-width="3"><path d="M5 13l4 4 10-11"/></svg></div><div class="sans" style="font-size:11.5px;color:#9C99B5;line-height:1.45"><b style="color:#E8E6F2">[필수]</b> 개인정보 수집·이용 동의 (항목·목적·보유기간)</div></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:18px;height:18px;border-radius:5px;border:1.5px solid #3A3D60;flex:none"></div><div class="sans" style="font-size:11.5px;color:#9C99B5;line-height:1.45"><b style="color:#E8E6F2">[필수]</b> 개인정보 제3자 제공 동의</div></div>
+      </div>
+      <div class="sans" style="font-size:10.5px;color:#6B6880;text-align:center;margin-top:18px;line-height:1.5">로그인 시 이용약관 및 개인정보처리방침에 동의한 것으로 간주합니다</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ③ 정보·고민 입력 ===== -->
+<div style="position:absolute;left:460px;top:900px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">③ 정보·고민 입력</div>
+  <div class="phone">
+    <div style="padding:24px 22px;background:#13152A">
+      <div style="height:5px;border-radius:3px;background:#22253f;overflow:hidden"><div style="width:66%;height:100%;background:linear-gradient(90deg,#E7C27D,#C9974A)"></div></div>
+      <div class="brush" style="font-size:34px;color:#F1EEF9;margin-top:16px;line-height:1.1">사주 정보를<br>알려주세요</div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;margin-top:22px">
+        <div><div class="sans" style="font-size:12px;color:#C9C6DC;font-weight:600;margin-bottom:6px">이름 (호칭) <span style="color:#8E8BA8;font-weight:400">· 선택</span></div><div class="sans" style="background:#1B1E38;border:1px solid #2C2F52;border-radius:11px;padding:11px 12px;font-size:13px;color:#6B6880">비우면 '회원님'으로 불러드려요</div></div>
+        <div><div class="sans" style="font-size:12px;color:#C9C6DC;font-weight:600;margin-bottom:6px">성별 <span style="color:#C75C4A">*</span></div>
+          <div style="display:flex;gap:9px"><div class="sans" style="flex:1;text-align:center;border:1.5px solid #E7C27D;background:rgba(225,193,123,.1);color:#E7C27D;border-radius:11px;padding:11px;font-size:13px;font-weight:600">남자</div><div class="sans" style="flex:1;text-align:center;border:1px solid #2C2F52;color:#8E8BA8;border-radius:11px;padding:11px;font-size:13px">여자</div></div>
+        </div>
+        <div><div class="sans" style="font-size:12px;color:#C9C6DC;font-weight:600;margin-bottom:6px">생년월일 <span style="color:#C75C4A">*</span></div><div class="sans" style="background:#1B1E38;border:1px solid #2C2F52;border-radius:11px;padding:11px 12px;font-size:13px;color:#C9C6DC;display:flex;justify-content:space-between">1995 · 03 · 14<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E8BA8" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div></div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1"><div class="sans" style="font-size:12px;color:#C9C6DC;font-weight:600;margin-bottom:6px">양/음력</div><div style="display:flex;gap:5px"><div class="sans" style="flex:1;text-align:center;border:1.5px solid #E7C27D;background:rgba(225,193,123,.1);color:#E7C27D;border-radius:9px;padding:8px;font-size:12px;font-weight:600">양</div><div class="sans" style="flex:1;text-align:center;border:1px solid #2C2F52;color:#8E8BA8;border-radius:9px;padding:8px;font-size:12px">음</div></div><div class="sans" style="font-size:10px;color:#6B6880;margin-top:5px">음력 시 윤달 체크</div></div>
+          <div style="flex:1"><div class="sans" style="font-size:12px;color:#C9C6DC;font-weight:600;margin-bottom:6px">태어난 시각</div><div class="sans" style="background:#1B1E38;border:1px solid #2C2F52;border-radius:9px;padding:8px;font-size:12px;color:#8E8BA8;text-align:center">선택 ▾</div><div class="sans" style="display:inline-block;border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:3px 9px;font-size:10px;margin-top:6px">모름 옵션</div></div>
+        </div>
+      </div>
+
+      <!-- 고민 (핵심) -->
+      <div style="margin-top:18px;background:rgba(138,107,242,.1);border:1.5px solid #6541F2;border-radius:14px;padding:13px">
+        <div class="sans" style="font-size:12px;color:#B7A0F5;font-weight:700;margin-bottom:9px">고민 내용 ★ 개인화 핵심</div>
+        <div class="serif" style="background:#13152A;border:1px solid #3A2F5E;border-radius:10px;padding:11px;color:#6B6880;font-size:13px;line-height:1.6;height:56px">예: 올해 이직해도 될까요?<br>지금 사람과 잘 맞을까요?</div>
+      </div>
+
+      <div style="display:flex;gap:9px;align-items:center;margin-top:16px"><div style="width:18px;height:18px;border-radius:5px;background:#E7C27D;flex:none;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#241a08" stroke-width="3"><path d="M5 13l4 4 10-11"/></svg></div><div class="sans" style="font-size:11.5px;color:#9C99B5"><b style="color:#E8E6F2">[필수]</b> 개인정보 수집·이용 동의</div></div>
+      <div class="sans" style="margin-top:18px;background:linear-gradient(135deg,#E7C27D,#C9974A);color:#241a08;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px;box-shadow:0 8px 24px rgba(201,151,74,.3)">무료 분석 결과 보기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ⑤ 결제 ===== -->
+<div style="position:absolute;left:840px;top:900px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">⑤ 결제 · ₩6,900</div>
+  <div class="phone">
+    <div style="padding:24px 22px;background:#13152A">
+      <div class="brush" style="font-size:34px;color:#F1EEF9;line-height:1.1">마지막 한 걸음</div>
+      <div class="sans" style="font-size:13px;color:#9C99B5;margin-top:6px">전체 풀이를 바로 받아보세요</div>
+
+      <div style="margin-top:20px;background:#1B1E38;border:1px solid #2C2F52;border-radius:16px;padding:16px">
+        <div class="sans" style="font-size:12px;color:#8E8BA8;margin-bottom:10px">주문 요약</div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="sans" style="font-size:14px;color:#E8E6F2;font-weight:600">사주 리포트 (단일)</span><span class="serif" style="font-size:18px;color:#E1C17B;font-weight:700">₩6,900</span></div>
+        <div class="sans" style="font-size:11px;color:#8E8BA8;margin-top:6px">핵심 사주 · 성향 · 올해 운세 요약 · 고민 답</div>
+      </div>
+
+      <div class="serif" style="font-size:14px;color:#E8E6F2;font-weight:700;margin:22px 0 12px">간편결제</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;gap:9px"><div class="sans" style="flex:1;background:#FEE500;color:#3c1e1e;border-radius:11px;padding:12px;text-align:center;font-size:13px;font-weight:700">카카오페이</div><div class="sans" style="flex:1;background:#03c75a;color:#fff;border-radius:11px;padding:12px;text-align:center;font-size:13px;font-weight:700">네이버페이</div></div>
+        <div style="display:flex;gap:9px"><div class="sans" style="flex:1;background:#3182f6;color:#fff;border-radius:11px;padding:12px;text-align:center;font-size:13px;font-weight:700">토스페이</div><div class="sans" style="flex:1;border:1px solid #2C2F52;color:#C9C6DC;border-radius:11px;padding:12px;text-align:center;font-size:13px;font-weight:600">카드 결제</div></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:11px;margin-top:20px">
+        <div style="display:flex;gap:9px;align-items:center"><div style="width:18px;height:18px;border-radius:5px;background:#E7C27D;flex:none;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#241a08" stroke-width="3"><path d="M5 13l4 4 10-11"/></svg></div><div class="sans" style="font-size:11.5px;color:#9C99B5"><b style="color:#E8E6F2">[필수]</b> 결제 진행 및 약관 동의</div></div>
+        <div style="display:flex;gap:9px;align-items:center"><div style="width:18px;height:18px;border-radius:5px;background:#E7C27D;flex:none;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#241a08" stroke-width="3"><path d="M5 13l4 4 10-11"/></svg></div><div class="sans" style="font-size:11.5px;color:#9C99B5"><b style="color:#E8E6F2">[필수]</b> 청약철회 제한 고지 확인</div></div>
+      </div>
+
+      <div style="margin-top:18px;background:rgba(225,193,123,.08);border:1px solid #5A4A2E;border-radius:12px;padding:11px"><div class="sans" style="font-size:11px;color:#C9C6DC;line-height:1.5">디지털 콘텐츠 특성상, <b style="color:#E1C17B">제작·발송 전 전액 환불</b> / 발송 후 환불이 제한됩니다.</div></div>
+
+      <div class="sans" style="margin-top:18px;background:linear-gradient(135deg,#E7C27D,#C9974A);color:#241a08;font-weight:700;font-size:16px;text-align:center;padding:16px;border-radius:14px;box-shadow:0 8px 24px rgba(201,151,74,.3)">₩6,900 결제하기</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ⑦ 완료 & 전달 ===== -->
+<div style="position:absolute;left:1220px;top:900px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">⑦ 완료 &amp; 전달</div>
+  <div class="phone glow">
+    <div style="padding:30px 22px 26px;position:relative">
+      <div class="star" style="top:26px;left:50px"></div><div class="star" style="top:50px;left:250px;opacity:.6"></div>
+      <div style="display:flex;justify-content:center;margin-top:8px"><div style="width:66px;height:66px;border-radius:50%;background:rgba(225,193,123,.12);border:1.5px solid #E7C27D;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(225,193,123,.3)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#E7C27D" stroke-width="3"><path d="M5 13l4 4 10-11"/></svg></div></div>
+      <div class="brush" style="font-size:36px;color:#F1EEF9;text-align:center;margin-top:14px;line-height:1.05">결제가 완료됐어요</div>
+      <div class="sans" style="font-size:13px;color:#9C99B5;text-align:center;margin-top:8px">리포트를 정성껏 제작 중이에요</div>
+
+      <div style="margin-top:22px;background:rgba(77,139,255,.1);border:1px solid #2E3E66;border-radius:14px;padding:14px">
+        <div class="sans" style="font-size:13px;color:#7FB0FF;font-weight:700;margin-bottom:5px">3시간 내 카톡으로 발송</div>
+        <div class="sans" style="font-size:12px;color:#9C99B5;line-height:1.5">완성되면 카카오 알림톡 + 이메일로 보내드려요</div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#E7C27D;flex:none"></div><span class="sans" style="font-size:13px;color:#E8E6F2">결제 완료</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;background:#8A6BF2;flex:none;box-shadow:0 0 10px rgba(138,107,242,.6)"></div><span class="sans" style="font-size:13px;color:#E8E6F2">리포트 제작 중…</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #3A3D60;flex:none"></div><span class="sans" style="font-size:13px;color:#8E8BA8">발송 완료</span></div>
+      </div>
+
+      <div style="margin-top:20px;background:#1B1E38;border:1px solid #2C2F52;border-radius:14px;padding:14px"><div class="sans" style="font-size:12px;color:#8E8BA8;margin-bottom:8px">내가 입력한 정보</div><div style="height:8px;width:80%;background:#2C2F52;border-radius:5px;margin-bottom:7px"></div><div style="height:8px;width:55%;background:#2C2F52;border-radius:5px"></div></div>
+
+      <div style="margin-top:18px;background:rgba(138,107,242,.1);border:1.5px dashed #6541F2;border-radius:14px;padding:14px"><div class="sans" style="font-size:13px;color:#B7A0F5;font-weight:700;margin-bottom:5px">기다리는 동안…</div><div class="sans" style="font-size:12px;color:#C9C6DC">이 사주로 궁합도 볼 수 있어요 →</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ⑧ 추가 SKU 재유입 ===== -->
+<div style="position:absolute;left:1600px;top:900px;width:320px">
+  <div data-drags-parent="1" style="position:absolute;top:-24px;font:600 13px Pretendard;color:#8a6bf2">⑧ 추가 SKU 재유입</div>
+  <div class="phone">
+    <div style="padding:24px 22px;background:#13152A">
+      <div class="brush" style="font-size:34px;color:#F1EEF9;line-height:1.1">이 사주로<br>더 볼까요?</div>
+      <div class="sans" style="font-size:13px;color:#9C99B5;margin-top:8px">정보를 다시 입력할 필요 없어요</div>
+
+      <!-- 카테고리 탭 (TIGHT 참고) -->
+      <div style="display:flex;gap:8px;margin-top:18px;overflow:hidden">
+        <div class="sans" style="background:#E7C27D;color:#241a08;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;flex:none">전체</div>
+        <div class="sans" style="border:1px solid #2C2F52;color:#9C99B5;border-radius:999px;padding:7px 14px;font-size:12px;flex:none">연애</div>
+        <div class="sans" style="border:1px solid #2C2F52;color:#9C99B5;border-radius:999px;padding:7px 14px;font-size:12px;flex:none">재회</div>
+        <div class="sans" style="border:1px solid #2C2F52;color:#9C99B5;border-radius:999px;padding:7px 14px;font-size:12px;flex:none">재물</div>
+        <div class="sans" style="border:1px solid #2C2F52;color:#9C99B5;border-radius:999px;padding:7px 14px;font-size:12px;flex:none">궁합</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+        <div style="border:1.5px solid #6541F2;border-radius:14px;padding:13px;background:rgba(138,107,242,.08)"><div style="width:34px;height:34px;border-radius:10px;background:rgba(138,107,242,.25);margin-bottom:10px"></div><div class="sans" style="font-size:14px;color:#B7A0F5;font-weight:700">궁합</div><div class="sans" style="font-size:10.5px;color:#8E8BA8;margin:4px 0">1차 출시 · 수요 多</div><div class="serif" style="font-size:16px;color:#E1C17B;font-weight:700">₩9,900</div></div>
+        <div style="border:1px solid #2C2F52;border-radius:14px;padding:13px"><div style="width:34px;height:34px;border-radius:10px;background:#22253f;margin-bottom:10px"></div><div class="sans" style="font-size:14px;color:#E8E6F2;font-weight:700">월별 운세</div><div class="sans" style="font-size:10.5px;color:#8E8BA8;margin:4px 0">반복 구매</div><div class="serif" style="font-size:16px;color:#9C99B5;font-weight:700">₩7,900</div></div>
+        <div style="border:1px solid #2C2F52;border-radius:14px;padding:13px"><div style="width:34px;height:34px;border-radius:10px;background:#22253f;margin-bottom:10px"></div><div class="sans" style="font-size:14px;color:#E8E6F2;font-weight:700">대운 로드맵</div><div class="sans" style="font-size:10.5px;color:#8E8BA8;margin:4px 0">프리미엄</div><div class="serif" style="font-size:16px;color:#9C99B5;font-weight:700">₩29,900</div></div>
+        <div style="border:1px solid #2C2F52;border-radius:14px;padding:13px"><div style="width:34px;height:34px;border-radius:10px;background:#22253f;margin-bottom:10px"></div><div class="sans" style="font-size:14px;color:#E8E6F2;font-weight:700">재회·관계</div><div class="sans" style="font-size:10.5px;color:#8E8BA8;margin:4px 0">감정 수요</div><div class="serif" style="font-size:16px;color:#9C99B5;font-weight:700">₩12,900</div></div>
+      </div>
+
+      <div class="serif" style="font-size:14px;color:#E8E6F2;font-weight:700;margin:22px 0 12px">추천 질문</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 12px;font-size:12px">올해 주의할 점은?</div>
+        <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 12px;font-size:12px">언제 이직이 좋을까?</div>
+        <div class="sans" style="border:1px solid #3A3D60;color:#C9C6DC;border-radius:999px;padding:7px 12px;font-size:12px">재물운이 트이는 때</div>
+      </div>
+
+      <div class="sans" style="margin-top:20px;background:linear-gradient(135deg,#8A6BF2,#6541F2);color:#fff;font-weight:700;font-size:15px;text-align:center;padding:15px;border-radius:14px;box-shadow:0 8px 24px rgba(138,107,242,.35)">궁합 분석 받기 · ₩9,900</div>
+    </div>
+  </div>
+</div>
+
+<!-- post-it -->
+<div style="position:absolute;left:80px;top:1760px;width:560px;background:#1B1E38;border:1px solid #2C2F52;border-radius:16px;padding:18px 20px">
+  <div class="sans" style="font-size:13px;color:#E1C17B;font-weight:700;margin-bottom:8px">이 무드의 핵심</div>
+  <div class="sans" style="font-size:13px;color:#C9C6DC;line-height:1.65">밤하늘 다크 + <b style="color:#E1C17B">금빛 포인트</b>로 점술의 신비로움을, <b style="color:#B7A0F5">명조 세리프</b> 제목으로 감성·전통의 무게를 줍니다. 운세위키식 가성비 경쟁이 아니라 <b style="color:#fff">읽는 맛·상담가의 목소리</b>로 차별화 — PRD §8 차별화 원칙과 맞닿아요. CTA만 금빛/자수정으로 또렷하게 살려 전환은 유지.</div>
+</div>
+
+</x-dc>
+</body>
+</html>

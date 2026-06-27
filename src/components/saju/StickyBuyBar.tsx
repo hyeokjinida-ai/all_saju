@@ -29,7 +29,7 @@ export function StickyBuyBar({ name, price }: { name: string; price: number }) {
         show ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="border-t border-gold bg-[rgba(13,6,8,0.94)] backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
+      <div className="border-t border-gold bg-[rgba(14,16,32,0.94)] backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[11px] text-bone-faint truncate">{name}</div>
           <div className="text-sm text-gold-bright font-bold">{formatKRW(price)}</div>
@@ -38,7 +38,7 @@ export function StickyBuyBar({ name, price }: { name: string; price: number }) {
           href="#start"
           onClick={go}
           className="shrink-0 rounded-md px-5 py-2.5 text-sm font-bold"
-          style={{ background: "linear-gradient(180deg,#e8c878,#d4af6a)", color: "var(--wine-deep)", fontFamily: "'Noto Serif KR', serif" }}
+          style={{ background: "linear-gradient(180deg,#E7C27D,#E1C17B)", color: "var(--wine-deep)", fontFamily: "'Noto Serif KR', serif" }}
         >
           내 사주 풀이 시작 →
         </a>

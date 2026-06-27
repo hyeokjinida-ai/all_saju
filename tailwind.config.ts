@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
-/* 명운록 디자인 시스템 — 다크 와인 + 골드 + 명조체
-   디자인 토큰: src/app/globals.css :root 및 design_handoff_myeongunrok/README.md */
+/* 명운록 디자인 시스템 — 밤하늘 먹빛 + 금 + 자수정 (붓글씨·명조·Pretendard)
+   디자인 토큰: src/app/globals.css :root 및 design_handoff_saju_funnel/README.md */
 const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
@@ -13,7 +13,7 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border) / 0.4)", // 골드 라인 (자동 alpha)
+        border: "hsl(var(--border))", // line/border #2C2F52
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -43,37 +43,49 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
-        // ── 보일러플레이트 alias 재매핑 (Ollama 페이퍼화이트 → 명운록 와인/본/골드) ──
+        // ── 보일러플레이트 alias 재매핑 — 밤하늘 먹빛 + 금 + 자수정 ──
         // 기존 className 그대로 두고 색만 바꿔서 모든 페이지 자동 적용됨
-        ink: "#f0e6d2",                          // was #000 — bone (다크 위 본문 텍스트)
-        canvas: "#3a0d18",                       // was #fff — wine (페이지 배경)
-        "surface-soft": "#4a0e1a",               // was #fafafa — wine-2 (살짝 더 밝은 표면)
-        "surface-dark": "#0d0608",               // was #171717 — night (가장 어두운 배경)
-        charcoal: "#d8cdb6",                     // was #525252 — 짙은 본 (서브 텍스트)
-        body: "rgba(243, 235, 218, 0.88)",       // bone-soft (본문) — 4050 가독성 대비 상향
-        mute: "rgba(243, 235, 218, 0.64)",       // bone-faint (보조) — 대비 상향
-        hairline: "rgba(212, 175, 106, 0.4)",    // was #e5e5e5 — gold-line (구분선)
-        "hairline-strong": "#c2a25f",            // gold-soft (강한 구분선) — 밝게
+        ink: "#F1EEF9",                          // 강조 텍스트
+        canvas: "#13152A",                       // 화면 배경 (screen)
+        "surface-soft": "#1B1E38",               // 카드 표면
+        "surface-dark": "#0E1020",               // 가장 깊은 밤
+        charcoal: "#C9C6DC",                     // 서브 텍스트
+        body: "#D8D5E6",                         // 본문 — 4050 가독성
+        mute: "#9C99B5",                         // 보조 텍스트
+        hairline: "#2C2F52",                     // 카드/입력 테두리
+        "hairline-strong": "#343865",            // 강한 테두리(차트 셀)
 
-        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold 등) ──
-        wine: "#3a0d18",
-        "wine-2": "#4a0e1a",
-        "wine-deep": "#2a0a12",
-        "wine-soft": "#5a1822",
-        night: "#0d0608",
-        "night-2": "#1a0810",
-        "night-3": "#2a0a14",
-        "night-edge": "#050204",
+        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold, text-violet 등) ──
+        // 호환 위해 wine* 이름은 유지하되 값은 먹빛 표면으로 재매핑
+        wine: "#13152A",          // 화면 배경
+        "wine-2": "#1B1E38",      // 카드
+        "wine-deep": "#181530",   // 잠긴 카드·서브
+        "wine-soft": "#1E2140",   // 차트 셀 등 밝은 표면
+        screen: "#13152A",
+        night: "#0E1020",
+        "night-2": "#15172E",
+        "night-3": "#1A1430",
+        "night-edge": "#07060F",
+        divider: "#24264A",
 
-        bone: "#f0e6d2",
-        "bone-soft": "rgba(243, 235, 218, 0.88)", // 4050 가독성 — 본문 대비 상향
-        "bone-faint": "rgba(243, 235, 218, 0.64)", // 보조 텍스트 대비 상향
+        bone: "#F1EEF9",
+        "bone-soft": "#D8D5E6",   // 본문 — 4050 가독성
+        "bone-faint": "#9C99B5",  // 보조 텍스트
 
-        gold: "#d4af6a",
-        "gold-bright": "#e8c878",
-        "gold-soft": "#c2a25f", // 어두운 와인 위 텍스트 대비 상향
-        "gold-pale": "rgba(212, 175, 106, 0.18)",
-        "gold-line": "rgba(212, 175, 106, 0.4)",
+        gold: "#E1C17B",
+        "gold-bright": "#E7C27D",
+        "gold-soft": "#D8C58C",
+        "gold-grad-start": "#E7C27D",
+        "gold-grad-end": "#C9974A",
+        "gold-pale": "rgba(225, 193, 123, 0.14)",
+        "gold-line": "rgba(225, 193, 123, 0.5)",
+
+        // 자수정 (violet) — AI/심화/프리미엄
+        violet: "#8A6BF2",
+        "violet-strong": "#6541F2",
+        "violet-text": "#B7A0F5",
+        "violet-line": "#4A3A6E",
+        "violet-pale": "rgba(138, 107, 242, 0.12)",
 
         seal: "#8b1e1e",
         "seal-dim": "#6e1818",
@@ -84,37 +96,45 @@ const config: Config = {
         brown: "#7d5a3a",
 
         kakao: "#FEE500",
-        "kakao-text": "#191919",
+        "kakao-text": "#3c1e1e",
+        naver: "#03c75a",
+        toss: "#3182f6",
+        success: "#6FBE8B",
+        "star-blue": "#4D8BFF",
 
         // 오행 (五行)
-        "o-wood":  "#4a6b3a",
-        "o-fire":  "#8b1e1e",
-        "o-earth": "#a8896b",
-        "o-metal": "#c9b896",
-        "o-water": "#1f2937",
+        "o-wood":  "#5BA877",
+        "o-fire":  "#C75C4A",
+        "o-earth": "#C99A52",
+        "o-metal": "#C9C9D6",
+        "o-water": "#4F7CC2",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 3px)",
+        sm: "calc(var(--radius) - 5px)",
       },
       fontFamily: {
-        // 기본 sans도 한국 명조계열로 (명운록 톤 통일)
+        // 본문·UI = Pretendard (또렷한 가독성)
         sans: [
-          "Noto Serif KR",
-          "Nanum Myeongjo",
+          "Pretendard",
+          "-apple-system",
+          "BlinkMacSystemFont",
           "Apple SD Gothic Neo",
           "Noto Sans KR",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
+        // 제목·전통 = 명조 (Gowun Batang)
         serif: [
+          "Gowun Batang",
           "Noto Serif KR",
           "Nanum Myeongjo",
           "serif",
         ],
         myeongjo: [
+          "Gowun Batang",
           "Nanum Myeongjo",
           "Noto Serif KR",
           "serif",
@@ -124,10 +144,11 @@ const config: Config = {
           "Noto Serif KR",
           "serif",
         ],
+        // 감성 헤드라인·워드마크 = 붓글씨
         brush: [
-          "Ma Shan Zheng",
-          "Nanum Myeongjo",
-          "serif",
+          "Nanum Brush Script",
+          "Gowun Batang",
+          "cursive",
         ],
         mono: [
           "JetBrains Mono",
@@ -147,7 +168,11 @@ const config: Config = {
         "mini": "0.4em",
       },
       boxShadow: {
-        "gold-glow": "0 0 24px rgba(212, 175, 106, 0.15)",
+        "gold-glow": "0 0 24px rgba(225, 193, 123, 0.18)",
+        "gold-cta": "0 8px 24px rgba(201, 151, 74, 0.30)",
+        "violet-cta": "0 8px 24px rgba(138, 107, 242, 0.35)",
+        "violet-glow": "0 0 50px rgba(138, 107, 242, 0.45)",
+        "card-float": "0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",
         "kakao": "0 0 0 1px rgba(0,0,0,0.06), 0 6px 18px rgba(254, 229, 0, 0.15)",
       },
     },

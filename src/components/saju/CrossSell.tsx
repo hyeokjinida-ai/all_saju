@@ -39,7 +39,7 @@ function signalReasonFor(slug: string, signal?: CrossSellSignal | null): string 
   return null;
 }
 
-// 고민(concern) → 어떤 상품을 밀지 매핑 (freeReading.ts 의 4050 고민 키와 일치)
+// 고민(concern) → 어떤 상품을 밀지 매핑 (위저드 CONCERN_OPTIONS 의 4050 고민 키와 일치)
 const CONCERN_MATCH: Record<string, string[]> = {
   "wealth-saju": ["재물", "노후", "직장·사업"],
   "love-saju": ["부부·연애", "자녀", "가족"],
@@ -140,7 +140,7 @@ export function CrossSell({
       </header>
 
       {/* 1순위 추천 — 깔끔한 추천 칩 + 에디토리얼 카드 */}
-      <div className="rounded-lg border border-gold-line bg-[rgba(212,175,106,0.04)] p-6 sm:p-7">
+      <div className="rounded-lg border border-gold-line bg-[rgba(225,193,123,0.04)] p-6 sm:p-7">
         {(primary.matched.length > 0 || primary.sigReason) && (
           <span className="inline-block mb-3.5 rounded-sm bg-gold-soft px-2.5 py-1 text-[11px] font-myeongjo font-semibold tracking-[0.08em] text-wine-deep">
             {primary.sigReason ? "명식이 가리키는 풀이" : `${primary.matched.join("·")}에 맞는 풀이`}
@@ -160,7 +160,7 @@ export function CrossSell({
             className="shrink-0 px-6 py-3.5 text-sm font-bold tracking-[0.06em] disabled:opacity-60"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#e8c878,#d4af6a)",
+              background: "linear-gradient(180deg,#E7C27D,#E1C17B)",
               color: "var(--wine-deep)",
             }}
           >
@@ -175,7 +175,7 @@ export function CrossSell({
           {rest.map((p) => (
             <div
               key={p.productId}
-              className="border border-gold-pale bg-[rgba(13,6,8,0.4)] rounded-lg p-5 flex flex-col"
+              className="border border-gold-pale bg-[rgba(14,16,32,0.4)] rounded-lg p-5 flex flex-col"
             >
               <p className="font-myeongjo text-base font-semibold text-bone">{p.name}</p>
               <p className="mt-2 text-xs text-bone-soft leading-relaxed flex-1">{p.reason}</p>

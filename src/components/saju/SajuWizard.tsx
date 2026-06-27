@@ -6,31 +6,18 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
-import { SAJU_INPUT_KEY } from "@/components/saju/FreeResult";
 import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 
 type Gender = "male" | "female";
 type Calendar = "solar" | "lunar";
 
-export type Tier = {
-  productId: string;
-  slug: string;
-  name: string;
-  price: number;
-};
-
-// flow="free"  → 메인 퍼널 입구. 입력만 모아 무료 결과 페이지(/free-result)로 보냅니다.
-//                (주문 생성·로그인·결제는 무료 결과 이후로 미룹니다.)
-// flow="order" → 연애·오늘의 운세 등 단일 상품 직접 구매. 바로 주문을 생성합니다.
+// 단일 상품 직접 구매 위저드 — 입력을 모아 바로 주문을 생성한다.
 type Props = {
   productId: string;
   productSlug: string;
   productName: string;
   price: number;
   isLoggedIn?: boolean;
-  flow?: "free" | "order";
-  // 호환용(미사용)
-  tiers?: Tier[];
 };
 
 type FormState = {
@@ -43,7 +30,7 @@ type FormState = {
   concerns: string[];
 };
 
-// freeReading.ts 의 CONCERN_TEASER 키와 정확히 일치 (4050 현실 고민)
+// 4050 현실 고민 — 위저드 STEP 惑 선택지
 const CONCERN_OPTIONS = ["재물", "부부·연애", "자녀", "직장·사업", "건강", "올해 운", "노후", "가족"];
 
 const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = [
@@ -67,7 +54,6 @@ export function SajuWizard({
   productName,
   price,
   isLoggedIn = false,
-  flow = "order",
 }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -114,7 +100,7 @@ export function SajuWizard({
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
     track("wizard_step", { step: step + 1, total: TOTAL, slug: productSlug });
-    if (step === TOTAL - 1 && flow === "order" && !isLoggedIn) {
+    if (step === TOTAL - 1 && !isLoggedIn) {
       track("checkout_login_wall", { slug: productSlug, value: price });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,24 +147,7 @@ export function SajuWizard({
     };
   }
 
-  // flow="free": 입력을 세션에 저장하고 무료 결과 페이지로 이동
-  function goFreeResult() {
-    if (!form.birthDate) {
-      toast.error("생년월일을 입력해 주세요");
-      setStep(1);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      sessionStorage.setItem(SAJU_INPUT_KEY, JSON.stringify(payload()));
-      router.push("/free-result");
-    } catch {
-      toast.error("결과 페이지로 이동하지 못했습니다. 다시 시도해 주세요.");
-      setSubmitting(false);
-    }
-  }
-
-  // flow="order": 단일 상품 주문 생성 → 결제
+  // 단일 상품 주문 생성 → 결제
   async function createOrder() {
     if (!form.birthDate) {
       toast.error("생년월일을 입력해 주세요");
@@ -228,7 +197,7 @@ export function SajuWizard({
                 style={{
                   width: i === step ? 22 : 7,
                   background:
-                    i < step ? "var(--gold-soft)" : i === step ? "var(--gold-bright)" : "rgba(212,175,106,0.2)",
+                    i < step ? "var(--gold-soft)" : i === step ? "var(--gold-bright)" : "rgba(225,193,123,0.2)",
                   boxShadow: i === step ? "0 0 8px rgba(232,200,120,0.6)" : "none",
                 }}
               />
@@ -408,7 +377,7 @@ export function SajuWizard({
 
         {/* STEP 6 — 확인 */}
         {step === 6 && (
-          <ConfirmStep form={form} onEdit={setStep} flow={flow} productName={productName} price={price} />
+          <ConfirmStep form={form} onEdit={setStep} productName={productName} price={price} />
         )}
       </div>
 
@@ -423,9 +392,9 @@ export function SajuWizard({
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.25em] disabled:cursor-default"
               style={{
                 fontFamily: "'Noto Serif KR', serif",
-                background: canNext() ? "linear-gradient(180deg,#e8c878,#d4af6a)" : "rgba(212,175,106,0.15)",
+                background: canNext() ? "linear-gradient(180deg,#E7C27D,#E1C17B)" : "rgba(225,193,123,0.15)",
                 color: canNext() ? "var(--wine-deep)" : "var(--bone-faint)",
-                boxShadow: canNext() ? "0 0 24px rgba(212,175,106,0.28)" : "none",
+                boxShadow: canNext() ? "0 0 24px rgba(225,193,123,0.28)" : "none",
               }}
             >
               다음
@@ -440,22 +409,6 @@ export function SajuWizard({
               </button>
             )}
           </>
-        ) : flow === "free" ? (
-          <button
-            type="button"
-            onClick={goFreeResult}
-            disabled={submitting}
-            className="w-full min-h-[58px] border-none font-bold text-base tracking-[0.12em] flex items-center justify-center gap-3 disabled:opacity-70"
-            style={{
-              fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#e8c878,#d4af6a)",
-              color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(212,175,106,0.3)",
-            }}
-          >
-            {submitting ? "명식을 세우는 중…" : "이 정보로 무료 결과 보기"}
-            {!submitting && <span className="font-brush text-xl text-wine-deep">覽</span>}
-          </button>
         ) : isLoggedIn ? (
           <button
             type="button"
@@ -464,9 +417,9 @@ export function SajuWizard({
             className="w-full min-h-[58px] border-none font-bold text-base tracking-[0.16em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#e8c878,#d4af6a)",
+              background: "linear-gradient(180deg,#E7C27D,#E1C17B)",
               color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(212,175,106,0.3)",
+              boxShadow: "0 0 24px rgba(225,193,123,0.3)",
             }}
           >
             {submitting ? "주문 생성 중…" : `${formatKRW(price)} 결제하러 가기`}
@@ -500,13 +453,11 @@ export function SajuWizard({
 function ConfirmStep({
   form,
   onEdit,
-  flow,
   productName,
   price,
 }: {
   form: FormState;
   onEdit: (s: number) => void;
-  flow: "free" | "order";
   productName: string;
   price: number;
 }) {
@@ -542,20 +493,10 @@ function ConfirmStep({
         ))}
       </div>
 
-      {flow === "free" ? (
-        <div className="mt-6 text-center">
-          <span className="font-brush text-gold-soft/70 text-[22px] leading-none block mb-2">命</span>
-          <p className="font-myeongjo text-[13px] text-bone-soft leading-relaxed tracking-[0.02em]">
-            바로 다음 화면에서 <span className="text-gold-bright">내 명식 여덟 글자</span>와
-            오행 균형, 올해 흐름까지 <span className="text-gold-bright">무료</span>로 확인할 수 있어요.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-[18px] px-4 py-3.5 bg-gold-pale border border-gold-pale flex justify-between items-center">
-          <span className="font-myeongjo text-sm text-bone font-semibold">{productName}</span>
-          <span className="font-serif text-xl font-bold text-gold-bright">{formatKRW(price)}</span>
-        </div>
-      )}
+      <div className="mt-[18px] px-4 py-3.5 bg-gold-pale border border-gold-pale flex justify-between items-center">
+        <span className="font-myeongjo text-sm text-bone font-semibold">{productName}</span>
+        <span className="font-serif text-xl font-bold text-gold-bright">{formatKRW(price)}</span>
+      </div>
 
       <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.04em]">
         입력하신 정보는 명식 계산과 결과 생성에만 사용됩니다.

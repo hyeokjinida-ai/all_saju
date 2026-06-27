@@ -67,7 +67,7 @@ function CTAButton({ sub, label = "내 사주 풀이 보기" }: { sub?: string; 
       style={{
         width: "100%",
         minHeight: 58,
-        background: "linear-gradient(180deg, #e8c878 0%, #d4af6a 100%)",
+        background: "linear-gradient(180deg, #E7C27D 0%, #E1C17B 100%)",
         color: "var(--wine-deep)",
         border: "none",
         cursor: "pointer",
@@ -79,7 +79,7 @@ function CTAButton({ sub, label = "내 사주 풀이 보기" }: { sub?: string; 
         alignItems: "center",
         justifyContent: "center",
         gap: 10,
-        boxShadow: "0 0 24px rgba(212,175,106,0.3)",
+        boxShadow: "0 0 24px rgba(225,193,123,0.3)",
         textDecoration: "none",
       }}
     >
@@ -147,7 +147,7 @@ function HeroSection() {
       <div className="fade-up" style={{ position: "relative", zIndex: 2 }}>
         <div
           className="gold-frame"
-          style={{ margin: "0 auto", maxWidth: 280, padding: "28px 18px 24px", background: "rgba(13,6,8,0.35)" }}
+          style={{ margin: "0 auto", maxWidth: 280, padding: "28px 18px 24px", background: "rgba(14,16,32,0.35)" }}
         >
           <div
             className="brush glow-gold"
@@ -294,7 +294,7 @@ function HeritageSection() {
 
         <GoldDivider width={60} />
 
-        <div style={{ background: "rgba(13,6,8,0.6)", border: "1px solid var(--gold-pale)", padding: "20px 16px", textAlign: "left" }}>
+        <div style={{ background: "rgba(14,16,32,0.6)", border: "1px solid var(--gold-pale)", padding: "20px 16px", textAlign: "left" }}>
           <div
             className="mono"
             style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.3em", marginBottom: 14, textAlign: "center" }}
@@ -445,7 +445,7 @@ function LimitSection() {
         <GoldDivider width={60} />
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ border: "1px solid var(--gold-pale)", background: "rgba(13,6,8,0.5)", padding: "22px 14px", opacity: 0.9 }}>
+          <div style={{ border: "1px solid var(--gold-pale)", background: "rgba(14,16,32,0.5)", padding: "22px 14px", opacity: 0.9 }}>
             <div className="myeongjo" style={{ fontSize: 11, color: "var(--bone-faint)", letterSpacing: "0.2em", marginBottom: 10 }}>
               자동 · AI 사주
             </div>
@@ -456,7 +456,7 @@ function LimitSection() {
               일주(日柱) 하나로<br />정해진 답 중 하나
             </div>
           </div>
-          <div style={{ border: "1px solid var(--gold)", background: "rgba(212,175,106,0.06)", padding: "22px 14px" }}>
+          <div style={{ border: "1px solid var(--gold)", background: "rgba(225,193,123,0.06)", padding: "22px 14px" }}>
             <div className="myeongjo" style={{ fontSize: 11, color: "var(--gold)", letterSpacing: "0.2em", marginBottom: 10 }}>명운록</div>
             <div className="brush glow-gold" style={{ fontSize: 40, color: "var(--gold-bright)", lineHeight: 1 }}>
               8<span style={{ fontSize: 15 }}>글자</span>
@@ -526,7 +526,7 @@ function ProblemSection() {
                 gridTemplateColumns: "auto 1fr",
                 gap: 14,
                 alignItems: "center",
-                background: "rgba(13,6,8,0.45)",
+                background: "rgba(14,16,32,0.45)",
                 border: "1px solid var(--gold-pale)",
                 padding: "14px 14px",
               }}
@@ -587,7 +587,7 @@ function ConceptSection() {
           당신이 흐를 결을 보는 일
         </div>
 
-        <div className="gold-frame" style={{ marginTop: 40, padding: "24px 14px 22px", background: "rgba(13,6,8,0.6)" }}>
+        <div className="gold-frame" style={{ marginTop: 40, padding: "24px 14px 22px", background: "rgba(14,16,32,0.6)" }}>
           <div className="mono" style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.35em", marginBottom: 18 }}>
             · 四 柱 命 式 ·
           </div>
@@ -607,8 +607,8 @@ function ConceptSection() {
                 key={`c-${i}`}
                 style={{
                   textAlign: "center",
-                  background: c.hi ? "rgba(212,175,106,0.10)" : "rgba(240,230,210,0.04)",
-                  border: c.hi ? "1px solid var(--gold)" : "1px solid rgba(240,230,210,0.10)",
+                  background: c.hi ? "rgba(225,193,123,0.10)" : "rgba(241,238,249,0.04)",
+                  border: c.hi ? "1px solid var(--gold)" : "1px solid rgba(241,238,249,0.10)",
                   padding: "10px 4px",
                 }}
               >
@@ -663,7 +663,7 @@ function FlowDiagram() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "rgba(212,175,106,0.08)",
+                background: "rgba(225,193,123,0.08)",
               }}
             >
               <span className="brush" style={{ fontSize: 16, color: "var(--gold-bright)", lineHeight: 1 }}>{s.h}</span>
@@ -784,7 +784,7 @@ function PrecisionSection() {
                 gridTemplateColumns: "44px 1fr",
                 gap: 14,
                 alignItems: "center",
-                background: "rgba(13,6,8,0.5)",
+                background: "rgba(14,16,32,0.5)",
                 border: "1px solid var(--gold-pale)",
                 padding: "14px 14px",
               }}
@@ -808,7 +808,7 @@ function PrecisionSection() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {stats.map((s, i) => (
-            <div key={i} style={{ border: "1px solid var(--gold-pale)", background: "rgba(13,6,8,0.55)", padding: "18px 10px", textAlign: "center" }}>
+            <div key={i} style={{ border: "1px solid var(--gold-pale)", background: "rgba(14,16,32,0.55)", padding: "18px 10px", textAlign: "center" }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 2 }}>
                 <span className="brush glow-gold" style={{ fontSize: 30, color: "var(--gold-bright)", lineHeight: 1, letterSpacing: 0 }}>{s.n}</span>
                 <span className="myeongjo" style={{ fontSize: 13, color: "var(--gold)", fontWeight: 600, letterSpacing: "0.05em" }}>{s.unit}</span>
@@ -819,7 +819,7 @@ function PrecisionSection() {
           ))}
         </div>
 
-        <div style={{ marginTop: 24, padding: "18px 14px", border: "1px dashed var(--gold-line)", background: "rgba(13,6,8,0.4)" }}>
+        <div style={{ marginTop: 24, padding: "18px 14px", border: "1px dashed var(--gold-line)", background: "rgba(14,16,32,0.4)" }}>
           <div className="mono" style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.3em", marginBottom: 14 }}>
             · PIPELINE · 산출 흐름 ·
           </div>
@@ -860,7 +860,7 @@ function ChaptersSection() {
           {chapters.map((c, i) => (
             <div
               key={i}
-              style={{ display: "flex", gap: 16, alignItems: "center", border: "1px solid var(--gold-pale)", background: "rgba(13,6,8,0.5)", padding: "16px 16px" }}
+              style={{ display: "flex", gap: 16, alignItems: "center", border: "1px solid var(--gold-pale)", background: "rgba(14,16,32,0.5)", padding: "16px 16px" }}
             >
               <div style={{ width: 44, height: 44, flexShrink: 0, border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span className="brush glow-gold" style={{ fontSize: 22, color: "var(--gold-bright)", lineHeight: 1 }}>{hanja[i]}</span>
@@ -913,8 +913,8 @@ function HowItWorksSection() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "left" }}>
           {steps.map((s, i) => (
-            <div key={i} style={{ padding: "20px 18px", position: "relative", overflow: "hidden", background: "rgba(13,6,8,0.6)", border: "1px solid var(--gold-pale)" }}>
-              <div className="brush" style={{ position: "absolute", right: -6, bottom: -24, fontSize: 110, lineHeight: 1, color: "rgba(212,175,106,0.07)", pointerEvents: "none" }}>
+            <div key={i} style={{ padding: "20px 18px", position: "relative", overflow: "hidden", background: "rgba(14,16,32,0.6)", border: "1px solid var(--gold-pale)" }}>
+              <div className="brush" style={{ position: "absolute", right: -6, bottom: -24, fontSize: 110, lineHeight: 1, color: "rgba(225,193,123,0.07)", pointerEvents: "none" }}>
                 {s.hanja}
               </div>
 
@@ -961,26 +961,26 @@ function PreviewSection() {
         <div
           style={{
             marginTop: 28,
-            background: "linear-gradient(180deg, #f4ecd8 0%, #ece1c8 100%)",
+            background: "linear-gradient(160deg, #1B1E38 0%, #181530 100%)",
             padding: "28px 22px 26px",
             position: "relative",
             boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
-            border: "1px solid rgba(212,175,106,0.5)",
+            border: "1px solid var(--gold-line)",
           }}
         >
-          <div style={{ textAlign: "center", position: "relative", zIndex: 1, paddingBottom: 18, borderBottom: "1.5px solid rgba(58,42,26,0.3)" }}>
-            <span className="brush" style={{ fontSize: 30, color: "#8b1e1e", letterSpacing: "0.06em" }}>命 運 錄</span>
-            <div className="myeongjo" style={{ fontSize: 14, fontWeight: 700, color: "#3a2a1a", letterSpacing: "0.1em", marginTop: 10 }}>명운록 기본 사주 기록</div>
-            <div className="myeongjo" style={{ fontSize: 10.5, color: "rgba(58,42,26,0.65)", letterSpacing: "0.25em", marginTop: 6 }}>성격 · 관계 · 재물 · 애정</div>
+          <div style={{ textAlign: "center", position: "relative", zIndex: 1, paddingBottom: 18, borderBottom: "1.5px solid rgba(225,193,123,0.25)" }}>
+            <span className="brush" style={{ fontSize: 30, color: "#E1C17B", letterSpacing: "0.06em" }}>命 運 錄</span>
+            <div className="myeongjo" style={{ fontSize: 14, fontWeight: 700, color: "var(--bone)", letterSpacing: "0.1em", marginTop: 10 }}>명운록 기본 사주 기록</div>
+            <div className="myeongjo" style={{ fontSize: 10.5, color: "var(--bone-faint)", letterSpacing: "0.25em", marginTop: 6 }}>성격 · 관계 · 재물 · 애정</div>
           </div>
           <div style={{ position: "relative", zIndex: 1, marginTop: 18, display: "flex", flexDirection: "column", gap: 16, textAlign: "left" }}>
             {parts.map((p, i) => (
               <div key={i}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 5 }}>
-                  <span className="mono" style={{ fontSize: 9, color: "#8b1e1e", letterSpacing: "0.15em", fontWeight: 600 }}>{p.n}</span>
-                  <span className="myeongjo" style={{ fontSize: 13, fontWeight: 700, color: "#3a2a1a", letterSpacing: "0.04em" }}>{p.t}</span>
+                  <span className="mono" style={{ fontSize: 9, color: "#E1C17B", letterSpacing: "0.15em", fontWeight: 600 }}>{p.n}</span>
+                  <span className="myeongjo" style={{ fontSize: 13, fontWeight: 700, color: "var(--gold-bright)", letterSpacing: "0.04em" }}>{p.t}</span>
                 </div>
-                <div className="myeongjo" style={{ fontSize: 12, color: "rgba(32,26,20,0.82)", lineHeight: 1.85 }}>{p.body}</div>
+                <div className="myeongjo" style={{ fontSize: 12, color: "var(--bone-soft)", lineHeight: 1.85 }}>{p.body}</div>
               </div>
             ))}
           </div>
@@ -1031,7 +1031,7 @@ function ReviewsSection() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
           {reviews.map((r, i) => (
-            <div key={i} style={{ background: "rgba(13,6,8,0.55)", border: "1px solid var(--gold-pale)", padding: "18px 16px", position: "relative" }}>
+            <div key={i} style={{ background: "rgba(14,16,32,0.55)", border: "1px solid var(--gold-pale)", padding: "18px 16px", position: "relative" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span
@@ -1044,7 +1044,7 @@ function ReviewsSection() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background: "linear-gradient(180deg,#e8c878,#caa862)",
+                      background: "linear-gradient(180deg,#E7C27D,#caa862)",
                       color: "var(--wine-deep)",
                       fontFamily: "'Nanum Myeongjo', serif",
                       fontWeight: 700,
@@ -1124,7 +1124,7 @@ function PricingSection() {
         <GoldDivider width={60} />
 
         {/* 기본 풀이에 담기는 것 */}
-        <div style={{ padding: "22px 20px", border: "1px solid var(--gold-pale)", background: "rgba(13,6,8,0.55)", textAlign: "left" }}>
+        <div style={{ padding: "22px 20px", border: "1px solid var(--gold-pale)", background: "rgba(14,16,32,0.55)", textAlign: "left" }}>
           <div className="myeongjo" style={{ fontSize: 13, color: "var(--gold-bright)", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 4 }}>
             기본 풀이에 담기는 것
           </div>
@@ -1154,8 +1154,8 @@ function PricingSection() {
             padding: "24px 20px",
             position: "relative",
             border: "1.5px solid var(--gold)",
-            background: "linear-gradient(180deg, rgba(212,175,106,0.10) 0%, rgba(13,6,8,0.65) 100%)",
-            boxShadow: "0 0 24px rgba(212,175,106,0.15)",
+            background: "linear-gradient(180deg, rgba(225,193,123,0.10) 0%, rgba(14,16,32,0.65) 100%)",
+            boxShadow: "0 0 24px rgba(225,193,123,0.15)",
             textAlign: "left",
           }}
         >
@@ -1358,7 +1358,7 @@ function StickyBar() {
         style={{
           maxWidth: 480,
           margin: "0 auto",
-          background: "rgba(13, 6, 8, 0.92)",
+          background: "rgba(14, 16, 32, 0.92)",
           backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)",
           borderRadius: 14,
@@ -1381,7 +1381,7 @@ function StickyBar() {
         <Link
           href={FUNNEL_HREF}
           style={{
-            background: "linear-gradient(180deg,#e8c878,#d4af6a)",
+            background: "linear-gradient(180deg,#E7C27D,#E1C17B)",
             color: "var(--wine-deep)",
             border: "none",
             padding: "12px 16px",

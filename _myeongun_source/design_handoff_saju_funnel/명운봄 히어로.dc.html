@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  .brush{font-family:'Nanum Brush Script',cursive}
+  .gothic{font-family:'Jua','Do Hyeon',sans-serif}
+  .gowun{font-family:'Gowun Batang',serif}
+  .sans{font-family:'Pretendard',sans-serif}
+  @keyframes twinkle{0%,100%{opacity:.25}50%{opacity:.9}}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 4s ease-in-out infinite}
+</style>
+</helmet>
+
+<div style="position:relative;width:1920px;height:900px;overflow:hidden;background:linear-gradient(180deg,#0b1730 0%,#0a1326 42%,#070c18 78%,#05080f 100%);font-family:'Pretendard',sans-serif">
+
+  <!-- stars -->
+  <div class="star" style="top:80px;left:300px"></div>
+  <div class="star" style="top:140px;left:560px;animation-delay:1.2s"></div>
+  <div class="star" style="top:60px;left:760px;animation-delay:2.1s"></div>
+  <div class="star" style="top:200px;left:200px;animation-delay:.6s"></div>
+  <div class="star" style="top:240px;left:880px;animation-delay:1.7s"></div>
+  <div class="star" style="top:110px;left:1180px;animation-delay:2.6s"></div>
+  <div class="star" style="top:300px;left:120px;animation-delay:.3s"></div>
+  <div class="star" style="top:170px;left:1320px;animation-delay:3.1s"></div>
+  <div class="star" style="top:90px;left:1010px;animation-delay:1.0s"></div>
+  <div class="star" style="top:330px;left:700px;animation-delay:2.3s"></div>
+
+  <!-- BIG MOON -->
+  <div style="position:absolute;top:210px;left:980px;width:300px;height:300px;border-radius:50%;
+    background:radial-gradient(circle at 42% 38%, #f6ecca 0%, #ecdca6 45%, #d8c084 78%, #c4a766 100%);
+    box-shadow:0 0 120px 40px rgba(244,232,200,.28), 0 0 240px 90px rgba(226,196,130,.16), inset -22px -18px 50px rgba(150,120,70,.35);"></div>
+  <!-- moon craters -->
+  <div style="position:absolute;top:270px;left:1060px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,rgba(150,120,70,.28),transparent 70%)"></div>
+  <div style="position:absolute;top:360px;left:1150px;width:50px;height:50px;border-radius:50%;background:radial-gradient(circle,rgba(150,120,70,.22),transparent 70%)"></div>
+  <div style="position:absolute;top:430px;left:1080px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,rgba(150,120,70,.25),transparent 70%)"></div>
+
+  <!-- HANOK ROOF EAVE (right) -->
+  <svg width="900" height="760" viewBox="0 0 900 760" style="position:absolute;top:140px;right:-40px" preserveAspectRatio="none">
+    <!-- main roof body -->
+    <path d="M900 250 C 700 270 520 320 360 420 C 300 458 250 500 214 542 L 196 560 C 150 612 120 690 110 760 L 900 760 Z" fill="#05080f"/>
+    <!-- eave under-curve highlight ridge -->
+    <path d="M900 250 C 700 270 520 320 360 420 C 300 458 250 500 214 542 L 196 560" fill="none" stroke="#1a2236" stroke-width="3"/>
+    <!-- upturned eave tip -->
+    <path d="M214 542 C 200 540 188 545 182 556 C 196 552 206 552 214 558 Z" fill="#05080f"/>
+    <!-- rafter teeth (서까래) along underside -->
+    <g fill="#0a0f1c">
+      <rect x="300" y="452" width="10" height="26" rx="3" transform="rotate(28 305 465)"/>
+      <rect x="345" y="430" width="10" height="26" rx="3" transform="rotate(24 350 443)"/>
+      <rect x="392" y="410" width="10" height="26" rx="3" transform="rotate(20 397 423)"/>
+      <rect x="442" y="392" width="10" height="26" rx="3" transform="rotate(16 447 405)"/>
+      <rect x="496" y="376" width="10" height="26" rx="3" transform="rotate(13 501 389)"/>
+    </g>
+  </svg>
+
+  <!-- bare tree branches (top, overlay) -->
+  <svg width="1500" height="560" viewBox="0 0 1500 560" style="position:absolute;top:-40px;left:-40px" fill="none" stroke="#05070e" stroke-linecap="round" opacity="0.96">
+    <g stroke-width="4">
+      <path d="M40 -40 C 120 60 150 130 240 170 C 330 210 470 215 620 205"/>
+      <path d="M150 -40 C 200 70 260 150 380 210 C 500 270 660 290 840 285"/>
+      <path d="M330 -40 C 360 60 430 140 560 200 C 700 264 900 280 1080 250"/>
+    </g>
+    <g stroke-width="2.2">
+      <path d="M240 170 C 300 150 350 100 380 40"/>
+      <path d="M240 170 C 260 220 250 270 220 320"/>
+      <path d="M380 210 C 450 200 500 160 540 105"/>
+      <path d="M380 210 C 400 260 390 300 360 345"/>
+      <path d="M560 200 C 630 195 680 160 720 110"/>
+      <path d="M560 200 C 590 250 600 300 590 350"/>
+      <path d="M620 205 C 700 205 760 190 820 160"/>
+      <path d="M840 285 C 920 280 980 255 1030 215"/>
+    </g>
+    <g stroke-width="1.2">
+      <path d="M380 40 C 410 10 420 -10 424 -30"/>
+      <path d="M540 105 C 580 80 600 50 612 18"/>
+      <path d="M720 110 C 760 92 790 64 808 30"/>
+      <path d="M220 320 C 190 350 150 360 110 358"/>
+      <path d="M360 345 C 340 385 300 405 256 410"/>
+      <path d="M590 350 C 620 388 660 402 700 402"/>
+      <path d="M820 160 C 870 144 905 120 928 86"/>
+      <path d="M1030 215 C 1080 198 1110 172 1128 140"/>
+      <path d="M1080 250 C 1160 248 1220 232 1276 206"/>
+    </g>
+  </svg>
+
+  <!-- mountains silhouette -->
+  <svg width="1920" height="320" viewBox="0 0 1920 320" style="position:absolute;bottom:0;left:0" preserveAspectRatio="none">
+    <path d="M0 320 L0 210 C 220 150 360 200 540 170 C 720 140 820 80 1020 120 C 1180 152 1300 110 1500 150 C 1680 186 1800 150 1920 170 L1920 320 Z" fill="#070b16"/>
+    <path d="M0 320 L0 268 C 260 232 420 262 640 244 C 900 222 1080 270 1320 250 C 1560 230 1740 262 1920 248 L1920 320 Z" fill="#04060d"/>
+  </svg>
+  <!-- ground fade -->
+  <div style="position:absolute;bottom:0;left:0;width:1920px;height:160px;background:linear-gradient(180deg,transparent,#04060d)"></div>
+
+  <!-- ===== UI LAYER ===== -->
+  <!-- crescent logo -->
+  <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:36px;left:56px">
+    <path d="M44 12 A24 24 0 1 0 44 52 A19 19 0 1 1 44 12 Z" fill="#E7C27D"/>
+  </svg>
+
+  <!-- nav center -->
+  <div class="gowun" style="position:absolute;top:50px;left:50%;transform:translateX(-50%);display:flex;gap:64px;color:#E7C27D;font-size:18px;letter-spacing:.04em;font-weight:700">
+    <span>명운봄 소개</span>
+    <span>사주 의뢰신청</span>
+    <span>의뢰인 문의</span>
+  </div>
+  <!-- nav right -->
+  <div class="sans" style="position:absolute;top:52px;right:56px;display:flex;gap:28px;color:#EDE7D6;font-size:15px;font-weight:600">
+    <span>로그인</span>
+    <span>회원가입</span>
+  </div>
+
+  <!-- center wordmark -->
+  <div style="position:absolute;top:96px;left:50%;transform:translateX(-50%);text-align:center">
+    <div class="brush" style="font-size:62px;color:#E7C27D;line-height:1;text-shadow:0 2px 24px rgba(226,196,130,.35)">명운봄 <span class="gowun" style="font-size:34px;font-weight:700">(命運春)</span></div>
+    <div class="brush" style="font-size:30px;color:#D8C58C;margin-top:8px">달빛 아래, 당신의 운을 읽는 곳</div>
+  </div>
+
+  <!-- headline bottom-left -->
+  <div style="position:absolute;left:84px;bottom:170px">
+    <div class="gowun" style="font-size:30px;color:#D8D2C4;font-weight:700;letter-spacing:.02em;margin-bottom:6px">마음이 어지러운 밤,</div>
+    <div class="brush" style="font-size:86px;color:#F4F1E8;line-height:1.18;text-shadow:0 4px 30px rgba(0,0,0,.5)"><span style="color:#E7C27D">당신</span>의 사주가<br>달빛 아래 <span style="color:#E7C27D">펼쳐집니다</span></div>
+  </div>
+
+  <!-- slide indicators -->
+  <div style="position:absolute;left:84px;bottom:96px;display:flex;gap:40px;align-items:center">
+    <div style="text-align:left"><div class="sans" style="font-size:13px;color:#E7C27D;letter-spacing:.1em;margin-bottom:8px">01</div><div style="width:130px;height:2px;background:#E7C27D"></div></div>
+    <div style="text-align:left"><div class="sans" style="font-size:13px;color:#6b6657;letter-spacing:.1em;margin-bottom:8px">02</div><div style="width:130px;height:2px;background:#33302a"></div></div>
+  </div>
+
+  <!-- kakao button -->
+  <div class="sans" style="position:absolute;right:56px;bottom:56px;display:flex;align-items:center;gap:10px;background:#FEE500;color:#3c1e1e;font-weight:700;font-size:16px;padding:14px 22px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#3c1e1e"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.9 5.3 4.7 6.7-.2.7-.7 2.6-.8 3-.1.5.2.5.4.4.2-.1 2.6-1.8 3.6-2.5.7.1 1.4.2 2.1.2 5.5 0 10-3.6 10-8S17.5 3 12 3z"/></svg>
+    카톡 문의
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

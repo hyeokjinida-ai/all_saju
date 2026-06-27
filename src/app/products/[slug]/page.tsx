@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { SajuWizard, type Tier } from "@/components/saju/SajuWizard";
+import { SajuWizard } from "@/components/saju/SajuWizard";
 import { TrustStrip } from "@/components/saju/TrustStrip";
 import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
@@ -14,15 +14,6 @@ import { productsSeed } from "@/config/products.seed";
 
 type Product = { id: string; slug: string; name: string; description: string; price: number };
 type Review = { id: string; rating: number; content: string; created_at: string };
-
-// 메인 퍼널 티어 (기본 풀이 → 인생 종합 풀이 업셀). 결제 직전 선택지로 노출.
-const FUNNEL_TIER_SLUGS = ["basic-saju", "premium-saju"];
-
-function buildTiers(rows: { id: string; slug: string; name: string; price: number }[]): Tier[] {
-  return FUNNEL_TIER_SLUGS.map((s) => rows.find((r) => r.slug === s))
-    .filter((r): r is { id: string; slug: string; name: string; price: number } => !!r)
-    .map((r) => ({ productId: r.id, slug: r.slug, name: r.name, price: r.price }));
-}
 
 // 상품별 SEO 메타데이터 — 검색/공유 시 상품명·설명이 그대로 노출되게(기존엔 전부 "명운록")
 export async function generateMetadata({
@@ -69,7 +60,6 @@ export default async function ProductDetailPage({
   let product: Product | null;
   let reviews: Review[] | null = null;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
-  let tiers: Tier[] | undefined;
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -90,27 +80,11 @@ export default async function ProductDetailPage({
         .order("created_at", { ascending: false })
         .limit(5);
       reviews = r;
-
-      if (FUNNEL_TIER_SLUGS.includes(slug)) {
-        const { data: tp } = await supabase
-          .from("products")
-          .select("id, slug, name, price")
-          .in("slug", FUNNEL_TIER_SLUGS)
-          .eq("is_active", true);
-        tiers = buildTiers(tp ?? []);
-      }
     }
     user = await getCurrentUser();
   } else {
     const seed = productsSeed.find((p) => p.slug === slug && p.is_active);
     product = seed ? { id: seed.slug, ...seed } : null;
-
-    if (product && FUNNEL_TIER_SLUGS.includes(slug)) {
-      const tp = productsSeed
-        .filter((p) => FUNNEL_TIER_SLUGS.includes(p.slug) && p.is_active)
-        .map((p) => ({ id: p.slug, slug: p.slug, name: p.name, price: p.price }));
-      tiers = buildTiers(tp);
-    }
   }
 
   if (!product) notFound();
@@ -186,7 +160,7 @@ export default async function ProductDetailPage({
 
       {/* ── 2. 공감(통증) ── */}
       {pitch?.pains && pitch.pains.length > 0 && (
-        <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-6">
+        <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(14,16,32,0.4)] p-6">
           <p className="font-myeongjo text-base font-semibold text-gold-bright mb-4 text-center">
             혹시, 이런 마음 아니신가요
           </p>
@@ -230,26 +204,26 @@ export default async function ProductDetailPage({
           <span className="font-brush text-gold-soft text-sm tracking-[0.2em]">覽</span>
           <span className="gold-rule flex-1 max-w-[50px] opacity-70" />
         </div>
-        <a href="#start" className="block relative rounded-md overflow-hidden p-6 sm:p-7" style={{ background: "linear-gradient(180deg,#f4ecd8,#ece1c8)", border: "1px solid rgba(212,175,106,0.5)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)" }}>
+        <a href="#start" className="block relative rounded-md overflow-hidden p-6 sm:p-7" style={{ background: "linear-gradient(160deg,#1B1E38,#181530)", border: "1px solid var(--cardline)", boxShadow: "0 12px 40px rgba(0,0,0,0.45)" }}>
           <div className="text-center mb-4">
-            <p className="font-brush text-[#8b1e1e] text-lg tracking-[0.2em]">命 運 錄</p>
-            <p className="font-myeongjo text-[#3a2a1a] text-sm font-bold mt-1">내 결과지 미리보기</p>
-            <p className="font-mono text-[12px] text-[#6b4a2c] mt-0.5">성격 · 관계 · 재물 · 애정</p>
+            <p className="font-brush text-gold-bright text-lg tracking-[0.2em]">命 運 錄</p>
+            <p className="font-myeongjo text-bone text-sm font-bold mt-1">내 결과지 미리보기</p>
+            <p className="font-mono text-[12px] text-bone-faint mt-0.5">성격 · 관계 · 재물 · 애정</p>
           </div>
-          <div className="space-y-3 text-[#3a2a1a]">
-            <p className="text-[13px] leading-relaxed"><b>PART 1 · 성격의 결</b><br />겉으로는 차분해 보여도, 속으로는 자기 기준이 분명한 분입니다. 한번 정하면 끝을 보는 힘이 강합니다.</p>
-            <p className="text-[13px] leading-relaxed"><b>PART 2 · 관계의 반복</b><br />빠른 친밀감보다 신뢰가 쌓이는 시간을 더 중요하게 여기는 흐름이 나타납니다.</p>
+          <div className="space-y-3 text-bone-soft">
+            <p className="text-[13px] leading-relaxed"><b className="text-gold-bright">PART 1 · 성격의 결</b><br />겉으로는 차분해 보여도, 속으로는 자기 기준이 분명한 분입니다. 한번 정하면 끝을 보는 힘이 강합니다.</p>
+            <p className="text-[13px] leading-relaxed"><b className="text-gold-bright">PART 2 · 관계의 반복</b><br />빠른 친밀감보다 신뢰가 쌓이는 시간을 더 중요하게 여기는 흐름이 나타납니다.</p>
           </div>
           <div className="relative mt-3">
-            <div className="space-y-3 text-[#3a2a1a] select-none" style={{ filter: "blur(5px)" }} aria-hidden>
-              <p className="text-[13px] leading-relaxed"><b>PART 3 · 재물의 흐름</b><br />돈이 들어오는 순간보다, 머무는 구조를 만드는 것이 더 중요하게 작동합니다. 올해는 특히…</p>
-              <p className="text-[13px] leading-relaxed"><b>PART 4 · 애정의 온도</b><br />마음이 열리기까지 시간이 필요하지만, 한 번 깊어진 관계는…</p>
+            <div className="space-y-3 text-bone-soft select-none" style={{ filter: "blur(5px)" }} aria-hidden>
+              <p className="text-[13px] leading-relaxed"><b className="text-gold-bright">PART 3 · 재물의 흐름</b><br />돈이 들어오는 순간보다, 머무는 구조를 만드는 것이 더 중요하게 작동합니다. 올해는 특히…</p>
+              <p className="text-[13px] leading-relaxed"><b className="text-gold-bright">PART 4 · 애정의 온도</b><br />마음이 열리기까지 시간이 필요하지만, 한 번 깊어진 관계는…</p>
             </div>
-            <div className="absolute inset-0 flex items-end justify-center" style={{ background: "linear-gradient(180deg, rgba(236,225,200,0), #ece1c8)" }}>
-              <span className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-[#8b1e1e]/40 bg-[#f4ecd8] px-3 py-1 font-myeongjo text-[11px] text-[#8b1e1e]">⌥ 결제 후 전체 열림</span>
+            <div className="absolute inset-0 flex items-end justify-center" style={{ background: "linear-gradient(180deg, rgba(24,21,48,0), #181530)" }}>
+              <span className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-gold-line bg-wine-deep px-3 py-1 font-myeongjo text-[11px] text-gold-bright">⌥ 결제 후 전체 열림</span>
             </div>
           </div>
-          <p className="mt-4 text-center font-myeongjo text-[11px] text-[#7d5a3a]">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
+          <p className="mt-4 text-center font-myeongjo text-[11px] text-bone-faint">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
         </a>
       </section>
 
@@ -262,7 +236,7 @@ export default async function ProductDetailPage({
       </section>
 
       {/* ── 4. 가격 + 입력 시작 ── */}
-      <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(212,175,106,0.10), rgba(13,6,8,0.6))" }}>
+      <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(225,193,123,0.10), rgba(7,6,15,0.6))" }}>
         <p className="text-xs text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
         <p className="font-myeongjo text-bone text-base mb-1">{product.name}</p>
         <p className="font-serif text-4xl font-bold text-gold-bright mb-1.5">{formatKRW(product.price)}</p>
@@ -281,22 +255,20 @@ export default async function ProductDetailPage({
           productName={product.name}
           price={product.price}
           isLoggedIn={!!user}
-          flow="order"
-          tiers={tiers}
         />
 
-        {/* 안심 — 리스크 역전. 밝은 보증서 톤으로 어둠 단조로움 환기 + 결제 직전 신뢰 */}
+        {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
         <div
           className="mt-6 rounded-md p-5"
-          style={{ background: "linear-gradient(180deg,#f4ecd8,#ece1c8)", border: "1px solid rgba(212,175,106,0.5)", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
+          style={{ background: "rgba(225,193,123,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
         >
-          <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "#8b1e1e" }}>安心</p>
-          <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "#3a2a1a" }}>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "#8b1e1e" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+          <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>安心</p>
+          <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
+            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
           </ul>
-          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "#8b6a3a" }}>
+          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
             환불 안내 자세히 →
           </Link>
         </div>
@@ -319,11 +291,11 @@ export default async function ProductDetailPage({
             const initial = (r.tag || "").trim().charAt(0);
             const avatar = /[가-힣]/.test(initial) ? initial : "命";
             return (
-              <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(13,6,8,0.4)] p-4">
+              <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(14,16,32,0.4)] p-4">
                 <div className="flex items-start gap-3">
                   <span
                     className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-myeongjo text-sm font-bold"
-                    style={{ background: "linear-gradient(180deg,#e8c878,#caa862)", color: "var(--wine-deep)" }}
+                    style={{ background: "linear-gradient(180deg,#E7C27D,#caa862)", color: "#241a08" }}
                     aria-hidden
                   >
                     {avatar}
@@ -348,7 +320,7 @@ export default async function ProductDetailPage({
         <a
           href="#start"
           className="inline-flex items-center gap-2 rounded-md px-7 py-3.5 font-bold text-sm tracking-[0.06em]"
-          style={{ background: "linear-gradient(180deg,#e8c878,#d4af6a)", color: "var(--wine-deep)", fontFamily: "'Noto Serif KR', serif" }}
+          style={{ background: "linear-gradient(180deg,#E7C27D,#E1C17B)", color: "#241a08", fontFamily: "'Gowun Batang', serif" }}
         >
           나도 지금 받아보기 <span className="font-brush">命</span>
         </a>

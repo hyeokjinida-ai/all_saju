@@ -51,7 +51,7 @@ const components: Components = {
     </div>
   ),
   th: ({ children }) => (
-    <th className="border-b border-gold-line bg-[rgba(212,175,106,0.08)] px-3 py-2 text-left font-myeongjo text-gold">
+    <th className="border-b border-gold-line bg-[rgba(225,193,123,0.08)] px-3 py-2 text-left font-myeongjo text-gold">
       {children}
     </th>
   ),

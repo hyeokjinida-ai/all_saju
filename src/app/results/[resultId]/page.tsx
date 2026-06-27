@@ -121,7 +121,7 @@ export default async function ResultPage({
         className="relative rounded-md px-6 py-7 sm:px-8 sm:py-9"
         style={{
           border: "1px solid var(--gold-line)",
-          background: "linear-gradient(180deg, rgba(212,175,106,0.05) 0%, rgba(13,6,8,0.35) 100%)",
+          background: "linear-gradient(180deg, rgba(225,193,123,0.05) 0%, rgba(14,16,32,0.35) 100%)",
         }}
       >
         {/* 낙관 */}

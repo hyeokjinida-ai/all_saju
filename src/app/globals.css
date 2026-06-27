@@ -1,7 +1,8 @@
-/* 명운록 (命運錄) — 한지·먹·인장 무드 + 시네마틱 야경 (딥 와인/블랙)
-   디자인 핸드오프: _myeongun_source/design_handoff_myeongunrok/README.md */
+/* 명운록 (命運錄) — 밤하늘 먹빛 + 금 + 자수정 무드 (붓글씨·명조·Pretendard)
+   디자인 핸드오프: design_handoff_saju_funnel/README.md */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=Ma+Shan+Zheng&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Ma+Shan+Zheng&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,57 +10,81 @@
 
 @layer base {
   :root {
-    /* shadcn-style HSL 토큰 — 명운록 다크 와인 팔레트 */
-    --background: 349 64% 14%;          /* wine #3a0d18 */
-    --foreground: 42 62% 88%;           /* bone #f0e6d2 */
-    --card: 349 68% 17%;                /* wine-2 #4a0e1a */
-    --card-foreground: 42 62% 88%;
-    --primary: 38 56% 62%;              /* gold #d4af6a */
-    --primary-foreground: 340 35% 4%;   /* night #0d0608 */
-    --secondary: 349 68% 17%;
-    --secondary-foreground: 42 62% 88%;
-    --muted: 349 50% 11%;               /* wine-deep #2a0a12 */
-    --muted-foreground: 42 50% 76%;
-    --accent: 38 56% 62%;
-    --accent-foreground: 340 35% 4%;
-    --destructive: 0 64% 33%;           /* seal #8b1e1e */
-    --destructive-foreground: 42 62% 88%;
-    --border: 38 56% 62%;               /* gold (사용시 / 0.4 alpha) */
-    --input: 349 68% 17%;
-    --ring: 38 70% 70%;                 /* gold-bright */
-    --radius: 0.375rem;                 /* 정통 느낌 — 거의 직각 */
+    /* shadcn-style HSL 토큰 — 명운록 밤하늘 먹빛 팔레트 */
+    --background: 232 35% 12%;          /* screen #13152A */
+    --foreground: 252 43% 96%;          /* text strong #F1EEF9 */
+    --card: 234 31% 17%;                /* card #1B1E38 */
+    --card-foreground: 252 43% 96%;
+    --primary: 40 67% 70%;              /* gold #E7C27D */
+    --primary-foreground: 36 70% 8%;    /* deep ink #241a08 */
+    --secondary: 234 31% 17%;
+    --secondary-foreground: 252 43% 96%;
+    --muted: 234 39% 14%;               /* card-2 #181530 */
+    --muted-foreground: 250 13% 66%;    /* #9C99B5 */
+    --accent: 252 80% 69%;              /* violet #8A6BF2 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 8 52% 54%;           /* 火 #C75C4A */
+    --destructive-foreground: 252 43% 96%;
+    --border: 234 30% 25%;              /* line/border #2C2F52 */
+    --input: 234 31% 17%;
+    --ring: 40 67% 70%;                 /* gold */
+    --radius: 0.875rem;                 /* 부드러운 카드 — 14px */
 
-    /* 명운록 raw 토큰 (유틸 클래스 / 직접 사용) */
+    /* 명운록 raw 토큰 — 밤하늘 먹빛 표면 */
+    --night:      #0E1020;  /* 가장 깊은 밤 */
+    --night-2:    #15172E;
+    --night-3:    #1A1430;  /* 자수정 기운 */
+    --night-edge: #07060F;  /* 업셀 외곽 등 더 깊은 먹 */
+    --screen:     #13152A;  /* 화면 본문 배경 */
+    --wine:       #13152A;  /* (호환 별칭) 화면 배경 */
+    --wine-2:     #1B1E38;  /* 카드 표면 */
+    --wine-deep:  #181530;  /* 잠긴 카드·서브 표면 */
+    --wine-soft:  #1E2140;  /* 차트 셀 등 살짝 밝은 표면 */
+    --cardline:        #2C2F52;  /* 카드/입력 테두리 */
+    --cardline-strong: #343865;  /* 차트 셀 테두리 */
+    --divider:         #24264A;  /* 구분선 */
+
+    /* 텍스트 (다크 위) */
+    --bone:       #F1EEF9;  /* 헤드라인/강조 */
+    --bone-soft:  #D8D5E6;  /* 본문 — 4050 가독성 */
+    --bone-faint: #9C99B5;  /* 보조 */
+    --text-assistive: #8E8BA8;
+    --text-disabled:  #6B6880;
+
+    /* 금 (gold) — 1차 강조 / CTA */
+    --gold:        #E1C17B;
+    --gold-bright: #E7C27D;
+    --gold-soft:   #D8C58C;
+    --gold-grad-start: #E7C27D;
+    --gold-grad-end:   #C9974A;
+    --gold-pale: rgba(225, 193, 123, 0.14);
+    --gold-line: rgba(225, 193, 123, 0.5);
+
+    /* 자수정 (violet) — AI/심화/프리미엄 강조 */
+    --violet:        #8A6BF2;
+    --violet-strong: #6541F2;
+    --violet-text:   #B7A0F5;
+    --violet-line:   #4A3A6E;
+    --violet-pale:   rgba(138, 107, 242, 0.12);
+
+    --seal: #8b1e1e;
+    --kakao: #FEE500;
+    --kakao-text: #3c1e1e;
+    --success: #6FBE8B;
+    --star-blue: #4D8BFF;
+
+    /* 한지(밝은 카드) — 일부 컴포넌트 호환용 유지 */
     --paper: #e8dfd0;
     --paper-warm: #ede4d4;
     --paper-deep: #d4c8af;
     --ink-mu: #14110d;
-    --night: #0d0608;
-    --night-2: #1a0810;
-    --night-3: #2a0a14;
-    --wine: #3a0d18;
-    --wine-2: #4a0e1a;
-    --wine-deep: #2a0a12;
-    --wine-soft: #5a1822;
-    --bone: #f0e6d2;
-    /* 4050 가독성 — 본문/보조 텍스트 대비 상향(어두운 와인 위에서 또렷하게) */
-    --bone-soft: rgba(243, 235, 218, 0.88);
-    --bone-faint: rgba(243, 235, 218, 0.64);
-    --gold: #d4af6a;
-    --gold-bright: #e8c878;
-    --gold-soft: #c2a25f;
-    --gold-pale: rgba(212, 175, 106, 0.18);
-    --gold-line: rgba(212, 175, 106, 0.4);
-    --seal: #8b1e1e;
-    --kakao: #FEE500;
-    --kakao-text: #191919;
 
-    /* 오행 */
-    --o-wood:  #4a6b3a;
-    --o-fire:  #8b1e1e;
-    --o-earth: #a8896b;
-    --o-metal: #c9b896;
-    --o-water: #1f2937;
+    /* 오행 (五行) */
+    --o-wood:  #5BA877;
+    --o-fire:  #C75C4A;
+    --o-earth: #C99A52;
+    --o-metal: #C9C9D6;
+    --o-water: #4F7CC2;
   }
 }
 
@@ -73,51 +98,69 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Apple SD Gothic Neo', 'Noto Sans KR', serif;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
     text-wrap: pretty;
-    /* 시네마틱 와인 씬 (전역 배경) */
-    background-color: var(--wine);
+    /* 밤하늘 먹빛 씬 (전역 배경) */
+    background-color: var(--night);
     background-image:
-      radial-gradient(ellipse 100% 60% at 50% 0%, rgba(212, 175, 106, 0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(13, 6, 8, 0.7) 0%, transparent 70%),
-      radial-gradient(circle at 80% 30%, rgba(232, 200, 120, 0.04) 0%, transparent 50%);
+      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(138, 107, 242, 0.16) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(7, 6, 15, 0.7) 0%, transparent 70%),
+      radial-gradient(circle at 82% 26%, rgba(225, 193, 123, 0.06) 0%, transparent 48%),
+      linear-gradient(160deg, #0E1020 0%, #15172E 60%, #1A1430 100%);
     background-attachment: fixed;
     min-height: 100vh;
   }
   code, pre, kbd, samp {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
+  /* 제목 = 명조 (Gowun Batang). 감성 헤드라인은 .brush 로 별도 지정. */
   h1, h2, h3 {
     @apply tracking-tight;
     font-weight: 700;
-    font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif;
+    font-family: 'Gowun Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif;
   }
   /* 입력창은 다크 톤 — 콘트라스트 위해 따로 처리 */
   input, textarea, select {
     background-color: var(--wine-2);
     color: var(--bone);
-    border-color: var(--gold-line);
+    border-color: var(--cardline);
   }
   input::placeholder, textarea::placeholder {
-    color: var(--bone-faint);
+    color: var(--text-disabled);
   }
 }
 
 /* ── 폰트·글로우 유틸리티 ──────────────────────────────────── */
 @layer utilities {
-  .font-serif-kr   { font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif; }
-  .font-myeongjo   { font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; }
+  .font-sans-kr    { font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
+  .font-serif-kr   { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
+  .font-myeongjo   { font-family: 'Gowun Batang', 'Nanum Myeongjo', serif; }
   .font-batang     { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
-  .font-brush      { font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif; }
+  .font-brush      { font-family: 'Nanum Brush Script', 'Gowun Batang', cursive; }
   .font-mono-kr    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
-  /* 핸드오프 프로토타입 호환 별칭 (myeongjo / brush / mono) */
-  .myeongjo { font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; }
-  .brush    { font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif; }
+  /* 핸드오프 프로토타입 호환 별칭 (sans / serif / brush) */
+  .sans     { font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
+  .serif    { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
+  .myeong   { font-family: 'Song Myung', 'Gowun Batang', serif; }
+  .myeongjo { font-family: 'Gowun Batang', 'Nanum Myeongjo', serif; }
+  .brush    { font-family: 'Nanum Brush Script', 'Gowun Batang', cursive; }
   .mono     { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
-  .glow-bone { text-shadow: 0 0 18px rgba(240,230,210,0.35), 0 0 2px rgba(240,230,210,0.6); }
-  .glow-gold { text-shadow: 0 0 14px rgba(201,168,110,0.55), 0 0 2px rgba(201,168,110,0.8); }
+  .glow-bone   { text-shadow: 0 0 18px rgba(241,238,249,0.35), 0 0 2px rgba(241,238,249,0.6); }
+  .glow-gold   { text-shadow: 0 0 24px rgba(225,193,123,0.45), 0 0 2px rgba(225,193,123,0.8); }
+  .glow-violet { text-shadow: 0 0 20px rgba(138,107,242,0.5), 0 0 2px rgba(183,160,245,0.85); }
+
+  /* 자수정 코너 글로우 (카드 우상단) */
+  .glow { position: relative; overflow: hidden; }
+  .glow::before {
+    content: ""; position: absolute; width: 240px; height: 240px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(138,107,242,.30), transparent 68%);
+    top: -90px; right: -70px; pointer-events: none;
+  }
+
+  /* 반짝이는 별 입자 (카드/히어로 위) */
+  .star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; opacity: .5; }
 
   .vertical-rl {
     writing-mode: vertical-rl;
@@ -127,6 +170,24 @@
 
 /* ── 명운록 컴포넌트 ──────────────────────────────────────── */
 @layer components {
+  /* 골드 그라데이션 CTA (1차 전환 버튼) */
+  .btn-gold-grad {
+    background: linear-gradient(135deg, var(--gold-grad-start), var(--gold-grad-end));
+    color: #241a08;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(201, 151, 74, 0.30);
+  }
+  .btn-gold-grad:hover { filter: brightness(1.04); }
+
+  /* 자수정 그라데이션 CTA (심화/업셀 버튼) */
+  .btn-violet-grad {
+    background: linear-gradient(135deg, var(--violet), var(--violet-strong));
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 10px 26px rgba(138, 107, 242, 0.40);
+  }
+  .btn-violet-grad:hover { filter: brightness(1.06); }
+
   /* 골드 프레임 (코너 L자 마크) */
   .gold-frame {
     position: relative;
@@ -176,7 +237,7 @@
     vertical-align: middle;
   }
 
-  /* 한지 텍스처 (밝은 톤 카드용) */
+  /* 한지 텍스처 (밝은 톤 카드용 — 호환 유지) */
   .hanji {
     background-color: var(--paper);
     background-image:
@@ -185,14 +246,14 @@
     color: var(--ink-mu);
   }
 
-  /* 다크 카드 (와인 씬 위에 띄울 때) */
+  /* 다크 카드 (먹빛 씬 위에 띄울 때) */
   .night-card {
-    background: rgba(34, 29, 44, 0.55);
-    border: 1px solid var(--gold-pale);
-    backdrop-filter: blur(4px);
+    background: var(--wine-2);
+    border: 1px solid var(--cardline);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
   }
 
-  /* 인장 (red square seal) */
+  /* 인장 (red square seal) — 한자 도장 */
   .seal {
     display: inline-flex;
     align-items: center;
@@ -214,16 +275,16 @@
     background: var(--kakao);
     color: var(--kakao-text);
     border: none;
-    padding: 18px 22px;
-    font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+    padding: 16px 22px;
+    font-family: 'Pretendard', -apple-system, sans-serif;
     font-weight: 700;
     font-size: 15px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.02em;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 6px 18px rgba(254,229,0,0.15);
+    gap: 9px;
+    border-radius: 14px;
     cursor: pointer;
   }
   .btn-kakao:hover { filter: brightness(0.97); }
@@ -234,28 +295,30 @@
     color: var(--gold);
     border: 1px solid var(--gold-soft);
     padding: 14px 20px;
-    font-family: 'Noto Serif KR', serif;
-    letter-spacing: 0.2em;
+    font-family: 'Pretendard', sans-serif;
+    letter-spacing: 0.06em;
     cursor: pointer;
   }
   .btn-gold:hover { background: var(--gold-pale); }
 
   /* 씬 배경 (섹션 단위 적용) */
   .scene-wine {
-    background-color: var(--wine);
+    background-color: var(--screen);
     background-image:
-      radial-gradient(ellipse 100% 60% at 50% 0%, rgba(212,175,106,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(13,6,8,0.7) 0%, transparent 70%),
-      radial-gradient(circle at 80% 30%, rgba(232,200,120,0.06) 0%, transparent 50%);
+      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(138,107,242,0.16) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(7,6,15,0.7) 0%, transparent 70%),
+      radial-gradient(circle at 82% 26%, rgba(225,193,123,0.07) 0%, transparent 48%),
+      linear-gradient(180deg, #161228, #13152A);
     color: var(--bone);
     position: relative;
   }
   .scene-cosmos {
-    background-color: #060306;
+    background-color: var(--night);
     background-image:
-      radial-gradient(ellipse 80% 70% at 50% 50%, rgba(74, 30, 70, 0.55) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(212,175,106,0.20) 0%, transparent 45%),
-      radial-gradient(ellipse 90% 60% at 50% 80%, rgba(74, 14, 26, 0.6) 0%, transparent 70%);
+      radial-gradient(ellipse 80% 70% at 50% 45%, rgba(138,107,242,0.30) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(225,193,123,0.14) 0%, transparent 45%),
+      radial-gradient(ellipse 90% 60% at 50% 85%, rgba(26,20,48,0.85) 0%, transparent 70%),
+      linear-gradient(160deg, #0E1020, #15172E 60%, #1A1430);
     color: var(--bone);
     position: relative;
   }
@@ -284,45 +347,46 @@
   .starfield {
     position: absolute; inset: 0; overflow: hidden; pointer-events: none;
     background-image:
-      radial-gradient(1.2px 1.2px at 12% 18%, rgba(240,230,210,0.95), transparent 50%),
-      radial-gradient(0.8px 0.8px at 78% 22%, rgba(240,230,210,0.7), transparent 50%),
-      radial-gradient(1.4px 1.4px at 32% 64%, rgba(212,175,106,0.9), transparent 50%),
-      radial-gradient(1px 1px at 88% 72%, rgba(240,230,210,0.8), transparent 50%),
-      radial-gradient(1.6px 1.6px at 56% 14%, rgba(240,230,210,0.95), transparent 50%),
-      radial-gradient(1px 1px at 22% 40%, rgba(240,230,210,0.55), transparent 50%),
-      radial-gradient(1px 1px at 64% 48%, rgba(212,175,106,0.7), transparent 50%),
-      radial-gradient(0.8px 0.8px at 8% 80%, rgba(240,230,210,0.75), transparent 50%),
-      radial-gradient(1.5px 1.5px at 92% 36%, rgba(240,230,210,0.9), transparent 50%),
-      radial-gradient(1px 1px at 44% 88%, rgba(212,175,106,0.6), transparent 50%),
-      radial-gradient(0.8px 0.8px at 72% 90%, rgba(240,230,210,0.55), transparent 50%),
-      radial-gradient(1px 1px at 18% 56%, rgba(240,230,210,0.5), transparent 50%),
-      radial-gradient(0.6px 0.6px at 38% 26%, rgba(240,230,210,0.7), transparent 50%),
-      radial-gradient(0.6px 0.6px at 84% 8%, rgba(240,230,210,0.6), transparent 50%),
-      radial-gradient(0.8px 0.8px at 6% 38%, rgba(240,230,210,0.55), transparent 50%),
-      radial-gradient(1px 1px at 96% 56%, rgba(212,175,106,0.5), transparent 50%);
+      radial-gradient(1.2px 1.2px at 12% 18%, rgba(241,238,249,0.95), transparent 50%),
+      radial-gradient(0.8px 0.8px at 78% 22%, rgba(241,238,249,0.7), transparent 50%),
+      radial-gradient(1.4px 1.4px at 32% 64%, rgba(225,193,123,0.9), transparent 50%),
+      radial-gradient(1px 1px at 88% 72%, rgba(241,238,249,0.8), transparent 50%),
+      radial-gradient(1.6px 1.6px at 56% 14%, rgba(241,238,249,0.95), transparent 50%),
+      radial-gradient(1px 1px at 22% 40%, rgba(241,238,249,0.55), transparent 50%),
+      radial-gradient(1px 1px at 64% 48%, rgba(183,160,245,0.7), transparent 50%),
+      radial-gradient(0.8px 0.8px at 8% 80%, rgba(241,238,249,0.75), transparent 50%),
+      radial-gradient(1.5px 1.5px at 92% 36%, rgba(241,238,249,0.9), transparent 50%),
+      radial-gradient(1px 1px at 44% 88%, rgba(225,193,123,0.6), transparent 50%),
+      radial-gradient(0.8px 0.8px at 72% 90%, rgba(241,238,249,0.55), transparent 50%),
+      radial-gradient(1px 1px at 18% 56%, rgba(241,238,249,0.5), transparent 50%),
+      radial-gradient(0.6px 0.6px at 38% 26%, rgba(241,238,249,0.7), transparent 50%),
+      radial-gradient(0.6px 0.6px at 84% 8%, rgba(241,238,249,0.6), transparent 50%),
+      radial-gradient(0.8px 0.8px at 6% 38%, rgba(241,238,249,0.55), transparent 50%),
+      radial-gradient(1px 1px at 96% 56%, rgba(183,160,245,0.5), transparent 50%);
     background-size: 100% 100%;
   }
   .starfield::after {
     content: '';
     position: absolute; inset: 0;
     background-image:
-      radial-gradient(0.8px 0.8px at 30% 30%, rgba(240,230,210,0.8), transparent 50%),
-      radial-gradient(0.8px 0.8px at 70% 60%, rgba(240,230,210,0.7), transparent 50%),
-      radial-gradient(0.6px 0.6px at 50% 85%, rgba(240,230,210,0.6), transparent 50%),
-      radial-gradient(0.7px 0.7px at 20% 70%, rgba(240,230,210,0.65), transparent 50%);
+      radial-gradient(0.8px 0.8px at 30% 30%, rgba(241,238,249,0.8), transparent 50%),
+      radial-gradient(0.8px 0.8px at 70% 60%, rgba(241,238,249,0.7), transparent 50%),
+      radial-gradient(0.6px 0.6px at 50% 85%, rgba(241,238,249,0.6), transparent 50%),
+      radial-gradient(0.7px 0.7px at 20% 70%, rgba(241,238,249,0.65), transparent 50%);
     animation: twinkle 4.5s ease-in-out infinite alternate;
   }
 
   /* 위저드 입력창 */
   .ap-input {
     width: 100%; padding: 14px 14px;
-    background: rgba(13,6,8,0.45); border: 1px solid var(--gold-line);
+    background: var(--wine-2); border: 1px solid var(--cardline);
     color: var(--bone); outline: none;
-    font-family: 'Nanum Myeongjo', serif; font-size: 16px; letter-spacing: 0.03em;
+    border-radius: 11px;
+    font-family: 'Pretendard', -apple-system, sans-serif; font-size: 16px; letter-spacing: 0.01em;
     transition: border-color 0.2s;
   }
   .ap-input:focus { border-color: var(--gold); }
-  .ap-input::placeholder { color: var(--bone-faint); }
+  .ap-input::placeholder { color: var(--text-disabled); }
   .ap-input::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(2) hue-rotate(5deg); }
 }
 
@@ -367,15 +431,16 @@
   .svc-blur { filter: blur(6px); opacity: 0.7; }
 }
 
-/* ── 결과지 markdown (다크 와인 위의 본문) ──────────────────── */
+/* ── 결과지 markdown (밤하늘 위의 본문) ──────────────────────── */
 @layer components {
   .prose-saju h2 {
     @apply mt-10 mb-3 text-2xl font-semibold;
-    font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif;
+    font-family: 'Gowun Batang', 'Noto Serif KR', serif;
     color: var(--gold-bright);
   }
   .prose-saju h3 {
     @apply mt-6 mb-2 text-lg font-semibold;
+    font-family: 'Gowun Batang', 'Noto Serif KR', serif;
     color: var(--bone);
   }
   .prose-saju p {
@@ -399,7 +464,7 @@
   }
   .prose-saju code {
     @apply rounded px-1.5 py-0.5 text-sm;
-    background: rgba(212, 175, 106, 0.15);
+    background: rgba(138, 107, 242, 0.15);
     color: var(--bone);
   }
   .prose-saju a {

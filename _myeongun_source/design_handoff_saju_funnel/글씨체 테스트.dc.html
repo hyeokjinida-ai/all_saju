@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Do+Hyeon&family=Gasoek+One&family=Nanum+Brush+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  .bhs{font-family:'Black Han Sans',sans-serif}
+  .jua{font-family:'Jua',sans-serif}
+  .doh{font-family:'Do Hyeon',sans-serif}
+  .gasoek{font-family:'Gasoek One',sans-serif}
+  .brush{font-family:'Nanum Brush Script',cursive}
+  .sans{font-family:'Pretendard',sans-serif}
+  .lbl{font:600 13px Pretendard;color:#8a6bf2;position:absolute;top:-24px}
+  .note{font:500 12px Pretendard;color:#9a96ad;margin-top:10px;text-align:center}
+</style>
+</helmet>
+
+<div style="position:absolute;left:80px;top:34px;width:900px">
+  <div class="sans" style="font-weight:800;font-size:30px;color:#1c1c28">글씨체 테스트 — 후킹/썸네일</div>
+  <div class="sans" style="font-size:15px;color:#6b6880;margin-top:4px">Black Han Sans(검은고딕) 중심으로 외곽선 처리 비교. 광고·SNS 미끼 소재용.</div>
+</div>
+
+<!-- 1. BHS white+red (웹툰 썸네일) -->
+<div style="position:absolute;left:80px;top:120px;width:360px">
+  <div data-drags-parent="1" class="lbl">① Black Han Sans · 흰+빨강 외곽선</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:radial-gradient(circle at 50% 30%,#a01828,#5e0b16);padding:46px 20px;text-align:center">
+      <div class="bhs" style="font-size:58px;color:#fff;line-height:1.05;text-shadow:-3px -3px 0 #c0152a,3px -3px 0 #c0152a,-3px 3px 0 #c0152a,3px 3px 0 #c0152a,0 3px 0 #c0152a,3px 0 0 #c0152a,0 -3px 0 #c0152a,-3px 0 0 #c0152a,0 8px 16px rgba(0,0,0,.5)">홍연 사주궁합</div>
+    </div>
+  </div>
+  <div class="note">웹툰 썸네일 느낌 · 강한 후킹</div>
+</div>
+
+<!-- 2. BHS white+gold (밤하늘) -->
+<div style="position:absolute;left:520px;top:120px;width:360px">
+  <div data-drags-parent="1" class="lbl">② Black Han Sans · 흰+금 외곽선</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:linear-gradient(160deg,#0E1020,#1A1430);padding:46px 20px;text-align:center">
+      <div class="bhs" style="font-size:58px;color:#fff;line-height:1.05;text-shadow:-2px -2px 0 #C9974A,2px -2px 0 #C9974A,-2px 2px 0 #C9974A,2px 2px 0 #C9974A,0 2px 0 #C9974A,2px 0 0 #C9974A,0 -2px 0 #C9974A,-2px 0 0 #C9974A,0 0 24px rgba(225,193,123,.5)">올해 운세 대박</div>
+    </div>
+  </div>
+  <div class="note">밤하늘 무드와 절충 · 금빛 포인트</div>
+</div>
+
+<!-- 3. BHS gold fill + dark stroke -->
+<div style="position:absolute;left:960px;top:120px;width:360px">
+  <div data-drags-parent="1" class="lbl">③ Black Han Sans · 금 글자+먹 외곽선</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:linear-gradient(160deg,#15172E,#070c18);padding:46px 20px;text-align:center">
+      <div class="bhs" style="font-size:60px;line-height:1.05;color:#E7C27D;text-shadow:-2px -2px 0 #06070d,2px -2px 0 #06070d,-2px 2px 0 #06070d,2px 2px 0 #06070d,0 6px 14px rgba(0,0,0,.6)">명운봄 사주</div>
+    </div>
+  </div>
+  <div class="note">고급스러움 ↑ · 자극 ↓</div>
+</div>
+
+<!-- 4. Jua -->
+<div style="position:absolute;left:80px;top:430px;width:360px">
+  <div data-drags-parent="1" class="lbl">④ Jua · 흰+남보라 외곽선 (둥글)</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:radial-gradient(circle at 50% 30%,#3A2E5E,#171430);padding:50px 20px;text-align:center">
+      <div class="jua" style="font-size:54px;color:#fff;line-height:1.1;text-shadow:-2px -2px 0 #6541F2,2px -2px 0 #6541F2,-2px 2px 0 #6541F2,2px 2px 0 #6541F2,0 2px 0 #6541F2,2px 0 0 #6541F2,0 -2px 0 #6541F2,-2px 0 0 #6541F2,0 8px 18px rgba(0,0,0,.5)">2026 신년운세</div>
+    </div>
+  </div>
+  <div class="note">덜 강하고 친근 · 가독성 좋음</div>
+</div>
+
+<!-- 5. Do Hyeon -->
+<div style="position:absolute;left:520px;top:430px;width:360px">
+  <div data-drags-parent="1" class="lbl">⑤ Do Hyeon · 흰+금 (각진편)</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:linear-gradient(160deg,#0E1020,#1A1430);padding:50px 20px;text-align:center">
+      <div class="doh" style="font-size:50px;color:#fff;line-height:1.15;text-shadow:-2px -2px 0 #C9974A,2px -2px 0 #C9974A,-2px 2px 0 #C9974A,2px 2px 0 #C9974A,0 0 20px rgba(225,193,123,.45)">당신의 궁합은</div>
+    </div>
+  </div>
+  <div class="note">차분·정돈 · 본문 제목에도 OK</div>
+</div>
+
+<!-- 6. Gasoek One -->
+<div style="position:absolute;left:960px;top:430px;width:360px">
+  <div data-drags-parent="1" class="lbl">⑥ Gasoek One · 자체 외곽선 스타일</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:radial-gradient(circle at 50% 30%,#a01828,#3e0810);padding:50px 20px;text-align:center">
+      <div class="gasoek" style="font-size:54px;color:#FFE9B0;line-height:1.1;text-shadow:0 6px 14px rgba(0,0,0,.5)">사주풀이</div>
+    </div>
+  </div>
+  <div class="note">레트로·통통 · 개성 강함</div>
+</div>
+
+<!-- 비교: 현재 브랜드 붓글씨 -->
+<div style="position:absolute;left:80px;top:760px;width:360px">
+  <div data-drags-parent="1" class="lbl" style="color:#E1A33B">현재 브랜드 (참고) · 붓글씨</div>
+  <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+    <div style="background:linear-gradient(160deg,#0E1020,#1A1430);padding:52px 20px;text-align:center">
+      <div class="brush" style="font-size:60px;color:#F1EEF9;line-height:1;text-shadow:0 0 24px rgba(225,193,123,.3)">명운봄 사주</div>
+    </div>
+  </div>
+  <div class="note">차분·감성 · 브랜드 히어로용</div>
+</div>
+
+<!-- 가이드 노트 -->
+<div style="position:absolute;left:520px;top:760px;width:800px;background:#fef4a8;padding:18px 22px;font:500 14px Pretendard;color:#3a3320;line-height:1.6;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.12)">
+  <b>제안</b> — 두 글씨체를 <b>역할로 분리</b>하면 좋아요.<br>
+  · <b>광고/SNS 썸네일·후킹 카피</b> → Black Han Sans + 외곽선 (①②③) 으로 시선 강탈<br>
+  · <b>브랜드 히어로·리포트 본문</b> → 붓글씨/명조 로 차분·고급 유지<br>
+  ②③처럼 <b>금빛 외곽선</b>을 쓰면 자극적인 썸네일도 밤하늘 브랜드 톤과 자연스럽게 이어집니다.
+</div>
+
+</x-dc>
+</body>
+</html>
