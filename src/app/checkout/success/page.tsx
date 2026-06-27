@@ -136,7 +136,7 @@ function CheckoutSuccessInner() {
         <p className="mt-6 font-myeongjo text-xs text-gold-soft tracking-[0.1em]">먼저 받아본 분들의 후기</p>
         <div
           key={idx}
-          className="svc-fade mt-3 rounded-md border border-gold-pale bg-[rgba(14,16,32,0.5)] p-5 text-left min-h-[120px]"
+          className="svc-fade mt-3 rounded-md border border-gold-pale bg-[rgba(36,16,71,0.5)] p-5 text-left min-h-[120px]"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-gold-bright text-sm tracking-[0.1em]">{"★".repeat(r.stars)}</span>
@@ -153,7 +153,7 @@ function CheckoutSuccessInner() {
               className="h-1.5 rounded-full transition-all"
               style={{
                 width: i === idx ? 16 : 6,
-                background: i === idx ? "var(--gold-bright)" : "rgba(225,193,123,0.25)",
+                background: i === idx ? "var(--gold-bright)" : "rgba(150,90,255,0.25)",
               }}
             />
           ))}
@@ -180,9 +180,9 @@ function CheckoutSuccessInner() {
             className="inline-flex items-center justify-center gap-2 w-full max-w-xs mx-auto py-4 font-bold text-base tracking-[0.1em]"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#E7C27D,#E1C17B)",
+              background: "linear-gradient(180deg,#ffffff,#f1eaff)",
               color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(225,193,123,0.3)",
+              boxShadow: "0 0 24px rgba(150,90,255,0.3)",
             }}
           >
             결과지 확인하기

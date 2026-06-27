@@ -34,7 +34,7 @@ export function SipseongChart({ analysis }: { analysis: unknown }) {
   return (
     <section className="mb-11">
       <SectionTitle title="십성 분포 · 十星" />
-      <div className="rounded-md border border-gold-line bg-[rgba(14,16,32,0.4)] px-5 py-6 sm:px-7">
+      <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] px-5 py-6 sm:px-7">
         <div className="space-y-3">
           {SIPSEONG.map((s) => {
             const c = num(summary[s.key]);
@@ -44,7 +44,7 @@ export function SipseongChart({ analysis }: { analysis: unknown }) {
                   <span className="text-bone-soft">{s.label}</span>
                   <span className="text-bone-faint"> · {s.desc}</span>
                 </span>
-                <div className="flex-1 h-3.5 rounded-sm overflow-hidden bg-[rgba(225,193,123,0.07)]">
+                <div className="flex-1 h-3.5 rounded-sm overflow-hidden bg-[rgba(150,90,255,0.07)]">
                   <div className="h-full rounded-sm" style={{ width: `${(c / max) * 100}%`, background: s.color, opacity: c === 0 ? 0.25 : 0.9 }} />
                 </div>
                 <span className="font-mono text-xs text-bone-faint w-5 text-right">{c}</span>
@@ -98,7 +98,7 @@ export function MonthlyLuckChart({ analysis }: { analysis: unknown }) {
   return (
     <section className="mb-11">
       <SectionTitle title="2026 월별 운 흐름 · 月運" />
-      <div className="rounded-md border border-gold-line bg-[rgba(14,16,32,0.4)] p-5 sm:p-6">
+      <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] p-5 sm:p-6">
         <div className="flex items-end justify-between gap-1.5 h-[120px]">
           {window.map((m, i) => {
             const r = rate(m);
@@ -108,7 +108,7 @@ export function MonthlyLuckChart({ analysis }: { analysis: unknown }) {
               <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                 <div
                   className="w-full max-w-[22px] rounded-t-sm"
-                  style={{ height: `${s.h}%`, background: s.color, opacity: now ? 1 : 0.78, boxShadow: now ? "0 0 10px rgba(225,193,123,0.5)" : "none" }}
+                  style={{ height: `${s.h}%`, background: s.color, opacity: now ? 1 : 0.78, boxShadow: now ? "0 0 10px rgba(150,90,255,0.5)" : "none" }}
                 />
                 <span className={`mt-1.5 font-mono text-[9px] ${now ? "text-gold-bright font-bold" : "text-bone-faint"}`}>{str(m.month)}월</span>
               </div>
@@ -136,7 +136,7 @@ export function DaeunTimeline({ analysis }: { analysis: unknown }) {
   return (
     <section className="mb-11">
       <SectionTitle title="대운 60년 흐름 · 大運" />
-      <div className="rounded-md border border-gold-line bg-[rgba(14,16,32,0.4)] p-5 sm:p-6">
+      <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] p-5 sm:p-6">
         <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-1 px-1">
           {all.map((d, i) => {
             const o = rec(d);
@@ -148,7 +148,7 @@ export function DaeunTimeline({ analysis }: { analysis: unknown }) {
                 className="shrink-0 w-[78px] rounded-md px-2 py-3 text-center"
                 style={{
                   border: isNow ? "1.5px solid var(--gold)" : "1px solid var(--gold-pale)",
-                  background: isNow ? "rgba(225,193,123,0.14)" : "rgba(14,16,32,0.4)",
+                  background: isNow ? "rgba(150,90,255,0.14)" : "rgba(36,16,71,0.4)",
                 }}
               >
                 <div className="font-mono text-[9px] text-bone-faint tracking-[0.05em]">{str(o.age_start)}~{str(o.age_end)}세</div>

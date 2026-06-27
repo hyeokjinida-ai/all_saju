@@ -43,44 +43,45 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
-        // ── 보일러플레이트 alias 재매핑 — 밤하늘 먹빛 + 금 + 자수정 ──
+        // ── 보일러플레이트 alias 재매핑 — 자수정(amethyst) 다크 ──
         // 기존 className 그대로 두고 색만 바꿔서 모든 페이지 자동 적용됨
         ink: "#F1EEF9",                          // 강조 텍스트
-        canvas: "#13152A",                       // 화면 배경 (screen)
-        "surface-soft": "#1B1E38",               // 카드 표면
-        "surface-dark": "#0E1020",               // 가장 깊은 밤
-        charcoal: "#C9C6DC",                     // 서브 텍스트
-        body: "#D8D5E6",                         // 본문 — 4050 가독성
-        mute: "#9C99B5",                         // 보조 텍스트
-        hairline: "#2C2F52",                     // 카드/입력 테두리
-        "hairline-strong": "#343865",            // 강한 테두리(차트 셀)
+        canvas: "#1b0d3c",                       // 화면 배경 (screen)
+        "surface-soft": "#241047",               // 카드 표면
+        "surface-dark": "#120726",               // 가장 깊은 밤
+        charcoal: "#cbb8f0",                     // 서브 텍스트
+        body: "#cbb8f0",                         // 본문
+        mute: "#9a8cd0",                         // 보조 텍스트
+        hairline: "#3a2f5e",                     // 카드/입력 테두리
+        "hairline-strong": "#4a3a6e",            // 강한 테두리(차트 셀)
 
-        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold, text-violet 등) ──
-        // 호환 위해 wine* 이름은 유지하되 값은 먹빛 표면으로 재매핑
-        wine: "#13152A",          // 화면 배경
-        "wine-2": "#1B1E38",      // 카드
-        "wine-deep": "#181530",   // 잠긴 카드·서브
-        "wine-soft": "#1E2140",   // 차트 셀 등 밝은 표면
-        screen: "#13152A",
-        night: "#0E1020",
-        "night-2": "#15172E",
-        "night-3": "#1A1430",
-        "night-edge": "#07060F",
-        divider: "#24264A",
+        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold[보라], text-violet 등) ──
+        // 호환 위해 wine*/gold* 이름은 유지하되 값은 자수정으로 재매핑
+        wine: "#1b0d3c",          // 화면 배경
+        "wine-2": "#241047",      // 카드
+        "wine-deep": "#1c0e3e",   // 잠긴 카드·서브
+        "wine-soft": "#2a1a5c",   // 차트 셀 등 밝은 표면
+        screen: "#1b0d3c",
+        night: "#120726",
+        "night-2": "#231052",
+        "night-3": "#2c1668",
+        "night-edge": "#0c0420",
+        divider: "#2a2350",
 
         bone: "#F1EEF9",
-        "bone-soft": "#D8D5E6",   // 본문 — 4050 가독성
-        "bone-faint": "#9C99B5",  // 보조 텍스트
+        "bone-soft": "#cbb8f0",
+        "bone-faint": "#9a8cd0",
 
-        gold: "#E1C17B",
-        "gold-bright": "#E7C27D",
-        "gold-soft": "#D8C58C",
-        "gold-grad-start": "#E7C27D",
-        "gold-grad-end": "#C9974A",
-        "gold-pale": "rgba(225, 193, 123, 0.14)",
-        "gold-line": "rgba(225, 193, 123, 0.5)",
+        // 1차 강조 = 자수정 보라 (이름은 gold 유지). CTA 그라데이션은 흰색.
+        gold: "#c9a8ff",
+        "gold-bright": "#dcc8ff",
+        "gold-soft": "#b794ff",
+        "gold-grad-start": "#ffffff",
+        "gold-grad-end": "#f1eaff",
+        "gold-pale": "rgba(150, 90, 255, 0.16)",
+        "gold-line": "rgba(180, 140, 255, 0.3)",
 
-        // 자수정 (violet) — AI/심화/프리미엄
+        // 자수정 (violet) — 코어 액센트
         violet: "#8A6BF2",
         "violet-strong": "#6541F2",
         "violet-text": "#B7A0F5",
@@ -96,18 +97,18 @@ const config: Config = {
         brown: "#7d5a3a",
 
         kakao: "#FEE500",
-        "kakao-text": "#3c1e1e",
+        "kakao-text": "#2b2b2b",
         naver: "#03c75a",
         toss: "#3182f6",
         success: "#6FBE8B",
         "star-blue": "#4D8BFF",
 
-        // 오행 (五行)
-        "o-wood":  "#5BA877",
-        "o-fire":  "#C75C4A",
-        "o-earth": "#C99A52",
-        "o-metal": "#C9C9D6",
-        "o-water": "#4F7CC2",
+        // 오행 (五行) — 자수정 디자인 팔레트
+        "o-wood":  "#7fc8a0",
+        "o-fire":  "#ff9a7a",
+        "o-earth": "#e4c878",
+        "o-metal": "#c8cdd4",
+        "o-water": "#88a8e0",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -168,8 +169,8 @@ const config: Config = {
         "mini": "0.4em",
       },
       boxShadow: {
-        "gold-glow": "0 0 24px rgba(225, 193, 123, 0.18)",
-        "gold-cta": "0 8px 24px rgba(201, 151, 74, 0.30)",
+        "gold-glow": "0 0 24px rgba(180, 140, 255, 0.25)",
+        "gold-cta": "0 12px 26px rgba(120, 60, 240, 0.4)",
         "violet-cta": "0 8px 24px rgba(138, 107, 242, 0.35)",
         "violet-glow": "0 0 50px rgba(138, 107, 242, 0.45)",
         "card-float": "0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",

@@ -160,7 +160,7 @@ export default async function ProductDetailPage({
 
       {/* ── 2. 공감(통증) ── */}
       {pitch?.pains && pitch.pains.length > 0 && (
-        <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(14,16,32,0.4)] p-6">
+        <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(36,16,71,0.4)] p-6">
           <p className="font-myeongjo text-base font-semibold text-gold-bright mb-4 text-center">
             혹시, 이런 마음 아니신가요
           </p>
@@ -236,7 +236,7 @@ export default async function ProductDetailPage({
       </section>
 
       {/* ── 4. 가격 + 입력 시작 ── */}
-      <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(225,193,123,0.10), rgba(7,6,15,0.6))" }}>
+      <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(150,90,255,0.10), rgba(7,6,15,0.6))" }}>
         <p className="text-xs text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
         <p className="font-myeongjo text-bone text-base mb-1">{product.name}</p>
         <p className="font-serif text-4xl font-bold text-gold-bright mb-1.5">{formatKRW(product.price)}</p>
@@ -260,7 +260,7 @@ export default async function ProductDetailPage({
         {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
         <div
           className="mt-6 rounded-md p-5"
-          style={{ background: "rgba(225,193,123,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
+          style={{ background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
         >
           <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>安心</p>
           <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
@@ -291,11 +291,11 @@ export default async function ProductDetailPage({
             const initial = (r.tag || "").trim().charAt(0);
             const avatar = /[가-힣]/.test(initial) ? initial : "命";
             return (
-              <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(14,16,32,0.4)] p-4">
+              <li key={r.key} className="rounded-md border border-gold-pale bg-[rgba(36,16,71,0.4)] p-4">
                 <div className="flex items-start gap-3">
                   <span
                     className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-myeongjo text-sm font-bold"
-                    style={{ background: "linear-gradient(180deg,#E7C27D,#caa862)", color: "#241a08" }}
+                    style={{ background: "linear-gradient(180deg,#ffffff,#c9a8ff)", color: "#241a08" }}
                     aria-hidden
                   >
                     {avatar}
@@ -320,7 +320,7 @@ export default async function ProductDetailPage({
         <a
           href="#start"
           className="inline-flex items-center gap-2 rounded-md px-7 py-3.5 font-bold text-sm tracking-[0.06em]"
-          style={{ background: "linear-gradient(180deg,#E7C27D,#E1C17B)", color: "#241a08", fontFamily: "'Gowun Batang', serif" }}
+          style={{ background: "linear-gradient(180deg,#ffffff,#f1eaff)", color: "#241a08", fontFamily: "'Gowun Batang', serif" }}
         >
           나도 지금 받아보기 <span className="font-brush">命</span>
         </a>

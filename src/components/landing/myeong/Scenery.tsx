@@ -28,8 +28,8 @@ export function MountainScene({ withLantern = false, height = 240 }: { withLante
         </linearGradient>
         <radialGradient id="moon-g" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#f0e6d2" stopOpacity="0.7" />
-          <stop offset="50%" stopColor="#E1C17B" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#E1C17B" stopOpacity="0" />
+          <stop offset="50%" stopColor="#f1eaff" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#f1eaff" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="lantern-g" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffd066" stopOpacity="0.95" />
@@ -54,7 +54,7 @@ export function MountainScene({ withLantern = false, height = 240 }: { withLante
         {Array.from({ length: 18 }).map((_, i) => {
           const x = (i * 23 + 11) % 400;
           const y = 130 + ((i * 7) % 70);
-          return <circle key={i} cx={x} cy={y} r="0.6" fill="#E1C17B" />;
+          return <circle key={i} cx={x} cy={y} r="0.6" fill="#f1eaff" />;
         })}
       </g>
     </svg>
@@ -67,9 +67,9 @@ export function GalaxyScene({ size = 280 }: { size?: number }) {
       <defs>
         <radialGradient id="gxy-core" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#f0e6d2" stopOpacity="1" />
-          <stop offset="15%" stopColor="#E7C27D" stopOpacity="0.85" />
-          <stop offset="40%" stopColor="#E1C17B" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#E1C17B" stopOpacity="0" />
+          <stop offset="15%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="40%" stopColor="#f1eaff" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#f1eaff" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="gxy-halo" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#2A2350" stopOpacity="0" />
@@ -78,7 +78,7 @@ export function GalaxyScene({ size = 280 }: { size?: number }) {
         </radialGradient>
       </defs>
       <circle cx="200" cy="200" r="180" fill="url(#gxy-halo)" />
-      <g fill="none" stroke="#E1C17B" strokeWidth="1.2" strokeLinecap="round">
+      <g fill="none" stroke="#f1eaff" strokeWidth="1.2" strokeLinecap="round">
         {Array.from({ length: 5 }).map((_, i) => {
           const rot = i * 72;
           return (
@@ -91,7 +91,7 @@ export function GalaxyScene({ size = 280 }: { size?: number }) {
           );
         })}
       </g>
-      <g fill="#E1C17B">
+      <g fill="#f1eaff">
         {Array.from({ length: 60 }).map((_, i) => {
           const angle = i * 0.32;
           const radius = 30 + i * 2.6;
@@ -148,12 +148,12 @@ export function SunRadiant({ size = 360 }: { size?: number }) {
       <defs>
         <radialGradient id="sun-core" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#f0e6d2" stopOpacity="0.95" />
-          <stop offset="20%" stopColor="#E7C27D" stopOpacity="0.7" />
-          <stop offset="55%" stopColor="#E1C17B" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#E1C17B" stopOpacity="0" />
+          <stop offset="20%" stopColor="#ffffff" stopOpacity="0.7" />
+          <stop offset="55%" stopColor="#f1eaff" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#f1eaff" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <g stroke="#E1C17B" strokeOpacity="0.4" strokeWidth="0.6">
+      <g stroke="#f1eaff" strokeOpacity="0.4" strokeWidth="0.6">
         {Array.from({ length: 36 }).map((_, i) => {
           const a = ((i * 10) * Math.PI) / 180;
           const r1 = 50,
@@ -201,15 +201,15 @@ export function LunarMansionChart({ size = 280, highlight }: { size?: number; hi
           <stop offset="100%" stopColor="#0E1020" stopOpacity="0.9" />
         </radialGradient>
         <radialGradient id="lm-core" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#E7C27D" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#E1C17B" stopOpacity="0" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#f1eaff" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle cx={cx} cy={cy} r={rOuter} fill="url(#lm-bg)" />
-      <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="rgba(225,193,123,0.6)" strokeWidth="0.8" />
-      <circle cx={cx} cy={cy} r={rRing} fill="none" stroke="rgba(225,193,123,0.35)" strokeWidth="0.6" />
-      <circle cx={cx} cy={cy} r={rInner} fill="none" stroke="rgba(225,193,123,0.4)" strokeWidth="0.6" />
-      <circle cx={cx} cy={cy} r={rCore} fill="none" stroke="rgba(225,193,123,0.6)" strokeWidth="0.8" />
+      <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="rgba(150,90,255,0.6)" strokeWidth="0.8" />
+      <circle cx={cx} cy={cy} r={rRing} fill="none" stroke="rgba(150,90,255,0.35)" strokeWidth="0.6" />
+      <circle cx={cx} cy={cy} r={rInner} fill="none" stroke="rgba(150,90,255,0.4)" strokeWidth="0.6" />
+      <circle cx={cx} cy={cy} r={rCore} fill="none" stroke="rgba(150,90,255,0.6)" strokeWidth="0.8" />
       {[0, 7, 14, 21].map((i) => {
         const a = ((startAngle + i * step) * Math.PI) / 180;
         return (
@@ -219,7 +219,7 @@ export function LunarMansionChart({ size = 280, highlight }: { size?: number; hi
             y1={rnd(cy + Math.sin(a) * rCore)}
             x2={rnd(cx + Math.cos(a) * rOuter)}
             y2={rnd(cy + Math.sin(a) * rOuter)}
-            stroke="rgba(225,193,123,0.55)"
+            stroke="rgba(150,90,255,0.55)"
             strokeWidth="0.8"
           />
         );
@@ -239,7 +239,7 @@ export function LunarMansionChart({ size = 280, highlight }: { size?: number; hi
             dominantBaseline="central"
             fontFamily="'Ma Shan Zheng', 'Nanum Myeongjo', serif"
             fontSize={size * 0.045}
-            fill={isHi ? "#E7C27D" : "rgba(241,238,249,0.85)"}
+            fill={isHi ? "#ffffff" : "rgba(203,184,240,0.85)"}
             style={{ filter: isHi ? "drop-shadow(0 0 4px rgba(232,200,120,0.7))" : "none" }}
           >
             {m.h}
@@ -253,10 +253,10 @@ export function LunarMansionChart({ size = 280, highlight }: { size?: number; hi
         const y = rnd(cy + Math.sin(a) * r);
         return (
           <g key={i}>
-            <text x={x} y={y - 4} textAnchor="middle" dominantBaseline="central" fontFamily="'Ma Shan Zheng', serif" fontSize={size * 0.052} fill="#E1C17B">
+            <text x={x} y={y - 4} textAnchor="middle" dominantBaseline="central" fontFamily="'Ma Shan Zheng', serif" fontSize={size * 0.052} fill="#f1eaff">
               {g.h}
             </text>
-            <text x={x} y={y + 12} textAnchor="middle" dominantBaseline="central" fontFamily="'Nanum Myeongjo', serif" fontSize={size * 0.028} letterSpacing="0.15em" fill="rgba(225,193,123,0.6)">
+            <text x={x} y={y + 12} textAnchor="middle" dominantBaseline="central" fontFamily="'Nanum Myeongjo', serif" fontSize={size * 0.028} letterSpacing="0.15em" fill="rgba(150,90,255,0.6)">
               {g.label}
             </text>
           </g>
@@ -272,7 +272,7 @@ export function LunarMansionChart({ size = 280, highlight }: { size?: number; hi
         const y1 = rnd(cy + Math.sin(a) * (rOuter + 2));
         const x2 = rnd(cx + Math.cos(a) * (rOuter + (i % 7 === 0 ? 7 : 4)));
         const y2 = rnd(cy + Math.sin(a) * (rOuter + (i % 7 === 0 ? 7 : 4)));
-        return <line key={`t-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(225,193,123,0.45)" strokeWidth={i % 7 === 0 ? 0.9 : 0.5} />;
+        return <line key={`t-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(150,90,255,0.45)" strokeWidth={i % 7 === 0 ? 0.9 : 0.5} />;
       })}
     </svg>
   );
@@ -310,10 +310,10 @@ export function AlmanacPage({ width = 220, height = 280 }: { width?: number; hei
         const x = 14 + ci * colW + colW / 2;
         return (
           <g key={ci}>
-            <text x={x} y="44" textAnchor="middle" dominantBaseline="central" fontFamily="'Ma Shan Zheng', serif" fontSize="11" fill="#E1C17B">
+            <text x={x} y="44" textAnchor="middle" dominantBaseline="central" fontFamily="'Ma Shan Zheng', serif" fontSize="11" fill="#f1eaff">
               {col.year}
             </text>
-            <line x1={x - colW * 0.35} y1="52" x2={x + colW * 0.35} y2="52" stroke="#E1C17B" strokeWidth="0.4" opacity="0.6" />
+            <line x1={x - colW * 0.35} y1="52" x2={x + colW * 0.35} y2="52" stroke="#f1eaff" strokeWidth="0.4" opacity="0.6" />
             {col.months.map((m, mi) => (
               <text key={mi} x={x} y={62 + mi * 16} textAnchor="middle" dominantBaseline="central" fontFamily="'Nanum Myeongjo', serif" fontSize="10" fill="#C9C6DC">
                 {m}
@@ -347,8 +347,8 @@ export function BigLandscape({ height = 320 }: { height?: number }) {
         </linearGradient>
         <radialGradient id="moon2" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#f0e6d2" stopOpacity="0.95" />
-          <stop offset="30%" stopColor="#E7C27D" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#E1C17B" stopOpacity="0" />
+          <stop offset="30%" stopColor="#ffffff" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#f1eaff" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="mt-deep" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#1A1430" />
@@ -366,10 +366,10 @@ export function BigLandscape({ height = 320 }: { height?: number }) {
       <path d="M-20 180 L30 150 L70 165 L120 140 L170 165 L220 130 L280 155 L340 130 L400 155 L400 320 L-20 320 Z" fill="url(#mt-deep)" opacity="0.85" />
       <rect x="0" y="175" width="400" height="35" fill="#0E1020" opacity="0.4" />
       <g transform="translate(280, 168)">
-        <rect x="-12" y="-4" width="24" height="8" fill="#15172E" stroke="#E1C17B" strokeWidth="0.5" />
-        <path d="M-16 -4 L-2 -14 L2 -14 L16 -4 Z" fill="#15172E" stroke="#E1C17B" strokeWidth="0.5" />
-        <path d="M-18 -4 L-13 -4 M18 -4 L13 -4" stroke="#E1C17B" strokeWidth="0.5" />
-        <line x1="0" y1="-14" x2="0" y2="-18" stroke="#E1C17B" strokeWidth="0.5" />
+        <rect x="-12" y="-4" width="24" height="8" fill="#15172E" stroke="#f1eaff" strokeWidth="0.5" />
+        <path d="M-16 -4 L-2 -14 L2 -14 L16 -4 Z" fill="#15172E" stroke="#f1eaff" strokeWidth="0.5" />
+        <path d="M-18 -4 L-13 -4 M18 -4 L13 -4" stroke="#f1eaff" strokeWidth="0.5" />
+        <line x1="0" y1="-14" x2="0" y2="-18" stroke="#f1eaff" strokeWidth="0.5" />
         <circle cx="0" cy="0" r="2" fill="#ffd066" opacity="0.8" />
       </g>
       <path d="M-10 230 L40 205 L90 220 L140 195 L200 215 L260 190 L320 210 L400 195 L400 320 L-10 320 Z" fill="#050204" />
@@ -387,7 +387,7 @@ export function BigLandscape({ height = 320 }: { height?: number }) {
         {Array.from({ length: 20 }).map((_, i) => {
           const x = (i * 27 + 11) % 400;
           const y = 110 + ((i * 11) % 80);
-          return <circle key={i} cx={x} cy={y} r="0.5" fill="#E1C17B" />;
+          return <circle key={i} cx={x} cy={y} r="0.5" fill="#f1eaff" />;
         })}
       </g>
     </svg>

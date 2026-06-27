@@ -11,57 +11,57 @@
 
 @layer base {
   :root {
-    /* shadcn-style HSL 토큰 — 명운록 밤하늘 먹빛 팔레트 */
-    --background: 232 35% 12%;          /* screen #13152A */
+    /* shadcn-style HSL 토큰 — 명운록 자수정(amethyst) 다크 팔레트 */
+    --background: 263 64% 14%;          /* screen #1b0d3c */
     --foreground: 252 43% 96%;          /* text strong #F1EEF9 */
-    --card: 234 31% 17%;                /* card #1B1E38 */
+    --card: 258 64% 17%;                /* card #241047 */
     --card-foreground: 252 43% 96%;
-    --primary: 40 67% 70%;              /* gold #E7C27D */
-    --primary-foreground: 36 70% 8%;    /* deep ink #241a08 */
-    --secondary: 234 31% 17%;
+    --primary: 258 83% 65%;             /* violet core #8a5cf0 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 258 64% 17%;
     --secondary-foreground: 252 43% 96%;
-    --muted: 234 39% 14%;               /* card-2 #181530 */
-    --muted-foreground: 250 13% 66%;    /* #9C99B5 */
-    --accent: 252 80% 69%;              /* violet #8A6BF2 */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 8 52% 54%;           /* 火 #C75C4A */
+    --muted: 263 60% 14%;               /* #1c0e3e */
+    --muted-foreground: 257 38% 68%;    /* #9a8cd0 */
+    --accent: 260 100% 83%;             /* #c9a8ff */
+    --accent-foreground: 258 70% 32%;   /* #3a1a8a */
+    --destructive: 8 52% 54%;
     --destructive-foreground: 252 43% 96%;
-    --border: 234 30% 25%;              /* line/border #2C2F52 */
-    --input: 234 31% 17%;
-    --ring: 40 67% 70%;                 /* gold */
+    --border: 258 30% 28%;              /* line/border 보라 */
+    --input: 258 64% 17%;
+    --ring: 264 100% 79%;               /* #b794ff */
     --radius: 0.875rem;                 /* 부드러운 카드 — 14px */
 
-    /* 명운록 raw 토큰 — 밤하늘 먹빛 표면 */
-    --night:      #0E1020;  /* 가장 깊은 밤 */
-    --night-2:    #15172E;
-    --night-3:    #1A1430;  /* 자수정 기운 */
-    --night-edge: #07060F;  /* 업셀 외곽 등 더 깊은 먹 */
-    --screen:     #13152A;  /* 화면 본문 배경 */
-    --wine:       #13152A;  /* (호환 별칭) 화면 배경 */
-    --wine-2:     #1B1E38;  /* 카드 표면 */
-    --wine-deep:  #181530;  /* 잠긴 카드·서브 표면 */
-    --wine-soft:  #1E2140;  /* 차트 셀 등 살짝 밝은 표면 */
-    --cardline:        #2C2F52;  /* 카드/입력 테두리 */
-    --cardline-strong: #343865;  /* 차트 셀 테두리 */
-    --divider:         #24264A;  /* 구분선 */
+    /* 명운록 raw 토큰 — 자수정 다크 표면 */
+    --night:      #120726;  /* 가장 깊은 자수정 밤 */
+    --night-2:    #231052;
+    --night-3:    #2c1668;
+    --night-edge: #0c0420;  /* 더 깊은 보라 */
+    --screen:     #1b0d3c;  /* 화면 본문 배경 */
+    --wine:       #1b0d3c;  /* (호환 별칭) 화면 배경 */
+    --wine-2:     #241047;  /* 카드 표면 */
+    --wine-deep:  #1c0e3e;  /* 잠긴 카드·서브 표면 */
+    --wine-soft:  #2a1a5c;  /* 차트 셀 등 살짝 밝은 표면 */
+    --cardline:        #3a2f5e;  /* 카드/입력 테두리 */
+    --cardline-strong: #4a3a6e;  /* 차트 셀 테두리 */
+    --divider:         #2a2350;  /* 구분선 */
 
     /* 텍스트 (다크 위) */
     --bone:       #F1EEF9;  /* 헤드라인/강조 */
-    --bone-soft:  #D8D5E6;  /* 본문 — 4050 가독성 */
-    --bone-faint: #9C99B5;  /* 보조 */
-    --text-assistive: #8E8BA8;
+    --bone-soft:  #cbb8f0;  /* 본문 */
+    --bone-faint: #9a8cd0;  /* 보조 */
+    --text-assistive: #9a8cd0;
     --text-disabled:  #6B6880;
 
-    /* 금 (gold) — 1차 강조 / CTA */
-    --gold:        #E1C17B;
-    --gold-bright: #E7C27D;
-    --gold-soft:   #D8C58C;
-    --gold-grad-start: #E7C27D;
-    --gold-grad-end:   #C9974A;
-    --gold-pale: rgba(225, 193, 123, 0.14);
-    --gold-line: rgba(225, 193, 123, 0.5);
+    /* 1차 강조 — 자수정 보라 (gold 토큰명 유지·값은 보라). CTA 그라데이션은 흰색. */
+    --gold:        #c9a8ff;
+    --gold-bright: #dcc8ff;
+    --gold-soft:   #b794ff;
+    --gold-grad-start: #ffffff;
+    --gold-grad-end:   #f1eaff;
+    --gold-pale: rgba(150, 90, 255, 0.16);
+    --gold-line: rgba(180, 140, 255, 0.3);
 
-    /* 자수정 (violet) — AI/심화/프리미엄 강조 */
+    /* 자수정 (violet) — 코어 액센트 */
     --violet:        #8A6BF2;
     --violet-strong: #6541F2;
     --violet-text:   #B7A0F5;
@@ -70,7 +70,7 @@
 
     --seal: #8b1e1e;
     --kakao: #FEE500;
-    --kakao-text: #3c1e1e;
+    --kakao-text: #2b2b2b;
     --success: #6FBE8B;
     --star-blue: #4D8BFF;
 
@@ -80,12 +80,12 @@
     --paper-deep: #d4c8af;
     --ink-mu: #14110d;
 
-    /* 오행 (五行) */
-    --o-wood:  #5BA877;
-    --o-fire:  #C75C4A;
-    --o-earth: #C99A52;
-    --o-metal: #C9C9D6;
-    --o-water: #4F7CC2;
+    /* 오행 (五行) — 자수정 디자인 팔레트 */
+    --o-wood:  #7fc8a0;
+    --o-fire:  #ff9a7a;
+    --o-earth: #e4c878;
+    --o-metal: #c8cdd4;
+    --o-water: #88a8e0;
   }
 }
 
@@ -101,13 +101,11 @@
     @apply bg-background text-foreground;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
     text-wrap: pretty;
-    /* 밤하늘 먹빛 씬 (전역 배경) */
-    background-color: var(--night);
+    /* 자수정 씬 (전역 배경) */
+    background-color: #160a36;
     background-image:
-      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(138, 107, 242, 0.16) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(7, 6, 15, 0.7) 0%, transparent 70%),
-      radial-gradient(circle at 82% 26%, rgba(225, 193, 123, 0.06) 0%, transparent 48%),
-      linear-gradient(160deg, #0E1020 0%, #15172E 60%, #1A1430 100%);
+      radial-gradient(120% 62% at 50% 4%, #4a2da0 0%, #2c1668 50%, #14092e 100%),
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(12, 4, 32, 0.6) 0%, transparent 70%);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -173,10 +171,10 @@
 @layer components {
   /* 골드 그라데이션 CTA (1차 전환 버튼) */
   .btn-gold-grad {
-    background: linear-gradient(135deg, var(--gold-grad-start), var(--gold-grad-end));
-    color: #241a08;
-    font-weight: 700;
-    box-shadow: 0 8px 24px rgba(201, 151, 74, 0.30);
+    background: linear-gradient(180deg, var(--gold-grad-start), var(--gold-grad-end));
+    color: #3a1a8a;
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(120, 60, 240, 0.4);
   }
   .btn-gold-grad:hover { filter: brightness(1.04); }
 
@@ -306,20 +304,16 @@
   .scene-wine {
     background-color: var(--screen);
     background-image:
-      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(138,107,242,0.16) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 70% at 50% 100%, rgba(7,6,15,0.7) 0%, transparent 70%),
-      radial-gradient(circle at 82% 26%, rgba(225,193,123,0.07) 0%, transparent 48%),
-      linear-gradient(180deg, #161228, #13152A);
+      radial-gradient(120% 62% at 50% 4%, #4a2da0 0%, #2c1668 50%, #14092e 100%);
     color: var(--bone);
     position: relative;
   }
   .scene-cosmos {
-    background-color: var(--night);
+    background-color: #160a36;
     background-image:
-      radial-gradient(ellipse 80% 70% at 50% 45%, rgba(138,107,242,0.30) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(225,193,123,0.14) 0%, transparent 45%),
-      radial-gradient(ellipse 90% 60% at 50% 85%, rgba(26,20,48,0.85) 0%, transparent 70%),
-      linear-gradient(160deg, #0E1020, #15172E 60%, #1A1430);
+      radial-gradient(ellipse 80% 70% at 50% 42%, rgba(122,63,242,0.40) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 45% at 50% 55%, rgba(201,168,255,0.14) 0%, transparent 50%),
+      radial-gradient(120% 62% at 50% 4%, #4a2da0, #2c1668 50%, #14092e);
     color: var(--bone);
     position: relative;
   }

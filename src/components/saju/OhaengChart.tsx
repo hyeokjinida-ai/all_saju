@@ -39,7 +39,7 @@ export function OhaengChart({ myeongsik }: { myeongsik: Myeongsik }) {
         <span className="gold-rule flex-1 max-w-[60px] opacity-70" />
       </div>
 
-      <div className="rounded-md border border-gold-line bg-[rgba(14,16,32,0.4)] px-5 py-6 sm:px-7">
+      <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] px-5 py-6 sm:px-7">
         <div className="space-y-3">
           {ELEMENTS.map((e) => {
             const c = counts[e.key];
@@ -49,7 +49,7 @@ export function OhaengChart({ myeongsik }: { myeongsik: Myeongsik }) {
                   {e.label}
                   <span className="text-bone-faint">({e.hanja})</span>
                 </span>
-                <div className="flex-1 h-3.5 rounded-sm overflow-hidden bg-[rgba(225,193,123,0.07)]">
+                <div className="flex-1 h-3.5 rounded-sm overflow-hidden bg-[rgba(150,90,255,0.07)]">
                   <div
                     className="h-full rounded-sm transition-all"
                     style={{ width: `${(c / max) * 100}%`, background: e.color, opacity: c === 0 ? 0.25 : 0.9 }}

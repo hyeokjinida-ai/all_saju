@@ -197,7 +197,7 @@ export function SajuWizard({
                 style={{
                   width: i === step ? 22 : 7,
                   background:
-                    i < step ? "var(--gold-soft)" : i === step ? "var(--gold-bright)" : "rgba(225,193,123,0.2)",
+                    i < step ? "var(--gold-soft)" : i === step ? "var(--gold-bright)" : "rgba(150,90,255,0.2)",
                   boxShadow: i === step ? "0 0 8px rgba(232,200,120,0.6)" : "none",
                 }}
               />
@@ -392,9 +392,9 @@ export function SajuWizard({
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.25em] disabled:cursor-default"
               style={{
                 fontFamily: "'Noto Serif KR', serif",
-                background: canNext() ? "linear-gradient(180deg,#E7C27D,#E1C17B)" : "rgba(225,193,123,0.15)",
+                background: canNext() ? "linear-gradient(180deg,#ffffff,#f1eaff)" : "rgba(150,90,255,0.15)",
                 color: canNext() ? "var(--wine-deep)" : "var(--bone-faint)",
-                boxShadow: canNext() ? "0 0 24px rgba(225,193,123,0.28)" : "none",
+                boxShadow: canNext() ? "0 0 24px rgba(150,90,255,0.28)" : "none",
               }}
             >
               다음
@@ -417,9 +417,9 @@ export function SajuWizard({
             className="w-full min-h-[58px] border-none font-bold text-base tracking-[0.16em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#E7C27D,#E1C17B)",
+              background: "linear-gradient(180deg,#ffffff,#f1eaff)",
               color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(225,193,123,0.3)",
+              boxShadow: "0 0 24px rgba(150,90,255,0.3)",
             }}
           >
             {submitting ? "주문 생성 중…" : `${formatKRW(price)} 결제하러 가기`}
