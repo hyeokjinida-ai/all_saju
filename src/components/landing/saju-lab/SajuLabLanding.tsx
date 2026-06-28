@@ -7,9 +7,16 @@ import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
 
 const CHIPS = ["총운", "재물운", "애정운", "직업운", "건강운"];
+// 샘플 후기(예시) — 실제 후기가 쌓이면 DB로 교체. 한글 이름·나이대로 현실감.
 const REVIEWS = [
-  { who: "r***", when: "22일 전", body: "올해 흐름을 짚어주는데 소름이 돋았어요. 막연하던 게 또렷해졌습니다…" },
-  { who: "j***", when: "5일 전", body: "재물·애정 다 봐주셔서 마음이 한결 가벼워졌어요. 추천합니다." },
+  { name: "김지현", tag: "34 · 서울", body: "올해 흐름을 짚어주는데 소름 돋았어요. 막연하던 게 또렷해졌어요." },
+  { name: "이서연", tag: "29", body: "재물 파트 보고 마음이 한결 가벼워졌어요. 추천합니다!" },
+  { name: "박준호", tag: "41 · 부산", body: "이직 고민이었는데 시기까지 콕 집어줘서 결정에 도움됐어요." },
+  { name: "정민아", tag: "37", body: "친구 추천으로 봤는데 디테일이 확실히 다르네요." },
+  { name: "최성훈", tag: "32", body: "성향 부분 읽다가 웃었어요. 완전 제 얘기더라고요." },
+  { name: "한지우", tag: "45 · 대구", body: "엄마 선물로 해드렸는데 정말 좋아하셨어요." },
+  { name: "윤서영", tag: "27", body: "적어둔 고민 그대로 답해줘서 신기했어요." },
+  { name: "강도윤", tag: "39", body: "돈 흐름 설명이 현실적이라 믿음이 가요." },
 ];
 
 export function SajuLabLanding() {
@@ -173,26 +180,31 @@ export function SajuLabLanding() {
           ))}
         </div>
 
-        {/* review cards */}
-        <div className="relative z-20 grid flex-none grid-cols-2 gap-2.5 px-4 pb-3">
-          {REVIEWS.map((r) => (
-            <div
-              key={r.who}
-              style={{
-                padding: "13px 13px 14px",
-                borderRadius: 14,
-                background: "rgba(40,20,80,.6)",
-                border: "1px solid rgba(160,120,255,.24)",
-                boxShadow: "0 10px 24px rgba(20,8,50,.5)",
-              }}
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <span style={{ fontWeight: 800, fontSize: 13, color: "#efe6ff" }}>{r.who}</span>
-                <span style={{ fontSize: 11, color: "#9b86cb" }}>{r.when}</span>
+        {/* review marquee — 옆으로 끊김 없이 흐르는 후기 */}
+        <div className="relative z-20 flex-none overflow-hidden pb-3">
+          <div
+            className="review-marquee"
+            style={{ display: "flex", gap: 10, width: "max-content", animation: "marquee 40s linear infinite" }}
+          >
+            {[...REVIEWS, ...REVIEWS].map((r, i) => (
+              <div
+                key={i}
+                style={{ flex: "none", width: 236, padding: "13px 14px", borderRadius: 14, background: "rgba(40,20,80,.6)", border: "1px solid rgba(160,120,255,.24)" }}
+              >
+                <div className="mb-2 flex items-center gap-2.5">
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(160deg,#8a6bf2,#6541f2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flex: "none" }}>
+                    {r.name[0]}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "#efe6ff" }}>{r.name}</div>
+                    <div style={{ fontSize: 10.5, color: "#9b86cb" }}>{r.tag}</div>
+                  </div>
+                  <div style={{ marginLeft: "auto", fontSize: 10, color: "#ffce73", letterSpacing: "0.5px" }}>★★★★★</div>
+                </div>
+                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: "#d4c6f0" }}>{r.body}</p>
               </div>
-              <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: "#d4c6f0" }}>{r.body}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* CTA + live pill */}
