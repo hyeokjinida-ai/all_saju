@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
 import { REVIEWS, maskName } from "@/lib/reviews";
+import { businessInfo, copy } from "@/config/site";
 
 const CHIPS = ["총운", "재물운", "애정운", "직업운", "건강운"];
 
@@ -107,7 +108,7 @@ export function SajuLabLanding() {
               letterSpacing: "-.01em",
             }}
           >
-            별과 운명이 만나는 자리,
+            {copy.heroSubLead}
             <br />내 삶의 답이 있을까?
           </p>
         </div>
@@ -221,7 +222,7 @@ export function SajuLabLanding() {
               boxShadow: "0 14px 30px rgba(120,60,240,.4), 0 1px 0 rgba(255,255,255,.9) inset",
             }}
           >
-            내 운명 보러가기
+            {copy.landingCta}
           </Link>
           <div className="mt-3 flex justify-center">
             <div
@@ -251,6 +252,23 @@ export function SajuLabLanding() {
               현재 <b style={{ color: "#fff", margin: "0 1px" }}>{live}</b>명이 사주를 보는 중이에요
             </div>
           </div>
+        </div>
+
+        {/* 사업자정보 — PG 심사용(홈에도 노출). 값은 config/site.ts businessInfo */}
+        <div className="relative z-20 flex-none px-6 pb-7" style={{ borderTop: "1px solid rgba(160,120,255,.14)", paddingTop: 14 }}>
+          <div className="flex flex-wrap gap-x-3 gap-y-1" style={{ fontSize: 10.5 }}>
+            <Link href="/legal/terms" style={{ color: "#b8a4e0" }}>이용약관</Link>
+            <Link href="/legal/privacy" style={{ color: "#b8a4e0" }}>개인정보처리방침</Link>
+            <Link href="/legal/refund-policy" style={{ color: "#b8a4e0" }}>환불정책</Link>
+          </div>
+          <p style={{ marginTop: 8, fontSize: 10, lineHeight: 1.65, color: "#7e70a8" }}>
+            {businessInfo.companyName} · 대표 {businessInfo.representative} · 사업자등록번호 {businessInfo.businessNumber}
+            <br />
+            통신판매업 {businessInfo.mailOrderNumber} · {businessInfo.address}
+            <br />
+            고객센터 {businessInfo.email}
+            {businessInfo.phone ? ` · ${businessInfo.phone}` : ""}
+          </p>
         </div>
       </div>
     </div>
