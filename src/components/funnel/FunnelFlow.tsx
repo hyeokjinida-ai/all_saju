@@ -8,9 +8,8 @@ import type { FunnelState, FunnelCtx, ViewKey, FunnelProfile, FunnelProduct } fr
 import {
   LoginScreen,
   ConcernsScreen,
-  SituationScreen,
-  WishScreen,
   ProfileScreen,
+  ExtraScreen,
   ConfirmScreen,
   AnalysisScreen,
   PaymentScreen,
@@ -19,19 +18,17 @@ import {
 // 로그인은 맨 앞이 아니라 결제 직전 게이트(무료 퍼널은 로그인 없이 다 보게).
 const ORDER: ViewKey[] = [
   "concerns",
-  "situation",
-  "wish",
   "profile",
+  "extra",
   "confirm",
   "analysis",
   "payment",
 ];
 const STEP: Partial<Record<ViewKey, number>> = {
   concerns: 1,
-  situation: 2,
-  wish: 3,
-  profile: 4,
-  confirm: 5,
+  profile: 2,
+  extra: 3,
+  confirm: 4,
 };
 // 기존 사용자 스토리지 키와 겹치지 않게 네임스페이스 고정.
 const STORAGE_KEY = "myeongbom_funnel_v1";
@@ -40,9 +37,8 @@ const VIEW_KEY = "myeongbom_funnel_view_v1"; // OAuth 왕복 후 같은 화면�
 const SCREENS: Record<ViewKey, ComponentType<{ ctx: FunnelCtx }>> = {
   login: LoginScreen,
   concerns: ConcernsScreen,
-  situation: SituationScreen,
-  wish: WishScreen,
   profile: ProfileScreen,
+  extra: ExtraScreen,
   confirm: ConfirmScreen,
   analysis: AnalysisScreen,
   payment: PaymentScreen,

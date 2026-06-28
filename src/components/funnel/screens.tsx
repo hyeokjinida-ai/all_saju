@@ -208,6 +208,44 @@ export function WishScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
+// 述·望 통합 — 상황 + 바람을 한 페이지에서(둘 다 선택·스킵). 명식 입력 다음에 위치.
+export function ExtraScreen({ ctx }: { ctx: FunnelCtx }) {
+  return (
+    <ScreenScaffold
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
+      footer={
+        <>
+          <PrimaryCTA label="다음" onClick={ctx.next} />
+          <SkipLink label="건너뛰기" onClick={ctx.next} />
+        </>
+      }
+    >
+      <QuestionHead hanja="述" title={<>지금 상황과 바람을<br />편하게 적어주세요</>} sub="둘 다 선택 — 안 적어도 괜찮아요" />
+      <div className="mt-5">
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 8 }}>지금 어떤 상황인가요?</div>
+        <FrostedTextarea
+          value={ctx.state.situationText}
+          onChange={(v) => ctx.setField("situationText", v)}
+          placeholder={"예) 이직과 결혼을 동시에 고민 중이에요. 요즘 돈이 잘 안 모여서 마음이 무거워요."}
+        />
+      </div>
+      <div className="mt-5">
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 8 }}>앞으로 이루고 싶은 건?</div>
+        <FrostedTextarea
+          value={ctx.state.wishText}
+          onChange={(v) => ctx.setField("wishText", v)}
+          placeholder={"예) 내 사업으로 자리잡아서 가족과 여유롭게 사는 게 꿈이에요."}
+        />
+      </div>
+      <div className="mt-4">
+        <ReassureBanner tone="green">
+          자세히 적으실수록 <b style={{ color: "#dffff0" }}>더 구체적으로</b> 풀어드려요
+        </ReassureBanner>
+      </div>
+    </ScreenScaffold>
+  );
+}
+
 // ④ 명식 정보
 export function ProfileScreen({ ctx }: { ctx: FunnelCtx }) {
   const p = ctx.state.profile;
@@ -215,7 +253,7 @@ export function ProfileScreen({ ctx }: { ctx: FunnelCtx }) {
   return (
     <ScreenScaffold
       header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
-      footer={<PrimaryCTA label="입력 확인하기" onClick={ctx.next} disabled={!ready} />}
+      footer={<PrimaryCTA label="다음" onClick={ctx.next} disabled={!ready} />}
     >
       <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 23, lineHeight: 1.3 }}>
         마지막으로

@@ -32,9 +32,8 @@ export interface FunnelState {
 export type ViewKey =
   | "login"
   | "concerns"
-  | "situation"
-  | "wish"
   | "profile"
+  | "extra"
   | "confirm"
   | "analysis"
   | "payment";
