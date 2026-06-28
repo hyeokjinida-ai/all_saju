@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formatKRW } from "@/lib/utils";
 import type { FunnelCtx, Gender, Calendar } from "@/lib/funnel/types";
-import { CONCERNS, concernShort } from "@/lib/funnel/options";
+import { CONCERNS } from "@/lib/funnel/options";
 import {
   ScreenScaffold,
   ProgressHeader,
@@ -113,7 +113,31 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ③-B 惑 · 고민 (복수, 최소 1) — 첫 화면
+// 問 · 고민/질문 한 개 자유 입력 — 첫 화면(고민·상황·바람을 하나로 통합)
+export function QuestionScreen({ ctx }: { ctx: FunnelCtx }) {
+  return (
+    <ScreenScaffold
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
+      footer={<PrimaryCTA label="다음" onClick={ctx.next} />}
+    >
+      <QuestionHead hanja="問" title={<>어떤 고민이나<br />궁금한 게 있으세요?</>} sub="고민·질문을 자유롭게 적어주세요" />
+      <div className="mt-5">
+        <FrostedTextarea
+          value={ctx.state.situationText}
+          onChange={(v) => ctx.setField("situationText", v)}
+          placeholder={"예) 올해 이직해도 될까요? 지금 사람과 잘 맞을까요? 돈은 언제 풀릴까요? — 편하게 적어주세요."}
+        />
+        <div className="mt-3.5">
+          <ReassureBanner tone="violet">
+            적어주신 고민을 <b style={{ color: "#fff" }}>가장 먼저, 가장 깊게</b> 풀어드려요
+          </ReassureBanner>
+        </div>
+      </div>
+    </ScreenScaffold>
+  );
+}
+
+// ③-B 惑 · 고민 (복수, 최소 1) — (구버전, 미사용)
 export function ConcernsScreen({ ctx }: { ctx: FunnelCtx }) {
   const has = ctx.state.concerns.length > 0;
   return (
@@ -336,7 +360,6 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   const { state } = ctx;
   const p = state.profile;
   const rows: { label: string; value: string; to: Parameters<typeof ctx.goTo>[0] }[] = [
-    { label: "고민", value: state.concerns.map(concernShort).join(" · ") || "선택 안 함", to: "concerns" },
     { label: "생년월일", value: p.birthDate ? p.birthDate.replace(/-/g, ".") : "—", to: "profile" },
     { label: "태어난 시각", value: p.unknownTime ? "모름 (시 제외)" : p.birthTime ? SIJU.find((s) => s.v === p.birthTime)?.label ?? p.birthTime : "선택 안 함", to: "profile" },
     { label: "성별 · 달력", value: `${p.gender === "M" ? "남" : p.gender === "F" ? "여" : "—"} · ${p.calendar === "lunar" ? "음력" : "양력"}`, to: "profile" },
@@ -362,7 +385,7 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
       </div>
       {(state.situationText || state.wishText) && (
         <div className="mt-[18px]" style={{ background: "rgba(150,90,255,.16)", border: "1px solid rgba(180,140,255,.35)", borderRadius: 14, padding: 14 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#dcc8ff", marginBottom: 6 }}>내가 적은 고민</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#dcc8ff", marginBottom: 6 }}>내가 적은 고민·질문</div>
           <div style={{ fontSize: 13, lineHeight: 1.55, color: "#cbb8f0" }}>
             &ldquo;{(state.situationText || state.wishText).slice(0, 120)}&rdquo;
           </div>
@@ -549,7 +572,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
           timeUnknown: p.unknownTime,
           gender: p.gender === "M" ? "male" : "female",
           calendar: p.calendar,
-          concerns: ctx.state.concerns.map(concernShort),
+          concerns: ctx.state.situationText.trim() ? [ctx.state.situationText.trim()] : [],
           email: ctx.isAuthed ? undefined : email, // 비회원 이메일(현 contract 미저장 — 후속)
         }),
       });

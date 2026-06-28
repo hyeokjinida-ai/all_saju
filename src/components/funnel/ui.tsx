@@ -46,7 +46,7 @@ export function ProgressHeader({ step, onBack }: { step: number; onBack?: () => 
         ‹
       </button>
       <div className="flex items-center gap-[5px]">
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3].map((i) => (
           <span
             key={i}
             style={{
@@ -59,7 +59,7 @@ export function ProgressHeader({ step, onBack }: { step: number; onBack?: () => 
           />
         ))}
       </div>
-      <span style={{ fontSize: 12, color: "#b8a4e0" }}>{step}/4</span>
+      <span style={{ fontSize: 12, color: "#b8a4e0" }}>{step}/3</span>
     </div>
   );
 }

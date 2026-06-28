@@ -11,7 +11,7 @@ const bodySchema = z.object({
   timeUnknown: z.boolean(),
   gender: z.enum(["male", "female"]),
   calendar: z.enum(["solar", "lunar"]),
-  concerns: z.array(z.string().max(20)).max(20),
+  concerns: z.array(z.string().max(500)).max(20),
   email: z.string().email().optional(), // 비회원 결과 수령용
 });
 

@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
 import type { FunnelState, FunnelCtx, ViewKey, FunnelProfile, FunnelProduct } from "@/lib/funnel/types";
 import {
   LoginScreen,
-  ConcernsScreen,
+  QuestionScreen,
   ProfileScreen,
-  ExtraScreen,
   ConfirmScreen,
   AnalysisScreen,
   PaymentScreen,
@@ -17,18 +16,16 @@ import {
 
 // 로그인은 맨 앞이 아니라 결제 직전 게이트(무료 퍼널은 로그인 없이 다 보게).
 const ORDER: ViewKey[] = [
-  "concerns",
+  "question",
   "profile",
-  "extra",
   "confirm",
   "analysis",
   "payment",
 ];
 const STEP: Partial<Record<ViewKey, number>> = {
-  concerns: 1,
+  question: 1,
   profile: 2,
-  extra: 3,
-  confirm: 4,
+  confirm: 3,
 };
 // 기존 사용자 스토리지 키와 겹치지 않게 네임스페이스 고정.
 const STORAGE_KEY = "myeongbom_funnel_v1";
@@ -36,9 +33,8 @@ const VIEW_KEY = "myeongbom_funnel_view_v1"; // OAuth 왕복 후 같은 화면�
 
 const SCREENS: Record<ViewKey, ComponentType<{ ctx: FunnelCtx }>> = {
   login: LoginScreen,
-  concerns: ConcernsScreen,
+  question: QuestionScreen,
   profile: ProfileScreen,
-  extra: ExtraScreen,
   confirm: ConfirmScreen,
   analysis: AnalysisScreen,
   payment: PaymentScreen,
@@ -54,7 +50,7 @@ const initialState: FunnelState = {
 export function FunnelFlow({ isAuthed = false, product = null, products = [] }: { isAuthed?: boolean; product?: FunnelProduct | null; products?: FunnelProduct[] }) {
   const router = useRouter();
   const [state, setState] = useState<FunnelState>(initialState);
-  const [view, setView] = useState<ViewKey>("concerns");
+  const [view, setView] = useState<ViewKey>("question");
   const [returnTo, setReturnTo] = useState<ViewKey | null>(null);
   const loaded = useRef(false);
 
