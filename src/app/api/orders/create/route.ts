@@ -12,7 +12,10 @@ const bodySchema = z.object({
   gender: z.enum(["male", "female"]),
   calendar: z.enum(["solar", "lunar"]),
   concerns: z.array(z.string().max(20)).max(20),
+  email: z.string().email().optional(), // 비회원 결과 수령용
 });
+
+const MEMBER_DISCOUNT = 1900; // 회원(로그인) 할인
 
 export async function POST(request: NextRequest) {
   const parsed = bodySchema.safeParse(await request.json());
@@ -21,12 +24,13 @@ export async function POST(request: NextRequest) {
   }
   const body = parsed.data;
 
-  // 로그인 필수 — 결과는 마이페이지에서 수령
+  // 회원이면 계정에, 비회원이면 이메일로 결과를 받는다.
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const guestEmail = user ? null : body.email?.trim() || null;
 
-  if (!user) {
-    return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+  if (!user && !guestEmail) {
+    return NextResponse.json({ error: "로그인 또는 결과 받을 이메일이 필요합니다" }, { status: 400 });
   }
 
   // 가격은 서버에서만 (클라 변조 방지)
@@ -42,15 +46,17 @@ export async function POST(request: NextRequest) {
   }
 
   const orderId = `ord_${nanoid(20)}`;
+  // 회원 1,900원 할인(비회원은 정가). 금액은 서버에서만 산정.
+  const amount = Math.max(0, product.price - (user ? MEMBER_DISCOUNT : 0));
 
   const { data: order, error: orderErr } = await service
     .from("orders")
     .insert({
       order_id: orderId,
-      user_id: user.id,
-      guest_email: null,
+      user_id: user?.id ?? null,
+      guest_email: guestEmail,
       product_id: product.id,
-      amount: product.price,
+      amount,
       status: "pending",
     })
     .select("id")
@@ -76,5 +82,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "사주 정보 저장 실패", detail: inputErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ orderId, amount: product.price });
+  return NextResponse.json({ orderId, amount });
 }
