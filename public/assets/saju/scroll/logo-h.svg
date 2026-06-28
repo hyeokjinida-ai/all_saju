@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 150"><defs>
+<radialGradient id="shad" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0e0722" stop-opacity=".5"></stop><stop offset="100%" stop-color="#0e0722" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf6ea"></stop><stop offset="100%" stop-color="#e6d9bd"></stop></linearGradient>
+<linearGradient id="rod" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8902f"></stop><stop offset="45%" stop-color="#f3dca0"></stop><stop offset="100%" stop-color="#8a6a26"></stop></linearGradient>
+<radialGradient id="cap" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff3cf"></stop><stop offset="55%" stop-color="#e8c878"></stop><stop offset="100%" stop-color="#b88a32"></stop></radialGradient>
+<radialGradient id="seal" cx="36%" cy="28%" r="82%"><stop offset="0" stop-color="#ff8a72"></stop><stop offset="50%" stop-color="#d8455a"></stop><stop offset="100%" stop-color="#8e1d2a"></stop></radialGradient></defs>
+<g transform="translate(-34,-35) scale(0.92)">
+<ellipse cx="110" cy="186" rx="58" ry="11" fill="url(#shad)"></ellipse>
+<rect x="52" y="54" width="116" height="112" rx="5" fill="url(#paper)"></rect>
+<g stroke="#bda874" stroke-width="3" stroke-linecap="round" opacity=".7"><path d="M70 80 H140 M70 96 H150 M70 112 H132 M70 128 H146"></path></g>
+<rect x="146" y="120" width="30" height="30" rx="5" fill="url(#seal)"></rect>
+<text x="161" y="142" text-anchor="middle" font-family="&#39;Nanum Myeongjo&#39;,serif" font-weight="800" font-size="20" fill="#fff3ef">命</text>
+<rect x="40" y="44" width="22" height="132" rx="11" fill="url(#rod)"></rect>
+<rect x="158" y="44" width="22" height="132" rx="11" fill="url(#rod)"></rect>
+<ellipse cx="51" cy="52" rx="7" ry="5" fill="#fff" opacity=".45"></ellipse><ellipse cx="169" cy="52" rx="7" ry="5" fill="#fff" opacity=".4"></ellipse>
+<ellipse cx="80" cy="64" rx="22" ry="7" fill="#fff" opacity=".3"></ellipse></g>
+<text x="186" y="84" font-family="&#39;Nanum Myeongjo&#39;,serif" font-weight="800" font-size="56" fill="#ffffff">명운록</text>
+<text x="188" y="116" font-family="&#39;Pretendard&#39;,sans-serif" font-weight="700" font-size="17" letter-spacing="6" fill="#c9a8ff">SAJU LAB</text></svg>

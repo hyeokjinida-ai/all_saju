@@ -5,22 +5,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
+import { REVIEWS, maskName } from "@/lib/reviews";
 
 const CHIPS = ["총운", "재물운", "애정운", "직업운", "건강운"];
-// 샘플 후기(예시) — 실제 후기가 쌓이면 DB로 교체. 이름은 성만 노출(나머지 가림).
-const REVIEWS = [
-  { name: "김지현", tag: "30대 · 여성", body: "올해 흐름을 짚어주는데 진짜 소름 돋았어요. 막연하던 고민이 또렷해졌고, 앞으로 뭘 준비해야 할지 방향까지 보여서 마음이 한결 편해졌습니다." },
-  { name: "이서연", tag: "20대 · 여성", body: "재물 파트를 보다가 위로를 많이 받았어요. 돈이 왜 안 모이는지 구조로 설명해주니 납득이 됐고, 당장 뭘 바꿔야 할지까지 알겠더라고요." },
-  { name: "박준호", tag: "40대 · 남성", body: "이직을 두고 한참 망설였는데 좋은 시기를 콕 집어줘서 결정에 큰 도움이 됐어요. 두루뭉술한 말이 아니라 근거가 있어서 더 믿음이 갔습니다." },
-  { name: "정민아", tag: "30대 · 여성", body: "친구 추천으로 봤는데 디테일이 확실히 다르네요. 누구에게나 맞는 말이 아니라 제 상황에 맞춰 풀어줘서, 끝까지 집중해서 읽게 됐어요." },
-  { name: "최성훈", tag: "30대 · 남성", body: "성향 부분 읽다가 혼자 웃었어요. 완전 제 얘기더라고요. 제가 왜 그렇게 행동하는지 이유까지 짚어줘서 스스로를 더 이해하게 됐습니다." },
-  { name: "한지우", tag: "40대 · 여성", body: "엄마 선물로 해드렸는데 정말 좋아하셨어요. 건강이랑 올해 운까지 꼼꼼히 봐주셔서, 덕분에 가족끼리 이야깃거리도 생기고 좋았습니다." },
-  { name: "윤서영", tag: "20대 · 여성", body: "적어둔 고민을 그대로 받아서 답해줘서 신기했어요. 형식적인 풀이가 아니라 제 말에 진짜 반응해주는 느낌이라 훨씬 더 와닿았습니다." },
-  { name: "강도윤", tag: "30대 · 남성", body: "돈 흐름 설명이 현실적이라 믿음이 갔어요. 막연한 부자 이야기가 아니라 새는 구멍과 모으는 법을 짚어줘서, 바로 실천하고 있습니다." },
-];
-
-// 성만 노출, 이름은 ○로 가림 (김지현 → 김○○)
-const maskName = (n: string) => n[0] + "○".repeat(Math.max(1, n.length - 1));
 
 export function SajuLabLanding() {
   const [live, setLive] = useState(25);
@@ -60,9 +47,12 @@ export function SajuLabLanding() {
           }}
         />
 
-        {/* app bar */}
-        <div className="relative z-30 flex flex-none items-center justify-center pb-1 pt-6">
-          <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: ".24em", textIndent: ".24em", color: "#eaf1ff" }}>
+        {/* app bar — 명운록 워드마크 + SAJU LAB */}
+        <div className="relative z-30 flex flex-none flex-col items-center pb-1 pt-6">
+          <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 20, letterSpacing: ".1em", color: "#f3edff" }}>
+            명운록
+          </div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".24em", textIndent: ".24em", color: "#c9a8ff", marginTop: 4 }}>
             SAJU LAB
           </div>
         </div>
@@ -202,7 +192,10 @@ export function SajuLabLanding() {
                     <div style={{ fontSize: 12.5, fontWeight: 700, color: "#efe6ff" }}>{maskName(r.name)}</div>
                     <div style={{ fontSize: 10.5, color: "#9b86cb" }}>{r.tag}</div>
                   </div>
-                  <div style={{ marginLeft: "auto", fontSize: 10, color: "#ffce73", letterSpacing: "0.5px" }}>★★★★★</div>
+                  <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                    <div style={{ fontSize: 10, color: "#ffce73", letterSpacing: "0.5px" }}>★★★★★</div>
+                    <div style={{ marginTop: 2, fontSize: 9.5, color: "#9b86cb" }}>{r.ago}</div>
+                  </div>
                 </div>
                 <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.6, color: "#d4c6f0", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {r.body}
@@ -228,7 +221,7 @@ export function SajuLabLanding() {
               boxShadow: "0 14px 30px rgba(120,60,240,.4), 0 1px 0 rgba(255,255,255,.9) inset",
             }}
           >
-            내 사주 여덟 글자, 종합 풀이 받기
+            내 운명 보러가기
           </Link>
           <div className="mt-3 flex justify-center">
             <div

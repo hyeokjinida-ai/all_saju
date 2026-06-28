@@ -8,24 +8,35 @@ import type { FunnelState, FunnelCtx, ViewKey, FunnelProfile, FunnelProduct } fr
 import {
   LoginScreen,
   QuestionScreen,
-  ProfileScreen,
+  NicknameScreen,
+  GenderScreen,
+  BirthScreen,
+  TimeScreen,
   ConfirmScreen,
   AnalysisScreen,
+  EmailScreen,
   PaymentScreen,
 } from "./screens";
 
-// 로그인은 맨 앞이 아니라 결제 직전 게이트(무료 퍼널은 로그인 없이 다 보게).
+// 명식 입력을 한 개씩 — 고민 → 호칭 → 성별 → 생년월일 → 시각 → 확인 → 무료분석 → 이메일 → 결제.
 const ORDER: ViewKey[] = [
   "question",
-  "profile",
+  "nickname",
+  "gender",
+  "birth",
+  "time",
   "confirm",
   "analysis",
+  "email",
   "payment",
 ];
 const STEP: Partial<Record<ViewKey, number>> = {
   question: 1,
-  profile: 2,
-  confirm: 3,
+  nickname: 2,
+  gender: 3,
+  birth: 4,
+  time: 5,
+  confirm: 6,
 };
 // 기존 사용자 스토리지 키와 겹치지 않게 네임스페이스 고정.
 const STORAGE_KEY = "myeongbom_funnel_v1";
@@ -34,9 +45,13 @@ const VIEW_KEY = "myeongbom_funnel_view_v1"; // OAuth 왕복 후 같은 화면�
 const SCREENS: Record<ViewKey, ComponentType<{ ctx: FunnelCtx }>> = {
   login: LoginScreen,
   question: QuestionScreen,
-  profile: ProfileScreen,
+  nickname: NicknameScreen,
+  gender: GenderScreen,
+  birth: BirthScreen,
+  time: TimeScreen,
   confirm: ConfirmScreen,
   analysis: AnalysisScreen,
+  email: EmailScreen,
   payment: PaymentScreen,
 };
 
@@ -44,6 +59,7 @@ const initialState: FunnelState = {
   concerns: [],
   situationText: "",
   wishText: "",
+  email: "",
   profile: { nickname: "", gender: undefined, birthDate: "", calendar: "solar", birthTime: "", unknownTime: false },
 };
 

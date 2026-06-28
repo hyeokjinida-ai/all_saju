@@ -25,16 +25,21 @@ export interface FunnelState {
   concerns: Concern[]; // 선택 순서 보존(결과 우선순위)
   situationText: string;
   wishText: string;
+  email: string; // 비회원 결과 수령용 — 결제 전 단계에서 받음
   profile: FunnelProfile;
 }
 
-// 화면(뷰) 순서: 로그인 → 状惑述望 → 명식 → 확인 → 무료분석 → 결제
+// 화면(뷰) 순서: 고민 → 호칭 → 성별 → 생년월일 → 시각 → 확인 → 무료분석 → 결제
 export type ViewKey =
   | "login"
   | "question"
-  | "profile"
+  | "nickname"
+  | "gender"
+  | "birth"
+  | "time"
   | "confirm"
   | "analysis"
+  | "email"
   | "payment";
 
 export interface FunnelProduct {

@@ -23,97 +23,39 @@ export type CrossSellProduct = {
   price: number;
 };
 
-// 명식 근거 개인화 신호 (saju-api extractCrossSellSignal 와 같은 형태 — 클라이언트용 로컬 타입)
+// 명식 근거 개인화 신호 (saju-api extractCrossSellSignal 와 같은 형태)
 export type CrossSellSignal = {
   jaeseongCount: number | null;
   hasYearClash: boolean;
 };
 
-// 신호가 가리키는 상품의 "부드러운 근거" 한 줄 (공포 X, 호기심 O)
-function signalReasonFor(slug: string, signal?: CrossSellSignal | null): string | null {
-  if (!signal) return null;
-  if (slug === "wealth-saju" && signal.jaeseongCount === 0)
-    return "사주에 재물을 담는 기운(재성)이 약하게 잡혀요 — 돈이 들어오는 길과 머무는 구조를 따로 짚어보면 도움이 됩니다.";
-  if (slug === "monthly-luck" && signal.hasYearClash)
-    return "올해는 흐름의 변동이 큰 해로 보여요 — 어느 달에 움직이고 어느 달에 멈출지 미리 정리해두면 좋습니다.";
-  return null;
-}
-
-// 고민(concern) → 어떤 상품을 밀지 매핑 (위저드 CONCERN_OPTIONS 의 4050 고민 키와 일치)
-const CONCERN_MATCH: Record<string, string[]> = {
-  "wealth-saju": ["재물", "노후", "직장·사업"],
-  "love-saju": ["부부·연애", "자녀", "가족"],
-  "monthly-luck": ["올해 운", "건강"],
-  "premium-saju": ["재물", "직장·사업", "건강", "노후", "올해 운", "부부·연애", "자녀", "가족"],
-};
-
-function reasonFor(slug: string, matched: string[]): string {
-  if (slug === "wealth-saju")
-    return matched.length
-      ? `${matched.join("·")}을(를) 궁금해하셨죠 — 돈이 들어오고 새는 구조, 올해 지출 흐름을 더 깊게 봅니다`
-      : "돈이 들어오고 새는 구조와 올해 재물 흐름을 깊게 봅니다";
-  if (slug === "love-saju")
-    return matched.length
-      ? `${matched.join("·")}을(를) 궁금해하셨죠 — 반복되는 관계 패턴과 잘 맞는 사람을 깊이 풀어드려요`
-      : "부부·연애·자녀·가족, 반복되는 관계 패턴을 깊게 봅니다";
-  if (slug === "monthly-luck")
-    return matched.length
-      ? `${matched.join("·")} — 1~12월 좋은 달·조심할 달을 따로 정리해드립니다`
-      : "올해 1~12월 좋은 달과 조심할 달을 따로 정리해드립니다";
-  if (slug === "premium-saju")
-    return matched.length
-      ? `${matched.join("·")}까지 — 대운 60년에 재물·직업·관계·건강을 한 번에 통합해 봅니다`
-      : "대운 60년 흐름과 재물·직업·관계·건강운을 통합 분석합니다";
-  if (slug === "today-fortune") return "매일 아침 가볍게 보는 오늘 하루의 흐름 한 줄";
-  return "";
-}
-
-// 결제 후 개인화 크로스셀 — 저장된 명식·고민을 재사용해 "재입력 없는 원클릭 재구매".
+// 결제 후 업셀 — 같은 명식 재사용 "원클릭 재구매". 지금은 인생 프리미엄 풀이만 노출.
 export function CrossSell({
   products,
   input,
-  signal,
 }: {
   products: CrossSellProduct[];
   input: CrossSellInput;
   signal?: CrossSellSignal | null;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  // 정렬: ① 고민 매칭 ② 명식 신호(재성 약함·올해 변동) ③ 프리미엄 업셀 가산점
-  // 신호 근거가 있으면 그 한 줄을 이유로 우선 노출(고민을 안 골랐어도 추천이 비지 않게).
-  const enriched = products
-    .map((p) => {
-      const matched = (CONCERN_MATCH[p.slug] ?? []).filter((c) => input.concerns.includes(c));
-      const sigReason = signalReasonFor(p.slug, signal);
-      const score =
-        matched.length * 10 + (sigReason ? 12 : 0) + (p.slug === "premium-saju" ? 1 : 0);
-      return {
-        ...p,
-        matched,
-        sigReason,
-        reason: sigReason ?? reasonFor(p.slug, matched),
-        score,
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3); // 크로스셀은 최대 3개까지만 노출
+  const premium = products.find((p) => p.slug === "premium-saju");
+  if (!premium) return null; // 이미 프리미엄을 봤거나 비활성이면 숨김
 
-  if (!enriched.length) return null;
-  const [primary, ...rest] = enriched;
-
-  async function buy(p: CrossSellProduct) {
-    setBusy(p.productId);
+  async function buy() {
+    if (!premium) return;
+    setBusy(true);
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: p.productId,
+          productId: premium.productId,
           name: input.name ?? "",
           birthDate: input.birthDate,
-          birthTime: input.timeUnknown ? null : (input.birthTime?.slice(0, 5) ?? null), // HH:mm:ss → HH:mm
+          birthTime: input.timeUnknown ? null : input.birthTime?.slice(0, 5) ?? null,
           timeUnknown: input.timeUnknown,
           gender: input.gender,
           calendar: input.calendar,
@@ -125,78 +67,57 @@ export function CrossSell({
       router.push(`/checkout/${json.orderId}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "오류가 발생했습니다");
-      setBusy(null);
+      setBusy(false);
     }
   }
 
   return (
-    <section className="mt-14 pt-10 border-t border-gold-line">
-      <header className="text-center mb-7">
-        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">緣</p>
-        <h2 className="font-myeongjo text-xl font-semibold text-bone">같은 명식으로 이어서 보기</h2>
-        <p className="mt-2 text-xs text-bone-soft tracking-[0.04em]">
-          정보를 다시 입력할 필요 없이, 한 번의 클릭으로 바로 풀이를 받아보실 수 있어요.
+    <section style={{ marginTop: 26 }}>
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 26, color: "#c9a8ff", lineHeight: 1 }}>緣</div>
+        <h2 style={{ marginTop: 8, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19, color: "#f3edff" }}>
+          같은 명식으로 이어서 보기
+        </h2>
+        <p style={{ marginTop: 7, fontSize: 12.5, lineHeight: 1.6, color: "#9a8cd0" }}>
+          정보를 다시 입력할 필요 없이, 한 번의 클릭으로 바로 받아보실 수 있어요.
         </p>
-      </header>
+      </div>
 
-      {/* 1순위 추천 — 깔끔한 추천 칩 + 에디토리얼 카드 */}
-      <div className="rounded-lg border border-gold-line bg-[rgba(150,90,255,0.04)] p-6 sm:p-7">
-        {(primary.matched.length > 0 || primary.sigReason) && (
-          <span className="inline-block mb-3.5 rounded-sm bg-gold-soft px-2.5 py-1 text-[11px] font-myeongjo font-semibold tracking-[0.08em] text-wine-deep">
-            {primary.sigReason ? "명식이 가리키는 풀이" : `${primary.matched.join("·")}에 맞는 풀이`}
-          </span>
-        )}
-        <p className="font-myeongjo text-xl font-bold text-gold-bright tracking-[0.02em]">{primary.name}</p>
-        <p className="mt-2.5 text-sm text-bone-soft leading-relaxed">{primary.reason}</p>
-        <div className="mt-6 flex items-end justify-between gap-3">
+      {/* 인생 프리미엄 풀이 — 추천 카드(자수정 글로우) */}
+      <div
+        style={{
+          borderRadius: 18,
+          padding: "20px 18px",
+          background: "linear-gradient(160deg, rgba(150,90,255,.18), rgba(40,20,80,.5))",
+          border: "2px solid #b794ff",
+          boxShadow: "0 14px 34px rgba(120,60,240,.3)",
+        }}
+      >
+        <span style={{ display: "inline-block", marginBottom: 12, padding: "4px 11px", borderRadius: 999, background: "#dcc8ff", color: "#3a1a8a", fontSize: 11, fontWeight: 800 }}>
+          추천 · 끝판왕 풀이
+        </span>
+        <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{premium.name}</div>
+        <p style={{ marginTop: 9, fontSize: 13, lineHeight: 1.7, color: "#dcd0ff" }}>
+          대운 60년 흐름과 재물·직업·관계·건강운을 한 번에 통합 분석합니다. 지금 보신 풀이의 큰 그림까지 이어서 봐요.
+        </p>
+        <div style={{ marginTop: 16, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <span className="block text-[10px] text-bone-faint tracking-[0.08em] mb-1">같은 명식 · 재입력 없이</span>
-            <span className="font-serif text-[26px] font-bold text-gold-bright leading-none">{formatKRW(primary.price)}</span>
+            <div style={{ fontSize: 10.5, color: "#b8a4e0", letterSpacing: ".04em", marginBottom: 3 }}>같은 명식 · 재입력 없이</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{formatKRW(premium.price)}</div>
           </div>
           <button
             type="button"
-            onClick={() => buy(primary)}
-            disabled={!!busy}
-            className="shrink-0 px-6 py-3.5 text-sm font-bold tracking-[0.06em] disabled:opacity-60"
-            style={{
-              fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#ffffff,#f1eaff)",
-              color: "var(--wine-deep)",
-            }}
+            onClick={buy}
+            disabled={busy}
+            className="shrink-0 transition-transform active:scale-[0.98] disabled:opacity-60"
+            style={{ padding: "13px 22px", borderRadius: 13, background: "linear-gradient(180deg,#fff,#f1eaff)", color: "#3a1a8a", fontSize: 14, fontWeight: 800, border: "none", cursor: "pointer" }}
           >
-            {busy === primary.productId ? "이동 중…" : "바로 보기 →"}
+            {busy ? "이동 중…" : "바로 보기 →"}
           </button>
         </div>
       </div>
 
-      {/* 나머지 상품 */}
-      {rest.length > 0 && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {rest.map((p) => (
-            <div
-              key={p.productId}
-              className="border border-gold-pale bg-[rgba(36,16,71,0.4)] rounded-lg p-5 flex flex-col"
-            >
-              <p className="font-myeongjo text-base font-semibold text-bone">{p.name}</p>
-              <p className="mt-2 text-xs text-bone-soft leading-relaxed flex-1">{p.reason}</p>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="font-serif text-lg font-bold text-gold">{formatKRW(p.price)}</span>
-                <button
-                  type="button"
-                  onClick={() => buy(p)}
-                  disabled={!!busy}
-                  className="shrink-0 px-4 py-2.5 text-sm font-semibold tracking-[0.04em] text-gold hover:text-gold-bright disabled:opacity-60"
-                  style={{ fontFamily: "'Noto Serif KR', serif", background: "transparent" }}
-                >
-                  {busy === p.productId ? "이동 중…" : "바로 보기 →"}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <p className="mt-4 text-center text-[11px] text-bone-faint tracking-[0.04em]">
+      <p style={{ marginTop: 14, textAlign: "center", fontSize: 11, color: "#9a8cd0" }}>
         이미 입력하신 생년월일·시각이 그대로 적용됩니다.
       </p>
     </section>

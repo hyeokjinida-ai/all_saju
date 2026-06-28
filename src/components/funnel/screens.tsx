@@ -9,6 +9,9 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { formatKRW } from "@/lib/utils";
 import type { FunnelCtx, Gender, Calendar } from "@/lib/funnel/types";
 import { CONCERNS } from "@/lib/funnel/options";
+import { ResultScroll } from "@/components/saju/ResultScroll";
+import { AnalyzingScreen } from "@/components/saju/AnalyzingScreen";
+import type { ResultView } from "@/lib/saju/result-view";
 import {
   ScreenScaffold,
   ProgressHeader,
@@ -270,87 +273,166 @@ export function ExtraScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ④ 명식 정보
-export function ProfileScreen({ ctx }: { ctx: FunnelCtx }) {
+// ④-A 名 · 호칭(선택) — 한 화면 하나씩.
+export function NicknameScreen({ ctx }: { ctx: FunnelCtx }) {
   const p = ctx.state.profile;
-  const ready = !!p.gender && !!p.birthDate && !!p.calendar;
+  return (
+    <ScreenScaffold
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
+      footer={
+        <>
+          <PrimaryCTA label="다음" onClick={ctx.next} />
+          <SkipLink label="건너뛰기" onClick={ctx.next} />
+        </>
+      }
+    >
+      <QuestionHead hanja="名" title={<>어떻게<br />불러드릴까요?</>} sub="비워도 괜찮아요 — '회원님'으로 불러드려요" />
+      <div className="mt-5">
+        <input
+          value={p.nickname}
+          onChange={(e) => ctx.setProfile("nickname", e.target.value)}
+          placeholder="예) 혁진, 김대표"
+          style={frostedInputStyle}
+        />
+      </div>
+    </ScreenScaffold>
+  );
+}
+
+// ④-B 人 · 성별 — 단일 선택, 고르면 220ms 후 자동 진행.
+export function GenderScreen({ ctx }: { ctx: FunnelCtx }) {
+  const p = ctx.state.profile;
+  const [pending, setPending] = useState<Gender | null>(null);
+  const pick = (g: Gender) => {
+    if (pending) return;
+    setPending(g);
+    ctx.setProfile("gender", g);
+    setTimeout(() => ctx.next(), 220);
+  };
+  return (
+    <ScreenScaffold header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}>
+      <QuestionHead hanja="人" title={<>성별을<br />알려주세요</>} sub="명식 계산에 꼭 필요해요" />
+      <div className="mt-5 flex flex-col gap-[11px]">
+        {([{ key: "M", label: "남자" }, { key: "F", label: "여자" }] as const).map((o) => {
+          const sel = p.gender === o.key || pending === o.key;
+          return (
+            <OptionRow key={o.key} selected={sel} label={o.label} onClick={() => pick(o.key)} trailing={sel ? <span style={{ fontSize: 16, opacity: 0.8 }}>›</span> : undefined} />
+          );
+        })}
+      </div>
+      <p className="mt-5 text-center" style={{ fontSize: 12, color: "#9a8cd0" }}>고르면 다음으로 자동 이동해요</p>
+    </ScreenScaffold>
+  );
+}
+
+// 생년월일 0000.00.00 검증/포맷
+function fmtBirth(d: string) {
+  const s = d.replace(/\D/g, "").slice(0, 8);
+  return [s.slice(0, 4), s.slice(4, 6), s.slice(6, 8)].filter(Boolean).join(".");
+}
+function isValidBirth(d: string) {
+  if (d.length !== 8) return false;
+  const y = +d.slice(0, 4), m = +d.slice(4, 6), day = +d.slice(6, 8);
+  if (y < 1930 || y > 2025 || m < 1 || m > 12 || day < 1 || day > 31) return false;
+  const dt = new Date(y, m - 1, day);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day;
+}
+
+// ④-C 生 · 생년월일(0000.00.00 직접 입력) + 양/음력
+export function BirthScreen({ ctx }: { ctx: FunnelCtx }) {
+  const p = ctx.state.profile;
+  const [raw, setRaw] = useState(() => p.birthDate.replace(/-/g, ""));
+  const onChange = (v: string) => {
+    const digits = v.replace(/\D/g, "").slice(0, 8);
+    setRaw(digits);
+    ctx.setProfile("birthDate", digits.length === 8 && isValidBirth(digits) ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` : "");
+  };
+  const ready = isValidBirth(raw) && !!p.calendar;
   return (
     <ScreenScaffold
       header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={<PrimaryCTA label="다음" onClick={ctx.next} disabled={!ready} />}
     >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 23, lineHeight: 1.3 }}>
-        마지막으로
-        <br />
-        사주 정보를 알려주세요
+      <QuestionHead hanja="生" title={<>생년월일을<br />입력해 주세요</>} sub="숫자 8자리 — 예) 1992.03.08" />
+      <div className="mt-5">
+        <input
+          inputMode="numeric"
+          value={fmtBirth(raw)}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="0000.00.00"
+          style={{ ...frostedInputStyle, fontSize: 19, letterSpacing: "0.08em", textAlign: "center", fontFamily: "'JetBrains Mono', monospace" }}
+        />
+        {raw.length > 0 && raw.length < 8 && (
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "#9a8cd0" }}>여덟 자리(연4·월2·일2)를 모두 입력해 주세요</div>
+        )}
+        {raw.length === 8 && !isValidBirth(raw) && (
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "#ff9a9a" }}>올바른 날짜가 아니에요 (1930~2025)</div>
+        )}
       </div>
-      <div className="mt-6 flex flex-col gap-3.5">
-        <div>
-          <FieldLabel>어떻게 불러드릴까요? <span style={{ fontWeight: 400, color: "#9a8cd0" }}>· 선택</span></FieldLabel>
-          <input
-            value={p.nickname}
-            onChange={(e) => ctx.setProfile("nickname", e.target.value)}
-            placeholder="비우면 '회원님'으로 불러드려요"
-            style={frostedInputStyle}
-          />
-        </div>
-        <div>
-          <FieldLabel required>성별</FieldLabel>
-          <SegmentToggle<Gender>
-            options={[{ key: "M", label: "남자" }, { key: "F", label: "여자" }]}
-            value={p.gender}
-            onChange={(v) => ctx.setProfile("gender", v)}
-          />
-        </div>
-        <div>
-          <FieldLabel required>생년월일</FieldLabel>
-          <input
-            type="date"
-            value={p.birthDate}
-            min="1930-01-01"
-            max="2025-12-31"
-            onChange={(e) => ctx.setProfile("birthDate", e.target.value)}
-            style={{ ...frostedInputStyle, colorScheme: "dark" }}
-          />
-        </div>
-        <div>
-          <FieldLabel required>양/음력</FieldLabel>
-          <SegmentToggle<Calendar>
-            options={[{ key: "solar", label: "양력" }, { key: "lunar", label: "음력" }]}
-            value={p.calendar}
-            onChange={(v) => ctx.setProfile("calendar", v)}
-          />
-        </div>
-        <div>
-          <FieldLabel>태어난 시각</FieldLabel>
-          <select
-            value={p.birthTime}
-            disabled={p.unknownTime}
-            onChange={(e) => ctx.setProfile("birthTime", e.target.value)}
-            style={{ ...frostedInputStyle, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark", accentColor: "#8a5cf0" }}
-          >
-            <option value="" style={{ background: "#1b0d3c", color: "#9a8cd0" }}>시간 선택 (모르면 아래 체크)</option>
-            {SIJU.map((s) => (
-              <option key={s.v} value={s.v} style={{ background: "#1b0d3c", color: "#F1EEF9" }}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={() => ctx.setProfile("unknownTime", !p.unknownTime)}
-          className="flex items-center gap-2"
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+      <div className="mt-5">
+        <FieldLabel required>양/음력</FieldLabel>
+        <SegmentToggle<Calendar>
+          options={[{ key: "solar", label: "양력" }, { key: "lunar", label: "음력" }]}
+          value={p.calendar}
+          onChange={(v) => ctx.setProfile("calendar", v)}
+        />
+      </div>
+    </ScreenScaffold>
+  );
+}
+
+// ④-D 時 · 태어난 시각(선택) + 모름
+export function TimeScreen({ ctx }: { ctx: FunnelCtx }) {
+  const p = ctx.state.profile;
+  return (
+    <ScreenScaffold
+      header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
+      footer={<PrimaryCTA label="입력 확인하기" onClick={ctx.next} />}
+    >
+      <QuestionHead hanja="時" title={<>태어난 시각을<br />알려주세요</>} sub="모르면 아래 체크 — 시 기둥 빼고 봐드려요" />
+      <div className="mt-5">
+        <select
+          value={p.birthTime}
+          disabled={p.unknownTime}
+          onChange={(e) => ctx.setProfile("birthTime", e.target.value)}
+          style={{ ...frostedInputStyle, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark", accentColor: "#8a5cf0" }}
         >
-          <span
-            style={{ width: 18, height: 18, borderRadius: 5, background: p.unknownTime ? "rgba(150,90,255,.24)" : "rgba(255,255,255,.05)", border: p.unknownTime ? "1.5px solid #b794ff" : "1.5px solid rgba(180,140,255,.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff" }}
-          >
-            {p.unknownTime ? "✓" : ""}
-          </span>
-          <span style={{ fontSize: 12, color: "#b8a4e0" }}>태어난 시각을 몰라요 (시 기둥 제외)</span>
-        </button>
+          <option value="" style={{ background: "#1b0d3c", color: "#9a8cd0" }}>시간 선택 (모르면 아래 체크)</option>
+          {SIJU.map((s) => (
+            <option key={s.v} value={s.v} style={{ background: "#1b0d3c", color: "#F1EEF9" }}>
+              {s.label}
+            </option>
+          ))}
+        </select>
       </div>
+      <div className="mt-4 mb-3 flex items-center gap-3" style={{ color: "#9a8cd0", fontSize: 12 }}>
+        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
+        또는
+        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
+      </div>
+      <button
+        type="button"
+        onClick={() => ctx.setProfile("unknownTime", !p.unknownTime)}
+        className="flex w-full items-center justify-between transition-transform active:scale-[0.99]"
+        style={{
+          padding: "16px 18px",
+          borderRadius: 15,
+          background: p.unknownTime ? "rgba(150,90,255,.24)" : "rgba(255,255,255,.05)",
+          border: p.unknownTime ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.3)",
+          cursor: "pointer",
+        }}
+      >
+        <span style={{ textAlign: "left" }}>
+          <span style={{ fontSize: 15, fontWeight: p.unknownTime ? 700 : 600, color: p.unknownTime ? "#fff" : "#dcc8ff" }}>태어난 시각을 몰라요</span>
+          <br />
+          <span style={{ fontSize: 12, color: "#9a8cd0" }}>시 기둥은 빼고 나머지로 정확히 봐드려요</span>
+        </span>
+        <span
+          style={{ flex: "none", width: 24, height: 24, borderRadius: 7, background: p.unknownTime ? "#b794ff" : "rgba(255,255,255,.06)", border: p.unknownTime ? "none" : "1.5px solid rgba(180,140,255,.45)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#1b0d3c" }}
+        >
+          {p.unknownTime ? "✓" : ""}
+        </span>
+      </button>
     </ScreenScaffold>
   );
 }
@@ -360,9 +442,10 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   const { state } = ctx;
   const p = state.profile;
   const rows: { label: string; value: string; to: Parameters<typeof ctx.goTo>[0] }[] = [
-    { label: "생년월일", value: p.birthDate ? p.birthDate.replace(/-/g, ".") : "—", to: "profile" },
-    { label: "태어난 시각", value: p.unknownTime ? "모름 (시 제외)" : p.birthTime ? SIJU.find((s) => s.v === p.birthTime)?.label ?? p.birthTime : "선택 안 함", to: "profile" },
-    { label: "성별 · 달력", value: `${p.gender === "M" ? "남" : p.gender === "F" ? "여" : "—"} · ${p.calendar === "lunar" ? "음력" : "양력"}`, to: "profile" },
+    { label: "호칭", value: p.nickname.trim() || "회원님", to: "nickname" },
+    { label: "성별", value: p.gender === "M" ? "남자" : p.gender === "F" ? "여자" : "—", to: "gender" },
+    { label: "생년월일", value: `${p.birthDate ? p.birthDate.replace(/-/g, ".") : "—"} · ${p.calendar === "lunar" ? "음력" : "양력"}`, to: "birth" },
+    { label: "태어난 시각", value: p.unknownTime ? "모름 (시 제외)" : p.birthTime ? SIJU.find((s) => s.v === p.birthTime)?.label ?? p.birthTime : "선택 안 함", to: "time" },
   ];
   return (
     <ScreenScaffold
@@ -400,55 +483,26 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
   );
 }
 
-// ⑥ 무료 기본 분석 — 실제 명식/오행 fetch(/api/saju/chart), 실패·미설정 시 대표값 폴백.
-const EL_BAR: Record<string, string> = {
-  목: "linear-gradient(180deg,#7fc8a0,#3a9a6c)",
-  화: "linear-gradient(180deg,#ff9a7a,#d0563c)",
-  토: "linear-gradient(180deg,#e4c878,#b4933a)",
-  금: "linear-gradient(180deg,#c8cdd4,#9098a4)",
-  수: "linear-gradient(180deg,#88a8e0,#4868c0)",
-};
-const EL_TINT: Record<string, { bg: string; border: string; color: string }> = {
-  목: { bg: "rgba(127,200,160,.18)", border: "rgba(127,200,160,.45)", color: "#aef0cc" },
-  화: { bg: "rgba(255,150,110,.2)", border: "rgba(255,160,120,.4)", color: "#ffc4b8" },
-  토: { bg: "rgba(228,200,120,.18)", border: "rgba(228,200,120,.4)", color: "#f0dca0" },
-  금: { bg: "rgba(200,205,212,.18)", border: "rgba(200,205,212,.4)", color: "#e6ebf2" },
-  수: { bg: "rgba(136,168,224,.18)", border: "rgba(136,168,224,.4)", color: "#bcd0f5" },
-};
-const NEUTRAL = { bg: "rgba(180,140,255,.16)", border: "rgba(180,140,255,.3)", color: "#e6dbff" };
-const EL_HANJA: Record<string, string> = { 목: "木", 화: "火", 토: "土", 금: "金", 수: "水" };
-const EL_TYPE: Record<string, string> = {
-  목: "木 기운이 뻗어가는 성장형",
-  화: "火 기운이 강한 추진력형",
-  토: "土 기운이 단단한 중심형",
-  금: "金 기운이 또렷한 결단형",
-  수: "水 기운이 깊은 지혜형",
-};
-
-type Chart = { cheongan: { ch: string; el: string; ilgan: boolean }[]; ohaeng: { el: string; pct: number }[] };
-const REP_CHART: Chart = {
-  cheongan: [
-    { ch: "己", el: "토", ilgan: false },
-    { ch: "丙", el: "화", ilgan: true },
-    { ch: "壬", el: "수", ilgan: false },
-    { ch: "甲", el: "목", ilgan: false },
-  ],
-  ohaeng: [
-    { el: "목", pct: 60 },
-    { el: "화", pct: 90 },
-    { el: "토", pct: 45 },
-    { el: "금", pct: 32 },
-    { el: "수", pct: 70 },
-  ],
-};
+// ⑥ 무료 기본 분석 — 같은 결과지 디자인을 "잠금(무료)" 모드로. 점수까지 공개, 상세는 결제 후.
+//    /api/saju/chart 가 명식+오행+영역별 점수까지 담은 ResultView 를 돌려준다(LLM 없음 · 만세력 1콜).
+const RESULT_BG = "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)";
 
 export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
   const p = ctx.state.profile;
-  const [chart, setChart] = useState<Chart>(REP_CHART);
+  const [view, setView] = useState<ResultView | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [minDone, setMinDone] = useState(false);
+
+  // 분석중 화면(나경반+후기) 최소 노출 — 너무 빨리 지나가지 않게 기대감 형성.
+  useEffect(() => {
+    const t = setTimeout(() => setMinDone(true), 2800);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!p.birthDate || !p.gender) return;
     let alive = true;
+    setFailed(false);
     fetch("/api/saju/chart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -458,77 +512,120 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
         timeUnknown: p.unknownTime,
         gender: p.gender === "M" ? "male" : "female",
         calendar: p.calendar,
+        nickname: p.nickname || undefined,
+        concerns: ctx.state.situationText.trim() ? [ctx.state.situationText.trim()] : [],
       }),
     })
       .then((r) => r.json())
       .then((d) => {
-        if (alive && d?.ok && Array.isArray(d.cheongan) && Array.isArray(d.ohaeng)) {
-          setChart({ cheongan: d.cheongan, ohaeng: d.ohaeng });
-        }
+        if (!alive) return;
+        if (d?.ok && d.view) setView(d.view as ResultView);
+        else setFailed(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
     return () => {
       alive = false;
     };
-  }, [p.birthDate, p.birthTime, p.unknownTime, p.gender, p.calendar]);
+  }, [p.birthDate, p.birthTime, p.unknownTime, p.gender, p.calendar, p.nickname, ctx.state.situationText]);
 
-  const nick = p.nickname || "회원";
-  const dominant = [...chart.ohaeng].sort((a, b) => b.pct - a.pct)[0]?.el ?? "화";
+  // 분석중 — 최소 노출 전이거나 결과/실패가 아직이면 회전 나경반 + 후기 화면
+  if (!minDone || (!view && !failed)) {
+    return <AnalyzingScreen variant="free" name={p.nickname} onBack={ctx.prev} />;
+  }
 
   return (
-    <ScreenScaffold
-      header={
-        <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
-          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>‹</button>
-          <span style={{ fontWeight: 800, letterSpacing: ".18em", fontSize: 13, color: "#d8c8ff" }}>SAJU LAB</span>
-          <span style={{ opacity: 0.7, fontSize: 11 }}>⌁</span>
+    <div className="relative flex min-h-screen w-full justify-center text-white" style={{ background: RESULT_BG, backgroundColor: "#0a0715" }}>
+      <div className="relative flex min-h-screen w-full max-w-[420px] flex-col">
+        {/* 뒤로 */}
+        <div className="flex-none px-5 pt-4">
+          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, lineHeight: 1, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>
+            ‹
+          </button>
         </div>
-      }
-      footer={<PrimaryCTA label="전체 풀이 받기" onClick={ctx.next} />}
-    >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 22 }}>{nick}님의 사주 원국</div>
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        {chart.cheongan.map((c, i) => {
-          const t = c.ilgan ? EL_TINT[c.el] ?? EL_TINT["화"] : NEUTRAL;
-          return (
-            <div
-              key={i}
-              style={{ aspectRatio: "0.78", borderRadius: 12, background: t.bg, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Ma Shan Zheng', cursive", fontSize: 30, color: t.color }}
-            >
-              {c.ch}
+        {/* 본문 — 잠금(무료) 결과지 미리보기 */}
+        <div className="flex-1 overflow-y-auto">
+          {view ? (
+            <ResultScroll view={view} embedded locked />
+          ) : (
+            <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: 360 }}>
+              <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 42, color: "#c9a8ff" }}>命</div>
+              <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#cbb8f0" }}>
+                명식을 불러오지 못했어요. 그래도 전체 풀이는 받을 수 있어요.
+              </div>
             </div>
-          );
-        })}
-      </div>
-      <div className="mt-[18px]" style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0" }}>오행 분포</div>
-      <div className="mt-2 flex items-end gap-1.5" style={{ height: 46 }}>
-        {chart.ohaeng.map((o) => (
-          <div key={o.el} style={{ flex: 1, height: `${Math.max(8, o.pct)}%`, background: EL_BAR[o.el], borderRadius: "5px 5px 0 0" }} />
-        ))}
-      </div>
-      <div className="mt-1.5 flex gap-1.5" style={{ fontSize: 11, color: "#9a8cd0" }}>
-        {chart.ohaeng.map((o) => (
-          <span key={o.el} style={{ flex: 1, textAlign: "center" }}>{EL_HANJA[o.el] ?? o.el}</span>
-        ))}
-      </div>
-      <div className="mt-4" style={{ background: "rgba(255,255,255,.05)", borderRadius: 12, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6, color: "#cbb8f0" }}>
-        {nick}님은 <b style={{ color: EL_TINT[dominant]?.color ?? "#ffc4b8" }}>{EL_TYPE[dominant] ?? EL_TYPE["화"]}</b> — 재물운부터 풀어드릴게요…
-      </div>
-      <div className="mt-3.5" style={{ position: "relative", borderRadius: 14, border: "1px dashed rgba(180,140,255,.4)", padding: 18, textAlign: "center", background: "rgba(20,8,50,.4)" }}>
-        <div style={{ fontSize: 22 }}>🔒</div>
-        <div style={{ marginTop: 6, fontSize: 12.5, color: "#b8a4e0", lineHeight: 1.5 }}>
-          재물·애정·직업 상세 풀이
-          <br />
-          유료에서 전체 공개
+          )}
+        </div>
+        {/* 결제 CTA */}
+        <div className="flex-none px-5 pb-7 pt-3">
+          <PrimaryCTA label="전체 풀이 받기" onClick={ctx.next} />
         </div>
       </div>
+    </div>
+  );
+}
+
+// ⑥-B 信 · 결과 받을 이메일(결제 직전) — 비회원은 이메일, 회원은 계정으로 수령.
+export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
+  const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ctx.state.email.trim());
+  const loginKakao = async () => {
+    if (!isSupabaseConfigured()) return;
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: `${window.location.origin}/auth/callback?next=/funnel` } });
+    } catch {
+      toast.error("카카오 로그인을 시작하지 못했어요");
+    }
+  };
+  const header = (
+    <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
+      <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>‹</button>
+      <span style={{ fontSize: 14, fontWeight: 700 }}>결과 받기</span>
+      <span style={{ opacity: 0, fontSize: 22 }}>‹</span>
+    </div>
+  );
+
+  if (ctx.isAuthed) {
+    return (
+      <ScreenScaffold header={header} footer={<PrimaryCTA label="다음" onClick={ctx.next} />}>
+        <QuestionHead hanja="信" title={<>결과는<br />계정으로 보내드려요</>} sub="이미 로그인하셨어요 — 따로 이메일을 안 받아도 돼요" />
+        <div className="mt-5">
+          <ReassureBanner tone="green">회원 할인 <b style={{ color: "#dffff0" }}>1,900원</b>이 적용돼요</ReassureBanner>
+        </div>
+      </ScreenScaffold>
+    );
+  }
+  return (
+    <ScreenScaffold header={header} footer={<PrimaryCTA label="다음" onClick={ctx.next} disabled={!valid} />}>
+      <QuestionHead hanja="信" title={<>결과 받을<br />이메일을 알려주세요</>} sub="분석이 끝나면 이 메일로 결과를 보내드려요" />
+      <div className="mt-5">
+        <input
+          type="email"
+          inputMode="email"
+          value={ctx.state.email}
+          onChange={(e) => ctx.setField("email", e.target.value)}
+          placeholder="you@example.com"
+          style={frostedInputStyle}
+        />
+      </div>
+      <div className="my-4 flex items-center gap-3" style={{ color: "#9a8cd0", fontSize: 12 }}>
+        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />또는<span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
+      </div>
+      <button
+        type="button"
+        onClick={loginKakao}
+        className="flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
+        style={{ padding: 13, borderRadius: 12, background: "#FEE500", color: "#2b2b2b", fontSize: 13, fontWeight: 800, border: "none", cursor: "pointer" }}
+      >
+        💬 카카오로 로그인 — <b>1,900원 할인</b> + 결과 자동 저장
+      </button>
     </ScreenScaffold>
   );
 }
 
-// ⑦ 결제 — 옵션(상품) 선택형. 기본 6,900 / 회원 −1,900(표시) / 비회원 이메일.
-// 주문 생성(/api/orders/create) → 체크아웃. ⚠️ 실제 할인 차감·이메일 저장은 주문 API 후속(현재 contract 미지원).
-// 옵션 카드 설명·추천 배지(slug별). 가짜 할인앵커는 쓰지 않음(과장/표시광고법 금지).
+// ⑦ 결제 — 옵션(상품) 선택형. 정가 → 회원 할인가(−1,900, 실제 할인) 표시. 이메일은 앞 단계(EmailScreen)에서 받음.
+// 주문 생성(/api/orders/create) → 체크아웃. 가짜 할인앵커는 쓰지 않음(실제 회원 할인만 · 표시광고법 준수).
 const PAY_META: Record<string, { desc: string; badge?: string }> = {
   "life-saju": { desc: "내 사주 핵심 · 올해 흐름 · 고민 답" },
   "wealth-saju": { desc: "돈 들어오는 길 · 새는 구멍 · 재물 시기" },
@@ -541,11 +638,12 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const [busy, setBusy] = useState(false);
   const options = ctx.products.length ? ctx.products : ctx.product ? [ctx.product] : [];
   const [selId, setSelId] = useState<string | undefined>(ctx.product?.id ?? options[0]?.id);
-  const [email, setEmail] = useState("");
+  const email = ctx.state.email; // 앞 단계(EmailScreen)에서 받은 결과 수령 이메일
   const sel = options.find((o) => o.id === selId) ?? ctx.product ?? options[0] ?? null;
   const basePrice = sel?.price ?? 6900;
   const discount = ctx.isAuthed ? 1900 : 0;
   const total = Math.max(0, basePrice - discount);
+  const memberPrice = Math.max(0, basePrice - 1900); // 회원 할인가(정가 −1,900)
   const benefits = ["재물·애정·직업·건강 전 영역", "대운 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
 
   const pay = async () => {
@@ -667,47 +765,52 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
                   </div>
                   {m?.desc && <div style={{ marginTop: 4, fontSize: 11.5, color: "#9a8cd0", lineHeight: 1.4 }}>{m.desc}</div>}
                 </div>
-                <span style={{ fontSize: 17, fontWeight: 800, color: on ? "#fff" : "#dcc8ff", flex: "none" }}>{formatKRW(o.price)}</span>
+                <div style={{ flex: "none", textAlign: "right" }}>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: on ? "#fff" : "#dcc8ff" }}>{formatKRW(o.price)}</div>
+                  <div style={{ fontSize: 10.5, color: "#9fe1cb", marginTop: 2 }}>회원가 {formatKRW(Math.max(0, o.price - 1900))}</div>
+                </div>
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* 가격 요약 */}
+      {/* 가격 요약 — 정가 → 회원 할인가(실제 할인) */}
       <div className="mt-4" style={{ borderRadius: 14, background: "rgba(255,255,255,.05)", border: "1px solid rgba(180,140,255,.2)", padding: 14 }}>
         <div className="flex items-center justify-between" style={{ fontSize: 13, color: "#cbb8f0" }}>
-          <span>상품가</span>
-          <span>{formatKRW(basePrice)}</span>
+          <span>정가</span>
+          <span style={ctx.isAuthed ? { textDecoration: "line-through", color: "#9a8cd0" } : undefined}>{formatKRW(basePrice)}</span>
         </div>
-        {ctx.isAuthed && (
-          <div className="mt-1.5 flex items-center justify-between" style={{ fontSize: 13, color: "#aef0cc" }}>
-            <span>회원 할인</span>
-            <span>- {formatKRW(1900)}</span>
-          </div>
-        )}
+        <div className="mt-1.5 flex items-center justify-between" style={{ fontSize: 13, color: "#9fe1cb" }}>
+          <span>회원 할인{ctx.isAuthed ? "" : " (로그인 시)"}</span>
+          <span>− {formatKRW(1900)}</span>
+        </div>
         <div className="mt-2 flex items-center justify-between" style={{ borderTop: "1px solid rgba(180,140,255,.18)", paddingTop: 10 }}>
           <span style={{ fontSize: 13, color: "#cbb8f0" }}>최종 결제금액</span>
-          <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{formatKRW(total)}</span>
+          <span className="flex items-baseline gap-1.5">
+            {ctx.isAuthed && <span style={{ fontSize: 13, textDecoration: "line-through", color: "#9a8cd0" }}>{formatKRW(basePrice)}</span>}
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{formatKRW(total)}</span>
+          </span>
         </div>
+        {!ctx.isAuthed && (
+          <div className="mt-2.5 flex items-center justify-center gap-1.5" style={{ fontSize: 12, color: "#ffd9e2", background: "rgba(255,143,168,.12)", border: "1px solid rgba(255,143,168,.3)", borderRadius: 10, padding: "8px 10px" }}>
+            🎁 로그인하면 <span style={{ textDecoration: "line-through", color: "#caa" }}>{formatKRW(basePrice)}</span> → <b style={{ color: "#fff" }}>{formatKRW(memberPrice)}</b>
+          </div>
+        )}
       </div>
 
-      {/* 비회원 이메일 / 회원 안내 */}
+      {/* 결과 수령 안내 — 이메일은 앞 단계(EmailScreen)에서 받음 */}
       {!ctx.isAuthed ? (
         <div className="mt-4">
-          <FieldLabel required>결과 받을 이메일</FieldLabel>
-          <input
-            type="email"
-            inputMode="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            style={frostedInputStyle}
-          />
+          {email && (
+            <div style={{ fontSize: 12.5, color: "#cbb8f0", marginBottom: 10 }}>
+              결과는 <b style={{ color: "#fff" }}>{email}</b> 로 보내드려요
+            </div>
+          )}
           <button
             type="button"
             onClick={loginKakao}
-            className="mt-2.5 flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
             style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(180,140,255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             💬 카카오로 로그인하면 <b style={{ color: "#fff" }}>1,900원 할인</b>

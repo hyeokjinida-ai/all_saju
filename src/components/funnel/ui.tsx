@@ -33,7 +33,7 @@ export function ScreenScaffold({
 }
 
 // 상단 진행 인디케이터(6점) + 뒤로 + n/6
-export function ProgressHeader({ step, onBack }: { step: number; onBack?: () => void }) {
+export function ProgressHeader({ step, total = 6, onBack }: { step: number; total?: number; onBack?: () => void }) {
   return (
     <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
       <button
@@ -46,7 +46,7 @@ export function ProgressHeader({ step, onBack }: { step: number; onBack?: () => 
         ‹
       </button>
       <div className="flex items-center gap-[5px]">
-        {[1, 2, 3].map((i) => (
+        {Array.from({ length: total }, (_, k) => k + 1).map((i) => (
           <span
             key={i}
             style={{
@@ -59,7 +59,7 @@ export function ProgressHeader({ step, onBack }: { step: number; onBack?: () => 
           />
         ))}
       </div>
-      <span style={{ fontSize: 12, color: "#b8a4e0" }}>{step}/3</span>
+      <span style={{ fontSize: 12, color: "#b8a4e0" }}>{step}/{total}</span>
     </div>
   );
 }

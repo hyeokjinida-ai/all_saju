@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
-import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
-import { OhaengChart } from "@/components/saju/OhaengChart";
-import { SipseongChart, MonthlyLuckChart, DaeunTimeline } from "@/components/saju/PremiumCharts";
-import { ResultBody } from "@/components/saju/ResultBody";
+import { ResultScroll } from "@/components/saju/ResultScroll";
+import { ResultChapters } from "@/components/saju/ResultChapters";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
+import { buildResultView } from "@/lib/saju/result-view";
 import { extractCrossSellSignal, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
-import { formatDate } from "@/lib/utils";
 
 export const metadata = { title: "결과지" };
 
@@ -36,7 +34,7 @@ export default async function ResultPage({
     ? await service.from("products").select("name, slug").eq("id", order.product_id).single()
     : { data: null };
 
-  // 결제 후 크로스셀: 저장된 명식 정보 + 방금 산 것 외 다른 활성 상품
+  // 결제 후 크로스셀 + 결과지 개인화에 쓸 저장된 명식 입력
   const { data: savedInput } = await service
     .from("saju_inputs")
     .select("name, birth_date, birth_time, time_unknown, gender, calendar, concerns")
@@ -73,74 +71,60 @@ export default async function ResultPage({
     : null;
 
   const myeongsik = result.myeongsik as unknown as Myeongsik;
-
-  // 차트/크로스셀용 원본 분석(있으면). 상품 티어별로 보여줄 차트 차등.
-  const rawAnalysis = (result as { raw_analysis?: unknown }).raw_analysis ?? null;
+  const rawAnalysis = ((result as { raw_analysis?: unknown }).raw_analysis ?? null) as SajuAnalysisResponse | null;
   const slug = (product as { slug?: string } | null)?.slug ?? "";
-  const showSipseong = !!rawAnalysis && !["basic-saju", "today-fortune"].includes(slug); // 심화·종합
-  const showMonthly = !!rawAnalysis && ["monthly-luck", "premium-saju"].includes(slug); // 월별 캘린더·종합
-  const showDaeun = !!rawAnalysis && slug === "premium-saju"; // 인생 종합 끝판왕
-  const crossSellSignal = rawAnalysis
-    ? extractCrossSellSignal(rawAnalysis as SajuAnalysisResponse)
-    : null;
+  const showScores = !!rawAnalysis && !["basic-saju", "today-fortune"].includes(slug);
+  const showDaeun = !!rawAnalysis && slug === "premium-saju";
+  const crossSellSignal = rawAnalysis ? extractCrossSellSignal(rawAnalysis) : null;
+
+  // ⑨ 종합 결과지 뷰모델 — 명식(항상) + raw_analysis(프리미엄)에서 가공.
+  const view = buildResultView({
+    myeongsik,
+    rawAnalysis,
+    name: savedInput?.name ?? null,
+    birthDate: savedInput?.birth_date ?? null,
+    birthTime: savedInput?.birth_time ?? null,
+    timeUnknown: savedInput?.time_unknown ?? null,
+    gender: (savedInput?.gender as "male" | "female" | null) ?? null,
+    calendar: (savedInput?.calendar as "solar" | "lunar" | null) ?? null,
+    concerns: savedInput?.concerns ?? [],
+    showScores,
+    showDaeun,
+  });
 
   return (
-    <div className="container py-12 max-w-2xl">
-      {/* 증서 헤더 */}
-      <header className="mb-9 text-center">
-        <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">命運錄</p>
-        <h1 className="font-myeongjo text-3xl font-semibold tracking-[0.04em] text-bone glow-bone">
-          {product?.name ?? "사주 풀이"}
-        </h1>
-        <p className="mt-3 text-xs text-bone-faint tracking-[0.06em]">발행일 · {formatDate(result.created_at)}</p>
-        <div className="gold-diamond mx-auto mt-5" />
-      </header>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        background: "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
+        padding: "30px 12px 64px",
+        color: "#fff",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* 한눈 요약 — 일간·원국·오행·영역별·대운·조언 + 목차(상세 풀이 포함) */}
+        <ResultScroll view={view} embedded extraToc={[{ label: "상세 풀이 전문", href: "#sec-detail" }]} />
 
-      {/* 명식 — 골드 프레임 증서 */}
-      <section className="mb-11">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <span className="gold-rule flex-1 max-w-[60px] opacity-70" />
-          <h2 className="font-myeongjo text-sm font-semibold text-gold tracking-[0.1em]">사주 명식 · 命式</h2>
-          <span className="gold-rule flex-1 max-w-[60px] opacity-70" />
+        {/* 상세 풀이 — LLM 전문(챕터별 카드) */}
+        <div id="sec-detail" className="mt-5" style={{ scrollMarginTop: 14 }}>
+          <div className="mb-3 px-1" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", color: "#c9a8ff" }}>
+            {product?.name ?? "사주 풀이"} · 상세 풀이
+          </div>
+          <ResultChapters markdown={result.interpretation_md} />
         </div>
-        <div className="gold-frame">
-          <MyeongsikTable myeongsik={myeongsik} />
-        </div>
-      </section>
 
-      {/* 오행 균형 차트 — 명식 8글자로 계산한 시각화 (모든 결과지) */}
-      <OhaengChart myeongsik={myeongsik} />
+        <p className="mt-5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>
+          입력하신 정보는 명식 계산과 결과 생성에만 사용됩니다.
+        </p>
 
-      {/* 심화/종합 전용 차트 — 십성 분포 + 대운 60년 타임라인 */}
-      {showSipseong && <SipseongChart analysis={rawAnalysis} />}
-      {showMonthly && <MonthlyLuckChart analysis={rawAnalysis} />}
-      {showDaeun && <DaeunTimeline analysis={rawAnalysis} />}
-
-      {/* 본문 — 한지/와인 카드로 감싼 결과지 */}
-      <article
-        className="relative rounded-md px-6 py-7 sm:px-8 sm:py-9"
-        style={{
-          border: "1px solid var(--gold-line)",
-          background: "linear-gradient(180deg, rgba(150,90,255,0.05) 0%, rgba(36,16,71,0.35) 100%)",
-        }}
-      >
-        {/* 낙관 */}
-        <div
-          className="seal absolute -top-3.5 right-5 w-12 h-12 text-base flex items-center justify-center"
-          style={{ transform: "rotate(-6deg)" }}
-        >
-          <span className="relative z-[2]">推</span>
-        </div>
-        <ResultBody markdown={result.interpretation_md} />
-      </article>
-
-      <p className="mt-6 text-center text-[11px] text-bone-faint tracking-[0.04em]">
-        입력하신 정보는 명식 계산과 결과 생성에만 사용됩니다.
-      </p>
-
-      {crossSellInput && crossSellProducts.length > 0 && (
-        <CrossSell products={crossSellProducts} input={crossSellInput} signal={crossSellSignal} />
-      )}
+        {crossSellInput && crossSellProducts.length > 0 && (
+          <CrossSell products={crossSellProducts} input={crossSellInput} signal={crossSellSignal} />
+        )}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const isBare = (p: string) => p === "/" || p.startsWith("/funnel") || p.startsWith("/start");
+const isBare = (p: string) => p === "/" || p.startsWith("/funnel") || p.startsWith("/start") || p.startsWith("/results") || p.startsWith("/checkout");
 
 export function ChromeGate({
   header,
