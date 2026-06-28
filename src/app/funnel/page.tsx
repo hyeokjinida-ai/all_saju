@@ -15,6 +15,7 @@ async function resolveProducts(): Promise<FunnelProduct[]> {
     .from("products")
     .select("id, slug, price, name")
     .eq("is_active", true)
+    .in("slug", ["life-saju", "premium-saju"]) // 결제 옵션은 기본 + 프리미엄 둘만
     .order("display_order");
   return (data ?? []).map((p) => ({ id: p.id, slug: p.slug, price: p.price, name: p.name }));
 }
