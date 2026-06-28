@@ -6,6 +6,7 @@
 // LLM 키 있으면 실제 해석 / 없으면 안내 메시지 + 풀 명식 텍스트 미리보기.
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { MyeongsikTable } from "@/components/saju/MyeongsikTable";
 import { ResultBody } from "@/components/saju/ResultBody";
 import {
@@ -37,6 +38,7 @@ const DEFAULTS = {
 };
 
 export default async function DemoPage({ searchParams }: { searchParams: SearchParams }) {
+  if (process.env.NODE_ENV === "production") notFound(); // 개발 전용 — 만세력/LLM 비용 보호
   const sp = await searchParams;
   const birthInfo: BirthInfo = {
     birthYear: sp.y || DEFAULTS.y,

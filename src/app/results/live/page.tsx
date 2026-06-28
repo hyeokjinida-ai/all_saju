@@ -5,6 +5,7 @@
 // 어떻게 얹히는지 실제로 보여준다. 비용 보호: 같은 입력은 모듈 캐시로 재호출 안 함.
 // 기본값 외 ?y=&m=&d=&h=&min=&cal=양력/음력&g=male/female&concern=&nm=&slug= 로 바꿔볼 수 있음.
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
 import { CrossSell } from "@/components/saju/CrossSell";
@@ -36,6 +37,7 @@ const lCache = new Map<string, { text: string; provider: string; model: string }
 type SP = Promise<Record<string, string | undefined>>;
 
 export default async function LiveResultPage({ searchParams }: { searchParams: SP }) {
+  if (process.env.NODE_ENV === "production") notFound(); // 개발 전용 — 만세력/LLM 비용 보호
   const sp = await searchParams;
   const g: "male" | "female" = sp.g === "female" ? "female" : "male";
   const cal: "양력" | "음력" = sp.cal === "음력" ? "음력" : "양력";

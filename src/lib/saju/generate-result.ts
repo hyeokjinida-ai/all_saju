@@ -14,6 +14,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildChapterPrompts } from "@/lib/saju/prompt";
 import { generateByChapters } from "@/lib/saju/llm";
+import { sendResultEmail } from "@/lib/email";
 import {
   isSajuApiConfigured,
   fetchSajuAnalysis,
@@ -91,7 +92,7 @@ export async function generateResultForOrder(
   // 1. 주문 — paid 만 생성
   const { data: order } = await service
     .from("orders")
-    .select("id, status, product_id")
+    .select("id, status, product_id, guest_email")
     .eq("id", orderUuid)
     .maybeSingle();
   if (!order) return { ok: false, reason: "no_order" };
@@ -175,5 +176,17 @@ export async function generateResultForOrder(
     .single();
 
   if (saveErr || !result) return { ok: false, reason: "save", detail: saveErr?.message };
+
+  // 비회원: 결과 링크를 이메일로 발송(베스트 에포트 — 실패해도 결과는 이미 저장됨).
+  // 회원은 마이페이지/결제완료 화면에서 바로 확인하므로 메일 생략.
+  const guestEmail = (order as { guest_email?: string | null }).guest_email;
+  if (guestEmail) {
+    try {
+      await sendResultEmail({ to: guestEmail, resultId: result.id, productName: product.name });
+    } catch {
+      /* 발송 실패는 무시 — 결과 생성은 성공 */
+    }
+  }
+
   return { ok: true, resultId: result.id, reused: false };
 }
