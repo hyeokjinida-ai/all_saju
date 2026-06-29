@@ -435,15 +435,6 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
 // ⑥-B 信 · 결과 받을 이메일(결제 직전) — 비회원은 이메일, 회원은 계정으로 수령.
 export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
   const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ctx.state.email.trim());
-  const loginKakao = async () => {
-    if (!isSupabaseConfigured()) return;
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithOAuth({ provider: "kakao", options: { redirectTo: `${window.location.origin}/auth/callback?next=/funnel` } });
-    } catch {
-      toast.error("카카오 로그인을 시작하지 못했어요");
-    }
-  };
   const header = (
     <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
       <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>‹</button>
@@ -475,17 +466,6 @@ export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
           style={frostedInputStyle}
         />
       </div>
-      <div className="my-4 flex items-center gap-3" style={{ color: "#9a8cd0", fontSize: 12 }}>
-        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />또는<span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
-      </div>
-      <button
-        type="button"
-        onClick={loginKakao}
-        className="flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
-        style={{ padding: 13, borderRadius: 12, background: "#FEE500", color: "#2b2b2b", fontSize: 13, fontWeight: 800, border: "none", cursor: "pointer" }}
-      >
-        💬 카카오로 로그인 — <b>1,900원 할인</b> + 결과 자동 저장
-      </button>
     </ScreenScaffold>
   );
 }
