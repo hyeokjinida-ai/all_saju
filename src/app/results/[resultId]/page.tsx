@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
@@ -27,9 +27,17 @@ export default async function ResultPage({
 
   const { data: order } = await service
     .from("orders")
-    .select("product_id, paid_at, guest_email")
+    .select("product_id, paid_at, guest_email, user_id")
     .eq("id", result.order_id)
     .single();
+
+  // 회원 결과지는 본인만 — 다른 로그인 사용자가 uuid로 남의 결과를 열람하는 것 차단.
+  // (비회원 게스트 결과는 링크=capability 로 유지. user_id 있는 회원 주문만 검사.)
+  const ownerId = (order as { user_id?: string | null } | null)?.user_id ?? null;
+  if (ownerId) {
+    const { data: { user } } = await (await createClient()).auth.getUser();
+    if (user && user.id !== ownerId) notFound();
+  }
   const { data: product } = order
     ? await service.from("products").select("name, slug").eq("id", order.product_id).single()
     : { data: null };
