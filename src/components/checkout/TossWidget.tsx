@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { loadWidgets } from "@/lib/toss/client";
-import { publicEnv } from "@/lib/env";
 
 type Props = {
   orderId: string;
@@ -49,8 +48,8 @@ export function TossWidget({ orderId, amount, customerKey, productName, customer
       await widgets.requestPayment({
         orderId,
         orderName: productName,
-        successUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/success`,
-        failUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/fail`,
+        successUrl: `${window.location.origin}/checkout/success`,
+        failUrl: `${window.location.origin}/checkout/fail`,
         customerEmail: customerEmail ?? undefined,
       });
     } catch (err) {
