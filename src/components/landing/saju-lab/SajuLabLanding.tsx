@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
 import { REVIEWS, maskName } from "@/lib/reviews";
-import { businessInfo, copy } from "@/config/site";
+import { businessInfo, copy, PG_REVIEW_MODE } from "@/config/site";
 
 const CHIPS = ["총운", "재물운", "애정운", "직업운", "건강운"];
 
@@ -174,7 +174,8 @@ export function SajuLabLanding() {
           ))}
         </div>
 
-        {/* review marquee — 옆으로 끊김 없이 흐르는 후기 */}
+        {/* review marquee — PG 심사 중엔 숨김(PG_REVIEW_MODE=false 면 복구) */}
+        {!PG_REVIEW_MODE && (
         <div className="relative z-20 flex-none overflow-hidden pb-3">
           <div
             className="review-marquee"
@@ -205,6 +206,7 @@ export function SajuLabLanding() {
             ))}
           </div>
         </div>
+        )}
 
         {/* CTA + live pill */}
         <div className="relative z-20 flex-none px-[18px] pb-6">
@@ -224,6 +226,7 @@ export function SajuLabLanding() {
           >
             {copy.landingCta}
           </Link>
+          {!PG_REVIEW_MODE && (
           <div className="mt-3 flex justify-center">
             <div
               style={{
@@ -252,6 +255,7 @@ export function SajuLabLanding() {
               현재 <b style={{ color: "#fff", margin: "0 1px" }}>{live}</b>명이 사주를 보는 중이에요
             </div>
           </div>
+        )}
         </div>
 
         {/* 사업자정보 — PG 심사용(홈에도 노출). 값은 config/site.ts businessInfo */}
