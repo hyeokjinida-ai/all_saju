@@ -33,10 +33,12 @@ export type CrossSellSignal = {
 export function CrossSell({
   products,
   input,
+  email,
 }: {
   products: CrossSellProduct[];
   input: CrossSellInput;
   signal?: CrossSellSignal | null;
+  email?: string | null; // 비회원 재구매용 — 첫 결제 때 받은 이메일 재사용
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -60,6 +62,7 @@ export function CrossSell({
           gender: input.gender,
           calendar: input.calendar,
           concerns: input.concerns,
+          email: email && email.trim() ? email.trim() : undefined, // 비회원이면 이메일 재사용
         }),
       });
       const json = await res.json();

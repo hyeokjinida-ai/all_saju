@@ -27,7 +27,7 @@ export default async function ResultPage({
 
   const { data: order } = await service
     .from("orders")
-    .select("product_id, paid_at")
+    .select("product_id, paid_at, guest_email")
     .eq("id", result.order_id)
     .single();
   const { data: product } = order
@@ -122,7 +122,12 @@ export default async function ResultPage({
         </p>
 
         {crossSellInput && crossSellProducts.length > 0 && (
-          <CrossSell products={crossSellProducts} input={crossSellInput} signal={crossSellSignal} />
+          <CrossSell
+            products={crossSellProducts}
+            input={crossSellInput}
+            signal={crossSellSignal}
+            email={(order as { guest_email?: string | null } | null)?.guest_email ?? null}
+          />
         )}
       </div>
     </div>
