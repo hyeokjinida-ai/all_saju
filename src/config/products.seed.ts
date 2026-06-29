@@ -23,14 +23,14 @@ export const productsSeed: ProductSeed[] = [
     display_order: 5,
     is_active: true,
   },
-  // 메인 진입 상품 — ₩7,900 종합 1장
+  // (비활성) life-saju(사주 기본 풀이 6,900)와 중복이라 내림 — 혼란 방지. 되살리려면 true.
   {
     slug: "basic-saju",
     name: "내 사주 기본 풀이",
     description: "왜 늘 같은 자리에서 멈출까 — 내 사주의 핵심과 올해 흐름, 지금 가장 큰 고민 하나를 짚어드립니다",
     price: 7900,
     display_order: 10,
-    is_active: true,
+    is_active: false,
   },
   // 고민별 심화 ① 재물 (신규)
   {

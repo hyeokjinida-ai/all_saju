@@ -17,7 +17,7 @@ export default function NotFound() {
       </p>
       <div className="gold-diamond mx-auto mt-6" />
       <div className="mt-7 flex flex-col items-center gap-3">
-        <Link href="/products/basic-saju" className={cn(buttonVariants(), "tracking-[0.08em]")}>
+        <Link href="/products/life-saju" className={cn(buttonVariants(), "tracking-[0.08em]")}>
           내 사주 풀이 보기
         </Link>
         <Link

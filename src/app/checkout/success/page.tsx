@@ -49,7 +49,7 @@ function CheckoutSuccessInner() {
           const r = await fetch("/api/orders/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: oid }),
+            body: JSON.stringify({ orderId: oid, paymentKey }),
           });
           const j = await r.json();
           if (j.resultId) {

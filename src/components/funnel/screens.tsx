@@ -199,7 +199,7 @@ function fmtBirth(d: string) {
 function isValidBirth(d: string) {
   if (d.length !== 8) return false;
   const y = +d.slice(0, 4), m = +d.slice(4, 6), day = +d.slice(6, 8);
-  if (y < 1930 || y > 2025 || m < 1 || m > 12 || day < 1 || day > 31) return false;
+  if (y < 1930 || y > new Date().getFullYear() || m < 1 || m > 12 || day < 1 || day > 31) return false;
   const dt = new Date(y, m - 1, day);
   return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day;
 }
@@ -232,7 +232,7 @@ export function BirthScreen({ ctx }: { ctx: FunnelCtx }) {
           <div style={{ marginTop: 8, fontSize: 11.5, color: "#9a8cd0" }}>여덟 자리(연4·월2·일2)를 모두 입력해 주세요</div>
         )}
         {raw.length === 8 && !isValidBirth(raw) && (
-          <div style={{ marginTop: 8, fontSize: 11.5, color: "#ff9a9a" }}>올바른 날짜가 아니에요 (1930~2025)</div>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "#ff9a9a" }}>올바른 날짜가 아니에요</div>
         )}
       </div>
       <div className="mt-5">
@@ -366,7 +366,10 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
   }, []);
 
   useEffect(() => {
-    if (!p.birthDate || !p.gender) return;
+    if (!p.birthDate || !p.gender) {
+      setFailed(true); // 필수입력 누락 — 무한로딩 대신 폴백 화면 + 결제 CTA로
+      return;
+    }
     let alive = true;
     setFailed(false);
     fetch("/api/saju/chart", {
@@ -394,7 +397,9 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
     return () => {
       alive = false;
     };
-  }, [p.birthDate, p.birthTime, p.unknownTime, p.gender, p.calendar, p.nickname, ctx.state.situationText]);
+    // 닉네임·고민은 분석 호출과 무관 — deps 에서 제외(불필요한 재호출 방지)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.birthDate, p.birthTime, p.unknownTime, p.gender, p.calendar]);
 
   // 분석중 — 최소 노출 전이거나 결과/실패가 아직이면 회전 나경반 + 후기 화면
   if (!minDone || (!view && !failed)) {

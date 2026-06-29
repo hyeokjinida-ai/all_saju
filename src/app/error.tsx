@@ -24,7 +24,7 @@ export default function ErrorPage({ error, reset }: { error: Error; reset: () =>
       <div className="mt-7 flex flex-col items-center gap-3">
         <Button onClick={reset} className="tracking-[0.08em]">다시 시도</Button>
         <Link
-          href="/products/basic-saju"
+          href="/products/life-saju"
           className="text-xs text-bone-soft underline underline-offset-4 hover:text-gold"
         >
           내 사주 풀이 보기
