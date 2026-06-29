@@ -8,7 +8,7 @@
 // 자세한 응답 스키마는 운세위키 API 문서 참고: https://luckyloveme.com/api-service
 
 import { serverEnv } from "@/lib/env";
-import { recordSajuApiCall, type SajuApiSource } from "./usage";
+import { recordSajuApiCall, getUsageCount, TOTAL_LIMIT, type SajuApiSource } from "./usage";
 
 export type AnalysisField =
   | "ganji"            // 천간지지 (사주 원국)
@@ -76,6 +76,13 @@ export async function fetchSajuAnalysis(
   }
   const url = env.SAJU_API_URL;
   const apiKey = env.SAJU_API_KEY;
+
+  // 누적 한도 강제 — 무료(demo)는 90%에서 차단해 결제(confirm) 한도를 보존.
+  const used = await getUsageCount();
+  const cap = source === "demo" ? Math.floor(TOTAL_LIMIT * 0.9) : TOTAL_LIMIT;
+  if (used >= cap) {
+    throw new SajuApiError(`사주 API 누적 한도 도달(${used}/${TOTAL_LIMIT})`, 429);
+  }
 
   const body = JSON.stringify({ ...birthInfo, fields });
   let lastError: unknown;

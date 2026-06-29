@@ -35,6 +35,11 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // 무인증 공개 프록시 — 운영에선 차단(개발/데모 전용). 만세력 유료 한도 어뷰즈 방지.
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ status: "error" as const, error: "not found" }, { status: 404 });
+  }
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(

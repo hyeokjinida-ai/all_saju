@@ -24,6 +24,19 @@ export async function recordSajuApiCall(success: boolean, source: SajuApiSource)
   }
 }
 
+// 잔여 한도 강제용 — 가벼운 count 만(전체 행 조회 X). 한도 근처 신규 호출 차단에 사용.
+export async function getUsageCount(): Promise<number> {
+  if (!isSupabaseConfigured()) return 0;
+  try {
+    const svc = createServiceClient();
+    const { count } = await svc.from("saju_api_calls").select("id", { count: "exact", head: true });
+    return count ?? 0;
+  } catch (err) {
+    console.error("[usage] getUsageCount failed:", err);
+    return 0; // 카운트 실패 시 본 흐름은 막지 않음(0으로 통과)
+  }
+}
+
 export type UsageStat = {
   used: number;
   limit: number;

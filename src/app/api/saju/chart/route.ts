@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { isSajuApiConfigured, fetchSajuAnalysis, ganjiToMyeongsik, type BirthInfo, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
 import { buildResultView, type ResultView } from "@/lib/saju/result-view";
+import { publicEnv } from "@/lib/env";
 
 // 무료 분석(⑥)용 — 명식 + 오행 + 영역별 점수까지(LLM 없이). 결제 후 상세 풀이는 별도.
 // 점수는 십성에서 파생되므로 만세력 16종 전체를 한 번에 받는다(호출 수는 1콜로 동일 — 한도 보호).
@@ -35,7 +36,35 @@ function toBirthInfo(b: z.infer<typeof schema>): BirthInfo {
   };
 }
 
+// 어뷰즈 1차 방지턱(인메모리·IP) — 무료 분석이 유료 만세력 콜을 무한 소진 못 하게.
+const BOT = /bot|crawl|spider|slurp|headless|lighthouse|monitor|curl|wget|python-requests|axios|node-fetch|preview/i;
+const WINDOW_MS = 60_000;
+const MAX_PER_WINDOW = 10; // IP당 분당 10회(정상 사용자 1~2회면 충분)
+const hits = new Map<string, number[]>();
+function safeHost(u: string | null | undefined) {
+  if (!u) return "";
+  try { return new URL(u).host; } catch { return ""; }
+}
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const arr = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  arr.push(now);
+  hits.set(ip, arr);
+  if (hits.size > 5000) for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
+  return arr.length > MAX_PER_WINDOW;
+}
+
 export async function POST(request: NextRequest) {
+  // 동일 출처 + 봇 필터 + IP 레이트리밋
+  const origin = request.headers.get("origin");
+  if (origin) {
+    const allowed = new Set([safeHost(request.headers.get("host")), safeHost(publicEnv.NEXT_PUBLIC_SITE_URL)]);
+    if (!allowed.has(safeHost(origin))) return NextResponse.json({ ok: false, reason: "forbidden" });
+  }
+  if (BOT.test(request.headers.get("user-agent") ?? "")) return NextResponse.json({ ok: false, reason: "bot" });
+  const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  if (rateLimited(ip)) return NextResponse.json({ ok: false, reason: "rate_limited" });
+
   let body: z.infer<typeof schema>;
   try {
     body = schema.parse(await request.json());
@@ -51,7 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     let analysis = analysisCache.get(birthKey);
     if (!analysis) {
-      analysis = await fetchSajuAnalysis(birthInfo, [], { source: "confirm" }); // 16종 전체(1콜)
+      analysis = await fetchSajuAnalysis(birthInfo, [], { source: "demo" }); // 무료 분석 — source=demo(통계/한도 분리)
       if (analysisCache.size > 2000) analysisCache.clear();
       analysisCache.set(birthKey, analysis);
     }
