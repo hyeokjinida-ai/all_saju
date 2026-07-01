@@ -9,6 +9,7 @@
 
 import { serverEnv } from "@/lib/env";
 import { recordSajuApiCall, getUsageCount, TOTAL_LIMIT, type SajuApiSource } from "./usage";
+import { birthCacheKey, getCachedAnalysis, putCachedAnalysis } from "./analysis-cache";
 
 export type AnalysisField =
   | "ganji"            // 천간지지 (사주 원국)
@@ -77,6 +78,15 @@ export async function fetchSajuAnalysis(
   const url = env.SAJU_API_URL;
   const apiKey = env.SAJU_API_KEY;
 
+  // 영속 캐시(생일키) — demo/confirm(고객 대면·한도 소모)만 조회. manual/compare(엔진 검증)는 항상 신선.
+  // 히트 시 실제 콜 0 → 한도·기록 미소모. 무료에서 저장한 결과를 결제(confirm)가 그대로 재사용(이중과금 제거).
+  const useCache = source === "demo" || source === "confirm";
+  const cacheKey = useCache ? birthCacheKey(birthInfo, fields) : "";
+  if (useCache) {
+    const cached = await getCachedAnalysis(cacheKey);
+    if (cached) return cached;
+  }
+
   // 누적 한도 강제 — 무료(demo)는 90%에서 차단해 결제(confirm) 한도를 보존.
   const used = await getUsageCount();
   const cap = source === "demo" ? Math.floor(TOTAL_LIMIT * 0.9) : TOTAL_LIMIT;
@@ -111,6 +121,7 @@ export async function fetchSajuAnalysis(
       if (res.ok) {
         const data = (await res.json()) as SajuAnalysisResponse;
         await recordSajuApiCall(true, source);
+        if (useCache) await putCachedAnalysis(cacheKey, data);
         return data;
       }
 

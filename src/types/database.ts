@@ -90,6 +90,12 @@ type SajuApiCallRow = {
   source: string | null;
 };
 
+type SajuAnalysisCacheRow = {
+  birth_key: string;
+  analysis: Json;
+  created_at: string;
+};
+
 type AnalyticsEventRow = {
   id: number;
   visitor_id: string | null;
@@ -206,6 +212,16 @@ export type Database = {
           source?: string | null;
         };
         Update: Partial<SajuApiCallRow>;
+        Relationships: [];
+      };
+      saju_analysis_cache: {
+        Row: SajuAnalysisCacheRow;
+        Insert: {
+          birth_key: string;
+          analysis: Json;
+          created_at?: string;
+        };
+        Update: Partial<SajuAnalysisCacheRow>;
         Relationships: [];
       };
       analytics_events: {
