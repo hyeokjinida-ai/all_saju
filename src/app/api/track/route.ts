@@ -25,8 +25,9 @@ const BOT = /bot|crawl|spider|slurp|bingpreview|headless|lighthouse|chrome-light
 
 function safeHost(u: string | null | undefined): string {
   if (!u) return "";
+  // host/x-forwarded-host 는 스킴 없는 맨호스트라 new URL() 이 예외 → 스킴을 보정해서 비교.
   try {
-    return new URL(u).host;
+    return new URL(u.includes("://") ? u : `https://${u}`).host.toLowerCase();
   } catch {
     return "";
   }
