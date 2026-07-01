@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
   // 동일 출처만 허용(브라우저가 보내는 Origin 기준). 다른 출처의 스팸은 조용히 무시.
   const origin = request.headers.get("origin");
   if (origin) {
-    const allowed = new Set([safeHost(request.headers.get("host")), safeHost(publicEnv.NEXT_PUBLIC_SITE_URL)]);
+    const reqHost = safeHost(request.headers.get("x-forwarded-host")) || safeHost(request.headers.get("host"));
+    const allowed = new Set([reqHost, safeHost(publicEnv.NEXT_PUBLIC_SITE_URL)].filter(Boolean));
     if (!allowed.has(safeHost(origin))) return new NextResponse(null, { status: 204 });
   }
 

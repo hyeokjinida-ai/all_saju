@@ -55,10 +55,11 @@ function rateLimited(ip: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  // 동일 출처 + 봇 필터 + IP 레이트리밋
+  // 동일 출처 + 봇 필터 + IP 레이트리밋. (Vercel은 접속 호스트가 x-forwarded-host 라 그걸 우선)
   const origin = request.headers.get("origin");
   if (origin) {
-    const allowed = new Set([safeHost(request.headers.get("host")), safeHost(publicEnv.NEXT_PUBLIC_SITE_URL)]);
+    const reqHost = safeHost(request.headers.get("x-forwarded-host")) || safeHost(request.headers.get("host"));
+    const allowed = new Set([reqHost, safeHost(publicEnv.NEXT_PUBLIC_SITE_URL)].filter(Boolean));
     if (!allowed.has(safeHost(origin))) return NextResponse.json({ ok: false, reason: "forbidden" });
   }
   if (BOT.test(request.headers.get("user-agent") ?? "")) return NextResponse.json({ ok: false, reason: "bot" });
