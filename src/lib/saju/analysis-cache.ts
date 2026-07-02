@@ -12,11 +12,16 @@ import type { BirthInfo, AnalysisField, SajuAnalysisResponse } from "./saju-api"
 
 // 안정적 캐시 키 — 무료(chart)·유료(generate)가 각자 toBirthInfo 로 만든 BirthInfo 라도
 // 같은 사람이면 동일 문자열이 나오도록 필드를 명시적으로 나열(객체 키 순서에 의존 X).
+// ⚠️ 응답에는 원국(불변)뿐 아니라 시점 의존 값(세운 '올해'·월운 12개월창·현재나이·현재대운)이
+// 섞여 있다. 그래서 키에 현재 연-월(YYYY-MM)을 넣어 월이 바뀌면 새로 조회한다 —
+// 같은 기간의 재방문·무료→결제 재조회는 히트(콜 절감), 해/달 경계에선 신선한 데이터를 받는다.
 export function birthCacheKey(b: BirthInfo, fields: AnalysisField[] = []): string {
   const hour =
     b.birthHour != null && b.birthHour !== "" ? `${b.birthHour}:${b.birthMinute ?? "0"}` : "-";
   const f = fields.length ? [...fields].sort().join(",") : "all";
+  const period = new Date().toISOString().slice(0, 7); // YYYY-MM
   return [
+    period,
     b.birthYear,
     b.birthMonth,
     b.birthDay,

@@ -121,7 +121,9 @@ export async function fetchSajuAnalysis(
       if (res.ok) {
         const data = (await res.json()) as SajuAnalysisResponse;
         await recordSajuApiCall(true, source);
-        if (useCache) await putCachedAnalysis(cacheKey, data);
+        // 200 이어도 ganji 없는 비정상 바디(빈 객체·에러 envelope)는 캐시 금지 — 안 그러면
+        // 그 생일이 영구 포이즌(무료 no_ganji·유료 'ganji missing', 재시도도 캐시히트로 무력화).
+        if (useCache && data.ganji) await putCachedAnalysis(cacheKey, data);
         return data;
       }
 
