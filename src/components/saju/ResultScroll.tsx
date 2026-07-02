@@ -166,19 +166,19 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
   // 무료(잠금) 목차 — 결제하면 받을 전체 구성을 미리 보여주고 잠긴 항목은 🔒.
   const toc: TocItem[] = locked
     ? [
-        { label: "타고난 나의 기질 — 나는 어떤 사람", href: "#sec-ilgan" },
-        { label: "내 사주 네 기둥 · 다섯 기운의 균형", href: "#sec-wonguk" },
-        { label: "영역별 점수 — 재물·직업·애정·건강", href: "#sec-areas" },
-        { label: "영역별 상세 풀이", href: "#", locked: true },
-        { label: "인생 60년의 큰 흐름", href: "#", locked: true },
-        { label: "내 고민 맞춤 조언 · 상세 풀이 7챕터", href: "#", locked: true },
+        { label: "나는 어떻게 타고났을까?", href: "#sec-ilgan" },
+        { label: "내 안엔 어떤 기운이 흐를까?", href: "#sec-wonguk" },
+        { label: "돈·일·사랑·건강 — 내 강점은 어디?", href: "#sec-areas" },
+        { label: "내 강점, 더 깊이 파고들면?", href: "#", locked: true },
+        { label: "내 인생, 언제 피어날까?", href: "#", locked: true },
+        { label: "그 고민, 사주는 뭐라 답할까? · 상세 풀이 7챕터", href: "#", locked: true },
       ]
     : [
-        { label: "타고난 나의 기질 — 나는 어떤 사람", href: "#sec-ilgan" },
-        { label: "내 사주 네 기둥 · 다섯 기운의 균형", href: "#sec-wonguk" },
-        ...(view.categories.length ? [{ label: "영역별 풀이 (재물·직업·애정·건강)", href: "#sec-areas" }] : []),
-        ...(view.daeun ? [{ label: "인생의 큰 흐름 — 10년마다 바뀌는 계절", href: "#sec-daeun" }] : []),
-        ...(view.advice ? [{ label: "내 고민에 대한 방향", href: "#sec-advice" }] : []),
+        { label: "나는 어떻게 타고났을까?", href: "#sec-ilgan" },
+        { label: "내 안엔 어떤 기운이 흐를까?", href: "#sec-wonguk" },
+        ...(view.categories.length ? [{ label: "돈·일·사랑·건강 — 내 강점은 어디?", href: "#sec-areas" }] : []),
+        ...(view.daeun ? [{ label: "내 인생, 언제 피어날까?", href: "#sec-daeun" }] : []),
+        ...(view.advice ? [{ label: "그 고민, 사주는 뭐라 답할까?", href: "#sec-advice" }] : []),
         ...extraToc,
       ];
 
