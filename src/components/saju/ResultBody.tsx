@@ -31,7 +31,7 @@ export function HeadingIcon({ title }: { title: string }) {
     path = <path d="M12 20S4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 11-8 11z" />;
   else if (/건강|체력|몸|수면/.test(t))
     path = <path d="M3 12h4l2-5 3 9 2-6 1.5 2H21" />;
-  else if (/대운|세운|시기|올해|흐름|계절|때|연도|3년|월별/.test(t))
+  else if (/대운|세운|시기|올해|흐름|계절|때|연도|연표|3년|월별/.test(t))
     path = (<><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></>);
   else if (/행동|조언|실천|팁|가이드|방향/.test(t))
     path = (<><circle cx="12" cy="12" r="9" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></>);

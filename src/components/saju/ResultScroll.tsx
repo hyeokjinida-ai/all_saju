@@ -166,18 +166,18 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
   // 무료(잠금) 목차 — 결제하면 받을 전체 구성을 미리 보여주고 잠긴 항목은 🔒.
   const toc: TocItem[] = locked
     ? [
-        { label: "내 일간 — 나는 어떤 사람", href: "#sec-ilgan" },
-        { label: "사주 원국 · 오행 분포", href: "#sec-wonguk" },
+        { label: "타고난 나의 기질 — 나는 어떤 사람", href: "#sec-ilgan" },
+        { label: "내 사주 네 기둥 · 다섯 기운의 균형", href: "#sec-wonguk" },
         { label: "영역별 점수 — 재물·직업·애정·건강", href: "#sec-areas" },
         { label: "영역별 상세 풀이", href: "#", locked: true },
-        { label: "대운 60년 흐름", href: "#", locked: true },
+        { label: "인생 60년의 큰 흐름", href: "#", locked: true },
         { label: "내 고민 맞춤 조언 · 상세 풀이 7챕터", href: "#", locked: true },
       ]
     : [
-        { label: "내 일간 — 나는 어떤 사람", href: "#sec-ilgan" },
-        { label: "사주 원국 · 오행 분포", href: "#sec-wonguk" },
+        { label: "타고난 나의 기질 — 나는 어떤 사람", href: "#sec-ilgan" },
+        { label: "내 사주 네 기둥 · 다섯 기운의 균형", href: "#sec-wonguk" },
         ...(view.categories.length ? [{ label: "영역별 풀이 (재물·직업·애정·건강)", href: "#sec-areas" }] : []),
-        ...(view.daeun ? [{ label: "대운 흐름 — 인생의 큰 계절", href: "#sec-daeun" }] : []),
+        ...(view.daeun ? [{ label: "인생의 큰 흐름 — 10년마다 바뀌는 계절", href: "#sec-daeun" }] : []),
         ...(view.advice ? [{ label: "내 고민에 대한 방향", href: "#sec-advice" }] : []),
         ...extraToc,
       ];
@@ -222,7 +222,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={il.orb} alt={`${il.ko} 오브`} width={148} height={148} style={{ width: 148, height: 148, display: "block", margin: "0 auto", filter: "drop-shadow(0 14px 30px rgba(20,10,40,.5))" }} />
-        <div style={{ marginTop: 6, fontSize: 12.5, color: "#cbb8f0" }}>회원님의 일간은</div>
+        <div style={{ marginTop: 6, fontSize: 12.5, color: "#cbb8f0" }}>회원님이 타고난 기운은</div>
         <div style={{ marginTop: 6, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 25 }}>{view.ilgan.title}</div>
         <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 13px", borderRadius: 999, background: `rgba(${il.rgb},.16)`, border: `1px solid rgba(${il.rgb},.35)`, fontSize: 12, fontWeight: 700, color: il.text }}>
           {view.ilgan.type}
@@ -235,7 +235,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
 
       {/* 원국 + 오행 분포 */}
       <div id="sec-wonguk" style={{ ...card, ...anchor, padding: `18px ${PAD - 4}px` }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 12 }}>사주 원국 (四柱) · 천간/지지</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 12 }}>내 사주 네 기둥 (四柱) — 타고난 여덟 글자</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
           {view.pillars.map((p, i) => (
             <div key={`l${i}`} style={{ textAlign: "center", fontSize: 11, color: p.isDay ? "#c9a8ff" : "#9a8cd0", fontWeight: p.isDay ? 700 : 400 }}>
@@ -250,7 +250,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
           ))}
         </div>
 
-        <div style={{ marginTop: 16, fontSize: 12.5, fontWeight: 700, color: "#cbb8f0" }}>오행 분포</div>
+        <div style={{ marginTop: 16, fontSize: 12.5, fontWeight: 700, color: "#cbb8f0" }}>나를 이루는 다섯 기운 (五行)</div>
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 48, marginTop: 10 }}>
           {view.ohaeng.map((o) => {
             const e = ELEMENT_META[o.key];
@@ -337,7 +337,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
           <div style={{ fontSize: 22 }}>🔒</div>
           <div style={{ marginTop: 6, fontSize: 13.5, fontWeight: 800, color: "#f3edff" }}>전체 풀이에서 모두 열려요</div>
           <div style={{ marginTop: 7, fontSize: 12, lineHeight: 1.65, color: "#b8a4e0" }}>
-            영역별 상세 풀이 · 대운 60년 흐름
+            영역별 상세 풀이 · 인생 60년의 큰 흐름
             <br />
             내 고민 맞춤 조언 · 상세 풀이 7챕터
           </div>
@@ -349,8 +349,8 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
         <>
           <Divider />
           <div id="sec-daeun" style={{ ...anchor, padding: `6px ${PAD}px 0` }}>
-            <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19 }}>대운 흐름</div>
-            <div style={{ marginTop: 6, fontSize: 12, color: "#9a8cd0" }}>10년 단위로 바뀌는 인생의 큰 계절</div>
+            <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19 }}>인생의 큰 흐름</div>
+            <div style={{ marginTop: 6, fontSize: 12, color: "#9a8cd0" }}>10년마다 바뀌는 인생의 큰 계절 · 대운(大運)</div>
             <DaeunChart points={view.daeun.points} />
           </div>
         </>

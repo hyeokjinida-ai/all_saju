@@ -35,7 +35,7 @@ export function OhaengChart({ myeongsik }: { myeongsik: Myeongsik }) {
     <section className="mb-11">
       <div className="flex items-center justify-center gap-3 mb-4">
         <span className="gold-rule flex-1 max-w-[60px] opacity-70" />
-        <h2 className="font-myeongjo text-sm font-semibold text-gold tracking-[0.1em]">오행 균형 · 五行</h2>
+        <h2 className="font-myeongjo text-sm font-semibold text-gold tracking-[0.1em]">다섯 기운의 균형 · 오행(五行)</h2>
         <span className="gold-rule flex-1 max-w-[60px] opacity-70" />
       </div>
 

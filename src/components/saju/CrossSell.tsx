@@ -101,7 +101,7 @@ export function CrossSell({
         </span>
         <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{premium.name}</div>
         <p style={{ marginTop: 9, fontSize: 13, lineHeight: 1.7, color: "#dcd0ff" }}>
-          대운 60년 흐름과 재물·직업·관계·건강운을 한 번에 통합 분석합니다. 지금 보신 풀이의 큰 그림까지 이어서 봐요.
+          인생 60년의 큰 흐름과 재물·직업·관계·건강운을 한 번에 통합 분석합니다. 지금 보신 풀이의 큰 그림까지 이어서 봐요.
         </p>
         <div style={{ marginTop: 16, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
           <div>

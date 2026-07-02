@@ -195,10 +195,10 @@ export function buildResultView(args: {
 
   // 원국 4기둥 — 표시 순서 시·일·월·년
   const order: { label: string; p: Pillar | null; isDay?: boolean }[] = [
-    { label: "時", p: m.hour },
-    { label: "日 · 나", p: m.day, isDay: true },
-    { label: "月", p: m.month },
-    { label: "年", p: m.year },
+    { label: "태어난 시", p: m.hour },
+    { label: "나 · 태어난 날", p: m.day, isDay: true },
+    { label: "태어난 달", p: m.month },
+    { label: "태어난 해", p: m.year },
   ];
   const pillars = order.map((o) => ({
     label: o.label,
@@ -242,7 +242,7 @@ export function buildResultView(args: {
   const dateStr = args.birthDate ? args.birthDate.replace(/-/g, ".") : "";
   const genderStr = gender === "female" ? "여" : "남";
   const calStr = args.calendar === "lunar" ? "음력" : "양력";
-  const hourStr = args.timeUnknown ? "시 모름" : m.hour ? `${toHanjaJi(m.hour.jiji)}시` : "시 모름";
+  const hourStr = args.timeUnknown ? "시 모름" : m.hour ? `${JI_READ[toHanjaJi(m.hour.jiji)] ?? m.hour.jiji}시` : "시 모름";
   const birthLine = [dateStr, genderStr, calStr, hourStr].filter(Boolean).join(" · ");
 
   // 영역별 점수 — 데이터(raw)가 있고 showScores일 때만
@@ -282,12 +282,12 @@ export function buildResultView(args: {
 export const DEMO_RESULT_VIEW: ResultView = {
   brand: { title: "명운록", sub: "SAJU LAB" },
   ilgan: { element: "fire", title: "한낮의 태양 · 丙火", type: "火 추진력형" },
-  birthLine: "1989.07.22 · 남 · 양력 · 亥시",
+  birthLine: "1989.07.22 · 남 · 양력 · 해시",
   pillars: [
-    { label: "時", gan: { char: "己", read: "기", element: "earth" }, ji: { char: "亥", read: "해", element: "water" } },
-    { label: "日 · 나", isDay: true, gan: { char: "丙", read: "병", element: "fire" }, ji: { char: "寅", read: "인", element: "wood" } },
-    { label: "月", gan: { char: "壬", read: "임", element: "water" }, ji: { char: "午", read: "오", element: "fire" } },
-    { label: "年", gan: { char: "甲", read: "갑", element: "wood" }, ji: { char: "子", read: "자", element: "water" } },
+    { label: "태어난 시", gan: { char: "己", read: "기", element: "earth" }, ji: { char: "亥", read: "해", element: "water" } },
+    { label: "나 · 태어난 날", isDay: true, gan: { char: "丙", read: "병", element: "fire" }, ji: { char: "寅", read: "인", element: "wood" } },
+    { label: "태어난 달", gan: { char: "壬", read: "임", element: "water" }, ji: { char: "午", read: "오", element: "fire" } },
+    { label: "태어난 해", gan: { char: "甲", read: "갑", element: "wood" }, ji: { char: "子", read: "자", element: "water" } },
   ],
   ohaeng: [
     { key: "wood", count: 2 },

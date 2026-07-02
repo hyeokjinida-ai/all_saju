@@ -482,7 +482,7 @@ const PAY_META: Record<string, { desc: string; badge?: string }> = {
   "wealth-saju": { desc: "돈 들어오는 길 · 새는 구멍 · 재물 시기" },
   "love-saju": { desc: "부부·연애·자녀, 관계 패턴과 인연" },
   "monthly-luck": { desc: "2026 월별 좋은 달 · 조심할 달" },
-  "premium-saju": { desc: "전 영역 + 대운 60년 흐름까지", badge: "추천" },
+  "premium-saju": { desc: "전 영역 + 인생 60년의 큰 흐름까지", badge: "추천" },
 };
 export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const router = useRouter();
@@ -495,7 +495,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const discount = ctx.isAuthed ? 1900 : 0;
   const total = Math.max(0, basePrice - discount);
   const memberPrice = Math.max(0, basePrice - 1900); // 회원 할인가(정가 −1,900)
-  const benefits = ["재물·애정·직업·건강 전 영역", "대운 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
+  const benefits = ["재물·애정·직업·건강 전 영역", "인생의 큰 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
 
   const pay = async () => {
     if (busy) return;

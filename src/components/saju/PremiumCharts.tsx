@@ -33,7 +33,7 @@ export function SipseongChart({ analysis }: { analysis: unknown }) {
 
   return (
     <section className="mb-11">
-      <SectionTitle title="십성 분포 · 十星" />
+      <SectionTitle title="관계·재물·일의 성향 · 십성(十星)" />
       <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] px-5 py-6 sm:px-7">
         <div className="space-y-3">
           {SIPSEONG.map((s) => {
@@ -135,7 +135,7 @@ export function DaeunTimeline({ analysis }: { analysis: unknown }) {
 
   return (
     <section className="mb-11">
-      <SectionTitle title="대운 60년 흐름 · 大運" />
+      <SectionTitle title="인생 60년의 큰 흐름 · 대운(大運)" />
       <div className="rounded-md border border-gold-line bg-[rgba(36,16,71,0.4)] p-5 sm:p-6">
         <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-1 px-1">
           {all.map((d, i) => {
