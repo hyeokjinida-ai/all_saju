@@ -30,7 +30,7 @@ export const businessInfo = {
   businessNumber: "271-13-02065",
   mailOrderNumber: "2022-서울마포-2340",
   address: "서울특별시 마포구 희우정로16길 43-5, 303호 (망원동, 하늘드리움)",
-  phone: "", // 전화 없음 — 푸터에서 자동 숨김(생기면 "010-..." 넣기)
+  phone: "010-2816-5645", // 대표번호 — PG(카드사) 심사 요청으로 하단 기재
   phoneNote: "",
   email: "kwonhyeokjin4@gmail.com",
   privacyOfficer: "권혁진",
