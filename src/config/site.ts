@@ -5,7 +5,13 @@
 
 // PG(전자결제) 심사는 사주 카테고리의 '운명' 표현에 민감하다.
 // 심사 동안 true(순화), 통과 후 false 로 바꾸면 원래 '운명' 카피가 그대로 돌아온다.
-export const PG_REVIEW_MODE = true;
+// 2026-07-26: 토스 확인("판매 품목만 안 바뀌면 문제없음") → false 로 해제.
+export const PG_REVIEW_MODE = false;
+
+// 홈의 후기 마퀴 + 실시간 접속자 카운터 노출 스위치.
+// 현재 lib/reviews.ts 의 후기는 템플릿 샘플(이름·날짜·내용 전부 예시)이고 카운터도 난수라,
+// 실제 고객 후기가 DB에 쌓이면 true 로 켠다. (체험단/첫 구매 후기 확보 후)
+export const SHOW_SOCIAL_PROOF = false;
 
 export const copy = {
   tagline: PG_REVIEW_MODE ? "사주를 기록하다" : "운명을 기록하다",

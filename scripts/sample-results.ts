@@ -35,14 +35,23 @@ type Case = {
 };
 
 const CASES: Case[] = [
+  // "돈 들어오는 달" 재출시 검증 케이스 (2026-07)
   {
-    slug: "basic-saju", name: "김영희", concern: "재물", expectAges: [50, 51, 52],
+    slug: "sangun-sinjeom", name: "김영희", concern: "이직", expectAges: [50, 51, 52],
     birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
-  {
-    slug: "premium-saju", name: "박상철", concern: "직장·사업", expectAges: [53, 54, 55],
-    birthInfo: { birthYear: "1972", birthMonth: "8", birthDay: "10", birthHour: "9", birthMinute: "0", calendarType: "양력", gender: "male" },
-  },
+  // {
+  //   slug: "wealth-saju", name: "김영희", concern: "재물", expectAges: [50, 51, 52],
+  //   birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
+  // {
+  //   slug: "basic-saju", name: "김영희", concern: "재물", expectAges: [50, 51, 52],
+  //   birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
+  // {
+  //   slug: "premium-saju", name: "박상철", concern: "직장·사업", expectAges: [53, 54, 55],
+  //   birthInfo: { birthYear: "1972", birthMonth: "8", birthDay: "10", birthHour: "9", birthMinute: "0", calendarType: "양력", gender: "male" },
+  // },
 ];
 
 // 프롬프트가 금지한 헷지 표현
@@ -85,7 +94,10 @@ async function main() {
     const myeongsik = saju.ganjiToMyeongsik(analysis);
     if (!myeongsik) { console.log("  ganji 누락 — 스킵"); continue; }
     const manseryeokText = saju.formatSajuCompact(analysis, c.birthInfo);
-    const keyFacts = saju.buildKeyFactsBlock(analysis, c.birthInfo);
+    let keyFacts = saju.buildKeyFactsBlock(analysis, c.birthInfo);
+    if (c.slug === "wealth-saju") {
+      keyFacts = [keyFacts, saju.buildWealthFactsBlock(analysis)].filter(Boolean).join("\n\n");
+    }
 
     const bi = c.birthInfo;
     const { title, chapters } = buildChapterPrompts({

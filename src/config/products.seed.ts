@@ -32,13 +32,22 @@ export const productsSeed: ProductSeed[] = [
     display_order: 10,
     is_active: false,
   },
-  // 고민별 심화 ① 재물 (신규)
+  // 고민별 심화 ① 재물 — "돈 들어오는 달"로 재출시 (2026-07 경쟁분석 반영: '언제'에 올인)
   {
     slug: "wealth-saju",
-    name: "내 재물·돈 흐름 깊이보기",
-    description: "버는데 왜 안 모일까 — 돈이 들어오는 길과 새는 구멍, 큰돈 들어올 시기까지 깊게 봅니다",
-    price: 19900,
+    name: "돈 들어오는 달",
+    description: "재물운이 '좋다'는 말은 그만 — 내 돈이 실제로 들어오는 달과 새는 달, 다가올 1년을 콕 집어드립니다",
+    price: 14900,
     display_order: 20,
+    is_active: true,
+  },
+  // 신점 라인 — 산군(민화 호랑이) 캐릭터, 질문 확답형 (2026-07 신규)
+  {
+    slug: "sangun-sinjeom",
+    name: "산군 신점",
+    description: "묻고 싶은 것에 확답만 고합니다 — 산이 내려다본 그대로, 돌려 말하지 않는 신점풀이",
+    price: 24900,
+    display_order: 25,
     is_active: true,
   },
   // 고민별 심화 ② 관계·가족 (기존 love-saju 개편)

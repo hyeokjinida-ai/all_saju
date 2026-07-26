@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
 import { REVIEWS, maskName } from "@/lib/reviews";
-import { businessInfo, copy, PG_REVIEW_MODE } from "@/config/site";
+import { businessInfo, copy, SHOW_SOCIAL_PROOF } from "@/config/site";
 
 const CHIPS = ["총운", "재물운", "애정운", "직업운", "건강운"];
 
@@ -174,8 +174,8 @@ export function SajuLabLanding() {
           ))}
         </div>
 
-        {/* review marquee — PG 심사 중엔 숨김(PG_REVIEW_MODE=false 면 복구) */}
-        {!PG_REVIEW_MODE && (
+        {/* review marquee — 실제 후기 확보 후 SHOW_SOCIAL_PROOF=true 로 켠다 */}
+        {SHOW_SOCIAL_PROOF && (
         <div className="relative z-20 flex-none overflow-hidden pb-3">
           <div
             className="review-marquee"
@@ -226,7 +226,7 @@ export function SajuLabLanding() {
           >
             {copy.landingCta}
           </Link>
-          {!PG_REVIEW_MODE && (
+          {SHOW_SOCIAL_PROOF && (
           <div className="mt-3 flex justify-center">
             <div
               style={{

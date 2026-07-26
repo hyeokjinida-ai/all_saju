@@ -365,6 +365,60 @@ export function buildKeyFactsBlock(
   return `[확정 사실 — 이미 계산된 값이다. 절대 다시 계산하지 말고 그대로 인용해 풀어쓸 것]\n${lines.join("\n")}`;
 }
 
+// ── 재물 확정값 ("돈 들어오는 달" 전용) ─────────────────
+// 재물그릇 점수·좋은 달·나쁜 달을 코드에서 한 번만 계산해 확정값으로 주입한다.
+// 챕터 병렬 생성 시 모델이 챕터마다 점수/달을 다르게 지어내는 모순(실측: 40점↔80점,
+// 같은 10월이 좋은 달이자 새는 달)을 지시문으로는 못 막아서, 값 자체를 고정한다.
+export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const w = rec(analysis.weolun);
+  type MonthRow = { label: string; verdict: string; score: number };
+  const toRow = (v: unknown): MonthRow | null => {
+    const m = rec(v);
+    const j = rec(m.yongsinJudgment);
+    const score = typeof j.종합점수 === "number" ? j.종합점수 : null;
+    if (!m.monthLabel || score == null) return null;
+    return { label: String(m.monthLabel), verdict: String(j.종합판정 ?? ""), score };
+  };
+  const months = [
+    toRow(w.currentWeolun),
+    toRow(w.nextWeolun),
+    ...(Array.isArray(w.upcomingWeoluns) ? w.upcomingWeoluns.map(toRow) : []),
+  ].filter((m): m is MonthRow => m != null);
+
+  const lines: string[] = [];
+
+  // 재물그릇 점수 — 십성 분포·용신으로 결정적 산출(같은 명식이면 항상 같은 점수)
+  const sum = rec(rec(analysis.sipseong).summary);
+  const n = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
+  const jae = n(sum.jaeseong);
+  const sik = n(sum.siksang);
+  const inseong = n(sum.inseong);
+  const yongSipsin = String(rec(rec(rec(analysis.gyeokguk)).yongsin).십신 ?? "");
+  const yongIsJae = /재/.test(yongSipsin);
+  const score = Math.max(
+    38,
+    Math.min(92, 42 + jae * 9 + sik * 5 + (yongIsJae ? 12 : 0) - Math.max(0, inseong - 3) * 3),
+  );
+  lines.push(`- 재물그릇 점수: ${score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`);
+
+  if (months.length >= 4) {
+    const sorted = [...months].sort((a, b) => b.score - a.score);
+    const top = sorted.slice(0, 3);
+    const topLabels = new Set(top.map((m) => m.label));
+    const bad = sorted
+      .slice(-3)
+      .filter((m) => !topLabels.has(m.label) && m.score < 15)
+      .sort((a, b) => a.score - b.score);
+    const fmt = (m: MonthRow) => `${m.label}(${m.verdict}${m.verdict ? " · " : ""}${m.score}점)`;
+    lines.push(`- 돈이 들어오는 달 TOP3: ${top.map(fmt).join(", ")}`);
+    if (bad.length) lines.push(`- 돈이 새는(조심할) 달: ${bad.map(fmt).join(", ")}`);
+  }
+
+  return `[재물 확정값 — 점수와 달은 아래 값을 그대로 인용할 것. 다른 점수·다른 달을 지어내지 말 것]\n${lines.join("\n")}`;
+}
+
 // ── 크로스셀 개인화 신호 ────────────────────────────
 // 결과지 하단 "이어서 보기" 추천을 명식 근거로 부드럽게 개인화하기 위한 작은 신호.
 // (공포 마케팅 금지: 단정적 약점 단언이 아니라 "더 깊이 보면 좋다"는 호기심 톤으로만 사용)

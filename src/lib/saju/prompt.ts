@@ -89,7 +89,7 @@ const SYSTEM_BASE = `당신은 40~50대 중년의 현실 고민을 사주로 풀
 // - title:   결과지 최상단 제목(##). 명운록 톤 + 쉬운 한국어.
 // - length:  목표 분량.
 // - outline: AI가 따라야 할 섹션 목차(### 소제목). 이게 상품 차별화의 핵심.
-type SlugStyle = { title: string; length: string; outline: string[] };
+type SlugStyle = { title: string; length: string; outline: string[]; voice?: string };
 
 const STYLE_BY_SLUG: Record<string, SlugStyle> = {
   // 오늘의 운세 ₩4,900 — 가볍게 매일
@@ -132,17 +132,39 @@ const STYLE_BY_SLUG: Record<string, SlugStyle> = {
     ],
   },
 
-  // 내 재물·돈 흐름 깊이보기 ₩19,900 — 신규
+  // 돈 들어오는 달 ₩14,900 — 재물 재출시. 차별화 = '언제'(월 단위 타이밍)에 올인.
   "wealth-saju": {
-    title: "○○님의 재물·돈 흐름 깊이 풀이",
-    length: "약 1,300~1,700자 (A4 1.5장 분량)",
+    title: "○○님의 돈 들어오는 달",
+    length: "약 1,500~2,000자 (A4 2장 분량)",
     outline: [
-      "내 사주 속 재물 구조 — 재성·식상을 근거로",
-      "돈이 들어오는 길 / 새어 나가는 길",
-      "모으는 힘과 쓰는 힘의 균형",
-      "올해 재물 흐름 + 큰돈이 들어오거나 조심할 시기",
-      "주거·가족·건강 지출과의 연결 — 40~50대 현실에 맞게",
-      "재물을 지키는 구체적 행동",
+      "내 재물그릇 — 첫 문장을 \"재물그릇 ○○점\"으로 시작하되 점수는 [재물 확정값]의 '재물그릇 점수'를 그대로 쓰고, 그 점수가 나온 이유를 재성·식상 구조로 설명",
+      "내 돈이 불어나는 방식 — 월급형·사업형·투자형 중 어느 쪽인지 판정하고 그 이유",
+      "★ 돈이 들어오는 달 — [재물 확정값]의 '돈이 들어오는 달 TOP3'를 그대로 소개하고, [월운] 해석을 근거로 각 달에 무엇을 하면 좋은지",
+      "돈이 새는 달 — [재물 확정값]의 '돈이 새는(조심할) 달'을 그대로 소개하고, 각 달에 무엇을 조심할지",
+      "나를 돈방석에 앉힐 사람 — 재물 귀인 유형과 알아보는 법 / 거리를 둘 유형",
+      "★ 내 돈 고민, 사주는 이렇게 답해요 — 선택한 고민을 재물 관점에서 정면 풀이",
+      "인생 재물 흐름의 전환점 — 돈이 가장 크게 움직이는 대운의 해와 그때 할 일",
+    ],
+  },
+
+  // 산군 신점 ₩24,900 — 질문 확답형. 반말 하대체(voice)로 신점 레지스터.
+  "sangun-sinjeom": {
+    title: "산군이 ○○님에게 고하는 직언",
+    length: "약 1,800~2,300자 (A4 2장 분량)",
+    voice: `[산군 어투 — 이 상품 전용. 아래가 기본 문체 지시의 '존댓말'보다 우선한다]
+- 너는 산군(山君), 민화 까치호랑이에서 나온 산신 호랑이다. 반말 하대체로 짧고 단정하게 고한다: "~하거라", "~이니라", "~일 것이다", "듣거라".
+- 무례하지 않은 위엄. 꾸짖더라도 아끼는 마음이 배어나게 한다.
+- 물음에 답하는 챕터는 첫 줄을 "**[산군의 직언]** " + 한 문장 확답으로 시작한다. 두루뭉술 금지 — 하라/말라/기다리라/움직이라 중 한쪽으로 분명히 기운다.
+- 확답 뒤에는 반드시 명식 근거([확정 사실])와 시기를 덧붙인다. 검증 가능한 가족·학력 사실 단정 금지 등 기존 금지 규칙은 그대로 지킨다.
+- 위 문체 예시 문장들은 어투만 반말로 바꿔 그대로 적용한다.`,
+    outline: [
+      "산군이 본 너의 그릇 — 타고난 본바탕과 강점을 단정으로 고함",
+      "올해 네게 오는 것, 떠나는 것 — 올해 흐름에서 분명히 오는 기회와 정리될 것",
+      "★ 첫 번째 물음에 답하노라 — 독자가 고른 첫 번째 고민에 [산군의 직언] 확답부터 박고, 근거와 시기를 고함",
+      "★ 두 번째 물음에 답하노라 — 두 번째 고민에 [산군의 직언] 확답, 근거, 시기 (고민 수가 부족하면 이 명식에서 가장 절실해 보이는 물음을 산군이 스스로 골라 답함)",
+      "★ 세 번째 물음에 답하노라 — 세 번째 고민에 [산군의 직언] 확답, 근거, 시기 (부족하면 산군이 스스로 물음을 골라 답함)",
+      "조심하거라 — 다가오는 시기 중 경계할 것 두 가지와 그 이유",
+      "산군의 마지막 당부 — 지금 바로 할 행동과 함께 한 문장의 직언으로 맺음",
     ],
   },
 
@@ -212,7 +234,7 @@ export type ChapterPrompt = { system: string; user: string; heading: string };
 function stripTimingFromKeyFacts(keyFacts: string): string {
   return keyFacts
     .split("\n")
-    .filter((l) => !/^- (현재 대운|다음 대운|올해\()/.test(l))
+    .filter((l) => !/^- (현재 대운|다음 대운|올해\(|돈이 들어오는 달|돈이 새는)/.test(l))
     .join("\n");
 }
 function stripTimingSections(saju: string): string {
@@ -267,7 +289,9 @@ export function buildChapterPrompts(input: PromptInput): {
     const heading = `### ${i + 1}. ${clean.split(" — ")[0]}`;
     const others = allTitles.filter((_, j) => j !== i).join(" / ");
     const isConcern = /고민/.test(sectionTitle);
-    const lenHint = isConcern
+    // ★ 표시 챕터는 상품의 핵심 챕터 — 고민 챕터와 같은 심화 분량을 준다.
+    const isCore = sectionTitle.startsWith("★");
+    const lenHint = isConcern || isCore
       ? "이 챕터는 결과지의 핵심이므로 가장 깊고 길게 (300~450자)"
       : /행동/.test(sectionTitle)
         ? "번호 매긴 3가지, 각 1~2문장의 구체적 실천"
@@ -281,7 +305,7 @@ export function buildChapterPrompts(input: PromptInput): {
           : "";
 
     // 반복 방지: '시기'(대운·세운·올해·특정 월) 설명은 시기 중심 챕터에서만. 구조/성격 챕터는 시기 반복 금지.
-    const isTiming = /올해|흐름|시기|조심|고민/.test(sectionTitle);
+    const isTiming = /올해|흐름|시기|조심|고민|들어오는 달|새는 달/.test(sectionTitle);
     const isAction = /행동/.test(sectionTitle);
     const factsCite = !input.keyFacts
       ? ""
@@ -307,7 +331,7 @@ ${baseInfo}
       input.timeUnknown ? " 태어난 시각을 모르니 시(時)에 의존하는 단정은 피하세요." : ""
     }`;
 
-    return { system: SYSTEM_BASE, user, heading };
+    return { system: style.voice ? `${SYSTEM_BASE}\n\n${style.voice}` : SYSTEM_BASE, user, heading };
   });
 
   return { title, chapters };

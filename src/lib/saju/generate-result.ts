@@ -20,6 +20,7 @@ import {
   fetchSajuAnalysis,
   formatSajuCompact,
   buildKeyFactsBlock,
+  buildWealthFactsBlock,
   ganjiToMyeongsik,
   type BirthInfo,
 } from "@/lib/saju/saju-api";
@@ -126,6 +127,10 @@ export async function generateResultForOrder(
       myeongsik = converted;
       manseryeokText = formatSajuCompact(analysis, birthInfo);
       keyFacts = buildKeyFactsBlock(analysis, birthInfo);
+      // "돈 들어오는 달": 점수·좋은/나쁜 달을 확정값으로 주입(챕터 간 모순 방지)
+      if (product.slug === "wealth-saju") {
+        keyFacts = [keyFacts, buildWealthFactsBlock(analysis)].filter(Boolean).join("\n\n");
+      }
     }
   } catch (apiErr) {
     return { ok: false, reason: "manseryeok", detail: apiErr instanceof Error ? apiErr.message : String(apiErr) };
