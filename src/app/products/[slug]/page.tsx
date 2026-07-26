@@ -8,6 +8,13 @@ import { SajuWizard } from "@/components/saju/SajuWizard";
 import { TrustStrip } from "@/components/saju/TrustStrip";
 import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
+import { SHOW_SOCIAL_PROOF } from "@/config/site";
+import {
+  WealthCutHook,
+  WealthCutMaster,
+  WealthTeaserLock,
+  WealthCutClosing,
+} from "@/components/products/WealthWebtoon";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -92,6 +99,8 @@ export default async function ProductDetailPage({
   const pitch = PRODUCT_PITCH[product.slug];
   const eyebrow = pitch?.eyebrow ?? `命 · ${product.name}`;
   const headline = pitch?.headline ?? [product.name];
+  // "돈 들어오는 달"은 웹툰 랜딩 v1(금두꺼비 3컷 + ▓잠금 티저)로 렌더
+  const isWealth = product.slug === "wealth-saju";
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -135,12 +144,14 @@ export default async function ProductDetailPage({
         </h1>
         <p className="mt-5 text-base sm:text-[17px] text-bone-soft leading-relaxed max-w-md mx-auto">{product.description}</p>
 
-        {/* 신뢰 한 줄 — 여백 주고 또렷하게 */}
-        <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-gold-pale px-4 py-2 text-sm text-bone-soft">
-          <span className="text-gold-bright">★ 4.96</span>
-          <span className="text-bone-faint">·</span>
-          <span>누적 <span className="text-bone">11,300명</span></span>
-        </div>
+        {/* 신뢰 한 줄 — 실측 아닌 예시 수치라 실후기 쌓일 때까지 숨김(SHOW_SOCIAL_PROOF) */}
+        {SHOW_SOCIAL_PROOF && (
+          <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-gold-pale px-4 py-2 text-sm text-bone-soft">
+            <span className="text-gold-bright">★ 4.96</span>
+            <span className="text-bone-faint">·</span>
+            <span>누적 <span className="text-bone">11,300명</span></span>
+          </div>
+        )}
         {pitch?.forWhom && <p className="mt-3 text-sm text-bone-soft">{pitch.forWhom}</p>}
 
         {/* 결과물 칩 — 첫 화면에서 '뭘 받는지' 못박기 */}
@@ -158,6 +169,13 @@ export default async function ProductDetailPage({
         <div className="gold-diamond mx-auto mt-7" />
       </header>
 
+      {/* ── 웹툰 컷1: 훅 (돈 들어오는 달 전용) ── */}
+      {isWealth && (
+        <section className="mb-9">
+          <WealthCutHook />
+        </section>
+      )}
+
       {/* ── 2. 공감(통증) ── */}
       {pitch?.pains && pitch.pains.length > 0 && (
         <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(36,16,71,0.4)] p-6">
@@ -172,6 +190,13 @@ export default async function ProductDetailPage({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* ── 웹툰 컷2: 금두꺼비 선생 등장 ── */}
+      {isWealth && (
+        <section className="mb-9">
+          <WealthCutMaster />
         </section>
       )}
 
@@ -197,7 +222,12 @@ export default async function ProductDetailPage({
         </section>
       )}
 
-      {/* ── 결과지 미리보기 (블러 잠금 — 자이가르닉) ── */}
+      {/* ── 결과지 미리보기 — wealth는 ▓잠금 티저("계산은 이미 끝났다"), 나머지는 기존 블러 잠금 ── */}
+      {isWealth ? (
+        <section className="mb-9">
+          <WealthTeaserLock />
+        </section>
+      ) : (
       <section className="mb-9">
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="gold-rule flex-1 max-w-[50px] opacity-70" />
@@ -226,6 +256,7 @@ export default async function ProductDetailPage({
           <p className="mt-4 text-center font-myeongjo text-[11px] text-bone-faint">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
         </a>
       </section>
+      )}
 
       {/* ── 방법론 (권위·실재성) ── */}
       <section className="mb-9 text-center">
@@ -234,6 +265,13 @@ export default async function ProductDetailPage({
           수백 년 이어진 <b className="text-gold-bright">정통 만세력</b> 명식 계산에 기반합니다. 진태양시·절기까지 보정해 여덟 글자를 세우고{pitch?.hasCharts ? ", 오행·십성·대운을 데이터로 시각화해" : ""} 풀어드려요.
         </p>
       </section>
+
+      {/* ── 웹툰 컷3: 클로징(손 내밀기 + CTA) ── */}
+      {isWealth && (
+        <section className="mb-9">
+          <WealthCutClosing priceLabel={formatKRW(product.price)} />
+        </section>
+      )}
 
       {/* ── 4. 가격 + 입력 시작 ── */}
       <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(150,90,255,0.10), rgba(7,6,15,0.6))" }}>

@@ -69,11 +69,12 @@ export const productsSeed: ProductSeed[] = [
     is_active: true,
   },
   // 끝판왕 — 인생 종합 풀이(대운 60년)
+  // 2026-07 사다리 복구: 16,900 → 29,900. '끝판왕'이 신점(24,900)보다 싸면 앵커가 무너짐.
   {
     slug: "premium-saju",
     name: "인생 프리미엄 풀이",
     description: "내 인생의 큰 그림 전부 — 재물·직업·관계·건강에 대운 60년 흐름까지, 가장 깊은 종합 풀이",
-    price: 16900,
+    price: 29900,
     display_order: 50,
     is_active: true,
   },
