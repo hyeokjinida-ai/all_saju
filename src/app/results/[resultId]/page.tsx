@@ -126,7 +126,7 @@ export default async function ResultPage({
         </div>
 
         <p className="mt-5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>
-          입력하신 정보는 명식 계산과 결과 생성에만 사용됩니다.
+          적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
         </p>
 
         {crossSellInput && crossSellProducts.length > 0 && (

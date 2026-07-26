@@ -271,7 +271,7 @@ export default async function ProductDetailPage({
               <span className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-gold-line bg-wine-deep px-3 py-1 font-myeongjo text-[11px] text-gold-bright">⌥ 결제 후 전체 열림</span>
             </div>
           </div>
-          <p className="mt-4 text-center font-myeongjo text-[11px] text-bone-faint">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
+          <p className="mt-4 text-center font-myeongjo text-[11px] text-bone-faint">여기서부터는 당신의 사주로 채워집니다 — 결제 후 바로 선명하게</p>
         </a>
       </section>
 
@@ -359,9 +359,9 @@ export default async function ProductDetailPage({
             { q: "태어난 시각을 몰라도 되나요?", a: "괜찮습니다. 시각을 몰라도 태어난 날을 중심으로 충분히 풀이됩니다. 입력할 때 ‘시각 몰라요’를 누르시면 돼요." },
             { q: "음력 생일만 알아요.", a: "괜찮습니다. 입력할 때 음력을 고르시면 양력으로 정확히 바꿔서 사주를 세웁니다." },
             { q: "결과는 언제 받나요?", a: "결제 직후 수 분 내로 결과지가 생성되어 바로 확인하실 수 있어요. 마이페이지에도 보관됩니다." },
-            { q: "결제는 안전한가요?", a: "토스페이먼츠 안전결제로 진행됩니다. 입력 정보는 명식 계산과 결과 생성에만 사용됩니다." },
-            { q: "결과가 기대와 다르면요?", a: "구매 후 7일 이내 청약철회가 가능합니다(전자상거래법 기준). 결과가 정상적으로 생성되지 않는 등 회사 귀책 사유는 전액 환불해 드립니다. 자세한 기준은 환불 안내를 참고해 주세요." },
-            { q: "전부 자동으로 생성되나요?", a: "정통 만세력 엔진으로 명식을 정밀 산출한 뒤, 그 결과를 바탕으로 풀이를 정리해 드립니다. 같은 생일이라도 시각·성별·고민에 따라 결과가 달라집니다." },
+            { q: "결제는 안전한가요?", a: "토스페이먼츠 안전결제로 진행됩니다. 적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다." },
+            { q: "결과가 기대와 다르면요?", a: "구매 후 7일 안에는 취소하실 수 있습니다(전자상거래법상 청약철회). 결과지가 제대로 만들어지지 않은 것처럼 저희 쪽 문제라면 전액 돌려드립니다. 자세한 기준은 환불 안내를 봐주세요." },
+            { q: "전부 자동으로 생성되나요?", a: "정통 사주 계산법으로 여덟 글자를 정확히 뽑은 뒤, 그 결과를 바탕으로 풀이를 정리해 드립니다. 같은 생일이라도 시각·성별·고민에 따라 결과가 달라집니다." },
           ].map((f, i) => (
             <li key={i} className="py-4">
               <p className="font-myeongjo text-base font-semibold text-bone mb-1.5">Q. {f.q}</p>

@@ -35,7 +35,7 @@ const CONCERN_OPTIONS = ["재물", "부부·연애", "자녀", "직장·사업",
 
 const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = [
   { hanja: "名", q: "어떻게 불러드릴까요?", help: "결과지에 표시될 이름입니다 (선택)", optional: true },
-  { hanja: "生", q: "언제 태어나셨나요?", help: "정확한 명식을 위해 꼭 필요합니다" },
+  { hanja: "生", q: "언제 태어나셨나요?", help: "정확한 사주 계산에 꼭 필요합니다" },
   { hanja: "時", q: "태어난 시각을 아시나요?", help: "시각을 알면 더 정밀한 풀이가 가능합니다" },
   { hanja: "性", q: "성별을 선택해 주세요", help: "대운의 방향을 정하는 데 쓰입니다" },
   { hanja: "曆", q: "양력인가요, 음력인가요?", help: "주민등록상 생일은 보통 양력입니다" },
@@ -499,7 +499,7 @@ function ConfirmStep({
       </div>
 
       <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.04em]">
-        입력하신 정보는 명식 계산과 결과 생성에만 사용됩니다.
+        적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
       </p>
     </div>
   );

@@ -177,7 +177,7 @@ export function GenderScreen({ ctx }: { ctx: FunnelCtx }) {
   };
   return (
     <ScreenScaffold header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}>
-      <QuestionHead hanja="人" title={<>성별을<br />알려주세요</>} sub="명식 계산에 꼭 필요해요" />
+      <QuestionHead hanja="人" title={<>성별을<br />알려주세요</>} sub="사주 계산에 꼭 필요해요" />
       <div className="mt-5 flex flex-col gap-[11px]">
         {([{ key: "M", label: "남자" }, { key: "F", label: "여자" }] as const).map((o) => {
           const sel = p.gender === o.key || pending === o.key;
@@ -255,7 +255,7 @@ export function TimeScreen({ ctx }: { ctx: FunnelCtx }) {
       header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={<PrimaryCTA label="입력 확인하기" onClick={ctx.next} />}
     >
-      <QuestionHead hanja="時" title={<>태어난 시각을<br />알려주세요</>} sub="모르면 아래 체크 — 시 기둥 빼고 봐드려요" />
+      <QuestionHead hanja="時" title={<>태어난 시각을<br />알려주세요</>} sub="모르시면 아래에 체크해 주세요 — 그대로 봐드려요" />
       <div className="mt-5">
         <select
           value={p.birthTime}
@@ -291,7 +291,7 @@ export function TimeScreen({ ctx }: { ctx: FunnelCtx }) {
         <span style={{ textAlign: "left" }}>
           <span style={{ fontSize: 15, fontWeight: p.unknownTime ? 700 : 600, color: p.unknownTime ? "#fff" : "#dcc8ff" }}>태어난 시각을 몰라요</span>
           <br />
-          <span style={{ fontSize: 12, color: "#9a8cd0" }}>시 기둥은 빼고 나머지로 정확히 봐드려요</span>
+          <span style={{ fontSize: 12, color: "#9a8cd0" }}>태어난 날을 중심으로 정확히 봐드려요</span>
         </span>
         <span
           style={{ flex: "none", width: 24, height: 24, borderRadius: 7, background: p.unknownTime ? "#b794ff" : "rgba(255,255,255,.06)", border: p.unknownTime ? "none" : "1.5px solid rgba(180,140,255,.45)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#1b0d3c" }}
@@ -341,9 +341,9 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
         </div>
       )}
       <div className="mt-4" style={{ fontSize: 11.5, textAlign: "center", lineHeight: 1.5, color: "#9a8cd0" }}>
-        입력하신 정보는 명식 계산과
+        적어주신 정보는 사주 계산과
         <br />
-        결과 생성에만 사용돼요
+        결과지 만드는 데만 써요
       </div>
     </ScreenScaffold>
   );
@@ -423,7 +423,7 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
             <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: 360 }}>
               <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 42, color: "#c9a8ff" }}>命</div>
               <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#cbb8f0" }}>
-                명식을 불러오지 못했어요. 그래도 전체 풀이는 받을 수 있어요.
+                사주를 불러오지 못했어요. 그래도 전체 풀이는 받을 수 있어요.
               </div>
             </div>
           )}

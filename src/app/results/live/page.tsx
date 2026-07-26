@@ -62,7 +62,7 @@ export default async function LiveResultPage({ searchParams }: { searchParams: S
   }
 
   const myeongsik = ganjiToMyeongsik(analysis) as Myeongsik | null;
-  if (!myeongsik) return <Notice msg="명식(ganji)이 안 와서 표시 못 해요." />;
+  if (!myeongsik) return <Notice msg="사주 정보를 불러오지 못해 표시할 수 없어요." />;
 
   const birthDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   const birthTime = `${h.padStart(2, "0")}:${min.padStart(2, "0")}`;

@@ -79,7 +79,7 @@ export function CrossSell({
       <div style={{ textAlign: "center", marginBottom: 14 }}>
         <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 26, color: "#c9a8ff", lineHeight: 1 }}>緣</div>
         <h2 style={{ marginTop: 8, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19, color: "#f3edff" }}>
-          같은 명식으로 이어서 보기
+          같은 사주로 이어서 보기
         </h2>
         <p style={{ marginTop: 7, fontSize: 12.5, lineHeight: 1.6, color: "#9a8cd0" }}>
           정보를 다시 입력할 필요 없이, 한 번의 클릭으로 바로 받아보실 수 있어요.
@@ -105,7 +105,7 @@ export function CrossSell({
         </p>
         <div style={{ marginTop: 16, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <div style={{ fontSize: 10.5, color: "#b8a4e0", letterSpacing: ".04em", marginBottom: 3 }}>같은 명식 · 재입력 없이</div>
+            <div style={{ fontSize: 10.5, color: "#b8a4e0", letterSpacing: ".04em", marginBottom: 3 }}>다시 입력하지 않아도 돼요</div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{formatKRW(premium.price)}</div>
           </div>
           <button
