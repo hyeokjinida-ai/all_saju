@@ -479,8 +479,8 @@ export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
 // 주문 생성(/api/orders/create) → 체크아웃. 가짜 할인앵커는 쓰지 않음(실제 회원 할인만 · 표시광고법 준수).
 const PAY_META: Record<string, { desc: string; badge?: string }> = {
   "life-saju": { desc: "내 사주 핵심 · 올해 흐름 · 고민 답" },
-  "wealth-saju": { desc: "재물그릇 점수 · 돈 들어오는 달 TOP3 · 새는 달", badge: "추천" },
-  "sangun-sinjeom": { desc: "내 질문에 [산군의 직언] 확답 · 반말 신점체" },
+  "wealth-saju": { desc: "내 재물그릇 점수 · 돈 들어오는 달 · 새는 달", badge: "추천" },
+  "sangun-sinjeom": { desc: "내가 물은 것에 확답만 · 돌려 말하지 않는 신점" },
   "love-saju": { desc: "부부·연애·자녀, 관계 패턴과 인연" },
   "monthly-luck": { desc: "2026 월별 좋은 달 · 조심할 달" },
   "premium-saju": { desc: "전 영역 + 인생 60년의 큰 흐름까지" },

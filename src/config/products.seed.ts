@@ -45,7 +45,7 @@ export const productsSeed: ProductSeed[] = [
   {
     slug: "sangun-sinjeom",
     name: "산군 신점",
-    description: "묻고 싶은 것에 확답만 고합니다 — 산이 내려다본 그대로, 돌려 말하지 않는 신점풀이",
+    description: "묻고 싶은 것에 확답만 드립니다 — 좋은 말로 돌려 말하지 않는 신점 풀이",
     price: 24900,
     display_order: 25,
     is_active: true,

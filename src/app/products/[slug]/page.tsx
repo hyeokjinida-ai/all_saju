@@ -124,11 +124,11 @@ export default async function ProductDetailPage({
         className="mt-6 rounded-md p-5"
         style={{ background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
       >
-        <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>安心</p>
+        <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>안심하세요</p>
         <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과지가 제대로 만들어지지 않으면 전액 돌려드려요</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 안에는 취소하실 수 있어요 (전자상거래법상 청약철회)</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>적어주신 정보는 사주 계산에만 쓰고, 마이페이지에 보관돼요</li>
         </ul>
         <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
           환불 안내 자세히 →
@@ -279,7 +279,7 @@ export default async function ProductDetailPage({
       <section className="mb-9 text-center">
         <span className="font-brush text-gold-soft text-base tracking-[0.2em]">解</span>
         <p className="mt-2 font-myeongjo text-sm text-bone-soft leading-relaxed max-w-md mx-auto">
-          수백 년 이어진 <b className="text-gold-bright">정통 만세력</b> 명식 계산에 기반합니다. 진태양시·절기까지 보정해 여덟 글자를 세우고{pitch?.hasCharts ? ", 오행·십성·대운을 데이터로 시각화해" : ""} 풀어드려요.
+          수백 년 이어온 <b className="text-gold-bright">정통 사주 계산법(만세력)</b>으로 풀어드려요. 태어난 곳의 실제 시각과 절기까지 맞춰 사주 여덟 글자를 세우고{pitch?.hasCharts ? ", 타고난 기운의 균형과 10년 단위 운의 흐름을 그림으로 보여" : ""} 드려요.
         </p>
       </section>
 
@@ -356,8 +356,8 @@ export default async function ProductDetailPage({
         <p className="font-myeongjo text-sm font-semibold text-gold-bright mb-4 text-center">자주 묻는 물음</p>
         <ul className="divide-y divide-gold-pale border-y border-gold-pale">
           {[
-            { q: "태어난 시각을 몰라도 되나요?", a: "괜찮습니다. 시(時)를 몰라도 일주 중심으로 충분히 풀이됩니다. 입력 단계에서 ‘시각 몰라요’를 누르면 됩니다." },
-            { q: "음력 생일만 알아요.", a: "괜찮습니다. 입력 때 음력을 선택하면 정밀하게 양력으로 환산해 명식을 세웁니다." },
+            { q: "태어난 시각을 몰라도 되나요?", a: "괜찮습니다. 시각을 몰라도 태어난 날을 중심으로 충분히 풀이됩니다. 입력할 때 ‘시각 몰라요’를 누르시면 돼요." },
+            { q: "음력 생일만 알아요.", a: "괜찮습니다. 입력할 때 음력을 고르시면 양력으로 정확히 바꿔서 사주를 세웁니다." },
             { q: "결과는 언제 받나요?", a: "결제 직후 수 분 내로 결과지가 생성되어 바로 확인하실 수 있어요. 마이페이지에도 보관됩니다." },
             { q: "결제는 안전한가요?", a: "토스페이먼츠 안전결제로 진행됩니다. 입력 정보는 명식 계산과 결과 생성에만 사용됩니다." },
             { q: "결과가 기대와 다르면요?", a: "구매 후 7일 이내 청약철회가 가능합니다(전자상거래법 기준). 결과가 정상적으로 생성되지 않는 등 회사 귀책 사유는 전액 환불해 드립니다. 자세한 기준은 환불 안내를 참고해 주세요." },

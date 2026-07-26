@@ -80,20 +80,20 @@ function TeaserLock() {
     >
       <div className="mb-5 text-center">
         <p className="font-brush text-lg tracking-[0.2em]" style={{ color: "#e8c96a" }}>
-          財 運 錄
+          財
         </p>
         <p className="mt-1 font-myeongjo text-[17px] font-bold" style={{ color: "#efe6d2" }}>
           당신의 계산은, 이미 끝나 있습니다
         </p>
         <p className="mt-1 text-[13px]" style={{ color: "#7d8496" }}>
-          생년월일을 넣는 순간 아래 빈칸이 선명해집니다
+          생년월일을 넣는 순간 아래 빈칸이 채워집니다
         </p>
       </div>
       <div className="space-y-2.5">
         <Row label="내 재물그릇 점수" value={<>▓▓점 · 상위 ▓▓%</>} />
-        <Row label="돈이 들어오는 달 TOP3" value={<>20▓▓년 ▓월 · ▓월 · ▓월</>} />
-        <Row label="돈이 새는(조심할) 달" value={<>20▓▓년 ▓월</>} />
-        <Row label="인생 재물 대운의 전환점" value={<>▓▓▓▓년</>} />
+        <Row label="돈이 들어오는 달" value={<>20▓▓년 ▓월 · ▓월 · ▓월</>} />
+        <Row label="돈이 새는 달" value={<>20▓▓년 ▓월</>} />
+        <Row label="돈이 가장 크게 움직이는 해" value={<>▓▓▓▓년</>} />
       </div>
       <div className="mt-4 text-center">
         <span
@@ -130,8 +130,8 @@ export function WealthStory({
       <div className="mx-auto w-full max-w-[480px]">
         {/* 헤드 */}
         <header className="px-6 pb-10 pt-14 text-center">
-          <p className="text-[13px] tracking-[0.5em]" style={{ color: "#c9a227" }}>
-            財 · 命運錄
+          <p className="text-[13px] tracking-[0.4em]" style={{ color: "#c9a227" }}>
+            財 · 명운록
           </p>
           <h1 className="mt-3 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
             재물운이 좋다는데
@@ -192,9 +192,9 @@ export function WealthStory({
 
         {/* 가격 앵커 한 줄 */}
         <p className="px-8 pb-4 pt-4 text-center text-[13.5px] leading-relaxed" style={{ color: "#7d8496" }}>
-          오프라인 철학관 재물 풀이 5만~30만원 —
+          철학관에서 재물운을 보면 한 번에 5만~30만원 —
           <br />
-          같은 정통 만세력 계산을 <b style={{ color: "#e8c96a" }}>{priceLabel}</b>에 받아보세요
+          같은 사주 계산을 <b style={{ color: "#e8c96a" }}>{priceLabel}</b>에 받아보세요
         </p>
 
         {/* 컷3 — 클로징 + CTA */}
