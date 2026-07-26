@@ -153,41 +153,35 @@ export function WealthStory({
           <div className="mx-auto mt-8 h-px w-[46px]" style={{ background: "#c9a227", opacity: 0.6 }} />
         </header>
 
-        {/* 컷1 — 훅: 달력의 붉은 동그라미 */}
-        <Cut src="/products/wealth/cut-calendar.webp" width={860} height={859} alt="달력의 한 달에 붉은 동그라미를 치는 금두꺼비 선생">
-          <div className="absolute inset-x-0 bottom-0 px-6 pb-6 text-center">
-            <p
-              className="font-myeongjo text-[17px] leading-[1.9]"
-              style={{ color: "#e7e2d2", textShadow: "0 2px 14px rgba(0,0,0,0.9)" }}
-            >
-              &ldquo;재물운이 좋으시네요&rdquo;
-              <br />
-              …그래서, <b style={{ color: "#e8c96a" }}>언제</b>라는 겁니까?
-            </p>
-          </div>
-        </Cut>
-
-        <Narration>
-          열심히 사는데, 통장은 왜 늘 그대로일까요.
-          <br />
-          <span style={{ color: "#8b93a5", fontSize: 14 }}>
-            막연한 &lsquo;재물운&rsquo; 말고 — 달력에 표시할 답이 필요했습니다.
-          </span>
-        </Narration>
-
-        {/* 컷2 — 등장 */}
+        {/* 컷1 — 등장: 독자의 물음을 받는 장면 (서재) */}
         <Cut src="/products/wealth/cut-study.webp" width={860} height={1290} alt="서재에서 만세력 책을 펴고 정면을 바라보는 금두꺼비 선생">
           <Bubble who="금두꺼비 선생">
-            돈은 매달 똑같이 흐르지 않아요.
+            &ldquo;재물운이 좋으시네요.&rdquo;
+            <br />그 말은 다들 하지요. 정작 궁금한 건{" "}
+            <em className="not-italic" style={POINT}>
+              언제
+            </em>
+            인데 말입니다.
+          </Bubble>
+        </Cut>
+
+        {/* 원리 — 왜 '언제'가 답인지 */}
+        <Narration>
+          돈은 매달 똑같이 흐르지 않습니다.
+          <br />
+          <b style={{ color: "#e8c96a" }}>열리는 달</b>과, <b style={{ color: "#e8c96a" }}>새는 달</b>이 있을 뿐입니다.
+        </Narration>
+
+        {/* 컷2 — 방법: 달력에 동그라미(그림과 대사가 같은 행동) */}
+        <Cut src="/products/wealth/cut-calendar.webp" width={860} height={859} alt="달력의 한 달에 붉은 동그라미를 치는 금두꺼비 선생">
+          <Bubble who="금두꺼비 선생">
+            그래서 저는 달력에 동그라미를 칩니다.
             <br />
+            당신의{" "}
             <em className="not-italic" style={POINT}>
               열리는 달
             </em>
-            과,{" "}
-            <em className="not-italic" style={POINT}>
-              새는 달
-            </em>
-            이 있을 뿐이지.
+            에.
           </Bubble>
         </Cut>
 
