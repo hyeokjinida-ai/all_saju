@@ -9,12 +9,7 @@ import { TrustStrip } from "@/components/saju/TrustStrip";
 import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
 import { SHOW_SOCIAL_PROOF } from "@/config/site";
-import {
-  WealthCutHook,
-  WealthCutMaster,
-  WealthTeaserLock,
-  WealthCutClosing,
-} from "@/components/products/WealthWebtoon";
+import { WealthStory } from "@/components/products/WealthWebtoon";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -108,8 +103,44 @@ export default async function ProductDetailPage({
     ? `오늘 ${today} 기준 — 2026 남은 흐름을 점검하기 좋은 때입니다`
     : `오늘 ${today} 기준 흐름까지 반영해 풀어드려요`;
 
+  // 입력 위저드 + 안심 + 신뢰 스트립 — 템플릿·웹툰(wealth) 양쪽에서 공유
+  const startSection = (
+    <section id="start" className="scroll-mt-4">
+      <h2 className="font-myeongjo text-lg font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
+      <p className="text-sm text-bone-soft mb-3 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
+      <p className="text-[13px] text-bone-soft mb-4 text-center leading-relaxed">
+        <span className="text-gold-bright">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 마이페이지에 보관
+      </p>
+      <SajuWizard
+        productId={product.id}
+        productSlug={product.slug}
+        productName={product.name}
+        price={product.price}
+        isLoggedIn={!!user}
+      />
+
+      {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
+      <div
+        className="mt-6 rounded-md p-5"
+        style={{ background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
+      >
+        <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>安心</p>
+        <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
+        </ul>
+        <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
+          환불 안내 자세히 →
+        </Link>
+      </div>
+
+      <TrustStrip className="mt-5" />
+    </section>
+  );
+
   return (
-    <div className="container py-12 max-w-2xl">
+    <div className={isWealth ? "" : "container py-12 max-w-2xl"}>
       {/* 검색 리치스니펫용 구조화 데이터 */}
       <script
         type="application/ld+json"
@@ -130,6 +161,12 @@ export default async function ProductDetailPage({
           }),
         }}
       />
+
+      {/* wealth: 전용 다크 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
+      {isWealth ? (
+        <WealthStory priceLabel={formatKRW(product.price)}>{startSection}</WealthStory>
+      ) : (
+        <>
 
       {/* ── 1. 후킹 헤더 ── */}
       <header className="text-center mb-10">
@@ -169,13 +206,6 @@ export default async function ProductDetailPage({
         <div className="gold-diamond mx-auto mt-7" />
       </header>
 
-      {/* ── 웹툰 컷1: 훅 (돈 들어오는 달 전용) ── */}
-      {isWealth && (
-        <section className="mb-9">
-          <WealthCutHook />
-        </section>
-      )}
-
       {/* ── 2. 공감(통증) ── */}
       {pitch?.pains && pitch.pains.length > 0 && (
         <section className="mb-9 rounded-md border border-gold-pale bg-[rgba(36,16,71,0.4)] p-6">
@@ -190,13 +220,6 @@ export default async function ProductDetailPage({
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {/* ── 웹툰 컷2: 금두꺼비 선생 등장 ── */}
-      {isWealth && (
-        <section className="mb-9">
-          <WealthCutMaster />
         </section>
       )}
 
@@ -222,12 +245,7 @@ export default async function ProductDetailPage({
         </section>
       )}
 
-      {/* ── 결과지 미리보기 — wealth는 ▓잠금 티저("계산은 이미 끝났다"), 나머지는 기존 블러 잠금 ── */}
-      {isWealth ? (
-        <section className="mb-9">
-          <WealthTeaserLock />
-        </section>
-      ) : (
+      {/* ── 결과지 미리보기 (블러 잠금 — 자이가르닉) ── */}
       <section className="mb-9">
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="gold-rule flex-1 max-w-[50px] opacity-70" />
@@ -256,7 +274,6 @@ export default async function ProductDetailPage({
           <p className="mt-4 text-center font-myeongjo text-[11px] text-bone-faint">여기서부터는 당신의 명식으로 채워집니다 — 결제 후 바로 선명하게</p>
         </a>
       </section>
-      )}
 
       {/* ── 방법론 (권위·실재성) ── */}
       <section className="mb-9 text-center">
@@ -266,13 +283,6 @@ export default async function ProductDetailPage({
         </p>
       </section>
 
-      {/* ── 웹툰 컷3: 클로징(손 내밀기 + CTA) ── */}
-      {isWealth && (
-        <section className="mb-9">
-          <WealthCutClosing priceLabel={formatKRW(product.price)} />
-        </section>
-      )}
-
       {/* ── 4. 가격 + 입력 시작 ── */}
       <section className="mb-9 rounded-md p-6 sm:p-7 text-center" style={{ border: "1.5px solid var(--gold)", background: "linear-gradient(180deg, rgba(150,90,255,0.10), rgba(7,6,15,0.6))" }}>
         <p className="text-xs text-gold-soft tracking-[0.06em] mb-2">今 · {timeliness}</p>
@@ -281,45 +291,17 @@ export default async function ProductDetailPage({
         <p className="text-[13px] text-bone-soft">생년월일만 입력하면 · 정통 만세력으로 풀어드려요</p>
       </section>
 
-      <section id="start" className="scroll-mt-4">
-        <h2 className="font-myeongjo text-lg font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
-        <p className="text-sm text-bone-soft mb-3 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
-        <p className="text-[13px] text-bone-soft mb-4 text-center leading-relaxed">
-          <span className="text-gold-bright">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 마이페이지에 보관
-        </p>
-        <SajuWizard
-          productId={product.id}
-          productSlug={product.slug}
-          productName={product.name}
-          price={product.price}
-          isLoggedIn={!!user}
-        />
+      {startSection}
 
-        {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
-        <div
-          className="mt-6 rounded-md p-5"
-          style={{ background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
-        >
-          <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>安心</p>
-          <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과가 정상 생성되지 않으면 전액 환불 — 회사 귀책 시</li>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 이내 청약철회 가능 (전자상거래법 기준)</li>
-            <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>입력 정보는 명식 계산에만 사용 · 마이페이지에 보관</li>
-          </ul>
-          <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
-            환불 안내 자세히 →
-          </Link>
-        </div>
-
-        <TrustStrip className="mt-5" />
-      </section>
-
-      {/* ── 5. 후기(실제 + 큐레이션 폴백) ── */}
+      {/* ── 5. 후기 — 실제 후기가 있으면 노출. 샘플 폴백·예시 수치는 SHOW_SOCIAL_PROOF 게이트 ── */}
+      {((reviews && reviews.length > 0) || SHOW_SOCIAL_PROOF) && (
       <section className="mt-16 pt-10 border-t border-gold-line">
         <div className="text-center mb-6">
           <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">證</p>
           <h2 className="font-myeongjo text-lg font-semibold text-bone">먼저 받아본 분들</h2>
-          <p className="mt-1 text-xs text-gold-soft">★★★★★ 4.96 · 누적 1,200+ 후기</p>
+          {SHOW_SOCIAL_PROOF && (
+            <p className="mt-1 text-xs text-gold-soft">★★★★★ 4.96 · 누적 1,200+ 후기</p>
+          )}
         </div>
         <ul className="space-y-3">
           {(reviews && reviews.length > 0
@@ -351,10 +333,15 @@ export default async function ProductDetailPage({
           })}
         </ul>
       </section>
+      )}
 
       {/* 신뢰 절정 재진입 CTA */}
       <div className="mt-10 text-center">
-        <p className="text-sm text-bone-soft mb-3">11,300명이 먼저 받아본 그 풀이 — {formatKRW(product.price)}</p>
+        <p className="text-sm text-bone-soft mb-3">
+          {SHOW_SOCIAL_PROOF
+            ? <>11,300명이 먼저 받아본 그 풀이 — {formatKRW(product.price)}</>
+            : <>결제 후 수 분 안에 도착하는 내 풀이 — {formatKRW(product.price)}</>}
+        </p>
         <a
           href="#start"
           className="inline-flex items-center gap-2 rounded-md px-7 py-3.5 font-bold text-sm tracking-[0.06em]"
@@ -383,6 +370,9 @@ export default async function ProductDetailPage({
           ))}
         </ul>
       </section>
+
+        </>
+      )}
 
       {/* 모바일 상시 결제바 */}
       <StickyBuyBar name={product.name} price={product.price} />
