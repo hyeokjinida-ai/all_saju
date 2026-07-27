@@ -419,6 +419,189 @@ export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
   return `[재물 확정값 — 점수와 달은 아래 값을 그대로 인용할 것. 다른 점수·다른 달을 지어내지 말 것]\n${lines.join("\n")}`;
 }
 
+// ── 인연 확정값 ("인연 들어오는 달" 전용) ─────────────
+// 점수·달·해·나이대를 코드에서 한 번 확정해 주입한다(챕터 병렬 생성 시 값이 갈라지는 1호 실측 버그 방지).
+// 핵심: 용신 종합점수를 주축으로 쓰면 짝과 무관한 달이 1위가 된다(실측) → 용신은 /8로 눌러 보조축,
+// 배우자 십성(여=관성, 남=재성)·배우자 자리(일지)와의 합·도화/홍염에 가중치를 준다.
+
+// 지지 관계표 — 월운에는 hapChungRelations 가 오지 않아 코드에서 직접 계산한다.
+const JIJI_YUKHAP: Record<string, string> = { 자: "축", 축: "자", 인: "해", 해: "인", 묘: "술", 술: "묘", 진: "유", 유: "진", 사: "신", 신: "사", 오: "미", 미: "오" };
+const JIJI_SAMHAP: string[][] = [["신", "자", "진"], ["해", "묘", "미"], ["인", "오", "술"], ["사", "유", "축"]];
+const JIJI_BANGHAP: string[][] = [["인", "묘", "진"], ["사", "오", "미"], ["신", "유", "술"], ["해", "자", "축"]];
+const JIJI_CHUNG: Record<string, string> = { 자: "오", 오: "자", 축: "미", 미: "축", 인: "신", 신: "인", 묘: "유", 유: "묘", 진: "술", 술: "진", 사: "해", 해: "사" };
+const JIJI_WONJIN: Record<string, string> = { 자: "미", 미: "자", 축: "오", 오: "축", 인: "유", 유: "인", 묘: "신", 신: "묘", 진: "해", 해: "진", 사: "술", 술: "사" };
+const JIJI_PA: [string, string][] = [["자", "유"], ["축", "진"], ["인", "해"], ["묘", "오"], ["사", "신"], ["술", "미"]];
+const JIJI_HYEONG: [string, string][] = [["인", "사"], ["사", "신"], ["인", "신"], ["축", "술"], ["술", "미"], ["축", "미"], ["자", "묘"]];
+
+// 두 지지의 관계 — 합이 우선(인·해처럼 합과 파가 겹치면 합으로 본다)
+function jijiRel(a: string, b: string): { score: number; tag: string } | null {
+  if (!a || !b || a === b) return null;
+  if (JIJI_YUKHAP[a] === b) return { score: 14, tag: "배우자 자리와 찰떡 합" };
+  if (JIJI_CHUNG[a] === b) return { score: -18, tag: "배우자 자리 흔들림" };
+  if (JIJI_WONJIN[a] === b) return { score: -12, tag: "마음이 어긋나기 쉬움" };
+  if (JIJI_SAMHAP.some((g) => g.includes(a) && g.includes(b))) return { score: 12, tag: "배우자 자리와 큰 합" };
+  if (JIJI_BANGHAP.some((g) => g.includes(a) && g.includes(b))) return { score: 8, tag: "배우자 자리와 같은 결" };
+  if (JIJI_PA.some(([x, y]) => (x === a && y === b) || (x === b && y === a)) || JIJI_HYEONG.some(([x, y]) => (x === a && y === b) || (x === b && y === a)))
+    return { score: -10, tag: "긁히기 쉬움" };
+  return null;
+}
+
+// 12운성 이름 → 활력 순위(레벨 필드가 없을 때 폴백)
+const FORTUNE_RANK: Record<string, number> = { 장생: 10, 목욕: 6, 관대: 9, 건록: 11, 제왕: 12, 쇠: 5, 병: 3, 사: 2, 묘: 1, 절: 1, 태: 4, 양: 7 };
+
+export function buildInyeonFactsBlock(
+  analysis: SajuAnalysisResponse,
+  gender: "male" | "female",
+): string {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+  const s = (v: unknown): string => (v == null ? "" : String(v));
+  const n = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
+
+  // ① 원국 앵커
+  const ilji = s(rec(rec(analysis.ganji).day).ji);
+  const sum = rec(rec(analysis.sipseong).summary);
+  const spouseCount = gender === "female" ? n(sum.gwanseong) : n(sum.jaeseong);
+  const spouseMain = gender === "female" ? "정관" : "정재"; // 결혼으로 이어지는 인연
+  const spouseSub = gender === "female" ? "편관" : "편재"; // 강렬한 인연
+
+  const dohwaArr = arr(rec(analysis.dohwa).dohwa);
+  const hongyeomArr = arr(rec(analysis.hongyeom).hongyeom);
+  const dohwaJi = new Set(dohwaArr.map((d) => s(d.ji)).filter(Boolean));
+  const hongyeomJi = new Set(hongyeomArr.map((d) => s(d.ji)).filter(Boolean));
+  const guiin = rec(analysis.guiin);
+  const cheoneulJi = new Set(arr(guiin.cheoneul).map((d) => s(d.ji)).filter(Boolean));
+  const hasCheoneul = cheoneulJi.size > 0;
+  const hasGeumyeo = arr(guiin.geumyeo).length > 0;
+
+  const fortunes = arr(rec(analysis.twelveFortune).fortunes);
+  const iljuF = fortunes.find((f) => s(f.position) === "일주");
+  const iljuInterp = rec(iljuF?.interpretation);
+  const iljiLevel = n(iljuInterp.level) || FORTUNE_RANK[s(iljuF?.fortune)] || 6;
+  const iljiHurt = arr(analysis.hapchung).some(
+    (h) => /충|원진/.test(s(h.type)) && (s(h.sourcePosition) === "일주" || s(h.targetPosition) === "일주"),
+  );
+
+  // ② 인연 그릇 점수 — 같은 명식·같은 성별이면 항상 같은 값 (41~94)
+  const score = Math.max(
+    41,
+    Math.min(
+      94,
+      46 +
+        Math.min(spouseCount, 3) * 7 +
+        Math.min(dohwaJi.size, 2) * 6 +
+        Math.min(hongyeomJi.size, 2) * 5 +
+        (hasCheoneul ? 5 : 0) +
+        (hasGeumyeo ? 4 : 0) +
+        Math.trunc((iljiLevel - 6) / 2) -
+        (iljiHurt ? 6 : 0) -
+        (spouseCount === 0 ? 5 : 0),
+    ),
+  );
+
+  // ③ 달·해 공용 인연 점수
+  type Row = { label: string; year: number; month: number; score: number; tags: string[]; verdict: string };
+  const rowOf = (o: Record<string, unknown>, labelKey: "monthLabel" | "year"): Row | null => {
+    const label = labelKey === "monthLabel" ? s(o.monthLabel) : o.year != null ? `${s(o.year)}년(${s(o.age)}세)` : "";
+    if (!label) return null;
+    const j = rec(o.yongsinJudgment);
+    const verdict = s(j.종합판정);
+    let sc = Math.trunc(Math.max(-120, Math.min(120, n(j.종합점수))) / 8);
+    const tags: string[] = [];
+    const relG = s(rec(o.sipseongRelation).gan);
+    const relJ = s(rec(o.sipseongRelation).ji);
+    if (relG === spouseMain) { sc += 22; tags.push("짝을 뜻하는 자리가 겉으로 드러남"); }
+    else if (relG === spouseSub) { sc += 16; tags.push("강렬한 끌림이 드러남"); }
+    if (relJ === spouseMain) { sc += 11; tags.push("짝을 뜻하는 자리가 속에 깔림"); }
+    else if (relJ === spouseSub) { sc += 8; tags.push("끌림이 속에 깔림"); }
+    const rel = jijiRel(s(o.ji), ilji);
+    if (rel) { sc += rel.score; tags.push(rel.tag); }
+    if (dohwaJi.has(s(o.ji))) { sc += 9; tags.push("눈에 띄는 신호(도화) 켜짐"); }
+    if (hongyeomJi.has(s(o.ji))) { sc += 7; tags.push("매력이 짙어짐"); }
+    if (cheoneulJi.has(s(o.ji))) { sc += 6; tags.push("귀인이 다리를 놓음"); }
+    if (tags.length === 0 && verdict) tags.push(`전체 흐름이 ${verdict}`);
+    return { label, year: n(o.year), month: n(o.month), score: sc, tags, verdict };
+  };
+
+  // ④ 인연이 들어오는 달 TOP3 (과거 제외, 대흉 제외 — 부족하면 게이트 해제)
+  const w = rec(analysis.weolun);
+  const monthRows: Row[] = [];
+  const seen = new Set<string>();
+  for (const m of [w.currentWeolun, w.nextWeolun, ...arr(w.upcomingWeoluns)]) {
+    const r = rowOf(rec(m), "monthLabel");
+    if (r && !seen.has(r.label)) { seen.add(r.label); monthRows.push(r); }
+  }
+  const byScore = (a: Row, b: Row) => b.score - a.score || a.year - b.year || a.month - b.month;
+  let topPool = monthRows.filter((r) => r.verdict !== "대흉");
+  if (topPool.length < 3) topPool = monthRows; // 상품 약속이 세 개
+  const top3 = [...topPool].sort(byScore).slice(0, 3);
+  const topLabels = new Set(top3.map((r) => r.label));
+
+  // ⑤ 마음이 흔들리는 달 (최대 2, TOP3와 중복 금지)
+  const rest = monthRows.filter((r) => !topLabels.has(r.label));
+  const shakeTagged = rest
+    .filter((r) => r.tags.some((t) => /흔들리|어긋나/.test(t)))
+    .sort((a, b) => a.year - b.year || a.month - b.month);
+  const shaky: Row[] = [];
+  if (shakeTagged[0]) shaky.push(shakeTagged[0]);
+  const lowPool = rest
+    .filter((r) => !shaky.some((x) => x.label === r.label))
+    .filter((r) => !r.tags.some((t) => /합|도화|매력|귀인/.test(t)))
+    .sort((a, b) => a.score - b.score);
+  if (lowPool[0]) shaky.push(lowPool[0]);
+
+  // ⑥ 인연이 가장 크게 바뀌는 해 (상위 2)
+  const se = rec(analysis.seun);
+  const yearRows: Row[] = [];
+  const seenY = new Set<string>();
+  for (const y of [se.currentSeun, ...arr(se.upcomingSeuns)]) {
+    const r = rowOf(rec(y), "year");
+    if (r && !seenY.has(r.label)) { seenY.add(r.label); yearRows.push(r); }
+  }
+  let yearPool = yearRows.filter((r) => r.verdict !== "대흉");
+  if (yearPool.length < 2) yearPool = yearRows;
+  const topYears = [...yearPool].sort(byScore).slice(0, 2);
+
+  // ⑦ 나이대 방향 — 반드시 한쪽으로만
+  const sipArr = arr(rec(analysis.sipseong).sipseongs);
+  const spousePos = sipArr.filter((p) => s(p.sipseong) === spouseMain || s(p.sipseong) === spouseSub).map((p) => s(p.position));
+  const inElder = spousePos.some((p) => p.startsWith("년") || p.startsWith("월"));
+  const inYounger = spousePos.some((p) => p.startsWith("일") || p.startsWith("시"));
+  let ageDir: string;
+  if (inElder && !inYounger) ageDir = "연상 쪽";
+  else if (inYounger && !inElder) ageDir = "연하 쪽";
+  else if (dohwaArr.some((d) => s(d.meaning).includes("연상"))) ageDir = "연상 쪽";
+  else ageDir = iljiLevel >= 7 ? "동갑 언저리" : "연상 쪽";
+
+  // ⑧ 만날 사람의 결 / 만나는 길
+  const gg = rec(analysis.gyeokguk);
+  const yongOh = s(rec(gg.yongsin).오행);
+  const heeOh = s(gg.희신오행);
+  const meetHint = s(dohwaArr[0]?.meaning).split(". ").slice(0, 2).join(". ");
+
+  // ⑨ 출력
+  const fmt = (r: Row) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
+  const lines = [
+    `- 인연 그릇 점수: ${score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
+    `- 계산 근거: 짝을 뜻하는 자리 ${spouseCount}개 · 눈에 띄는 신호 ${dohwaJi.size ? "도화 있음" : "도화 없음"}${hongyeomJi.size ? "·홍염 있음" : ""} · 배우자 자리 활력 ${iljiLevel}/12${iljuHurtNote(iljiHurt)}`,
+    `- 타고난 끌림 신호: ${[dohwaJi.size ? `도화 ${dohwaJi.size}개` : "", hongyeomJi.size ? `홍염 ${hongyeomJi.size}개` : "", hasCheoneul ? "천을귀인" : "", hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
+    `- 배우자 자리(일지): ${ilji}${iljuF ? ` · 활력 ${s(iljuF.fortune)}(${iljiLevel}/12)` : ""}${iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
+    `- 만날 사람의 결: ${yongOh || "미상"}${heeOh ? ` · 도움이 되는 결 ${heeOh}` : ""}`,
+    meetHint ? `- 만나는 길 힌트: ${meetHint}` : "",
+    `- 나이대: ${ageDir} — 이 한쪽으로만 쓸 것`,
+    `- 인연이 들어오는 달 TOP3: ${top3.map(fmt).join(", ")}`,
+    shaky.length ? `- 마음이 흔들리는 달: ${shaky.map(fmt).join(", ")}` : "",
+    topYears.length ? `- 인연이 가장 크게 바뀌는 해: ${topYears.map(fmt).join(" / 그다음 ")}` : "",
+  ].filter(Boolean);
+
+  return `[인연 확정값 — 점수와 달·해·나이대는 아래 값을 그대로 인용할 것. 다른 값을 지어내지 말 것]\n${lines.join("\n")}`;
+}
+
+function iljuHurtNote(hurt: boolean): string {
+  return hurt ? " (흔들림 감점 반영)" : "";
+}
+
 // ── 크로스셀 개인화 신호 ────────────────────────────
 // 결과지 하단 "이어서 보기" 추천을 명식 근거로 부드럽게 개인화하기 위한 작은 신호.
 // (공포 마케팅 금지: 단정적 약점 단언이 아니라 "더 깊이 보면 좋다"는 호기심 톤으로만 사용)

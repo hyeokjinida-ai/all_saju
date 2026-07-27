@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "무료 사주 분석", robots: { ind
 // 결제 옵션 — 엄선한 가격 사다리 4종(표시 순). 전 상품을 다 띄우면 선택 마비로
 // 전환이 떨어져서, 입구(기본)→주력(돈 들어오는 달)→프리미엄→신점만 노출한다.
 // (관계·월별 등 나머지는 결과지 크로스셀 전용)
-const FUNNEL_SLUGS = ["life-saju", "wealth-saju", "premium-saju", "sangun-sinjeom"];
+const FUNNEL_SLUGS = ["life-saju", "wealth-saju", "inyeon-saju", "premium-saju", "sangun-sinjeom"];
 
 async function resolveProducts(): Promise<FunnelProduct[]> {
   if (!isSupabaseConfigured()) return [];

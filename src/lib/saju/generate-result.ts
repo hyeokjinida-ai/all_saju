@@ -21,6 +21,7 @@ import {
   formatSajuCompact,
   buildKeyFactsBlock,
   buildWealthFactsBlock,
+  buildInyeonFactsBlock,
   ganjiToMyeongsik,
   type BirthInfo,
 } from "@/lib/saju/saju-api";
@@ -130,6 +131,10 @@ export async function generateResultForOrder(
       // "돈 들어오는 달": 점수·좋은/나쁜 달을 확정값으로 주입(챕터 간 모순 방지)
       if (product.slug === "wealth-saju") {
         keyFacts = [keyFacts, buildWealthFactsBlock(analysis)].filter(Boolean).join("\n\n");
+      }
+      // "인연 들어오는 달": 점수·달·해·나이대 확정값 주입(동일 원리, 성별로 배우자 십성이 갈림)
+      if (product.slug === "inyeon-saju") {
+        keyFacts = [keyFacts, buildInyeonFactsBlock(analysis, input.gender)].filter(Boolean).join("\n\n");
       }
     }
   } catch (apiErr) {

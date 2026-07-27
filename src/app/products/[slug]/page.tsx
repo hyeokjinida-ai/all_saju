@@ -10,6 +10,7 @@ import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
 import { SHOW_SOCIAL_PROOF } from "@/config/site";
 import { WealthStory } from "@/components/products/WealthWebtoon";
+import { InyeonStory } from "@/components/products/InyeonWebtoon";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -52,12 +53,21 @@ export async function generateMetadata({
   };
 }
 
+// 전용 웹툰 랜딩을 가진 상품 — 나머지는 공용 템플릿
+const WEBTOON: Record<string, React.ComponentType<{ priceLabel: string; children: React.ReactNode }>> = {
+  "wealth-saju": WealthStory,
+  "inyeon-saju": InyeonStory,
+};
+
 export default async function ProductDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ c?: string }>;
 }) {
   const { slug } = await params;
+  const { c: concernPreset } = await searchParams;
 
   let product: Product | null;
   let reviews: Review[] | null = null;
@@ -94,8 +104,9 @@ export default async function ProductDetailPage({
   const pitch = PRODUCT_PITCH[product.slug];
   const eyebrow = pitch?.eyebrow ?? `命 · ${product.name}`;
   const headline = pitch?.headline ?? [product.name];
-  // "돈 들어오는 달"은 웹툰 랜딩 v1(금두꺼비 3컷 + ▓잠금 티저)로 렌더
-  const isWealth = product.slug === "wealth-saju";
+  // 전용 웹툰 랜딩 상품(돈/인연 들어오는 달)은 템플릿 대신 스토리 컴포넌트로 렌더
+  const Story = WEBTOON[product.slug];
+  const isWealth = !!Story;
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -117,6 +128,7 @@ export default async function ProductDetailPage({
         productName={product.name}
         price={product.price}
         isLoggedIn={!!user}
+        initialConcerns={concernPreset ? [concernPreset] : undefined}
       />
 
       {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
@@ -162,9 +174,9 @@ export default async function ProductDetailPage({
         }}
       />
 
-      {/* wealth: 전용 다크 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
-      {isWealth ? (
-        <WealthStory priceLabel={formatKRW(product.price)}>{startSection}</WealthStory>
+      {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
+      {Story ? (
+        <Story priceLabel={formatKRW(product.price)}>{startSection}</Story>
       ) : (
         <>
 

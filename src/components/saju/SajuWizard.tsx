@@ -18,6 +18,8 @@ type Props = {
   productName: string;
   price: number;
   isLoggedIn?: boolean;
+  // 랜딩 상태 배지(?c=…) → 고민 프리셀렉트. CONCERN_BY_SLUG 옵션에 있는 값만 반영.
+  initialConcerns?: string[];
 };
 
 type FormState = {
@@ -30,14 +32,26 @@ type FormState = {
   concerns: string[];
 };
 
-// 4050 현실 고민 — 위저드 STEP 惑 선택지
+// 기본 고민 선택지 — 위저드 STEP 惑
 const CONCERN_OPTIONS = ["재물", "부부·연애", "자녀", "직장·사업", "건강", "올해 운", "노후", "가족"];
+
+// 상품별 고민 선택지 — 상품이 파는 질문과 위저드가 묻는 질문을 일치시킨다.
+const CONCERN_BY_SLUG: Record<string, string[]> = {
+  "inyeon-saju": [
+    "아직 만나는 사람이 없어요",
+    "썸·짝사랑 중이에요",
+    "사귀는 사람이 있어요",
+    "결혼 시기가 궁금해요",
+    "최근에 헤어졌어요",
+    "일하느라 연애가 밀려요",
+  ],
+};
 
 const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = [
   { hanja: "名", q: "어떻게 불러드릴까요?", help: "결과지에 표시될 이름입니다 (선택)", optional: true },
   { hanja: "生", q: "언제 태어나셨나요?", help: "정확한 사주 계산에 꼭 필요합니다" },
   { hanja: "時", q: "태어난 시각을 아시나요?", help: "시각을 알면 더 정밀한 풀이가 가능합니다" },
-  { hanja: "性", q: "성별을 선택해 주세요", help: "대운의 방향을 정하는 데 쓰입니다" },
+  { hanja: "性", q: "성별을 선택해 주세요", help: "운의 흐름 방향을 정하는 데 쓰입니다" },
   { hanja: "曆", q: "양력인가요, 음력인가요?", help: "주민등록상 생일은 보통 양력입니다" },
   { hanja: "惑", q: "요즘 가장 마음 쓰이는 건?", help: "복수 선택 가능 · 이 흐름을 먼저 살펴드립니다" },
   { hanja: "覽", q: "입력하신 정보를 확인해 주세요", help: "" },
@@ -54,8 +68,10 @@ export function SajuWizard({
   productName,
   price,
   isLoggedIn = false,
+  initialConcerns,
 }: Props) {
   const router = useRouter();
+  const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -65,7 +81,7 @@ export function SajuWizard({
     timeUnknown: false,
     gender: "",
     calendar: "",
-    concerns: [],
+    concerns: (initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
   });
 
   // 로그인 왕복 후 복귀 시 입력 복원 (read-once: 복원하면 즉시 비움)
@@ -355,7 +371,7 @@ export function SajuWizard({
         {/* STEP 5 — 고민 */}
         {step === 5 && (
           <div className="flex flex-wrap gap-2.5 justify-center">
-            {CONCERN_OPTIONS.map((c) => {
+            {concernOptions.map((c) => {
               const on = form.concerns.includes(c);
               return (
                 <button

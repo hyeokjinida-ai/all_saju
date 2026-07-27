@@ -41,6 +41,15 @@ export const productsSeed: ProductSeed[] = [
     display_order: 20,
     is_active: true,
   },
+  // 30대 여성 메인 — "○○ 들어오는 달" 시리즈 2호 (2026-07 신규, 페르소나 검증 반영)
+  {
+    slug: "inyeon-saju",
+    name: "인연 들어오는 달",
+    description: "'곧 좋은 사람 만난다'는 말은 그만 — 인연이 들어오는 달과 흔들리는 달, 앞으로 12개월을 콕 집어드려요",
+    price: 17900,
+    display_order: 22,
+    is_active: true,
+  },
   // 신점 라인 — 산군(민화 호랑이) 캐릭터, 질문 확답형 (2026-07 신규)
   {
     slug: "sangun-sinjeom",
@@ -50,11 +59,11 @@ export const productsSeed: ProductSeed[] = [
     display_order: 25,
     is_active: true,
   },
-  // 고민별 심화 ② 관계·가족 (기존 love-saju 개편)
+  // 고민별 심화 ② 부부·자녀 (연애는 inyeon-saju가 담당 — 카니발 방지로 축소)
   {
     slug: "love-saju",
-    name: "내 관계·가족 깊이보기",
-    description: "왜 늘 비슷한 사람에게 끌릴까 — 부부·연애·재혼·자녀, 반복되는 관계 패턴과 내게 맞는 인연을 봅니다",
+    name: "부부·자녀 관계 풀이",
+    description: "왜 같은 갈등이 반복될까 — 부부 사이와 자녀와의 거리, 우리 가족의 관계 흐름을 깊게 봅니다",
     price: 19900,
     display_order: 30,
     is_active: true,

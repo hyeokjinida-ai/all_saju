@@ -90,7 +90,7 @@ function TeaserLock() {
         </p>
       </div>
       <div className="space-y-2.5">
-        <Row label="내 재물그릇 점수" value={<>▓▓점 · 상위 ▓▓%</>} />
+        <Row label="내 재물그릇 점수" value={<>▓▓점 / 100점</>} />
         <Row label="돈이 들어오는 달" value={<>20▓▓년 ▓월 · ▓월 · ▓월</>} />
         <Row label="돈이 새는 달" value={<>20▓▓년 ▓월</>} />
         <Row label="돈이 가장 크게 움직이는 해" value={<>▓▓▓▓년</>} />
