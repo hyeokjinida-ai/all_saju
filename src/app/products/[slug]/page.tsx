@@ -239,7 +239,7 @@ export default async function ProductDetailPage({
           </ul>
           {pitch.hasCharts && (
             <p className="mt-4 text-[13px] text-bone-soft text-center tracking-[0.02em]">
-              ＋ 오행·십성 균형을 <span className="text-gold-bright">그래프</span>로 한눈에 — 글로만 보던 사주를 시각으로
+              ＋ 타고난 기운의 균형을 <span className="text-gold-bright">그래프</span>로 한눈에 — 글로만 보던 사주를 그림으로
             </p>
           )}
         </section>
@@ -279,7 +279,7 @@ export default async function ProductDetailPage({
       <section className="mb-9 text-center">
         <span className="font-brush text-gold-soft text-base tracking-[0.2em]">解</span>
         <p className="mt-2 font-myeongjo text-sm text-bone-soft leading-relaxed max-w-md mx-auto">
-          수백 년 이어온 <b className="text-gold-bright">정통 사주 계산법(만세력)</b>으로 풀어드려요. 태어난 곳의 실제 시각과 절기까지 맞춰 사주 여덟 글자를 세우고{pitch?.hasCharts ? ", 타고난 기운의 균형과 10년 단위 운의 흐름을 그림으로 보여" : ""} 드려요.
+          수백 년 이어온 <b className="text-gold-bright">정통 사주 계산법(만세력)</b>으로 풀어드려요. 태어난 곳의 실제 시각과 절기까지 맞춰 사주 여덟 글자를 세웁니다{pitch?.hasCharts ? <>. 타고난 기운의 균형과 10년 단위 운의 흐름은 <b className="text-gold-bright">그림</b>으로 보여드려요.</> : "."}
         </p>
       </section>
 
