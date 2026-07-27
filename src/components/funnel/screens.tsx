@@ -497,7 +497,13 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   const discount = ctx.isAuthed ? 1900 : 0;
   const total = Math.max(0, basePrice - discount);
   const memberPrice = Math.max(0, basePrice - 1900); // 회원 할인가(정가 −1,900)
-  const benefits = ["재물·애정·직업·건강 전 영역", "인생의 큰 흐름 + 올해 월별 운세", "내가 적은 고민 맞춤 조언"];
+  // 혜택 줄 — 고른 상품이 주는 것을 그대로(고정 3줄이 프리미엄 설명이라 다른 상품 선택 시 어긋나던 것 수정)
+  const descParts = sel ? (PAY_META[sel.slug]?.desc.split(" · ") ?? []) : [];
+  const benefits = [
+    ...(descParts.length ? descParts : ["재물·애정·직업·건강 전 영역", "인생의 큰 흐름 + 올해 월별 운세"]),
+    ...(descParts.some((t) => t.includes("고민") || t.includes("확답")) ? [] : ["내가 적은 고민 맞춤 조언"]),
+    "결과지는 몇 분 안에 도착 · 마이페이지에 보관",
+  ];
 
   const pay = async () => {
     if (busy) return;
@@ -586,7 +592,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
         </>
       }
     >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>전체 풀이 한 번에</div>
+      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>받아볼 풀이를 골라주세요</div>
 
       {/* 회원 할인 안내 배지 (실제 할인만) */}
       {!ctx.isAuthed && (

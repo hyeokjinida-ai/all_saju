@@ -86,7 +86,7 @@ function TeaserLock() {
           당신의 계산은, 이미 끝나 있습니다
         </p>
         <p className="mt-1 text-[13px]" style={{ color: "#7d8496" }}>
-          생년월일을 넣는 순간 아래 빈칸이 채워집니다
+          당신 생년월일로 다시 계산해, 아래 빈칸을 채워드립니다
         </p>
       </div>
       <div className="space-y-2.5">
@@ -106,6 +106,63 @@ function TeaserLock() {
     </a>
   );
 }
+
+// 받는 것 — 7챕터 목차(받는 양으로 값을 정당화, 인연 랜딩과 같은 패턴)
+function WealthToc() {
+  const rows: [string, string][] = [
+    ["1. 내 재물그릇", "점수와 그 점수가 나온 이유"],
+    ["2. 내 돈이 불어나는 방식", "월급형·사업형·투자형"],
+    ["3. 돈이 들어오는 달 세 개", "연도·월까지 콕"],
+    ["4. 돈이 새는 달", "그 달에 조심할 것까지"],
+    ["5. 나를 돈방석에 앉힐 사람", "귀인과 거리 둘 사람"],
+    ["6. 내 돈 고민, 사주의 답", "고른 고민 정면 풀이"],
+    ["7. 돈이 가장 크게 움직이는 해", "전환점과 그때 할 일"],
+  ];
+  return (
+    <div
+      className="rounded-md p-6"
+      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(201,162,39,0.2)" }}
+    >
+      <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
+        받는 것 — 7개 챕터 · 앞으로 12개월 전부
+      </p>
+      <ul className="space-y-2.5">
+        {rows.map(([t, d]) => (
+          <li key={t} className="flex items-baseline justify-between gap-3 text-[13.5px]">
+            <span style={{ color: "#cfd0d8" }}>{t}</span>
+            <span className="text-right" style={{ color: "#7d8496" }}>
+              {d}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// 상품 전용 FAQ — 망설임 처리(인연 랜딩과 같은 패턴, 재물 질문으로)
+const WFAQ: [string, string][] = [
+  [
+    "무료 사주랑 뭐가 다른가요?",
+    "무료 사주는 \"재물운이 좋으시네요\"에서 끝납니다. 여기서는 연도와 달을 집어드립니다. 앞으로 12개월에서 돈이 들어오는 달 세 개, 돈이 새는 달, 돈이 가장 크게 움직이는 해까지요. 그 달들은 사람이 골라주는 게 아니라 만세력 계산에서 나옵니다.",
+  ],
+  [
+    "월급쟁이인데도 볼 의미가 있나요?",
+    "네. 첫 챕터에서 월급형·사업형·투자형 중 어느 쪽으로 돈이 불어나는 사주인지부터 판정합니다. 월급형이면 이직·연봉 협상·큰 지출의 때를, 사업·투자형이면 벌리는 달과 거둬들일 달을 봅니다.",
+  ],
+  [
+    "태어난 시각을 몰라요. 음력 생일만 알아요.",
+    "둘 다 괜찮습니다. 시각을 모르시면 '시각 몰라요'를 누르시면 태어난 날을 중심으로 풀어드립니다. 음력을 고르시면 양력으로 정확히 바꿔서 사주를 세웁니다.",
+  ],
+  [
+    "결과는 언제 받고, 나중에 다시 볼 수 있나요?",
+    "결제하고 몇 분 안에 만들어져서 바로 읽으실 수 있습니다. 마이페이지에 계속 보관되니 그 달이 실제로 왔을 때 다시 꺼내 보세요.",
+  ],
+  [
+    "결제랑 제 생년월일은 안전한가요?",
+    "토스페이먼츠 안전결제로 진행됩니다. 적어주신 생년월일은 사주 계산과 결과지 만드는 데만 쓰고 광고에 쓰지 않습니다. 결과지가 제대로 만들어지지 않으면 전액 돌려드리고, 결과지를 열기 전이면 7일 안에 취소됩니다.",
+  ],
+];
 
 // 컷 사이 내레이션(스토리 연결부) — 템플릿 섹션 대신 이야기 톤 한 줄
 function Narration({ children }: { children: React.ReactNode }) {
@@ -190,6 +247,11 @@ export function WealthStory({
           <TeaserLock />
         </div>
 
+        {/* 받는 것 — 7챕터 목차 */}
+        <div className="px-5 pb-2 pt-6">
+          <WealthToc />
+        </div>
+
         {/* 가격 앵커 한 줄 */}
         <p className="px-8 pb-4 pt-4 text-center text-[13.5px] leading-relaxed" style={{ color: "#7d8496" }}>
           철학관에서 재물운을 보면 한 번에 5만~30만원 —
@@ -239,11 +301,33 @@ export function WealthStory({
                 {priceLabel} · 생년월일만 입력하면 끝
               </span>
             </a>
+            <p className="mt-2 text-center text-[12.5px]" style={{ color: "#9aa3b8" }}>
+              결과지가 제대로 만들어지지 않으면 전액 환불해 드립니다.
+            </p>
           </div>
         </Cut>
 
         {/* 입력 위저드(#start)·안심·신뢰 — 페이지에서 주입 */}
-        <div className="px-5 pb-16 pt-12">{children}</div>
+        <div className="px-5 pb-6 pt-12">{children}</div>
+
+        {/* 상품 전용 FAQ */}
+        <section className="px-5 pb-16 pt-4">
+          <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
+            자주 묻는 물음
+          </p>
+          <ul className="divide-y" style={{ borderColor: "rgba(201,162,39,0.15)" }}>
+            {WFAQ.map(([q, a]) => (
+              <li key={q} className="py-4" style={{ borderColor: "rgba(201,162,39,0.15)" }}>
+                <p className="mb-1.5 font-myeongjo text-[15px] font-semibold" style={{ color: "#efe6d2" }}>
+                  Q. {q}
+                </p>
+                <p className="text-[13.5px] leading-relaxed" style={{ color: "#cfd0d8" }}>
+                  {a}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   );

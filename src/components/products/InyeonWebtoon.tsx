@@ -86,8 +86,9 @@ function TeaserLock() {
     </div>
   );
   return (
-    <div
-      className="rounded-md p-6"
+    <a
+      href="#start"
+      className="block rounded-md p-6"
       style={{
         background: "linear-gradient(160deg,#171130,#10101f)",
         border: "1px solid rgba(217,199,232,0.28)",
@@ -99,13 +100,13 @@ function TeaserLock() {
           계산은 이미 끝났어요 — 당신 것만 잠겨 있을 뿐이에요
         </p>
         <p className="mt-1 text-[13px]" style={{ color: "#7d8496" }}>
-          생년월일을 넣는 순간 아래 빈칸이 열려요
+          당신 생년월일로 다시 계산해서, 아래 빈칸을 채워드려요
         </p>
       </div>
       <div className="space-y-2.5">
         <Row label="내 인연 그릇" value={<>▓▓점 / 100점</>} />
         <Row label="인연이 들어오는 달" value={<>20▓▓년 ▓월 · ▓월 · ▓월</>} />
-        <Row label="내게 올 사람" value={<>▓▓하게 다가오는 사람 · ▓▓ 쪽</>} />
+        <Row label="내게 올 사람" value={<>▓▓한 사람 · 나이는 ▓▓ 쪽</>} />
         <Row label="마음이 흔들리는 달" value={<>20▓▓년 ▓월</>} />
         <Row label="인연이 가장 크게 바뀌는 해" value={<>▓▓▓▓년(▓▓세)</>} />
       </div>
@@ -117,7 +118,7 @@ function TeaserLock() {
           ⌥ 결제 후 전체가 선명하게 열려요
         </span>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -200,7 +201,7 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
         ))}
       </ul>
       <p className="mt-4 text-center text-[13px]" style={{ color: SUB }}>
-        <b style={{ color: MOON }}>{priceLabel}</b> · 결제 후 몇 분 안에 도착 · 마이페이지에 계속 보관
+        <b style={{ color: MOON }}>{priceLabel}</b> — 점심 한 번 값 · 몇 분 안에 도착 · 마이페이지에 계속 보관
       </p>
     </div>
   );
@@ -349,6 +350,9 @@ export function InyeonStory({
         {/* 목차 카드 — 철학관 가격 앵커 대신 받는 것의 양으로 (페르소나 3/3 거부 반영) */}
         <div className="px-5 pb-4 pt-6">
           <TocCard priceLabel={priceLabel} />
+          <p className="mt-3 text-center text-[12.5px] leading-relaxed" style={{ color: "#7d8496" }}>
+            이번 달이 당신의 &lsquo;열리는 달&rsquo;일 수도 있어요 — 지나간 달은 다음 계산에서 빠져요.
+          </p>
         </div>
 
         {/* 컷3 — 클로징 + CTA */}

@@ -139,7 +139,7 @@ export default async function ProductDetailPage({
         <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>안심하세요</p>
         <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
           <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과지가 제대로 만들어지지 않으면 전액 돌려드려요</li>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>구매 후 7일 안에는 취소하실 수 있어요 (전자상거래법상 청약철회)</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과지를 열기 전이면, 구매 후 7일 안에 취소할 수 있어요</li>
           <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>적어주신 정보는 사주 계산에만 쓰고, 마이페이지에 보관돼요</li>
         </ul>
         <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
@@ -372,7 +372,7 @@ export default async function ProductDetailPage({
             { q: "음력 생일만 알아요.", a: "괜찮습니다. 입력할 때 음력을 고르시면 양력으로 정확히 바꿔서 사주를 세웁니다." },
             { q: "결과는 언제 받나요?", a: "결제 직후 수 분 내로 결과지가 생성되어 바로 확인하실 수 있어요. 마이페이지에도 보관됩니다." },
             { q: "결제는 안전한가요?", a: "토스페이먼츠 안전결제로 진행됩니다. 적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다." },
-            { q: "결과가 기대와 다르면요?", a: "구매 후 7일 안에는 취소하실 수 있습니다(전자상거래법상 청약철회). 결과지가 제대로 만들어지지 않은 것처럼 저희 쪽 문제라면 전액 돌려드립니다. 자세한 기준은 환불 안내를 봐주세요." },
+            { q: "결과가 기대와 다르면요?", a: "결과지를 열기 전이면 구매 후 7일 안에 취소할 수 있습니다. 결과지가 제대로 만들어지지 않은 것처럼 저희 쪽 문제라면 전액 돌려드립니다. 자세한 기준은 환불 안내를 봐주세요." },
             { q: "전부 자동으로 생성되나요?", a: "정통 사주 계산법으로 여덟 글자를 정확히 뽑은 뒤, 그 결과를 바탕으로 풀이를 정리해 드립니다. 같은 생일이라도 시각·성별·고민에 따라 결과가 달라집니다." },
           ].map((f, i) => (
             <li key={i} className="py-4">
