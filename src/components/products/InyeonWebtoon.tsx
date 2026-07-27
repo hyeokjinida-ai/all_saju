@@ -301,7 +301,7 @@ export function InyeonStory({
         </header>
 
         {/* 컷1 — 까치 아씨: 독자의 물음을 받는다 (자기소개 없음 — 페르소나 지적 #18) */}
-        <Cut src={undefined} minH={430} alt="기와 처마 끝에 앉아 정면을 바라보는 까치 아씨">
+        <Cut src="/products/inyeon/i1.webp" width={860} height={1290} alt="기와 처마 끝에 앉아 정면을 바라보는 까치 아씨">
           <Bubble who="까치 아씨">
             &ldquo;좋은 인연이 올 거예요.&rdquo;
             <br />그 말은 다들 하죠. 정작 알고 싶은 건{" "}
@@ -320,7 +320,7 @@ export function InyeonStory({
         </Narration>
 
         {/* 컷2 — 방법: 달력에 붉은 실을 매는 행동(그림=대사) */}
-        <Cut src={undefined} minH={430} alt="한지 달력의 한 칸에 붉은 실로 매듭을 짓는 손">
+        <Cut src="/products/inyeon/i2.webp" width={860} height={1290} alt="한지 달력의 한 칸에 붉은 실로 매듭을 짓는 손">
           <Bubble who="까치 아씨">
             그래서 저는 달력에 붉은 실을 매어 둬요.
             <br />
@@ -356,7 +356,7 @@ export function InyeonStory({
         </div>
 
         {/* 컷3 — 클로징 + CTA */}
-        <Cut src={undefined} minH={470} alt="정면으로 붉은 실 한쪽 끝을 내미는 까치 아씨">
+        <Cut src="/products/inyeon/i3.webp" width={860} height={1290} alt="정면으로 붉은 실 한쪽 끝을 내미는 까치 아씨">
           <div className="absolute inset-x-4 bottom-4">
             <div
               className="relative mb-3 rounded-[5px] px-5 py-4"
