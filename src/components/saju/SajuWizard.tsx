@@ -124,6 +124,7 @@ export function SajuWizard({
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [birthRaw, setBirthRaw] = useState("");
+  const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
   const [form, setForm] = useState<FormState>({
     name: "",
     birthDate: "",
@@ -141,9 +142,10 @@ export function SajuWizard({
       const raw = sessionStorage.getItem(ORDER_DRAFT_KEY);
       if (!raw) return;
       sessionStorage.removeItem(ORDER_DRAFT_KEY);
-      const draft = JSON.parse(raw) as { slug?: string; step?: number; form?: FormState };
+      const draft = JSON.parse(raw) as { slug?: string; step?: number; form?: FormState; guestEmail?: string };
       if (draft?.slug === productSlug && draft.form) {
-        setForm(draft.form);
+        setForm({ ...draft.form, concernText: draft.form.concernText ?? "" });
+        if (draft.guestEmail) setGuestEmail(draft.guestEmail);
         setStep(
           typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), TOTAL - 1) : TOTAL - 1,
         );
@@ -165,11 +167,11 @@ export function SajuWizard({
   // 로그인으로 떠나기 직전, 현재 입력을 세션에 저장해 복귀 후 복원되게 함
   const saveDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify({ slug: productSlug, step, form }));
+      sessionStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify({ slug: productSlug, step, form, guestEmail }));
     } catch {
       /* 저장 실패해도 흐름은 계속 */
     }
-  }, [productSlug, step, form]);
+  }, [productSlug, step, form, guestEmail]);
 
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
@@ -238,11 +240,17 @@ export function SajuWizard({
     };
   }
 
-  // 단일 상품 주문 생성 → 결제
+  const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
+
+  // 단일 상품 주문 생성 → 결제 (회원=계정 수령 / 비회원=이메일 수령)
   async function createOrder() {
     if (!form.birthDate) {
       toast.error("생년월일을 입력해 주세요");
       setStep(1);
+      return;
+    }
+    if (!isLoggedIn && !guestEmailValid) {
+      toast.error("결과 받을 이메일을 입력해 주세요");
       return;
     }
     setSubmitting(true);
@@ -250,7 +258,11 @@ export function SajuWizard({
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, ...payload() }),
+        body: JSON.stringify({
+          productId,
+          ...payload(),
+          email: isLoggedIn ? undefined : guestEmail.trim(),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "주문 생성 실패");
@@ -599,15 +611,54 @@ export function SajuWizard({
               boxShadow: imm ? "0 8px 26px rgba(201,162,39,0.35)" : "0 0 24px rgba(150,90,255,0.3)",
             }}
           >
-            {submitting ? "주문 생성 중…" : imm ? `${formatKRW(price)} 복채 내고 장부 열기` : `${formatKRW(price)} 결제하러 가기`}
+            {submitting
+              ? "주문 생성 중…"
+              : imm
+                ? `${formatKRW(Math.max(0, price - 1900))} 복채 내고 장부 열기`
+                : `${formatKRW(Math.max(0, price - 1900))} 결제하러 가기 (회원 할인 적용)`}
             {!submitting && <span className="font-brush text-xl" style={{ color: imm ? "#241a08" : "var(--wine-deep)" }}>受</span>}
           </button>
         ) : (
           <div className="space-y-2.5">
-            {/* 카카오 원탭 — 마찰 최소화(입력은 저장돼 로그인 후 그대로 복원) */}
+            {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
+            <input
+              className="ap-input text-center"
+              type="email"
+              inputMode="email"
+              placeholder={imm ? "결과 장부 받을 이메일" : "결과 받을 이메일 (예: you@naver.com)"}
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              style={{ fontSize: 15 }}
+            />
+            <button
+              type="button"
+              onClick={createOrder}
+              disabled={submitting || !guestEmailValid}
+              className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.1em] disabled:opacity-45"
+              style={{
+                fontFamily: "'Noto Serif KR', serif",
+                background: imm
+                  ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
+                  : "linear-gradient(180deg,#ffffff,#f1eaff)",
+                color: imm ? "#241a08" : "var(--wine-deep)",
+                boxShadow: imm ? "0 8px 26px rgba(201,162,39,0.35)" : "0 0 24px rgba(150,90,255,0.28)",
+              }}
+            >
+              {submitting
+                ? "주문 생성 중…"
+                : imm
+                  ? `${formatKRW(price)} 복채 내고 장부 열기`
+                  : `${formatKRW(price)} 바로 결제하기`}
+            </button>
+            <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--bone-faint)", fontSize: 11 }}>
+              <span className="h-px flex-1" style={{ background: "currentColor", opacity: 0.25 }} />
+              또는
+              <span className="h-px flex-1" style={{ background: "currentColor", opacity: 0.25 }} />
+            </div>
+            {/* 카카오 로그인 — 실제 서버 할인(−1,900) 넛지 */}
             <KakaoLoginButton
               redirect={`/products/${productSlug}`}
-              label={`카카오로 3초 로그인 후 결제 · ${formatKRW(price)}`}
+              label={`카카오 로그인하면 1,900원 할인 · ${formatKRW(Math.max(0, price - 1900))}`}
               onBeforeRedirect={saveDraft}
             />
             <Link
@@ -618,7 +669,7 @@ export function SajuWizard({
               이메일로 로그인하고 결제하기
             </Link>
             <p className="text-[11px] text-bone-faint text-center">
-              입력하신 내용은 그대로 저장돼요. 로그인 후 바로 이어서 결제합니다.
+              로그인해도 입력하신 내용은 그대로 저장돼요. 결과지는 이메일/마이페이지로 받아요.
             </p>
           </div>
         )}
