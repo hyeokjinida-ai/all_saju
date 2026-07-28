@@ -244,10 +244,10 @@ export function SajuWizard({
     <div
       className={
         imm
-          ? "wizard-immersive relative overflow-hidden rounded-md min-h-[640px] flex flex-col"
+          ? "wizard-immersive relative flex w-full flex-col overflow-hidden"
           : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
       }
-      style={imm ? { border: "1px solid rgba(232,201,106,0.25)", background: "#0a090e" } : undefined}
+      style={imm ? { background: "#0a090e", minHeight: "100svh" } : undefined}
     >
       {imm ? (
         <>
@@ -270,8 +270,8 @@ export function SajuWizard({
         <div className="starfield opacity-30" />
       )}
 
-      {/* 상단: 이전 + 진행률 + N/7 */}
-      <div className="relative z-[2] w-full max-w-[560px] mx-auto px-5 pt-5">
+      {/* 상단: 이전 + 진행률 + N/7 (몰입형은 스테이지 상단 바 아래로 여백 확보) */}
+      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : "pt-5"}`}>
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -311,7 +311,7 @@ export function SajuWizard({
       {/* 중앙: 질문 + 컨트롤 */}
       <div
         key={step}
-        className="svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center"
+        className={`svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center${imm ? " overflow-y-auto" : ""}`}
       >
         <div className="text-center mb-7">
           {!imm && (
@@ -557,6 +557,11 @@ export function SajuWizard({
               입력하신 내용은 그대로 저장돼요. 로그인 후 바로 이어서 결제합니다.
             </p>
           </div>
+        )}
+        {imm && (
+          <p className="mt-3 text-center text-[11px]" style={{ color: "#5b6274" }}>
+            토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
+          </p>
         )}
       </div>
     </div>

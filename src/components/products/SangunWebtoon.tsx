@@ -587,25 +587,20 @@ export function SangunStory({
     );
   }
 
-  // ── 입력 스테이지(풀스크린) — 위아래 크롬 없이 위저드만. 몰입 유지 ──
+  // ── 입력 스테이지 — 씬과 같은 풀블리드(테두리·여백 없음). 상단 바만 오버레이 ──
   if (stage === "input") {
     return (
-      <div className="story-immersive min-h-screen w-full" style={{ background: "#070609" }}>
-        <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col px-4 pb-8 pt-4">
-          <div className="mb-3 flex items-center justify-between">
-            <button type="button" onClick={() => setStage("main")} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
-              ‹ 신당으로
-            </button>
-            <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
-              명운록 · 산군 신점
-            </span>
-            <span aria-hidden className="w-16" />
-          </div>
-          <div className="flex-1">{wizard}</div>
-          <p className="mt-3 text-center text-[11.5px]" style={{ color: "#5b6274" }}>
-            토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
-          </p>
+      <div className="story-immersive relative w-full" style={{ background: "#070609" }}>
+        <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-between px-5 pt-4">
+          <button type="button" onClick={() => setStage("main")} className="px-1 py-1 text-[13px]" style={{ color: "#9aa0b0" }}>
+            ‹ 신당으로
+          </button>
+          <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
+            명운록 · 산군 신점
+          </span>
+          <span aria-hidden className="w-16" />
         </div>
+        {wizard}
       </div>
     );
   }
