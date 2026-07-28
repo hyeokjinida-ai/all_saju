@@ -5,7 +5,15 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const isBare = (p: string) => p === "/" || p.startsWith("/funnel") || p.startsWith("/start") || p.startsWith("/results") || p.startsWith("/checkout");
+const isBare = (p: string) =>
+  p === "/" ||
+  p.startsWith("/funnel") ||
+  p.startsWith("/start") ||
+  p.startsWith("/results") ||
+  p.startsWith("/checkout") ||
+  // 몰입형 웹툰 랜딩 — 자체 배경·자체 푸터를 가지므로 사이트 크롬 제거
+  p === "/products/wealth-saju" ||
+  p === "/products/inyeon-saju";
 
 export function ChromeGate({
   header,

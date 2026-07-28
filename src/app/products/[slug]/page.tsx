@@ -114,13 +114,24 @@ export default async function ProductDetailPage({
     ? `오늘 ${today} 기준 — 2026 남은 흐름을 점검하기 좋은 때입니다`
     : `오늘 ${today} 기준 흐름까지 반영해 풀어드려요`;
 
-  // 입력 위저드 + 안심 + 신뢰 스트립 — 템플릿·웹툰(wealth) 양쪽에서 공유
+  // 입력 위저드 + 안심 + 신뢰 스트립 — 템플릿·웹툰 양쪽 공유.
+  // 웹툰(Story) 페이지에선 보라 템플릿 토큰 대신 먹빛 스킨(상품별 포인트색)으로 톤을 통일한다.
+  const storyAccent = Story ? (product.slug === "inyeon-saju" ? "#d9c7e8" : "#e8c96a") : null;
   const startSection = (
     <section id="start" className="scroll-mt-4">
-      <h2 className="font-myeongjo text-lg font-semibold mb-2 text-gold-bright text-center">지금 바로 시작</h2>
-      <p className="text-sm text-bone-soft mb-3 text-center">한 번에 하나씩, 차근차근 — 2분이면 충분해요.</p>
-      <p className="text-[13px] text-bone-soft mb-4 text-center leading-relaxed">
-        <span className="text-gold-bright">✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;<span className="text-gold-bright">✓</span> 마이페이지에 보관
+      <h2
+        className={`font-myeongjo text-lg font-semibold mb-2 text-center ${storyAccent ? "" : "text-gold-bright"}`}
+        style={storyAccent ? { color: "#efe6d2" } : undefined}
+      >
+        지금 바로 시작
+      </h2>
+      <p className={`text-sm mb-3 text-center ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
+        한 번에 하나씩, 차근차근 — 2분이면 충분해요.
+      </p>
+      <p className={`text-[13px] mb-4 text-center leading-relaxed ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 마이페이지에 보관
       </p>
       <SajuWizard
         productId={product.id}
@@ -131,18 +142,28 @@ export default async function ProductDetailPage({
         initialConcerns={concernPreset ? [concernPreset] : undefined}
       />
 
-      {/* 안심 — 리스크 역전. 다크 앰버 보증 박스로 결제 직전 신뢰 */}
+      {/* 안심 — 리스크 역전. 웹툰에선 먹빛 카드, 템플릿에선 기존 앰버 박스 */}
       <div
         className="mt-6 rounded-md p-5"
-        style={{ background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}
+        style={
+          storyAccent
+            ? { background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }
+            : { background: "rgba(150,90,255,0.06)", border: "1px solid #5A4A2E", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }
+        }
       >
-        <p className="font-brush text-base tracking-[0.2em] mb-3 text-center" style={{ color: "var(--gold-bright)" }}>안심하세요</p>
-        <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: "var(--bone-soft)" }}>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과지가 제대로 만들어지지 않으면 전액 돌려드려요</li>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>결과지를 열기 전이면, 구매 후 7일 안에 취소할 수 있어요</li>
-          <li className="flex gap-2"><span className="shrink-0" style={{ color: "var(--gold-bright)" }}>✓</span>적어주신 정보는 사주 계산에만 쓰고, 마이페이지에 보관돼요</li>
+        <p className="font-myeongjo text-[15px] font-bold tracking-[0.06em] mb-3 text-center" style={{ color: storyAccent ?? "var(--gold-bright)" }}>
+          안심하세요
+        </p>
+        <ul className="space-y-2.5 text-[13px] leading-relaxed" style={{ color: storyAccent ? "#cfd0d8" : "var(--bone-soft)" }}>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: storyAccent ?? "var(--gold-bright)" }}>✓</span>결과지가 제대로 만들어지지 않으면 전액 돌려드려요</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: storyAccent ?? "var(--gold-bright)" }}>✓</span>결과지를 열기 전이면, 구매 후 7일 안에 취소할 수 있어요</li>
+          <li className="flex gap-2"><span className="shrink-0" style={{ color: storyAccent ?? "var(--gold-bright)" }}>✓</span>적어주신 정보는 사주 계산에만 쓰고, 마이페이지에 보관돼요</li>
         </ul>
-        <Link href="/legal/refund-policy" className="mt-3 inline-block text-xs underline underline-offset-2" style={{ color: "var(--gold-soft)" }}>
+        <Link
+          href="/legal/refund-policy"
+          className="mt-3 inline-block text-xs underline underline-offset-2"
+          style={{ color: storyAccent ? "#9aa3b8" : "var(--gold-soft)" }}
+        >
           환불 안내 자세히 →
         </Link>
       </div>

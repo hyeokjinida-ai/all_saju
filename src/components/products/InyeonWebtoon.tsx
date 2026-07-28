@@ -1,3 +1,5 @@
+import { StoryFooter } from "@/components/products/StoryFooter";
+
 // "인연 들어오는 달" 전용 웹툰 랜딩 — 30대 여성 페르소나 3인 검증(22개 지적) 반영판.
 // 1호(WealthStory)와 같은 뼈대이되: 달빛 팔레트 / 한자 배제 / 상태 배지 / 예시 결과지 카드 /
 // 목차 카드(가격 앵커 대체 — 페르소나 3/3이 철학관 비교를 거부) / 상품 전용 FAQ 포함.
@@ -11,12 +13,14 @@ const RED = "#8f2b1e"; // 홍실(포인트·명패)
 const SUB = "#9aa3b8";
 
 // 풀블리드 컷 — src 가 오면 이미지, 없으면 달빛 패널(말풍선이 카피를 다 나른다)
+// priority: 첫 화면 컷은 lazy 대신 즉시 로드(LCP — 웹툰 랜딩의 첫인상이 이미지이므로)
 function Cut({
   src,
   width,
   height,
   alt,
   minH = 430,
+  priority,
   children,
 }: {
   src?: string;
@@ -24,13 +28,22 @@ function Cut({
   height?: number;
   alt?: string;
   minH?: number;
+  priority?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="relative w-full overflow-hidden" style={src ? undefined : { minHeight: minH }}>
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt ?? ""} width={width} height={height} loading="lazy" className="block w-full" />
+        <img
+          src={src}
+          alt={alt ?? ""}
+          width={width}
+          height={height}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          className="block w-full"
+        />
       ) : (
         <div
           className="absolute inset-0"
@@ -80,7 +93,7 @@ function TeaserLock() {
       <span className="shrink-0 text-[14px]" style={{ color: SUB }}>
         {label}
       </span>
-      <span className="text-right font-myeongjo text-[15.5px] font-bold tracking-[0.06em]" style={{ color: MOON }}>
+      <span className="text-right font-myeongjo text-[16.5px] font-bold tracking-[0.06em]" style={{ color: MOON }}>
         {value}
       </span>
     </div>
@@ -88,13 +101,21 @@ function TeaserLock() {
   return (
     <a
       href="#start"
-      className="block rounded-md p-6"
+      className="relative block rounded-md p-6"
       style={{
         background: "linear-gradient(160deg,#171130,#10101f)",
         border: "1px solid rgba(217,199,232,0.28)",
         boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
       }}
     >
+      {/* 緣 낙관 — 봉인된 장부 느낌 */}
+      <span
+        aria-hidden
+        className="absolute -top-3 right-4 flex h-9 w-9 rotate-3 items-center justify-center rounded-[3px] font-myeongjo text-[17px] font-bold"
+        style={{ background: RED, color: "#f3e6cf", boxShadow: "0 6px 16px rgba(0,0,0,0.45)" }}
+      >
+        緣
+      </span>
       <div className="mb-5 text-center">
         <p className="font-myeongjo text-[17px] font-bold" style={{ color: "#efe6d2" }}>
           계산은 이미 끝났어요 — 당신 것만 잠겨 있을 뿐이에요
@@ -112,10 +133,10 @@ function TeaserLock() {
       </div>
       <div className="mt-4 text-center">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-myeongjo text-[12px]"
-          style={{ border: "1px solid rgba(217,199,232,0.4)", color: MOON, background: "rgba(0,0,0,0.3)" }}
+          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-myeongjo text-[12.5px] font-semibold"
+          style={{ background: RED, color: "#f3e6cf", boxShadow: "0 4px 14px rgba(143,43,30,0.4)" }}
         >
-          ⌥ 결제 후 전체가 선명하게 열려요
+          결제 후 전체가 선명하게 열려요
         </span>
       </div>
     </a>
@@ -217,6 +238,23 @@ function Narration({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 붉은 실 디바이저 — 섹션 사이를 실 한 가닥이 이어준다(브랜드 모티프)
+function ThreadDivider() {
+  return (
+    <div aria-hidden className="flex justify-center py-1">
+      <svg width="12" height="64" viewBox="0 0 12 64" fill="none">
+        <path
+          d="M6 0 C 7.8 12, 4.2 20, 6 30 C 7.8 40, 4.2 50, 6 64"
+          stroke="#a63a2b"
+          strokeOpacity="0.75"
+          strokeWidth="1.4"
+        />
+        <circle cx="6" cy="31" r="2.6" fill="#8f2b1e" />
+      </svg>
+    </div>
+  );
+}
+
 const FAQ: [string, string][] = [
   [
     "지금 만나는 사람이 있어요 / 최근에 헤어졌어요. 봐도 되나요?",
@@ -252,13 +290,13 @@ export function InyeonStory({
   children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
 }) {
   return (
-    <div className="min-h-screen w-full" style={{ background: INK_BG }}>
+    <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
-        {/* 헤드 */}
-        <header className="px-6 pb-8 pt-14 text-center">
-          <p className="text-[13px] tracking-[0.4em]" style={{ color: MOON }}>
+        {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
+        <header className="px-6 pb-5 pt-9 text-center">
+          <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: MOON }}>
             명운록 · 인연 들어오는 달
-          </p>
+          </a>
           <h1 className="mt-3 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
             &lsquo;때가 되면 만난다&rsquo;는데
             <br />
@@ -277,31 +315,19 @@ export function InyeonStory({
             &lsquo;곧 온다&rsquo;는 말은 그만 — 인연이 들어오는 달을 콕 집어드려요
           </p>
 
-          {/* 상태 배지 3종 — 어떤 상황이든 손님을 배제하지 않는다(페르소나 지적 #1·#2) */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            {[
-              ["아직 없어요", "아직 만나는 사람이 없어요"],
-              ["만나는 사람이 있어요", "사귀는 사람이 있어요"],
-              ["최근에 끝났어요", "최근에 헤어졌어요"],
-            ].map(([label, c]) => (
-              <a
-                key={label}
-                href={`?c=${encodeURIComponent(c)}#start`}
-                className="rounded-full px-3.5 py-1.5 text-[13px]"
-                style={{ border: "1px solid rgba(217,199,232,0.35)", color: "#cfd0d8" }}
-              >
-                {label}
-              </a>
-            ))}
-          </div>
           <p className="mt-4 text-[12.5px]" style={{ color: "#7d8496" }}>
             사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이에요 · {priceLabel}
           </p>
-          <div className="mx-auto mt-7 h-px w-[46px]" style={{ background: MOON, opacity: 0.5 }} />
         </header>
 
-        {/* 컷1 — 까치 아씨: 독자의 물음을 받는다 (자기소개 없음 — 페르소나 지적 #18) */}
-        <Cut src="/products/inyeon/i1.webp" width={860} height={1290} alt="기와 처마 끝에 앉아 정면을 바라보는 까치 아씨">
+        {/* 컷1 — 까치 아씨: 독자의 물음을 받는다. 첫 화면의 얼굴이므로 즉시 로드 */}
+        <Cut
+          src="/products/inyeon/i1.webp"
+          width={860}
+          height={1290}
+          priority
+          alt="기와 처마 끝에 앉아 정면을 바라보는 까치 아씨"
+        >
           <Bubble who="까치 아씨">
             &ldquo;좋은 인연이 올 거예요.&rdquo;
             <br />그 말은 다들 하죠. 정작 알고 싶은 건{" "}
@@ -312,12 +338,37 @@ export function InyeonStory({
           </Bubble>
         </Cut>
 
+        {/* 상태 배지 3종 — 어떤 상황이든 손님을 배제하지 않는다(페르소나 지적 #1·#2) */}
+        <div className="px-6 pt-7 text-center">
+          <p className="text-[12.5px]" style={{ color: "#7d8496" }}>
+            지금 상황에 제일 가까운 걸 고르면, 거기에 맞춰 풀어드려요
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            {[
+              ["아직 없어요", "아직 만나는 사람이 없어요"],
+              ["만나는 사람이 있어요", "사귀는 사람이 있어요"],
+              ["최근에 끝났어요", "최근에 헤어졌어요"],
+            ].map(([label, c]) => (
+              <a
+                key={label}
+                href={`?c=${encodeURIComponent(c)}#start`}
+                className="rounded-full px-3.5 py-1.5 text-[13px]"
+                style={{ border: "1px solid rgba(217,199,232,0.35)", color: "#cfd0d8", background: "rgba(0,0,0,0.25)" }}
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+
         <Narration>
           사람은 아무 때나 오지 않아요.
           <br />
           <b style={{ color: MOON }}>열리는 달</b>과, <b style={{ color: MOON }}>닫히는 달</b>이 있을
           뿐이에요.
         </Narration>
+
+        <ThreadDivider />
 
         {/* 컷2 — 방법: 달력에 붉은 실을 매는 행동(그림=대사) */}
         <Cut src="/products/inyeon/i2.webp" width={860} height={1290} alt="한지 달력의 한 칸에 붉은 실로 매듭을 짓는 손">
@@ -347,13 +398,17 @@ export function InyeonStory({
           <SampleCard />
         </div>
 
+        <ThreadDivider />
+
         {/* 목차 카드 — 철학관 가격 앵커 대신 받는 것의 양으로 (페르소나 3/3 거부 반영) */}
-        <div className="px-5 pb-4 pt-6">
+        <div className="px-5 pb-4 pt-3">
           <TocCard priceLabel={priceLabel} />
           <p className="mt-3 text-center text-[12.5px] leading-relaxed" style={{ color: "#7d8496" }}>
             이번 달이 당신의 &lsquo;열리는 달&rsquo;일 수도 있어요 — 지나간 달은 다음 계산에서 빠져요.
           </p>
         </div>
+
+        <ThreadDivider />
 
         {/* 컷3 — 클로징 + CTA */}
         <Cut src="/products/inyeon/i3.webp" width={860} height={1290} alt="정면으로 붉은 실 한쪽 끝을 내미는 까치 아씨">
@@ -387,7 +442,7 @@ export function InyeonStory({
                 background: `linear-gradient(135deg,#efe6d2,${MOON} 70%,#b9a6cf)`,
                 boxShadow: "0 8px 26px rgba(217,199,232,0.3), inset 0 1px 0 #fff",
                 color: "#241a33",
-                fontSize: 16.5,
+                fontSize: 17,
               }}
             >
               내 인연 들어오는 달 확인하기
@@ -405,7 +460,7 @@ export function InyeonStory({
         <div className="px-5 pb-6 pt-12">{children}</div>
 
         {/* 상품 전용 FAQ — 1번이 손님을 자르지 않게 순서 설계(페르소나 지적 #3) */}
-        <section className="px-5 pb-16 pt-4">
+        <section className="px-5 pb-10 pt-4">
           <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
             자주 묻는 물음
           </p>
@@ -422,6 +477,8 @@ export function InyeonStory({
             ))}
           </ul>
         </section>
+
+        <StoryFooter />
       </div>
     </div>
   );

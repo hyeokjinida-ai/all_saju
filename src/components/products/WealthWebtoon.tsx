@@ -1,3 +1,5 @@
+import { StoryFooter } from "@/components/products/StoryFooter";
+
 // "돈 들어오는 달" 전용 웹툰 랜딩 v2 — 템플릿 삽입이 아니라 페이지 전체가 웹툰.
 // 킵해둔 샘플(먹빛 풀블리드) 재현: 다크 잉크 배경 + 컷 끝까지 채움 + 글자는 스크림 위 오버레이.
 // 원칙: 컷당 말풍선 1개, 대사 17px+, 보라 템플릿 요소 배제(이 페이지는 자체 배경을 가짐).
@@ -7,24 +9,34 @@ const SCRIM =
   "linear-gradient(180deg, rgba(7,6,15,0.30) 0%, rgba(7,6,15,0) 28%, rgba(7,6,15,0) 52%, rgba(7,6,15,0.97) 100%)";
 const POINT = { color: "#a4552c" };
 
-// 풀블리드 컷 — 테두리·라운드 없이 화면을 가로로 꽉 채운다.
+// 풀블리드 컷 — 테두리·라운드 없이 화면을 가로로 꽉 채운다. priority=첫 컷 즉시 로드(LCP)
 function Cut({
   src,
   width,
   height,
   alt,
+  priority,
   children,
 }: {
   src: string;
   width: number;
   height: number;
   alt: string;
+  priority?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="relative w-full overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} width={width} height={height} loading="lazy" className="block w-full" />
+      <img
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : undefined}
+        className="block w-full"
+      />
       <div className="pointer-events-none absolute inset-0" style={{ background: SCRIM }} />
       {children}
     </div>
@@ -183,13 +195,13 @@ export function WealthStory({
   children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
 }) {
   return (
-    <div className="min-h-screen w-full" style={{ background: INK_BG }}>
+    <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
-        {/* 헤드 */}
-        <header className="px-6 pb-10 pt-14 text-center">
-          <p className="text-[13px] tracking-[0.4em]" style={{ color: "#c9a227" }}>
+        {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
+        <header className="px-6 pb-10 pt-10 text-center">
+          <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: "#c9a227" }}>
             財 · 명운록
-          </p>
+          </a>
           <h1 className="mt-3 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
             재물운이 좋다는데
             <br />
@@ -210,8 +222,8 @@ export function WealthStory({
           <div className="mx-auto mt-8 h-px w-[46px]" style={{ background: "#c9a227", opacity: 0.6 }} />
         </header>
 
-        {/* 컷1 — 등장: 독자의 물음을 받는 장면 (서재) */}
-        <Cut src="/products/wealth/cut-study.webp" width={860} height={1290} alt="서재에서 만세력 책을 펴고 정면을 바라보는 금두꺼비 선생">
+        {/* 컷1 — 등장: 독자의 물음을 받는 장면 (서재). 첫 화면이므로 즉시 로드 */}
+        <Cut src="/products/wealth/cut-study.webp" width={860} height={1290} priority alt="서재에서 만세력 책을 펴고 정면을 바라보는 금두꺼비 선생">
           <Bubble who="금두꺼비 선생">
             &ldquo;재물운이 좋으시네요.&rdquo;
             <br />그 말은 다들 하지요. 정작 궁금한 건{" "}
@@ -328,6 +340,8 @@ export function WealthStory({
             ))}
           </ul>
         </section>
+
+        <StoryFooter />
       </div>
     </div>
   );

@@ -490,3 +490,11 @@
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .review-marquee:hover { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .review-marquee { animation: none !important; } }
+
+/* 몰입형 웹툰 랜딩(.story-immersive) — 주입되는 위저드 무대(보라 코스모스)를 먹빛으로 맞춰 이질감 제거 */
+.story-immersive .scene-cosmos {
+  background-color: #10101f;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 28%, rgba(217, 199, 232, 0.13) 0%, transparent 60%),
+    linear-gradient(180deg, #171130, #0b0f1a);
+}
