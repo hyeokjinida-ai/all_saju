@@ -54,11 +54,11 @@ export async function generateMetadata({
   };
 }
 
-// 전용 웹툰 랜딩을 가진 상품 — 나머지는 공용 템플릿
+// 전용 웹툰 랜딩을 가진 상품 — 나머지는 공용 템플릿.
+// 산군은 풀스크린 스테이지 구조(위저드를 스토리 안에서 소유)라 맵이 아닌 전용 분기로 렌더한다.
 const WEBTOON: Record<string, React.ComponentType<{ priceLabel: string; children: React.ReactNode }>> = {
   "wealth-saju": WealthStory,
   "inyeon-saju": InyeonStory,
-  "sangun-sinjeom": SangunStory,
 };
 
 export default async function ProductDetailPage({
@@ -106,9 +106,10 @@ export default async function ProductDetailPage({
   const pitch = PRODUCT_PITCH[product.slug];
   const eyebrow = pitch?.eyebrow ?? `命 · ${product.name}`;
   const headline = pitch?.headline ?? [product.name];
-  // 전용 웹툰 랜딩 상품(돈/인연 들어오는 달)은 템플릿 대신 스토리 컴포넌트로 렌더
+  // 전용 웹툰 랜딩 상품(돈/인연/산군)은 템플릿 대신 스토리 컴포넌트로 렌더
   const Story = WEBTOON[product.slug];
-  const isWealth = !!Story;
+  const isSangunStory = product.slug === "sangun-sinjeom";
+  const isWealth = !!Story || isSangunStory;
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -201,7 +202,24 @@ export default async function ProductDetailPage({
       />
 
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
-      {Story ? (
+      {isSangunStory ? (
+        // 산군: 풀스크린 스테이지(게이트→스토리→입력) — 위저드를 스토리가 소유해 위아래 크롬 없이 몰입 유지
+        <SangunStory
+          priceLabel={formatKRW(product.price)}
+          wizard={
+            <SajuWizard
+              productId={product.id}
+              productSlug={product.slug}
+              productName={product.name}
+              price={product.price}
+              isLoggedIn={!!user}
+              initialConcerns={concernPreset ? [concernPreset] : undefined}
+              variant="immersive"
+              bgImage="/products/sangun/face.webp"
+            />
+          }
+        />
+      ) : Story ? (
         <Story priceLabel={formatKRW(product.price)}>{startSection}</Story>
       ) : (
         <>

@@ -177,7 +177,7 @@ function ThreadDivider() {
 }
 
 // ▓ 장부 티저 — "장부는 이미 읽혔다"
-function LedgerLock() {
+function LedgerLock({ onOpen }: { onOpen: () => void }) {
   const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div
       className="flex items-baseline justify-between gap-3 rounded-[4px] px-4 py-3"
@@ -192,9 +192,10 @@ function LedgerLock() {
     </div>
   );
   return (
-    <a
-      href="#start"
-      className="relative block rounded-md p-6"
+    <button
+      type="button"
+      onClick={onOpen}
+      className="relative block w-full rounded-md p-6 text-left"
       style={{
         background: "linear-gradient(160deg,#1a1410,#12100f)",
         border: "1px solid rgba(201,162,39,0.3)",
@@ -232,7 +233,7 @@ function LedgerLock() {
           결제 후 전체가 열린다
         </span>
       </div>
-    </a>
+    </button>
   );
 }
 
@@ -337,12 +338,12 @@ const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
 
 export function SangunStory({
   priceLabel,
-  children,
+  wizard,
 }: {
   priceLabel: string;
-  children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
+  wizard: React.ReactNode; // 몰입 위저드(immersive SajuWizard) — 입력 스테이지가 풀스크린으로 소유
 }) {
-  const [stage, setStage] = useState<"gate" | "story" | "main">("gate");
+  const [stage, setStage] = useState<"gate" | "story" | "main" | "input">("gate");
   const [scene, setScene] = useState(0);
   const profileRef = useRef<{ job?: string; love?: string }>({});
   const { on, toggle } = useShrineAmbience();
@@ -354,15 +355,26 @@ export function SangunStory({
       /* 저장 실패해도 흐름은 계속 */
     }
   };
-  const toMain = (anchor?: string) => {
+  const toMain = () => {
     saveProfile();
     setStage("main");
-    if (anchor) {
-      setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth" }), 200);
-    } else {
-      setTimeout(() => window.scrollTo(0, 0), 0);
-    }
+    setTimeout(() => window.scrollTo(0, 0), 0);
   };
+  const toInput = () => {
+    saveProfile();
+    setStage("input");
+    setTimeout(() => window.scrollTo(0, 0), 0);
+  };
+
+  // 로그인 왕복 복귀: 위저드 초안이 남아 있으면 게이트·스토리를 다시 태우지 않고 바로 입력 스테이지로
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("myeongunrok:order-wizard-draft");
+      if (raw && (JSON.parse(raw) as { slug?: string })?.slug === "sangun-sinjeom") setStage("input");
+    } catch {
+      /* 무시 */
+    }
+  }, []);
 
   // ── 입장 게이트(MZ무당사주 구조) — 입장 전에는 이것만 보인다 ──
   if (stage === "gate") {
@@ -503,8 +515,8 @@ export function SangunStory({
           </>
         ),
         choices: [
-          { label: "생년월일 알려주기", act: () => toMain("start"), primary: true },
-          { label: "장부에 뭐가 적혔는지 먼저 볼래", act: () => toMain() },
+          { label: "생년월일 알려주기", act: toInput, primary: true },
+          { label: "장부에 뭐가 적혔는지 먼저 볼래", act: toMain },
         ],
       },
     ] as { img: string; video: string; line: React.ReactNode; choices: { label: string; act: () => void; primary?: boolean }[] }[];
@@ -575,6 +587,29 @@ export function SangunStory({
     );
   }
 
+  // ── 입력 스테이지(풀스크린) — 위아래 크롬 없이 위저드만. 몰입 유지 ──
+  if (stage === "input") {
+    return (
+      <div className="story-immersive min-h-screen w-full" style={{ background: "#070609" }}>
+        <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col px-4 pb-8 pt-4">
+          <div className="mb-3 flex items-center justify-between">
+            <button type="button" onClick={() => setStage("main")} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
+              ‹ 신당으로
+            </button>
+            <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
+              명운록 · 산군 신점
+            </span>
+            <span aria-hidden className="w-16" />
+          </div>
+          <div className="flex-1">{wizard}</div>
+          <p className="mt-3 text-center text-[11.5px]" style={{ color: "#5b6274" }}>
+            토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ── 신당 내부(입장 후) ──────────────────────────────────────────
   return (
     <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
@@ -609,7 +644,7 @@ export function SangunStory({
 
         {/* ▓ 장부 티저 */}
         <div className="px-5 pb-2 pt-3">
-          <LedgerLock />
+          <LedgerLock onOpen={toInput} />
           <p className="mt-2 text-center">
             <a href="#sample" className="text-[13px] underline underline-offset-2" style={{ color: SUB }}>
               먼저 예시 결과지를 보겠다 →
@@ -659,9 +694,10 @@ export function SangunStory({
                 열어 보겠느냐.
               </p>
             </div>
-            <a
-              href="#start"
-              className="block rounded-[6px] py-[18px] text-center font-bold tracking-[0.04em]"
+            <button
+              type="button"
+              onClick={toInput}
+              className="block w-full rounded-[6px] py-[18px] text-center font-bold tracking-[0.04em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
                 boxShadow: "0 8px 26px rgba(201,162,39,0.35), inset 0 1px 0 #ffe9a8",
@@ -673,15 +709,12 @@ export function SangunStory({
               <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">
                 {priceLabel} · 2분이면 끝 · 태어난 시각·성별·고민까지 반영
               </span>
-            </a>
+            </button>
             <p className="mt-2 text-center text-[12.5px]" style={{ color: SUB }}>
               결과지가 제대로 만들어지지 않으면 전액 환불해요. 결과지를 열기 전이면 7일 안에 취소돼요.
             </p>
           </div>
         </Cut>
-
-        {/* 입력 위저드(#start)·안심 — 페이지에서 주입 */}
-        <div className="px-5 pb-6 pt-12">{children}</div>
 
         {/* FAQ */}
         <section className="px-5 pb-10 pt-4">
