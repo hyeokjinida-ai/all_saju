@@ -11,6 +11,7 @@ import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
 import { SHOW_SOCIAL_PROOF } from "@/config/site";
 import { WealthStory } from "@/components/products/WealthWebtoon";
 import { InyeonStory } from "@/components/products/InyeonWebtoon";
+import { SangunStory } from "@/components/products/SangunWebtoon";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -57,6 +58,7 @@ export async function generateMetadata({
 const WEBTOON: Record<string, React.ComponentType<{ priceLabel: string; children: React.ReactNode }>> = {
   "wealth-saju": WealthStory,
   "inyeon-saju": InyeonStory,
+  "sangun-sinjeom": SangunStory,
 };
 
 export default async function ProductDetailPage({

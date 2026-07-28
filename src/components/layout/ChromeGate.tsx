@@ -13,7 +13,8 @@ const isBare = (p: string) =>
   p.startsWith("/checkout") ||
   // 몰입형 웹툰 랜딩 — 자체 배경·자체 푸터를 가지므로 사이트 크롬 제거
   p === "/products/wealth-saju" ||
-  p === "/products/inyeon-saju";
+  p === "/products/inyeon-saju" ||
+  p === "/products/sangun-sinjeom";
 
 export function ChromeGate({
   header,
