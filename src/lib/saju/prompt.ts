@@ -316,11 +316,16 @@ export function buildChapterPrompts(input: PromptInput): {
     ? style.title.replace("○○", displayName)
     : style.title.replace("○○님", "당신");
 
-  const hasConcern = input.concerns.length > 0;
+  // "[프로필] 직업: …" 태그는 고민이 아니라 독자 상황 정보 — 스토리 선택지(산군)에서 수집돼 개인화 근거로만 쓴다.
+  const profileTags = input.concerns
+    .filter((c) => c.startsWith("[프로필]"))
+    .map((c) => c.replace("[프로필]", "").trim());
+  const realConcerns = input.concerns.filter((c) => !c.startsWith("[프로필]"));
+  const hasConcern = realConcerns.length > 0;
   const baseInfo = `[기본 정보]
 - 생년월일: ${input.birthDate}${input.timeUnknown ? " (태어난 시각 모름)" : input.birthTime ? ` ${input.birthTime}` : ""}
 - 성별: ${input.gender === "male" ? "남성" : "여성"}
-- 고민 키워드: ${hasConcern ? input.concerns.join(", ") : "(선택 안 함)"}`;
+- 고민 키워드: ${hasConcern ? realConcerns.join(", ") : "(선택 안 함)"}${profileTags.length ? `\n- 독자 상황: ${profileTags.join(" · ")} — 조언을 이 상황에 맞춰 구체화하되, 사주 근거 없이 상황만으로 단정하지 말 것` : ""}`;
 
   // 각 챕터를 독립 호출로. 다른 챕터 제목들을 알려줘 "그건 거기서 다루니 쓰지 마"로 중복/이탈 방지.
   const allTitles = style.outline.map((s, i) => `${i + 1}. ${s.replace(/^★\s*/, "")}`);
@@ -340,7 +345,7 @@ export function buildChapterPrompts(input: PromptInput): {
 
     const concernLine =
       isConcern && hasConcern
-        ? `\n■ 독자가 고른 고민(${input.concerns.join(", ")})을 명식 근거로 정면으로, 올해/시기 조언까지 구체적으로 답하세요.`
+        ? `\n■ 독자가 고른 고민(${realConcerns.join(", ")})을 명식 근거로 정면으로, 올해/시기 조언까지 구체적으로 답하세요.`
         : isConcern
           ? `\n■ 고민을 따로 선택하지 않았으니 "고민이 없다"는 말은 쓰지 말고, 이 명식에서 가장 두드러진 영역(재물/일/관계/건강 중)을 골라 깊게 다루세요.`
           : "";

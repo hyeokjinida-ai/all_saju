@@ -329,6 +329,12 @@ const FAQ: [string, string][] = [
   ],
 ];
 
+// ── 비주얼노벨 스토리(타이트 MZ무당 구조 이식) ─────────────────────
+// 선택지는 장식이 아니라 수집: 직업·연애상태를 스토리 안에서 받아 결과지 개인화([프로필] 태그)에 쓴다.
+const JOB_CHOICES = ["학생이다", "일을 구하는 중이다", "직장에 다닌다", "사업을 한다", "프리랜서다", "잠시 쉬는 중이다"];
+const LOVE_CHOICES = ["솔로다", "연애 중이다", "썸이 있다", "최근에 끝났다", "결혼했다"];
+const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
+
 export function SangunStory({
   priceLabel,
   children,
@@ -336,11 +342,30 @@ export function SangunStory({
   priceLabel: string;
   children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
 }) {
-  const [entered, setEntered] = useState(false);
+  const [stage, setStage] = useState<"gate" | "story" | "main">("gate");
+  const [scene, setScene] = useState(0);
+  const profileRef = useRef<{ job?: string; love?: string }>({});
   const { on, toggle } = useShrineAmbience();
 
+  const saveProfile = () => {
+    try {
+      sessionStorage.setItem(SANGUN_PROFILE_KEY, JSON.stringify(profileRef.current));
+    } catch {
+      /* 저장 실패해도 흐름은 계속 */
+    }
+  };
+  const toMain = (anchor?: string) => {
+    saveProfile();
+    setStage("main");
+    if (anchor) {
+      setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth" }), 200);
+    } else {
+      setTimeout(() => window.scrollTo(0, 0), 0);
+    }
+  };
+
   // ── 입장 게이트(MZ무당사주 구조) — 입장 전에는 이것만 보인다 ──
-  if (!entered) {
+  if (stage === "gate") {
     return (
       <div className="story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
         <BgMedia
@@ -393,7 +418,7 @@ export function SangunStory({
             </button>
             <button
               type="button"
-              onClick={() => setEntered(true)}
+              onClick={() => setStage("story")}
               className="block w-full rounded-[6px] py-4 text-center font-bold tracking-[0.04em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
@@ -408,6 +433,142 @@ export function SangunStory({
             <p className="mt-3 text-[12px]" style={{ color: "#6f7686" }}>
               사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이다
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 스토리(비주얼노벨) — 4씬: 대면 → 직업 → 연애상태 → 생년월일 진입 ──
+  if (stage === "story") {
+    const scenes = [
+      {
+        img: "/products/sangun/altar.webp",
+        video: "/products/sangun/altar.mp4",
+        line: (
+          <>
+            …왔느냐.
+            <br />
+            산군께서 <em className="not-italic" style={P}>네 장부</em>를 먼저 보셨다.
+          </>
+        ),
+        choices: [
+          { label: "(내 장부…?) 따라 들어간다", act: () => setScene(1) },
+          { label: "무, 무슨 소리예요?", act: () => setScene(1) },
+        ],
+      },
+      {
+        img: "/products/sangun/altar.webp",
+        video: "/products/sangun/altar.mp4",
+        line: (
+          <>
+            겁먹을 것 없다. 묻겠다 —
+            <br />
+            일은 <em className="not-italic" style={P}>무엇을 하는</em> 놈이냐.
+          </>
+        ),
+        choices: JOB_CHOICES.map((j) => ({
+          label: j,
+          act: () => {
+            profileRef.current.job = j;
+            setScene(2);
+          },
+        })),
+      },
+      {
+        img: "/products/sangun/face.webp",
+        video: "/products/sangun/face.mp4",
+        line: (
+          <>
+            그렇군.
+            <br />
+            연애는… <em className="not-italic" style={P}>하고 있느냐.</em>
+          </>
+        ),
+        choices: LOVE_CHOICES.map((l) => ({
+          label: l,
+          act: () => {
+            profileRef.current.love = l;
+            setScene(3);
+          },
+        })),
+      },
+      {
+        img: "/products/sangun/face.webp",
+        video: "/products/sangun/face.mp4",
+        line: (
+          <>
+            됐다. 장부를 펴려면
+            <br />네 <em className="not-italic" style={P}>생년월일</em>이 필요하다.
+          </>
+        ),
+        choices: [
+          { label: "생년월일 알려주기", act: () => toMain("start"), primary: true },
+          { label: "장부에 뭐가 적혔는지 먼저 볼래", act: () => toMain() },
+        ],
+      },
+    ] as { img: string; video: string; line: React.ReactNode; choices: { label: string; act: () => void; primary?: boolean }[] }[];
+    const s = scenes[Math.min(scene, scenes.length - 1)];
+
+    return (
+      <div className="story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
+        <BgMedia video={s.video} img={s.img} alt="신당" className="absolute inset-0 h-full w-full object-cover opacity-85" />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(7,6,9,0.55) 0%, rgba(7,6,9,0.15) 40%, rgba(7,6,9,0.94) 100%)" }}
+        />
+        <div key={scene} className="svc-fade relative mx-auto flex min-h-screen w-full max-w-[480px] flex-col justify-between px-5 pb-8 pt-5">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
+              명운록 · 신당
+            </span>
+            <button type="button" onClick={() => toMain()} className="px-2 py-1 text-[12.5px]" style={{ color: "#8b91a3" }}>
+              건너뛰기 &gt;
+            </button>
+          </div>
+
+          <div>
+            <div
+              className="relative mb-3 rounded-[5px] px-5 py-4"
+              style={{
+                background: "linear-gradient(180deg,#f3ead6,#e9dec2)",
+                border: "1px solid #c9b98e",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.55)",
+              }}
+            >
+              <span
+                className="absolute -top-3 right-3 rounded-[2px] px-2.5 pb-[3px] pt-1 text-[11px] font-semibold tracking-[0.22em]"
+                style={{ background: RED, color: "#f3e6cf" }}
+              >
+                박수
+              </span>
+              <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">{s.line}</p>
+            </div>
+            <div className="space-y-2">
+              {s.choices.map((c) => (
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={c.act}
+                  className="block w-full rounded-[6px] px-4 py-3.5 text-center text-[15px] font-semibold tracking-[0.02em]"
+                  style={
+                    c.primary
+                      ? {
+                          background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
+                          color: "#241a08",
+                          boxShadow: "0 8px 26px rgba(201,162,39,0.35)",
+                        }
+                      : {
+                          background: "rgba(10,9,14,0.72)",
+                          border: "1px solid rgba(232,201,106,0.38)",
+                          color: "#e9e2cf",
+                        }
+                  }
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

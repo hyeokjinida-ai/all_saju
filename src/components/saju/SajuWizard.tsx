@@ -45,6 +45,15 @@ const CONCERN_BY_SLUG: Record<string, string[]> = {
     "최근에 헤어졌어요",
     "일하느라 연애가 밀려요",
   ],
+  // 산군(신점) — 반말 톤 유지
+  "sangun-sinjeom": [
+    "돈이 궁금하다",
+    "연애·결혼이 궁금하다",
+    "일·이직이 궁금하다",
+    "건강이 걱정된다",
+    "올해 운이 궁금하다",
+    "크게 바뀔 때가 궁금하다",
+  ],
 };
 
 const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = [
@@ -57,7 +66,25 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
   { hanja: "覽", q: "입력하신 정보를 확인해 주세요", help: "" },
 ];
 
+// 산군(신점) 전용 반말 카피 — 단계 구성·인덱스는 공용과 동일(로직 무변경), 말만 갈아끼운다.
+const STEPS_SANGUN: typeof STEPS = [
+  { hanja: "名", q: "네 이름이 무엇이냐", help: "장부에 적을 이름이다 (안 적어도 된다)", optional: true },
+  { hanja: "生", q: "언제 태어났느냐", help: "네 장부를 찾으려면 꼭 필요하다" },
+  { hanja: "時", q: "태어난 시각은 아느냐", help: "알면 더 깊이 본다 — 모르면 모른다 해도 된다" },
+  { hanja: "性", q: "성별은 무엇이냐", help: "기운의 방향이 여기서 갈린다" },
+  { hanja: "曆", q: "양력이냐, 음력이냐", help: "주민등록 생일은 보통 양력이다" },
+  { hanja: "惑", q: "따로 물어보고 싶은 것이 있느냐", help: "고르면 그 물음부터 답해주마 (여러 개도 된다)" },
+  { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
+];
+
+const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
+  "sangun-sinjeom": STEPS_SANGUN,
+};
+
 const TOTAL = STEPS.length;
+
+// 산군 스토리(비주얼노벨)에서 고른 직업·연애상태를 위저드로 넘기는 세션 키
+const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
 
 // 비로그인 → 로그인 왕복 동안 위저드 입력을 보존하는 세션 키 (read-once)
 const ORDER_DRAFT_KEY = "myeongunrok:order-wizard-draft";
@@ -72,6 +99,7 @@ export function SajuWizard({
 }: Props) {
   const router = useRouter();
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
+  const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -152,6 +180,23 @@ export function SajuWizard({
   }, [canNext, next, step]);
 
   function payload() {
+    // 산군: 스토리 선택지(직업·연애상태)를 [프로필] 태그로 실어 결과지 개인화에 쓴다(prompt.ts에서 고민과 분리 처리)
+    let concerns = form.concerns;
+    if (productSlug === "sangun-sinjeom") {
+      try {
+        const raw = sessionStorage.getItem(SANGUN_PROFILE_KEY);
+        if (raw) {
+          const p = JSON.parse(raw) as { job?: string; love?: string };
+          const tags = [
+            p.job ? `[프로필] 직업: ${p.job}` : null,
+            p.love ? `[프로필] 연애상태: ${p.love}` : null,
+          ].filter((t): t is string => !!t);
+          concerns = [...form.concerns, ...tags];
+        }
+      } catch {
+        /* 프로필 없이도 흐름은 계속 */
+      }
+    }
     return {
       name: form.name.trim(),
       birthDate: form.birthDate,
@@ -159,7 +204,7 @@ export function SajuWizard({
       timeUnknown: form.timeUnknown,
       gender: (form.gender || "male") as Gender,
       calendar: (form.calendar || "solar") as Calendar,
-      concerns: form.concerns,
+      concerns,
     };
   }
 
@@ -187,7 +232,7 @@ export function SajuWizard({
     }
   }
 
-  const cur = STEPS[step];
+  const cur = steps[step];
 
   return (
     <div className="scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col">
@@ -206,7 +251,7 @@ export function SajuWizard({
             ‹
           </button>
           <div className="flex items-center gap-[7px]">
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <span
                 key={i}
                 className="h-[7px] rounded-full transition-all duration-300"
