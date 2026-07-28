@@ -20,6 +20,9 @@ type Props = {
   isLoggedIn?: boolean;
   // 랜딩 상태 배지(?c=…) → 고민 프리셀렉트. CONCERN_BY_SLUG 옵션에 있는 값만 반영.
   initialConcerns?: string[];
+  // "immersive": 타이트식 몰입 입력 — 카드 대신 캐릭터 배경 풀블리드 + 금색 톤(산군 전용, 로직 동일)
+  variant?: "immersive";
+  bgImage?: string;
 };
 
 type FormState = {
@@ -96,7 +99,10 @@ export function SajuWizard({
   price,
   isLoggedIn = false,
   initialConcerns,
+  variant,
+  bgImage,
 }: Props) {
+  const imm = variant === "immersive";
   const router = useRouter();
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
@@ -235,8 +241,34 @@ export function SajuWizard({
   const cur = steps[step];
 
   return (
-    <div className="scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col">
-      <div className="starfield opacity-30" />
+    <div
+      className={
+        imm
+          ? "wizard-immersive relative overflow-hidden rounded-md min-h-[640px] flex flex-col"
+          : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
+      }
+      style={imm ? { border: "1px solid rgba(232,201,106,0.25)", background: "#0a090e" } : undefined}
+    >
+      {imm ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage ?? "/products/sangun/face.webp"}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover opacity-70"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(7,6,9,0.74) 0%, rgba(7,6,9,0.35) 36%, rgba(7,6,9,0.92) 74%, rgba(7,6,9,0.97) 100%)",
+            }}
+          />
+        </>
+      ) : (
+        <div className="starfield opacity-30" />
+      )}
 
       {/* 상단: 이전 + 진행률 + N/7 */}
       <div className="relative z-[2] w-full max-w-[560px] mx-auto px-5 pt-5">
@@ -258,7 +290,13 @@ export function SajuWizard({
                 style={{
                   width: i === step ? 22 : 7,
                   background:
-                    i < step ? "var(--gold-soft)" : i === step ? "var(--gold-bright)" : "rgba(150,90,255,0.2)",
+                    i < step
+                      ? "var(--gold-soft)"
+                      : i === step
+                        ? "var(--gold-bright)"
+                        : imm
+                          ? "rgba(232,201,106,0.18)"
+                          : "rgba(150,90,255,0.2)",
                   boxShadow: i === step ? "0 0 8px rgba(232,200,120,0.6)" : "none",
                 }}
               />
@@ -276,9 +314,11 @@ export function SajuWizard({
         className="svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center"
       >
         <div className="text-center mb-7">
-          <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
-            {cur.hanja}
-          </span>
+          {!imm && (
+            <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
+              {cur.hanja}
+            </span>
+          )}
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-snug tracking-[0.03em]">
             {cur.q}
           </p>
@@ -453,9 +493,19 @@ export function SajuWizard({
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.25em] disabled:cursor-default"
               style={{
                 fontFamily: "'Noto Serif KR', serif",
-                background: canNext() ? "linear-gradient(180deg,#ffffff,#f1eaff)" : "rgba(150,90,255,0.15)",
-                color: canNext() ? "var(--wine-deep)" : "var(--bone-faint)",
-                boxShadow: canNext() ? "0 0 24px rgba(150,90,255,0.28)" : "none",
+                background: canNext()
+                  ? imm
+                    ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
+                    : "linear-gradient(180deg,#ffffff,#f1eaff)"
+                  : imm
+                    ? "rgba(232,201,106,0.12)"
+                    : "rgba(150,90,255,0.15)",
+                color: canNext() ? (imm ? "#241a08" : "var(--wine-deep)") : "var(--bone-faint)",
+                boxShadow: canNext()
+                  ? imm
+                    ? "0 8px 26px rgba(201,162,39,0.35)"
+                    : "0 0 24px rgba(150,90,255,0.28)"
+                  : "none",
               }}
             >
               다음
@@ -478,13 +528,15 @@ export function SajuWizard({
             className="w-full min-h-[58px] border-none font-bold text-base tracking-[0.16em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              background: "linear-gradient(180deg,#ffffff,#f1eaff)",
-              color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(150,90,255,0.3)",
+              background: imm
+                ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
+                : "linear-gradient(180deg,#ffffff,#f1eaff)",
+              color: imm ? "#241a08" : "var(--wine-deep)",
+              boxShadow: imm ? "0 8px 26px rgba(201,162,39,0.35)" : "0 0 24px rgba(150,90,255,0.3)",
             }}
           >
-            {submitting ? "주문 생성 중…" : `${formatKRW(price)} 결제하러 가기`}
-            {!submitting && <span className="font-brush text-xl text-wine-deep">受</span>}
+            {submitting ? "주문 생성 중…" : imm ? `${formatKRW(price)} 복채 내고 장부 열기` : `${formatKRW(price)} 결제하러 가기`}
+            {!submitting && <span className="font-brush text-xl" style={{ color: imm ? "#241a08" : "var(--wine-deep)" }}>受</span>}
           </button>
         ) : (
           <div className="space-y-2.5">

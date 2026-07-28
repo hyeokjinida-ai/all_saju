@@ -119,21 +119,22 @@ export default async function ProductDetailPage({
   // 입력 위저드 + 안심 + 신뢰 스트립 — 템플릿·웹툰 양쪽 공유.
   // 웹툰(Story) 페이지에선 보라 템플릿 토큰 대신 먹빛 스킨(상품별 포인트색)으로 톤을 통일한다.
   const storyAccent = Story ? (product.slug === "inyeon-saju" ? "#d9c7e8" : "#e8c96a") : null;
+  const isSangun = product.slug === "sangun-sinjeom";
   const startSection = (
     <section id="start" className="scroll-mt-4">
       <h2
         className={`font-myeongjo text-lg font-semibold mb-2 text-center ${storyAccent ? "" : "text-gold-bright"}`}
         style={storyAccent ? { color: "#efe6d2" } : undefined}
       >
-        지금 바로 시작
+        {isSangun ? "이제 네 차례다" : "지금 바로 시작"}
       </h2>
       <p className={`text-sm mb-3 text-center ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
-        한 번에 하나씩, 차근차근 — 2분이면 충분해요.
+        {isSangun ? "하나씩만 답하거라 — 2분이면 된다." : "한 번에 하나씩, 차근차근 — 2분이면 충분해요."}
       </p>
       <p className={`text-[13px] mb-4 text-center leading-relaxed ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
-        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 태어난 시각 몰라도 돼요&nbsp;&nbsp;
-        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 음력 생일만 알아도 돼요&nbsp;&nbsp;
-        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> 마이페이지에 보관
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "시각을 몰라도 된다" : "태어난 시각 몰라도 돼요"}&nbsp;&nbsp;
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "음력이어도 된다" : "음력 생일만 알아도 돼요"}&nbsp;&nbsp;
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "장부는 마이페이지에 보관된다" : "마이페이지에 보관"}
       </p>
       <SajuWizard
         productId={product.id}
@@ -142,6 +143,8 @@ export default async function ProductDetailPage({
         price={product.price}
         isLoggedIn={!!user}
         initialConcerns={concernPreset ? [concernPreset] : undefined}
+        variant={isSangun ? "immersive" : undefined}
+        bgImage={isSangun ? "/products/sangun/face.webp" : undefined}
       />
 
       {/* 안심 — 리스크 역전. 웹툰에선 먹빛 카드, 템플릿에선 기존 앰버 박스 */}

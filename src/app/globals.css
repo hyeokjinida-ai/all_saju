@@ -498,3 +498,18 @@
     radial-gradient(ellipse 80% 60% at 50% 28%, rgba(217, 199, 232, 0.13) 0%, transparent 60%),
     linear-gradient(180deg, #171130, #0b0f1a);
 }
+
+/* 몰입 위저드(산군) — 카드 부품의 보라 잔재를 먹빛+금으로 통일 */
+.wizard-immersive .ap-input {
+  background: rgba(10, 9, 14, 0.72);
+  border: 1px solid rgba(232, 201, 106, 0.38);
+  color: #f1eef9;
+}
+.wizard-immersive .ap-input:focus {
+  border-color: #e8c96a;
+  box-shadow: 0 0 0 3px rgba(232, 201, 106, 0.15);
+}
+.wizard-immersive select.ap-input option {
+  background: #14120f;
+  color: #f1eef9;
+}
