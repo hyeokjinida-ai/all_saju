@@ -83,29 +83,61 @@ function useShrineAmbience() {
 }
 
 // ── 공용 조각(웹툰 랜딩 문법 재사용) ─────────────────────────────
+// 영상 파일이 도착하면 자동으로 살아나는 미디어 — 파일이 없으면(404) 포스터/이미지로 조용히 폴백.
+// V1~V3(Flow 생성분)을 public/products/sangun/{gate,altar,face}.mp4 로 넣기만 하면 코드 수정 없이 영상화된다.
+function BgMedia({ video, img, alt, className }: { video: string; img: string; alt: string; className: string }) {
+  const [fallback, setFallback] = useState(false);
+  if (fallback) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={img} alt={alt} width={860} height={1471} className={className} />;
+  }
+  return (
+    <video
+      className={className}
+      width={860}
+      height={1471}
+      autoPlay
+      muted
+      loop
+      playsInline
+      poster={img}
+      aria-label={alt}
+      onError={() => setFallback(true)}
+    >
+      <source src={video} type="video/mp4" onError={() => setFallback(true)} />
+    </video>
+  );
+}
+
 function Cut({
   src,
+  videoSrc,
   alt,
   priority,
   children,
 }: {
   src: string;
+  videoSrc?: string;
   alt: string;
   priority?: boolean;
   children?: React.ReactNode;
 }) {
   return (
     <div className="relative w-full overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        width={860}
-        height={1471}
-        loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : undefined}
-        className="block w-full"
-      />
+      {videoSrc ? (
+        <BgMedia video={videoSrc} img={src} alt={alt} className="block w-full" />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          width={860}
+          height={1471}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          className="block w-full"
+        />
+      )}
       <div className="pointer-events-none absolute inset-0" style={{ background: SCRIM }} />
       {children}
     </div>
@@ -311,13 +343,10 @@ export function SangunStory({
   if (!entered) {
     return (
       <div className="story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/products/sangun/gate.webp"
+        <BgMedia
+          video="/products/sangun/gate.mp4"
+          img="/products/sangun/gate.webp"
           alt="신당 문을 여는 박수"
-          width={860}
-          height={1471}
-          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover opacity-80"
         />
         <div
@@ -398,8 +427,8 @@ export function SangunStory({
           </p>
         </header>
 
-        {/* 컷1 — 제단 앞 박수(뒷모습): 대면 */}
-        <Cut src="/products/sangun/altar.webp" alt="촛불 제단 앞에 선 박수의 뒷모습" priority>
+        {/* 컷1 — 제단 앞 박수(뒷모습): 대면. altar.mp4 가 도착하면 자동 영상화 */}
+        <Cut src="/products/sangun/altar.webp" videoSrc="/products/sangun/altar.mp4" alt="촛불 제단 앞에 선 박수의 뒷모습" priority>
           <Bubble who="박수">
             …왔느냐.
             <br />
@@ -444,8 +473,8 @@ export function SangunStory({
 
         <ThreadDivider />
 
-        {/* 컷2 — 갓 그림자 정면 + CTA */}
-        <Cut src="/products/sangun/face.webp" alt="갓 그림자에 얼굴이 가려진 박수의 정면">
+        {/* 컷2 — 갓 그림자 정면 + CTA. face.mp4 가 도착하면 자동 영상화 */}
+        <Cut src="/products/sangun/face.webp" videoSrc="/products/sangun/face.mp4" alt="갓 그림자에 얼굴이 가려진 박수의 정면">
           <div className="absolute inset-x-4 bottom-4">
             <div
               className="relative mb-3 rounded-[5px] px-5 py-4"
