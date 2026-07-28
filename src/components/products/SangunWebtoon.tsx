@@ -331,10 +331,9 @@ const FAQ: [string, string][] = [
 ];
 
 // ── 비주얼노벨 스토리(타이트 MZ무당 구조 이식) ─────────────────────
-// 선택지는 장식이 아니라 수집: 직업·연애상태를 스토리 안에서 받아 결과지 개인화([프로필] 태그)에 쓴다.
-const JOB_CHOICES = ["학생이다", "일을 구하는 중이다", "직장에 다닌다", "사업을 한다", "프리랜서다", "잠시 쉬는 중이다"];
-const LOVE_CHOICES = ["솔로다", "연애 중이다", "썸이 있다", "최근에 끝났다", "결혼했다"];
-const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
+// 선택지는 장식(참여감 전용) — 결제 전에는 아무것도 묻지 않는다(A안 확정 2026-07-28).
+// 이유: 이 카테고리의 구매·후기 엔진은 "안 물었는데 맞혔다"는 소름. 직업·연애 수집은
+// CRM 붙는 날 '결제 후 질문'으로 부활시킨다([프로필] 태그 파이프는 prompt.ts에 유지).
 
 export function SangunStory({
   priceLabel,
@@ -345,23 +344,13 @@ export function SangunStory({
 }) {
   const [stage, setStage] = useState<"gate" | "story" | "main" | "input">("gate");
   const [scene, setScene] = useState(0);
-  const profileRef = useRef<{ job?: string; love?: string }>({});
   const { on, toggle } = useShrineAmbience();
 
-  const saveProfile = () => {
-    try {
-      sessionStorage.setItem(SANGUN_PROFILE_KEY, JSON.stringify(profileRef.current));
-    } catch {
-      /* 저장 실패해도 흐름은 계속 */
-    }
-  };
   const toMain = () => {
-    saveProfile();
     setStage("main");
     setTimeout(() => window.scrollTo(0, 0), 0);
   };
   const toInput = () => {
-    saveProfile();
     setStage("input");
     setTimeout(() => window.scrollTo(0, 0), 0);
   };
@@ -474,36 +463,31 @@ export function SangunStory({
         video: "/products/sangun/altar.mp4",
         line: (
           <>
-            겁먹을 것 없다. 묻겠다 —
+            아무것도 묻지 않으마.
             <br />
-            일은 <em className="not-italic" style={P}>무엇을 하는</em> 놈이냐.
+            장부에 <em className="not-italic" style={P}>이미 다 적혀 있으니.</em>
+            <br />…겁먹었느냐.
           </>
         ),
-        choices: JOB_CHOICES.map((j) => ({
-          label: j,
-          act: () => {
-            profileRef.current.job = j;
-            setScene(2);
-          },
-        })),
+        choices: [
+          { label: "(아니라고 하고 싶다) 아니요", act: () => setScene(2) },
+          { label: "(솔직하게) …조금요", act: () => setScene(2) },
+        ],
       },
       {
         img: "/products/sangun/face.webp",
         video: "/products/sangun/face.mp4",
         line: (
           <>
-            그렇군.
+            산군께서 이미 너를 기다리신다.
             <br />
-            연애는… <em className="not-italic" style={P}>하고 있느냐.</em>
+            들을 <em className="not-italic" style={P}>준비가 되었느냐.</em>
           </>
         ),
-        choices: LOVE_CHOICES.map((l) => ({
-          label: l,
-          act: () => {
-            profileRef.current.love = l;
-            setScene(3);
-          },
-        })),
+        choices: [
+          { label: "듣겠습니다", act: () => setScene(3) },
+          { label: "(침을 꿀꺽 삼킨다)", act: () => setScene(3) },
+        ],
       },
       {
         img: "/products/sangun/face.webp",

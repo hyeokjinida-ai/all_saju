@@ -77,7 +77,7 @@ const STEPS_SANGUN: typeof STEPS = [
   { hanja: "時", q: "태어난 시각은 아느냐", help: "알면 더 깊이 본다 — 모르면 모른다 해도 된다" },
   { hanja: "性", q: "성별은 무엇이냐", help: "기운의 방향이 여기서 갈린다" },
   { hanja: "曆", q: "양력이냐, 음력이냐", help: "주민등록 생일은 보통 양력이다" },
-  { hanja: "惑", q: "따로 물어보고 싶은 것이 있느냐", help: "고르면 그 물음부터 답해주마 (여러 개도 된다)" },
+  { hanja: "惑", q: "따로 물어보고 싶은 것이 있느냐", help: "적으면 그 물음부터 정면으로 답해주마 — 없으면 그냥 다음" },
   { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
 ];
 
@@ -88,7 +88,6 @@ const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
 const TOTAL = STEPS.length;
 
 // 산군 스토리(비주얼노벨)에서 고른 직업·연애상태를 위저드로 넘기는 세션 키
-const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
 
 // 비로그인 → 로그인 왕복 동안 위저드 입력을 보존하는 세션 키 (read-once)
 const ORDER_DRAFT_KEY = "myeongunrok:order-wizard-draft";
@@ -212,23 +211,9 @@ export function SajuWizard({
   }, [canNext, next, step]);
 
   function payload() {
-    // 산군: 스토리 선택지(직업·연애상태)를 [프로필] 태그로 실어 결과지 개인화에 쓴다(prompt.ts에서 고민과 분리 처리)
-    let concerns = form.concernText.trim() ? [...form.concerns, form.concernText.trim()] : form.concerns;
-    if (productSlug === "sangun-sinjeom") {
-      try {
-        const raw = sessionStorage.getItem(SANGUN_PROFILE_KEY);
-        if (raw) {
-          const p = JSON.parse(raw) as { job?: string; love?: string };
-          const tags = [
-            p.job ? `[프로필] 직업: ${p.job}` : null,
-            p.love ? `[프로필] 연애상태: ${p.love}` : null,
-          ].filter((t): t is string => !!t);
-          concerns = [...form.concerns, ...tags];
-        }
-      } catch {
-        /* 프로필 없이도 흐름은 계속 */
-      }
-    }
+    // 결제 전에는 아무것도 캐묻지 않는다(A안) — 직접 적은 물음만 고민으로 합류.
+    // [프로필] 태그 파이프(prompt.ts)는 추후 '결제 후 질문'용으로 유지.
+    const concerns = form.concernText.trim() ? [...form.concerns, form.concernText.trim()] : form.concerns;
     return {
       name: form.name.trim(),
       birthDate: form.birthDate,
@@ -513,28 +498,55 @@ export function SajuWizard({
           </div>
         )}
 
-        {/* STEP 5 — 고민 (칩 + 직접 입력) */}
+        {/* STEP 5 — 고민. 산군(포괄)은 카테고리 칩이 상품과 안 맞아(전 영역을 어차피 다룸) 구체 물음 예시 탭으로 대체 */}
         {step === 5 && (
           <div>
-            <div className="flex flex-wrap gap-2.5 justify-center">
-              {concernOptions.map((c) => {
-                const on = form.concerns.includes(c);
-                return (
-                  <button
-                    type="button"
-                    key={c}
-                    onClick={() => toggleConcern(c)}
-                    className={`px-[18px] py-3 border font-myeongjo text-sm tracking-[0.06em] ${
-                      on
-                        ? "border-gold bg-gold text-wine-deep font-bold"
-                        : "border-gold-line bg-transparent text-bone-soft"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
-            </div>
+            {productSlug === "sangun-sinjeom" ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                {[
+                  "내년에 이직해도 되나",
+                  "지금 만나는 사람과 결혼하게 되나",
+                  "돈은 언제 풀리나",
+                  "사업을 시작해도 되나",
+                ].map((ex) => {
+                  const on = form.concernText === ex;
+                  return (
+                    <button
+                      type="button"
+                      key={ex}
+                      onClick={() => up("concernText", on ? "" : ex)}
+                      className={`border px-3.5 py-2 font-myeongjo text-[12.5px] tracking-[0.02em] ${
+                        on
+                          ? "border-gold bg-gold text-wine-deep font-bold"
+                          : "border-gold-line bg-transparent text-bone-soft"
+                      }`}
+                    >
+                      {ex}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2.5 justify-center">
+                {concernOptions.map((c) => {
+                  const on = form.concerns.includes(c);
+                  return (
+                    <button
+                      type="button"
+                      key={c}
+                      onClick={() => toggleConcern(c)}
+                      className={`px-[18px] py-3 border font-myeongjo text-sm tracking-[0.06em] ${
+                        on
+                          ? "border-gold bg-gold text-wine-deep font-bold"
+                          : "border-gold-line bg-transparent text-bone-soft"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="mt-5">
               <input
                 className="ap-input text-center"
