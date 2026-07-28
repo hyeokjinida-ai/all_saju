@@ -33,6 +33,7 @@ type FormState = {
   gender: Gender | "";
   calendar: Calendar | "";
   concerns: string[];
+  concernText: string; // 직접 입력한 고민 한 줄(칩과 별개, 결과지에 정면 답변)
 };
 
 // 기본 고민 선택지 — 위저드 STEP 惑
@@ -92,6 +93,20 @@ const SANGUN_PROFILE_KEY = "myeongunrok:sangun-profile";
 // 비로그인 → 로그인 왕복 동안 위저드 입력을 보존하는 세션 키 (read-once)
 const ORDER_DRAFT_KEY = "myeongunrok:order-wizard-draft";
 
+// 생년월일 — 네이티브 date 입력은 연도 칸이 6자리까지 먹어 "199406년" 오입력이 남(실측 버그).
+// 퍼널과 같은 숫자 8자리 마스크 방식으로 통일한다: 19940615 → 1994.06.15
+function fmtBirth(digits: string) {
+  const s = digits.slice(0, 8);
+  return [s.slice(0, 4), s.slice(4, 6), s.slice(6, 8)].filter(Boolean).join(".");
+}
+function isValidBirth(d: string) {
+  if (d.length !== 8) return false;
+  const y = +d.slice(0, 4), m = +d.slice(4, 6), day = +d.slice(6, 8);
+  if (y < 1930 || y > new Date().getFullYear() || m < 1 || m > 12 || day < 1 || day > 31) return false;
+  const dt = new Date(y, m - 1, day);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day;
+}
+
 export function SajuWizard({
   productId,
   productSlug,
@@ -108,6 +123,7 @@ export function SajuWizard({
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [birthRaw, setBirthRaw] = useState("");
   const [form, setForm] = useState<FormState>({
     name: "",
     birthDate: "",
@@ -116,6 +132,7 @@ export function SajuWizard({
     gender: "",
     calendar: "",
     concerns: (initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
+    concernText: "",
   });
 
   // 로그인 왕복 후 복귀 시 입력 복원 (read-once: 복원하면 즉시 비움)
@@ -137,6 +154,13 @@ export function SajuWizard({
     // 마운트 시 1회만
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 초안 복원 등으로 birthDate가 밖에서 채워지면 마스크 입력 상태도 따라간다(타이핑 중 빈값일 땐 건드리지 않음)
+  useEffect(() => {
+    const digits = form.birthDate.replace(/-/g, "");
+    if (digits && digits !== birthRaw) setBirthRaw(digits);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.birthDate]);
 
   // 로그인으로 떠나기 직전, 현재 입력을 세션에 저장해 복귀 후 복원되게 함
   const saveDraft = useCallback(() => {
@@ -187,7 +211,7 @@ export function SajuWizard({
 
   function payload() {
     // 산군: 스토리 선택지(직업·연애상태)를 [프로필] 태그로 실어 결과지 개인화에 쓴다(prompt.ts에서 고민과 분리 처리)
-    let concerns = form.concerns;
+    let concerns = form.concernText.trim() ? [...form.concerns, form.concernText.trim()] : form.concerns;
     if (productSlug === "sangun-sinjeom") {
       try {
         const raw = sessionStorage.getItem(SANGUN_PROFILE_KEY);
@@ -340,16 +364,40 @@ export function SajuWizard({
           />
         )}
 
-        {/* STEP 1 — 생년월일 */}
+        {/* STEP 1 — 생년월일 (숫자 8자리 마스크: 19940615 → 1994.06.15) */}
         {step === 1 && (
-          <input
-            autoFocus
-            className="ap-input text-center"
-            type="date"
-            value={form.birthDate}
-            onChange={(e) => up("birthDate", e.target.value)}
-            style={{ fontSize: 18 }}
-          />
+          <div>
+            <input
+              autoFocus
+              className="ap-input text-center"
+              type="text"
+              inputMode="numeric"
+              placeholder="19940615"
+              maxLength={10}
+              value={fmtBirth(birthRaw)}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                setBirthRaw(digits);
+                up(
+                  "birthDate",
+                  digits.length === 8 && isValidBirth(digits)
+                    ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+                    : "",
+                );
+              }}
+              style={{ fontSize: 19, letterSpacing: "0.08em" }}
+            />
+            {birthRaw.length > 0 && birthRaw.length < 8 && (
+              <p className="mt-2 text-center text-[11.5px] text-bone-faint">
+                숫자 여덟 자리(연4 · 월2 · 일2)를 이어서 입력해 주세요
+              </p>
+            )}
+            {birthRaw.length === 8 && !isValidBirth(birthRaw) && (
+              <p className="mt-2 text-center text-[11.5px]" style={{ color: "#ff9a9a" }}>
+                올바른 날짜가 아니에요
+              </p>
+            )}
+          </div>
         )}
 
         {/* STEP 2 — 출생시각 */}
@@ -453,26 +501,42 @@ export function SajuWizard({
           </div>
         )}
 
-        {/* STEP 5 — 고민 */}
+        {/* STEP 5 — 고민 (칩 + 직접 입력) */}
         {step === 5 && (
-          <div className="flex flex-wrap gap-2.5 justify-center">
-            {concernOptions.map((c) => {
-              const on = form.concerns.includes(c);
-              return (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => toggleConcern(c)}
-                  className={`px-[18px] py-3 border font-myeongjo text-sm tracking-[0.06em] ${
-                    on
-                      ? "border-gold bg-gold text-wine-deep font-bold"
-                      : "border-gold-line bg-transparent text-bone-soft"
-                  }`}
-                >
-                  {c}
-                </button>
-              );
-            })}
+          <div>
+            <div className="flex flex-wrap gap-2.5 justify-center">
+              {concernOptions.map((c) => {
+                const on = form.concerns.includes(c);
+                return (
+                  <button
+                    type="button"
+                    key={c}
+                    onClick={() => toggleConcern(c)}
+                    className={`px-[18px] py-3 border font-myeongjo text-sm tracking-[0.06em] ${
+                      on
+                        ? "border-gold bg-gold text-wine-deep font-bold"
+                        : "border-gold-line bg-transparent text-bone-soft"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <input
+                className="ap-input text-center"
+                type="text"
+                maxLength={80}
+                placeholder={imm ? "직접 물어봐도 된다 — 예) 내년에 이직해도 되나" : "직접 적어주셔도 돼요 — 예) 내년에 이직해도 될까요?"}
+                value={form.concernText}
+                onChange={(e) => up("concernText", e.target.value)}
+                style={{ fontSize: 15 }}
+              />
+              <p className="mt-2 text-center text-[11.5px] text-bone-faint">
+                {imm ? "적으면 그 물음부터 정면으로 답해주마" : "적어주시면 그 질문부터 정면으로 답해드려요"}
+              </p>
+            </div>
           </div>
         )}
 
@@ -579,13 +643,14 @@ function ConfirmStep({
   productName: string;
   price: number;
 }) {
+  const concernAll = [...form.concerns, ...(form.concernText.trim() ? [form.concernText.trim()] : [])];
   const rows: [string, string, number][] = [
     ["이름", form.name || "—", 0],
     ["생년월일", form.birthDate || "—", 1],
     ["출생시각", form.timeUnknown ? "시 모름" : form.birthTime || "—", 2],
     ["성별", form.gender === "male" ? "남성" : form.gender === "female" ? "여성" : "—", 3],
     ["달력", form.calendar === "solar" ? "양력" : form.calendar === "lunar" ? "음력" : "—", 4],
-    ["고민", form.concerns.length ? form.concerns.join(" · ") : "—", 5],
+    ["고민", concernAll.length ? concernAll.join(" · ") : "—", 5],
   ];
 
   return (

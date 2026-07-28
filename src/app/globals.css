@@ -513,3 +513,13 @@
   background: #14120f;
   color: #f1eef9;
 }
+
+/* 몰입 위저드 범위 토큰 교정 — 사이트 공용 'gold'는 실제로 라벤더(#c9a8ff)라, 신당 안에서만 진짜 금으로 */
+.wizard-immersive {
+  --gold: #e8c96a;
+  --gold-bright: #f0d98c;
+  --gold-soft: #cdb26a;
+  --gold-pale: rgba(232, 201, 106, 0.14);
+  --gold-line: rgba(232, 201, 106, 0.35);
+  --wine-deep: #241a08;
+}
