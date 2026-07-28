@@ -85,7 +85,19 @@ function useShrineAmbience() {
 // ── 공용 조각(웹툰 랜딩 문법 재사용) ─────────────────────────────
 // 영상 파일이 도착하면 자동으로 살아나는 미디어 — 파일이 없으면(404) 포스터/이미지로 조용히 폴백.
 // V1~V3(Flow 생성분)을 public/products/sangun/{gate,altar,face}.mp4 로 넣기만 하면 코드 수정 없이 영상화된다.
-function BgMedia({ video, img, alt, className }: { video: string; img: string; alt: string; className: string }) {
+function BgMedia({
+  video,
+  img,
+  alt,
+  className,
+  loop = true,
+}: {
+  video: string;
+  img: string;
+  alt: string;
+  className: string;
+  loop?: boolean; // false = 1회 재생 후 마지막 프레임 정지(게이트: 문 통과 → 제단 앞 도착 연출)
+}) {
   const [fallback, setFallback] = useState(false);
   if (fallback) {
     // eslint-disable-next-line @next/next/no-img-element
@@ -98,7 +110,7 @@ function BgMedia({ video, img, alt, className }: { video: string; img: string; a
       height={1471}
       autoPlay
       muted
-      loop
+      loop={loop}
       playsInline
       poster={img}
       aria-label={alt}
@@ -372,8 +384,9 @@ export function SangunStory({
         <BgMedia
           video="/products/sangun/gate.mp4"
           img="/products/sangun/gate.webp"
-          alt="신당 문을 여는 박수"
+          alt="신당 문을 지나 제단 앞으로 들어가는 장면"
           className="absolute inset-0 h-full w-full object-cover opacity-80"
+          loop={false}
         />
         <div
           className="absolute inset-0"
