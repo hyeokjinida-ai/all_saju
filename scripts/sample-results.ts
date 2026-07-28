@@ -35,11 +35,16 @@ type Case = {
 };
 
 const CASES: Case[] = [
-  // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
+  // "산군 신점"(포괄 확장) 검증 — 인연 검증과 같은 명식(캐시 재사용). 예상: 인연 68점·TOP3 2026-12/2027-05/2027-06 인용 일치 + 재물 점수·달 인용 일치
   {
-    slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [33, 34],
+    slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [33, 34, 40, 45],
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
+  // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
+  // {
+  //   slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [33, 34],
+  //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
   // {
   //   slug: "sangun-sinjeom", name: "김영희", concern: "이직", expectAges: [50, 51, 52],
   //   birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
@@ -105,6 +110,13 @@ async function main() {
     if (c.slug === "inyeon-saju") {
       keyFacts = [keyFacts, saju.buildInyeonFactsBlock(analysis, c.birthInfo.gender)].filter(Boolean).join("\n\n");
       console.log("  [인연 확정값]\n" + keyFacts.split("[인연 확정값")[1].slice(0, 700));
+    }
+    // 산군(포괄 확장) — 실제 파이프라인(generate-result)과 동일하게 재물+인연 동시 주입
+    if (c.slug === "sangun-sinjeom") {
+      keyFacts = [keyFacts, saju.buildWealthFactsBlock(analysis), saju.buildInyeonFactsBlock(analysis, c.birthInfo.gender)]
+        .filter(Boolean)
+        .join("\n\n");
+      console.log("  [확정값 주입]\n" + keyFacts.split("[재물 확정값")[1]?.slice(0, 600));
     }
 
     const bi = c.birthInfo;

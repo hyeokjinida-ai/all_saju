@@ -50,13 +50,13 @@ export const productsSeed: ProductSeed[] = [
     display_order: 22,
     is_active: true,
   },
-  // 신점 라인 — 산군(민화 호랑이) 캐릭터, 질문 확답형 (2026-07 신규)
+  // 신점 라인 — 산군(호랑이 신령) 포괄 메인 상품 (2026-07-28 확장: 총운+돈 달·인연 달·바뀌는 해 확언, 테스트가 19,900)
   {
     slug: "sangun-sinjeom",
     name: "산군 신점",
-    description: "묻고 싶은 것에 확답만 드립니다 — 좋은 말로 돌려 말하지 않는 신점 풀이",
-    price: 24900,
-    display_order: 25,
+    description: "산군이 네 운명 장부를 먼저 읽었다 — 타고난 그릇부터 돈 들어오는 달, 인연 오는 달, 인생이 바뀌는 해까지 돌려 말하지 않고 고한다",
+    price: 19900,
+    display_order: 21,
     is_active: true,
   },
   // 고민별 심화 ② 부부·자녀 (연애는 inyeon-saju가 담당 — 카니발 방지로 축소)

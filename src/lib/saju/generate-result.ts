@@ -136,6 +136,12 @@ export async function generateResultForOrder(
       if (product.slug === "inyeon-saju") {
         keyFacts = [keyFacts, buildInyeonFactsBlock(analysis, input.gender)].filter(Boolean).join("\n\n");
       }
+      // "산군 신점"(포괄 확장): 재물+인연 확정값을 함께 주입 — 총운인데 달·해까지 확언하는 차별화
+      if (product.slug === "sangun-sinjeom") {
+        keyFacts = [keyFacts, buildWealthFactsBlock(analysis), buildInyeonFactsBlock(analysis, input.gender)]
+          .filter(Boolean)
+          .join("\n\n");
+      }
     }
   } catch (apiErr) {
     return { ok: false, reason: "manseryeok", detail: apiErr instanceof Error ? apiErr.message : String(apiErr) };
