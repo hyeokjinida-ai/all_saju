@@ -588,14 +588,13 @@ export function SangunStory({
   if (stage === "input") {
     return (
       <div className="story-immersive relative w-full" style={{ background: "#070609" }}>
-        <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-between px-5 pt-4">
-          <button type="button" onClick={() => setStage("main")} className="px-1 py-1 text-[13px]" style={{ color: "#9aa0b0" }}>
-            ‹ 신당으로
-          </button>
+        {/* 상단은 표제만. '신당으로' 되돌아가기 버튼은 제거했다 —
+            누르면 위저드가 언마운트돼 그때까지 입력한 값이 전부 날아갔고(초안 저장은 로그인 경로에만 걸려 있음),
+            바로 아래 위저드 자체 '‹' 와 뒤로가기가 겹쳐 보였다. */}
+        <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-center px-5 pt-4">
           <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
             명운록 · 산군 신점
           </span>
-          <span aria-hidden className="w-16" />
         </div>
         {wizard}
       </div>

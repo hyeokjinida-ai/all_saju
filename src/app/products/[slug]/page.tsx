@@ -430,8 +430,11 @@ export default async function ProductDetailPage({
         </>
       )}
 
-      {/* 모바일 상시 결제바 */}
-      <StickyBuyBar name={product.name} price={product.price} />
+      {/* 모바일 상시 결제바 — 옛 템플릿 상품에만.
+          몰입 랜딩(산군·인연·재물)에는 붙이지 않는다: ①사이트 톤(존댓말 "내 사주 풀이 시작")이
+          캐릭터 반말 위에 겹쳐 다른 상품처럼 보이고 ②가격이 화면에 두 번 뜨며
+          ③위저드 8단계 내내 따라다니다 오탭하면 #start 로 튀어 입력이 날아간다. */}
+      {!isWealth && <StickyBuyBar name={product.name} price={product.price} />}
     </div>
   );
 }
