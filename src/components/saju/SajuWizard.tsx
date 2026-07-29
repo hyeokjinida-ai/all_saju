@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
+import type { SajuTeaser } from "@/lib/saju/teaser";
 
 type Gender = "male" | "female";
 type Calendar = "solar" | "lunar";
@@ -68,6 +69,7 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
   { hanja: "曆", q: "양력인가요, 음력인가요?", help: "주민등록상 생일은 보통 양력입니다" },
   { hanja: "惑", q: "요즘 가장 마음 쓰이는 건?", help: "복수 선택 가능 · 이 흐름을 먼저 살펴드립니다" },
   { hanja: "覽", q: "입력하신 정보를 확인해 주세요", help: "" },
+  { hanja: "兆", q: "겉장만 먼저 펼쳐봤어요", help: "여기까지는 무료예요" },
 ];
 
 // 산군(신점) 전용 반말 카피 — 단계 구성·인덱스는 공용과 동일(로직 무변경), 말만 갈아끼운다.
@@ -79,6 +81,7 @@ const STEPS_SANGUN: typeof STEPS = [
   { hanja: "曆", q: "양력이냐, 음력이냐", help: "주민등록 생일은 보통 양력이다" },
   { hanja: "惑", q: "따로 물어보고 싶은 것이 있느냐", help: "적으면 그 물음부터 정면으로 답해주마 — 없으면 그냥 다음" },
   { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
+  { hanja: "兆", q: "네 장부, 겉장만 펴봤다", help: "여기까지는 값을 안 받는다" },
 ];
 
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
@@ -86,6 +89,8 @@ const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
 };
 
 const TOTAL = STEPS.length;
+const CONFIRM_STEP = 6; // 입력 확인
+const TEASER_STEP = 7;  // 결제 전 무료 티저(개인화) = 결제 화면
 
 // 산군 스토리(비주얼노벨)에서 고른 직업·연애상태를 위저드로 넘기는 세션 키
 
@@ -123,6 +128,8 @@ export function SajuWizard({
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [birthRaw, setBirthRaw] = useState("");
+  const [teaser, setTeaser] = useState<SajuTeaser | null>(null);
+  const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -145,8 +152,9 @@ export function SajuWizard({
       if (draft?.slug === productSlug && draft.form) {
         setForm({ ...draft.form, concernText: draft.form.concernText ?? "" });
         if (draft.guestEmail) setGuestEmail(draft.guestEmail);
+        // 티저 단계는 분석 결과가 있어야 성립 → 복귀는 확인 단계까지만
         setStep(
-          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), TOTAL - 1) : TOTAL - 1,
+          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), CONFIRM_STEP) : CONFIRM_STEP,
         );
       }
     } catch {
@@ -196,9 +204,46 @@ export function SajuWizard({
     return true;
   }, [step, form.birthDate, form.gender, form.calendar]);
 
+  // 확인 → 티저: 만세력 1콜(생일 캐시 공유 — 이 사람이 결제하면 추가 콜 없음)로
+  // 명식 기반 콜드리딩 + "크게 갈리는 해"를 먼저 보여준다. 실패해도 결제는 그대로 진행.
+  const loadTeaser = useCallback(async () => {
+    setTeaserLoading(true);
+    setStep(TEASER_STEP);
+    try {
+      const res = await fetch("/api/saju/chart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          birthDate: form.birthDate,
+          birthTime: form.timeUnknown ? null : form.birthTime || null,
+          timeUnknown: form.timeUnknown,
+          gender: form.gender || "male",
+          calendar: form.calendar || "solar",
+          slug: productSlug,
+          teaser: true,
+        }),
+      });
+      const json = await res.json();
+      if (json?.ok && json.teaser) {
+        setTeaser(json.teaser as SajuTeaser);
+        track("teaser_view", { slug: productSlug });
+      } else {
+        track("teaser_fail", { slug: productSlug, reason: String(json?.reason ?? "no_teaser") });
+      }
+    } catch {
+      track("teaser_fail", { slug: productSlug, reason: "network" });
+    } finally {
+      setTeaserLoading(false);
+    }
+  }, [form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug]);
+
   const next = useCallback(() => {
+    if (step === CONFIRM_STEP) {
+      void loadTeaser();
+      return;
+    }
     setStep((s) => (s < TOTAL - 1 ? s + 1 : s));
-  }, []);
+  }, [step, loadTeaser]);
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
   // Enter 키로 다음
@@ -341,9 +386,9 @@ export function SajuWizard({
             </span>
           )}
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-snug tracking-[0.03em]">
-            {cur.q}
+            {step === TEASER_STEP && teaserLoading ? (imm ? "네 장부를 찾는 중이다" : "명식을 계산하고 있어요") : cur.q}
           </p>
-          {cur.help && (
+          {cur.help && !(step === TEASER_STEP && teaserLoading) && (
             <p className="font-myeongjo mt-3 text-[12.5px] text-bone-soft tracking-[0.04em]">{cur.help}</p>
           )}
         </div>
@@ -568,6 +613,11 @@ export function SajuWizard({
         {step === 6 && (
           <ConfirmStep form={form} onEdit={setStep} productName={productName} price={price} />
         )}
+
+        {/* STEP 7 — 결제 전 개인화 무료 티저 */}
+        {step === TEASER_STEP && (
+          <TeaserStep teaser={teaser} loading={teaserLoading} imm={imm} name={form.name.trim()} />
+        )}
       </div>
 
       {/* 하단 고정 버튼 */}
@@ -577,7 +627,7 @@ export function SajuWizard({
             <button
               type="button"
               onClick={next}
-              disabled={!canNext()}
+              disabled={!canNext() || (step === CONFIRM_STEP && teaserLoading)}
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.25em] disabled:cursor-default"
               style={{
                 fontFamily: "'Noto Serif KR', serif",
@@ -596,7 +646,7 @@ export function SajuWizard({
                   : "none",
               }}
             >
-              다음
+              {step === CONFIRM_STEP ? (imm ? "겉장부터 펴봐라" : "겉장 먼저 보기 (무료)") : "다음"}
             </button>
             {cur.optional && (
               <button
@@ -691,6 +741,91 @@ export function SajuWizard({
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+// 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
+// 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
+function TeaserStep({
+  teaser,
+  loading,
+  imm,
+  name,
+}: {
+  teaser: SajuTeaser | null;
+  loading: boolean;
+  imm: boolean;
+  name: string;
+}) {
+  if (loading) {
+    return (
+      <div className="py-8 text-center">
+        <span className="font-brush animate-pulse block text-[44px] leading-none text-gold-bright">命</span>
+        <p className="font-myeongjo mt-5 text-[13px] text-bone-soft tracking-[0.06em]">
+          {imm ? "만세력에서 네 여덟 글자를 꺼내는 중이다…" : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
+        </p>
+      </div>
+    );
+  }
+
+  if (!teaser) {
+    return (
+      <p className="font-myeongjo py-6 text-center text-[13px] text-bone-soft leading-relaxed">
+        {imm
+          ? "겉장은 지금 펴줄 수 없다. 장부는 그대로 열린다."
+          : "미리보기는 지금 준비하지 못했어요. 결과지는 정상적으로 만들어져요."}
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
+      {name && (
+        <p className="font-myeongjo text-center text-[12px] text-gold-soft tracking-[0.14em]">{name}</p>
+      )}
+
+      {/* 콜드리딩 — 명식에서 나온 문장만 */}
+      <div className={`${name ? "mt-3" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
+        {teaser.coldRead.map((line, i) => (
+          <p key={i} className="font-myeongjo text-[15px] leading-[1.75] text-bone tracking-[0.01em]">
+            {line}
+          </p>
+        ))}
+      </div>
+
+      {/* 크게 갈리는 해 — 연도만 공개 */}
+      {teaser.turningYear && (
+        <div
+          className="mt-4 px-4 py-4 text-center"
+          style={{ background: "rgba(232,201,106,0.07)", border: "1px solid var(--gold-pale)" }}
+        >
+          <p className="font-myeongjo text-[11.5px] text-bone-faint tracking-[0.16em]">
+            {imm ? "장부에 붉게 표시된 해" : "장부에 붉게 표시된 해"}
+          </p>
+          <p className="font-serif mt-1.5 text-[27px] font-bold text-gold-bright leading-none">
+            {teaser.turningYear.year}년
+          </p>
+          <p className="font-myeongjo mt-2 text-[13.5px] text-bone leading-relaxed">{teaser.turningYear.line}</p>
+        </div>
+      )}
+
+      {/* 잠긴 줄 */}
+      <div className="mt-4">
+        {teaser.locked.map((row, i) => (
+          <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
+            <span className="font-myeongjo text-[12.5px] text-bone-soft tracking-[0.04em]">{row.label}</span>
+            <span className="font-mono text-[13px] tracking-[0.1em]" style={{ color: "rgba(232,201,106,0.42)" }}>
+              {row.mask}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <p className="font-myeongjo mt-3.5 text-center text-[11.5px] text-bone-faint tracking-[0.04em]">
+        {teaser.note}
+      </p>
     </div>
   );
 }

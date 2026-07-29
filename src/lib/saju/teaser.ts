@@ -1,0 +1,186 @@
+// =====================================================
+// 결제 전 개인화 무료 티저 ("A안")
+// =====================================================
+// 목적: 결제 직전에 "안 물었는데 맞혔다"를 한 번 만들어준다.
+//  - 콜드리딩 3문장 = 만세력 실측값(일간·신강약·오행 결핍·십성 편중·일지 충)으로만 조립.
+//    LLM 을 쓰지 않는다: 무료 방문자마다 비용/지연/헛소리 리스크를 지지 않기 위함이고,
+//    값 자체가 그 사람 명식에서 나온 거라 "맞혔다" 효과는 그대로 난다.
+//  - 크게 바뀌는 해 = 유료 결과지가 쓰는 computeInyeonFacts 와 **같은 계산**을 인용한다.
+//    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
+import { computeInyeonFacts, type SajuAnalysisResponse } from "./saju-api";
+
+export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
+
+export type SajuTeaser = {
+  voice: TeaserVoice;
+  headline: string;
+  coldRead: string[]; // 3문장
+  turningYear: { year: number; age: number; line: string } | null;
+  locked: { label: string; mask: string }[];
+  note: string;
+};
+
+type Line = { ban: string; jon: string };
+
+const rec = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+const str = (v: unknown): string => (v == null ? "" : String(v));
+const num = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
+
+// 일간은 한글로도 한자로도 올 수 있어 한글 한 글자로 정규화한다.
+const GAN_READ: Record<string, string> = {
+  甲: "갑", 乙: "을", 丙: "병", 丁: "정", 戊: "무",
+  己: "기", 庚: "경", 辛: "신", 壬: "임", 癸: "계",
+};
+
+// ── ① 일간 — 타고난 결 ────────────────────────────────
+const ILGAN_LINE: Record<string, Line> = {
+  갑: { ban: "너는 한번 방향을 정하면 웬만해선 안 꺾는 사람이다.", jon: "한번 방향을 정하면 웬만해선 안 꺾으시는 분이에요." },
+  을: { ban: "너는 어디에 놓여도 결국 적응해내는 사람이다. 대신 굽힌 건 오래 기억한다.", jon: "어디에 놓여도 결국 적응해내시는 분이에요. 대신 굽힌 건 오래 기억하시고요." },
+  병: { ban: "너는 먼저 밝히고 먼저 지치는 사람이다.", jon: "먼저 밝히고 먼저 지치시는 분이에요." },
+  정: { ban: "너는 여럿 앞에선 조용한데, 한 사람 앞에선 다 내주는 사람이다.", jon: "여럿 앞에선 조용한데, 한 사람 앞에선 다 내주시는 분이에요." },
+  무: { ban: "너는 남의 짐까지 받아 안고는 정작 네 얘기는 안 하는 사람이다.", jon: "남의 짐까지 받아 안고는, 정작 본인 얘기는 안 하시는 분이에요." },
+  기: { ban: "너는 다 받아주다가 결국 혼자 뒷정리하는 사람이다.", jon: "다 받아주시다가 결국 혼자 뒷정리하시는 분이에요." },
+  경: { ban: "너는 맺고 끊는 건 확실한데, 그 뒤로 혼자 오래 곱씹는 사람이다.", jon: "맺고 끊는 건 확실한데, 그 뒤로 혼자 오래 곱씹으시는 분이에요." },
+  신: { ban: "너는 겉은 단정한데 속으로 사람을 아주 세밀하게 매기는 사람이다.", jon: "겉은 단정한데 속으로 사람을 아주 세밀하게 보시는 분이에요." },
+  임: { ban: "너는 생각이 늘 몇 수 앞서 나가서, 시작도 전에 먼저 지치는 사람이다.", jon: "생각이 늘 몇 수 앞서 나가서, 시작도 전에 먼저 지치시는 분이에요." },
+  계: { ban: "너는 티 안 내고 다 알아채는 사람이다.", jon: "티 안 내고 다 알아채시는 분이에요." },
+};
+
+// ── ② 신강/신약 — 그래서 어떻게 사는가 ────────────────
+const STRONG_LINE: Line = {
+  ban: "그래서 남한테 기대는 걸 지는 걸로 여긴다. 혼자 감당하다 탈이 난다.",
+  jon: "그래서 남한테 기대는 걸 지는 걸로 여기세요. 혼자 감당하시다 탈이 나고요.",
+};
+const WEAK_LINE: Line = {
+  ban: "그래서 이미 답을 정해놓고도 누가 한 번 확인해주길 기다린다.",
+  jon: "그래서 이미 답을 정해놓고도, 누가 한 번 확인해주길 기다리세요.",
+};
+const MID_LINE: Line = {
+  ban: "그래서 어느 쪽으로도 잘 안 쏠리는데, 그게 스스로는 답답하다.",
+  jon: "그래서 어느 쪽으로도 잘 안 쏠리는데, 그게 스스로는 답답하시죠.",
+};
+
+// ── ③ 콕 집는 한 줄 — 우선순위대로 하나만 고른다 ───────
+const HURT_LINE: Line = {
+  ban: "제일 가까운 사람한테서 제일 크게 흔들린다. 밖에선 티도 안 낸다.",
+  jon: "제일 가까운 사람한테서 제일 크게 흔들리세요. 밖에선 티도 안 내시고요.",
+};
+const MISSING_LINE: Record<string, Line> = {
+  수: { ban: "머리를 식힐 데가 없어서 밤에 생각이 길어진다.", jon: "머리를 식힐 데가 없어서 밤에 생각이 길어지세요." },
+  화: { ban: "속으로는 다 정해놓고, 말로 꺼내는 데서 늘 손해를 본다.", jon: "속으로는 다 정해놓고, 말로 꺼내는 데서 늘 손해를 보세요." },
+  목: { ban: "새로 시작하는 일 앞에서 유독 오래 뜸을 들인다.", jon: "새로 시작하는 일 앞에서 유독 오래 뜸을 들이세요." },
+  금: { ban: "끊어야 할 사람을 못 끊고 몇 년을 끌고 간다.", jon: "끊어야 할 사람을 못 끊고 몇 년을 끌고 가세요." },
+  토: { ban: "마음 붙일 자리가 자주 바뀐다. 한곳에 오래 못 앉는다.", jon: "마음 붙일 자리가 자주 바뀌세요. 한곳에 오래 못 앉으시고요." },
+};
+const SIPSEONG_LINE: Record<string, Line> = {
+  gwanseong: { ban: "책임이 자꾸 너한테만 몰린다. 네가 거절을 못 해서 그렇다.", jon: "책임이 자꾸 본인한테만 몰려요. 거절을 못 하셔서 그래요." },
+  jaeseongZero: { ban: "돈이 안 들어오는 게 아니라, 새는 자리가 안 보이는 것이다.", jon: "돈이 안 들어오는 게 아니라, 새는 자리가 안 보이는 거예요." },
+  siksang: { ban: "할 말을 참은 날은 그날 밤 잠이 잘 안 온다.", jon: "할 말을 참으신 날은 그날 밤 잠이 잘 안 오시죠." },
+  inseong: { ban: "결심까지가 길다. 머릿속에서 이미 다 끝내버린다.", jon: "결심까지가 길어요. 머릿속에서 이미 다 끝내버리시고요." },
+  bigyeop: { ban: "사람은 늘 곁에 있는데, 정작 손 벌릴 사람은 없다.", jon: "사람은 늘 곁에 있는데, 정작 손 벌릴 사람은 없으시죠." },
+};
+const DOHWA_LINE: Line = {
+  ban: "먼저 다가오는 사람은 있는데, 정작 네가 원하는 쪽은 아니다.",
+  jon: "먼저 다가오는 사람은 있는데, 정작 원하시는 쪽은 아니에요.",
+};
+const PLAIN_LINE: Line = {
+  ban: "겉이 무던해 보여서, 사람들이 네 속을 자주 오해한다.",
+  jon: "겉이 무던해 보여서, 사람들이 속을 자주 오해해요.",
+};
+
+const pick = (l: Line, v: TeaserVoice) => (v === "sangun" ? l.ban : l.jon);
+
+export function buildTeaser(
+  analysis: SajuAnalysisResponse,
+  gender: "male" | "female",
+  voice: TeaserVoice,
+): SajuTeaser | null {
+  const day = rec(rec(analysis.ganji).day);
+  const ganRaw = str(day.gan).trim();
+  if (!ganRaw) return null; // 명식이 없으면 티저 자체를 만들지 않는다(가짜 문장 금지)
+  const gan = GAN_READ[ganRaw] ?? ganRaw.slice(0, 1);
+
+  const coldRead: string[] = [];
+
+  // ① 일간
+  const l1 = ILGAN_LINE[gan];
+  if (l1) coldRead.push(pick(l1, voice));
+
+  // ② 신강/신약 (7단계 → 강/중/약)
+  // 실측 값: 태왕 · 신강 · 중강 · 중화 · 중약 · 신약 · 태약 — "태왕"은 강 계열인데 '강'자가 없어
+  // /강/ 만 보면 중간 문장으로 잘못 떨어진다(실측 버그). 약을 먼저 걸러내고 강·왕을 함께 본다.
+  const strength = str(rec(analysis.sinStrength).strength);
+  if (strength) {
+    const l2 = /약/.test(strength) ? WEAK_LINE : /강|왕/.test(strength) ? STRONG_LINE : MID_LINE;
+    coldRead.push(pick(l2, voice));
+  }
+
+  // ③ 콕 집는 한 줄 — 흔들림 > 없는 오행 > 십성 편중 > 도화 > 기본
+  const facts = computeInyeonFacts(analysis, gender);
+  const oc = rec(rec(rec(rec(analysis.sipseong).cheonganHap).ohaengImpact).originalCount);
+  const missing = ["수", "화", "목", "금", "토"].filter((k) => Object.keys(oc).length && !num(oc[k]));
+  const sum = rec(rec(analysis.sipseong).summary);
+
+  let l3: Line;
+  if (facts.iljiHurt) l3 = HURT_LINE;
+  else if (missing.length && MISSING_LINE[missing[0]]) l3 = MISSING_LINE[missing[0]];
+  else if (num(sum.gwanseong) >= 3) l3 = SIPSEONG_LINE.gwanseong;
+  else if (num(sum.jaeseong) === 0) l3 = SIPSEONG_LINE.jaeseongZero;
+  else if (num(sum.siksang) >= 3) l3 = SIPSEONG_LINE.siksang;
+  else if (num(sum.inseong) >= 3) l3 = SIPSEONG_LINE.inseong;
+  else if (num(sum.bigyeop) >= 3) l3 = SIPSEONG_LINE.bigyeop;
+  else if (facts.dohwaCount > 0) l3 = DOHWA_LINE;
+  else l3 = PLAIN_LINE;
+  coldRead.push(pick(l3, voice));
+
+  // ④ 크게 바뀌는 해 — 유료 결과지와 같은 값(연도·나이만 공개, 무슨 일인지는 잠근다)
+  const ty = facts.topYears[0];
+  // 후보를 5년 창으로 좁힌 뒤로는 올해가 뽑히는 경우가 흔하다 → 그때는 미래형이 어색하니 "올해"로 쓴다.
+  const baseYear = num(rec(rec(analysis.seun).currentSeun).year);
+  const isThisYear = !!ty && ty.year === baseYear;
+  const turningYear =
+    ty && ty.year
+      ? {
+          year: ty.year,
+          age: ty.age,
+          line:
+            voice === "sangun"
+              ? isThisYear
+                ? `바로 올해다. ${ty.year}년, ${ty.age}세에 한 번 크게 갈린다.`
+                : `너는 ${ty.year}년, ${ty.age}세에 한 번 크게 갈린다.`
+              : isThisYear
+                ? `바로 올해예요. ${ty.year}년, ${ty.age}세에 한 번 크게 갈리세요.`
+                : `${ty.year}년, ${ty.age}세에 한 번 크게 갈리세요.`,
+        }
+      : null;
+
+  const locked =
+    voice === "sangun"
+      ? [
+          { label: "그해에 무엇이 갈리는지", mask: "▓▓▓▓▓▓▓▓▓▓" },
+          { label: "돈이 들어오는 달", mask: "▓▓년 ▓▓월" },
+          { label: "인연이 들어오는 달", mask: "▓▓년 ▓▓월" },
+          { label: "조심해야 할 달", mask: "▓▓년 ▓▓월" },
+          { label: "네가 물은 것에 대한 답", mask: "▓▓▓▓▓▓▓▓" },
+        ]
+      : [
+          { label: "그해에 무엇이 달라지는지", mask: "▓▓▓▓▓▓▓▓▓▓" },
+          { label: "돈이 들어오는 달", mask: "▓▓년 ▓▓월" },
+          { label: "인연이 들어오는 달", mask: "▓▓년 ▓▓월" },
+          { label: "조심해야 할 달", mask: "▓▓년 ▓▓월" },
+          { label: "적어주신 물음에 대한 답", mask: "▓▓▓▓▓▓▓▓" },
+        ];
+
+  return {
+    voice,
+    headline: voice === "sangun" ? "네 장부, 겉장만 펴봤다" : "겉장만 먼저 펼쳐봤어요",
+    coldRead,
+    turningYear,
+    locked,
+    note:
+      voice === "sangun"
+        ? "여기까지는 값을 안 받는다. 나머지는 장부를 열어야 나온다."
+        : "여기까지는 무료로 보여드려요. 나머지는 결과지에 담겨요.",
+  };
+}

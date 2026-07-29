@@ -81,6 +81,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { label: "양/음력", n: stepSessions(5) },
     { label: "고민 선택", n: stepSessions(6) },
     { label: "입력 확인", n: stepSessions(7) },
+    { label: "무료 티저", n: stepSessions(8) }, // 결제 직전 개인화 티저 — 여기서 빠지면 티저가 안 먹힌 것
     { label: "결제 시작", n: checkoutSet.size },
     { label: "결제 완료", n: purchaseSet.size },
   ];

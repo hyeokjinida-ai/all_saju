@@ -446,13 +446,47 @@ function jijiRel(a: string, b: string): { score: number; tag: string } | null {
   return null;
 }
 
+// "크게 바뀌는 해"를 고를 때 보는 창(올해 포함 N년). 멀면 팔리지 않고, 너무 좁으면 고를 게 없다.
+const NEAR_YEARS = 5;
+
 // 12운성 이름 → 활력 순위(레벨 필드가 없을 때 폴백)
 const FORTUNE_RANK: Record<string, number> = { 장생: 10, 목욕: 6, 관대: 9, 건록: 11, 제왕: 12, 쇠: 5, 병: 3, 사: 2, 묘: 1, 절: 1, 태: 4, 양: 7 };
 
-export function buildInyeonFactsBlock(
+// 인연 확정값의 "계산" 부분 — 문자열 조립과 분리해서 무료 티저도 같은 값을 쓰게 한다.
+// (티저에서 "2029년에 크게 바뀐다" 라고 해놓고 결제 후 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝난다.)
+export type InyeonRow = {
+  label: string;
+  year: number;
+  month: number;
+  age: number;
+  score: number;
+  tags: string[];
+  verdict: string;
+};
+export type InyeonFacts = {
+  score: number;
+  spouseCount: number;
+  dohwaCount: number;
+  hongyeomCount: number;
+  hasCheoneul: boolean;
+  hasGeumyeo: boolean;
+  ilji: string;
+  iljiFortune: string;
+  iljiLevel: number;
+  iljiHurt: boolean;
+  yongOh: string;
+  heeOh: string;
+  meetHint: string;
+  ageDir: string;
+  top3: InyeonRow[];
+  shaky: InyeonRow[];
+  topYears: InyeonRow[];
+};
+
+export function computeInyeonFacts(
   analysis: SajuAnalysisResponse,
   gender: "male" | "female",
-): string {
+): InyeonFacts {
   const rec = (v: unknown): Record<string, unknown> =>
     v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
   const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
@@ -501,7 +535,7 @@ export function buildInyeonFactsBlock(
   );
 
   // ③ 달·해 공용 인연 점수
-  type Row = { label: string; year: number; month: number; score: number; tags: string[]; verdict: string };
+  type Row = InyeonRow;
   const rowOf = (o: Record<string, unknown>, labelKey: "monthLabel" | "year"): Row | null => {
     const label = labelKey === "monthLabel" ? s(o.monthLabel) : o.year != null ? `${s(o.year)}년(${s(o.age)}세)` : "";
     if (!label) return null;
@@ -521,7 +555,7 @@ export function buildInyeonFactsBlock(
     if (hongyeomJi.has(s(o.ji))) { sc += 7; tags.push("매력이 짙어짐"); }
     if (cheoneulJi.has(s(o.ji))) { sc += 6; tags.push("귀인이 다리를 놓음"); }
     if (tags.length === 0 && verdict) tags.push(`전체 흐름이 ${verdict}`);
-    return { label, year: n(o.year), month: n(o.month), score: sc, tags, verdict };
+    return { label, year: n(o.year), month: n(o.month), age: n(o.age), score: sc, tags, verdict };
   };
 
   // ④ 인연이 들어오는 달 TOP3 (과거 제외, 대흉 제외 — 부족하면 게이트 해제)
@@ -561,7 +595,12 @@ export function buildInyeonFactsBlock(
   }
   let yearPool = yearRows.filter((r) => r.verdict !== "대흉");
   if (yearPool.length < 2) yearPool = yearRows;
-  const topYears = [...yearPool].sort(byScore).slice(0, 2);
+  // 후보를 올해 포함 5년으로 좁힌다 — 세운 전체(10년+)에서 최고점만 뽑으면 30대 고객에게
+  // "11년 뒤에 갈린다"가 나와 상품이 안 팔린다(실측: 4명 중 2명이 11년 뒤). 기준연도는
+  // currentSeun.year 를 쓴다(Date 미사용 → 같은 명식이면 항상 같은 값).
+  const baseYear = n(rec(se.currentSeun).year);
+  const nearPool = baseYear ? yearPool.filter((r) => r.year >= baseYear && r.year < baseYear + NEAR_YEARS) : [];
+  const topYears = [...(nearPool.length >= 2 ? nearPool : yearPool)].sort(byScore).slice(0, 2);
 
   // ⑦ 나이대 방향 — 반드시 한쪽으로만
   const sipArr = arr(rec(analysis.sipseong).sipseongs);
@@ -580,19 +619,46 @@ export function buildInyeonFactsBlock(
   const heeOh = s(gg.희신오행);
   const meetHint = s(dohwaArr[0]?.meaning).split(". ").slice(0, 2).join(". ");
 
+  return {
+    score,
+    spouseCount,
+    dohwaCount: dohwaJi.size,
+    hongyeomCount: hongyeomJi.size,
+    hasCheoneul,
+    hasGeumyeo,
+    ilji,
+    iljiFortune: s(iljuF?.fortune),
+    iljiLevel,
+    iljiHurt,
+    yongOh,
+    heeOh,
+    meetHint,
+    ageDir,
+    top3,
+    shaky,
+    topYears,
+  };
+}
+
+export function buildInyeonFactsBlock(
+  analysis: SajuAnalysisResponse,
+  gender: "male" | "female",
+): string {
+  const f = computeInyeonFacts(analysis, gender);
+
   // ⑨ 출력
-  const fmt = (r: Row) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
+  const fmt = (r: InyeonRow) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
   const lines = [
-    `- 인연 그릇 점수: ${score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
-    `- 계산 근거: 짝을 뜻하는 자리 ${spouseCount}개 · 눈에 띄는 신호 ${dohwaJi.size ? "도화 있음" : "도화 없음"}${hongyeomJi.size ? "·홍염 있음" : ""} · 배우자 자리 활력 ${iljiLevel}/12${iljuHurtNote(iljiHurt)}`,
-    `- 타고난 끌림 신호: ${[dohwaJi.size ? `도화 ${dohwaJi.size}개` : "", hongyeomJi.size ? `홍염 ${hongyeomJi.size}개` : "", hasCheoneul ? "천을귀인" : "", hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
-    `- 배우자 자리(일지): ${ilji}${iljuF ? ` · 활력 ${s(iljuF.fortune)}(${iljiLevel}/12)` : ""}${iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
-    `- 만날 사람의 결: ${yongOh || "미상"}${heeOh ? ` · 도움이 되는 결 ${heeOh}` : ""}`,
-    meetHint ? `- 만나는 길 힌트: ${meetHint}` : "",
-    `- 나이대: ${ageDir} — 이 한쪽으로만 쓸 것`,
-    `- 인연이 들어오는 달 TOP3: ${top3.map(fmt).join(", ")}`,
-    shaky.length ? `- 마음이 흔들리는 달: ${shaky.map(fmt).join(", ")}` : "",
-    topYears.length ? `- 인연이 가장 크게 바뀌는 해: ${topYears.map(fmt).join(" / 그다음 ")}` : "",
+    `- 인연 그릇 점수: ${f.score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
+    `- 계산 근거: 짝을 뜻하는 자리 ${f.spouseCount}개 · 눈에 띄는 신호 ${f.dohwaCount ? "도화 있음" : "도화 없음"}${f.hongyeomCount ? "·홍염 있음" : ""} · 배우자 자리 활력 ${f.iljiLevel}/12${iljuHurtNote(f.iljiHurt)}`,
+    `- 타고난 끌림 신호: ${[f.dohwaCount ? `도화 ${f.dohwaCount}개` : "", f.hongyeomCount ? `홍염 ${f.hongyeomCount}개` : "", f.hasCheoneul ? "천을귀인" : "", f.hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
+    `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}(${f.iljiLevel}/12)` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
+    `- 만날 사람의 결: ${f.yongOh || "미상"}${f.heeOh ? ` · 도움이 되는 결 ${f.heeOh}` : ""}`,
+    f.meetHint ? `- 만나는 길 힌트: ${f.meetHint}` : "",
+    `- 나이대: ${f.ageDir} — 이 한쪽으로만 쓸 것`,
+    `- 인연이 들어오는 달 TOP3: ${f.top3.map(fmt).join(", ")}`,
+    f.shaky.length ? `- 마음이 흔들리는 달: ${f.shaky.map(fmt).join(", ")}` : "",
+    f.topYears.length ? `- 인연이 가장 크게 바뀌는 해: ${f.topYears.map(fmt).join(" / 그다음 ")}` : "",
   ].filter(Boolean);
 
   return `[인연 확정값 — 점수와 달·해·나이대는 아래 값을 그대로 인용할 것. 다른 값을 지어내지 말 것]\n${lines.join("\n")}`;

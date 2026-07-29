@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { isSajuApiConfigured, fetchSajuAnalysis, ganjiToMyeongsik, type BirthInfo, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
 import { buildResultView, type ResultView } from "@/lib/saju/result-view";
+import { buildTeaser } from "@/lib/saju/teaser";
 import { publicEnv } from "@/lib/env";
 
 // 무료 분석(⑥)용 — 명식 + 오행 + 영역별 점수까지(LLM 없이). 결제 후 상세 풀이는 별도.
@@ -17,6 +18,9 @@ const schema = z.object({
   calendar: z.enum(["solar", "lunar"]),
   nickname: z.string().max(30).optional(),
   concerns: z.array(z.string().max(500)).max(20).optional(),
+  // 결제 전 티저를 함께 받을 때만 — 상품 슬러그로 말투(산군=반말)를 정한다.
+  slug: z.string().max(60).optional(),
+  teaser: z.boolean().optional(),
 });
 
 // 만세력 분석은 생년월일 기준으로만 캐시(닉네임/고민은 분석 호출과 무관 → 뷰만 매번 재조립)
@@ -102,7 +106,16 @@ export async function POST(request: NextRequest) {
       showScores: true,
       showDaeun: false, // 무료에선 대운 잠금
     });
-    return NextResponse.json({ ok: true, view });
+    // 결제 전 티저(요청 시에만) — LLM 없이 만세력 실측값으로만 조립. 실패해도 view 는 그대로 준다.
+    let teaser = null;
+    if (body.teaser) {
+      try {
+        teaser = buildTeaser(analysis, body.gender, body.slug === "sangun-sinjeom" ? "sangun" : "polite");
+      } catch {
+        teaser = null; // 티저는 부가물 — 실패해도 명식/결제 흐름을 막지 않는다
+      }
+    }
+    return NextResponse.json({ ok: true, view, teaser });
   } catch (e) {
     return NextResponse.json({ ok: false, reason: "api_error", detail: e instanceof Error ? e.message : String(e) });
   }
