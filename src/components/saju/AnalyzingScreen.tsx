@@ -5,7 +5,14 @@
 // ⚠️ 핸드오프의 "★4.9 · 2,418명" 가짜 집계는 표시광고법 리스크라 넣지 않음(후기 카드만).
 import { useEffect, useState } from "react";
 import { Naegyeongban } from "@/components/landing/saju-lab/Naegyeongban";
-import { REVIEWS, maskName } from "@/lib/reviews";
+
+// 진행바(pct)에 맞춰 하나씩 체크되는 실제 작업 단계. 실제로 서버가 하는 일 순서 그대로다.
+const WORKING_STEPS: { at: number; label: string }[] = [
+  { at: 0, label: "만세력에서 여덟 글자를 꺼내는 중" },
+  { at: 30, label: "대운·세운을 맞춰보는 중" },
+  { at: 55, label: "돈과 인연이 들어오는 달을 셈하는 중" },
+  { at: 78, label: "적어주신 물음에 답을 적는 중" },
+];
 
 export function AnalyzingScreen({
   name,
@@ -26,7 +33,6 @@ export function AnalyzingScreen({
 
   const who = name?.trim() ? `${name.trim()}님` : "회원님";
   const paid = variant === "paid";
-  const cards = REVIEWS.slice(0, 2);
 
   return (
     <div
@@ -86,30 +92,43 @@ export function AnalyzingScreen({
 
         <div className="flex-1" style={{ minHeight: 24 }} />
 
-        {/* 하단 — 먼저 받아본 분들의 후기 */}
+        {/* 하단 — 지금 실제로 하는 일.
+            원래 여기에 lib/reviews.ts 의 샘플 후기 2장(이름·날짜·별점 전부 지어낸 값)이 떴다.
+            SHOW_SOCIAL_PROOF 게이트를 안 타서 결제한 사람이 반드시 봤다. 실후기가 쌓이기 전까지
+            거짓을 띄우느니 진행 상황을 보여주는 편이 대기 이탈에도 낫다. */}
         <div className="flex-none">
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 10 }}>먼저 받아본 분들의 후기</div>
-          <div className="flex flex-col gap-2.5">
-            {cards.map((r) => (
-              <div
-                key={r.name}
-                style={{ padding: "13px 14px", borderRadius: 14, background: "rgba(40,22,72,.55)", border: "1px solid rgba(160,120,255,.24)", backdropFilter: "blur(4px)" }}
-              >
-                <div className="mb-1.5 flex items-center gap-2.5">
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(160deg,#8a6bf2,#6541f2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flex: "none" }}>
-                    {r.name[0]}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "#efe6ff" }}>{maskName(r.name)} · {r.tag.split(" · ")[0]}</div>
-                    <div style={{ fontSize: 10, color: "#ffce73", letterSpacing: "0.5px" }}>★★★★★</div>
-                  </div>
-                  <div style={{ fontSize: 9.5, color: "#9b86cb", flex: "none" }}>{r.ago}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#cbb8f0", marginBottom: 10 }}>지금 하는 일</div>
+          <div className="flex flex-col gap-2">
+            {WORKING_STEPS.map((s, i) => {
+              const done = pct >= s.at;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-2.5"
+                  style={{
+                    padding: "11px 13px",
+                    borderRadius: 12,
+                    background: done ? "rgba(40,22,72,.55)" : "rgba(40,22,72,.28)",
+                    border: `1px solid ${done ? "rgba(160,120,255,.30)" : "rgba(160,120,255,.14)"}`,
+                    transition: "background .4s, border-color .4s",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 18, height: 18, borderRadius: "50%", flex: "none",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, fontWeight: 700,
+                      color: done ? "#0f0a1c" : "#7a6aa8",
+                      background: done ? "#c9a8ff" : "transparent",
+                      border: done ? "none" : "1px solid rgba(160,120,255,.35)",
+                    }}
+                  >
+                    {done ? "✓" : ""}
+                  </span>
+                  <span style={{ fontSize: 12, color: done ? "#e4dbff" : "#8f81bd" }}>{s.label}</span>
                 </div>
-                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: "#d4c6f0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {r.body}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <p style={{ marginTop: 14, fontSize: 11.5, lineHeight: 1.5, color: "#9a8cd0", textAlign: "center" }}>
             창을 닫아도 결과는 안전하게 저장돼요

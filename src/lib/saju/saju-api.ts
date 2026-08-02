@@ -486,6 +486,12 @@ export type InyeonFacts = {
 export function computeInyeonFacts(
   analysis: SajuAnalysisResponse,
   gender: "male" | "female",
+  /**
+   * 인연 상대의 성별. 배우자성이 여기서 갈린다 — 명리에서 남편(남자)은 관성, 아내(여자)는 재성이라
+   * 기준은 "내 성별"이 아니라 "상대 성별"이다. 손님 성별만 보면 동성 인연에서 계산이 뒤집힌다.
+   * 안 주면 이성 인연으로 본다(예전 동작 그대로).
+   */
+  partnerSex?: "male" | "female",
 ): InyeonFacts {
   const rec = (v: unknown): Record<string, unknown> =>
     v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
@@ -496,9 +502,11 @@ export function computeInyeonFacts(
   // ① 원국 앵커
   const ilji = s(rec(rec(analysis.ganji).day).ji);
   const sum = rec(rec(analysis.sipseong).summary);
-  const spouseCount = gender === "female" ? n(sum.gwanseong) : n(sum.jaeseong);
-  const spouseMain = gender === "female" ? "정관" : "정재"; // 결혼으로 이어지는 인연
-  const spouseSub = gender === "female" ? "편관" : "편재"; // 강렬한 인연
+  // 상대가 남자면 관성, 여자면 재성. 안 물었으면 이성 인연으로 본다.
+  const partner = partnerSex ?? (gender === "female" ? "male" : "female");
+  const spouseCount = partner === "male" ? n(sum.gwanseong) : n(sum.jaeseong);
+  const spouseMain = partner === "male" ? "정관" : "정재"; // 결혼으로 이어지는 인연
+  const spouseSub = partner === "male" ? "편관" : "편재"; // 강렬한 인연
 
   const dohwaArr = arr(rec(analysis.dohwa).dohwa);
   const hongyeomArr = arr(rec(analysis.hongyeom).hongyeom);
@@ -643,8 +651,9 @@ export function computeInyeonFacts(
 export function buildInyeonFactsBlock(
   analysis: SajuAnalysisResponse,
   gender: "male" | "female",
+  partnerSex?: "male" | "female",
 ): string {
-  const f = computeInyeonFacts(analysis, gender);
+  const f = computeInyeonFacts(analysis, gender, partnerSex);
 
   // ⑨ 출력
   const fmt = (r: InyeonRow) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;

@@ -14,3 +14,8 @@ _pnpm_install.log
 .vercel
 supabase/.branches
 supabase/.temp
+# 비공개 조사·전략 문서 — 이 리포는 공개(public fork)라 여기 넣은 건 절대 커밋되지 않게 한다.
+# (2026-07-30 감사: 가격전략·경쟁사 해부 문서가 이미 공개 푸시된 것을 확인 → 신규분은 전부 여기로)
+docs-private/
+# 다른 프로젝트 폴더가 워킹트리에 섞여 있어 실수로 딸려 올라가는 것을 막는다
+morelle-brand/

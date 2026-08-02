@@ -6,11 +6,12 @@ const serverSchema = z.object({
   TOSS_SECRET_KEY: z.string().min(1),
   SAJU_API_URL: z.string().url().optional().or(z.literal("")),
   SAJU_API_KEY: z.string().optional(),
-  LLM_PROVIDER: z.enum(["openai", "anthropic", "gemini"]).default("anthropic"),
+  LLM_PROVIDER: z.enum(["openai", "anthropic", "gemini", "deepseek"]).default("anthropic"),
   LLM_MODEL: z.string().min(1),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+  DEEPSEEK_API_KEY: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional().default(""),
   // 복구 크론(/api/cron/recover-results) 인증용. 비우면 크론 엔드포인트는 비활성(401).
   CRON_SECRET: z.string().optional().default(""),
@@ -54,6 +55,7 @@ export function serverEnv() {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
       GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
       CRON_SECRET: process.env.CRON_SECRET,
     });

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { isSajuApiConfigured, fetchSajuAnalysis, ganjiToMyeongsik, type BirthInfo, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
 import { buildResultView, type ResultView } from "@/lib/saju/result-view";
 import { buildTeaser } from "@/lib/saju/teaser";
+import { buildWebtoonTokens } from "@/lib/saju/webtoon-tokens";
+import { parseProfileTags } from "@/lib/saju/profile-tags";
 import { publicEnv } from "@/lib/env";
 
 // 무료 분석(⑥)용 — 명식 + 오행 + 영역별 점수까지(LLM 없이). 결제 후 상세 풀이는 별도.
@@ -110,12 +112,24 @@ export async function POST(request: NextRequest) {
     let teaser = null;
     if (body.teaser) {
       try {
-        teaser = buildTeaser(analysis, body.gender, body.slug === "sangun-sinjeom" ? "sangun" : "polite");
+        // 인연 방향은 유료 결과지와 같은 값을 써야 티저와 결과지가 같은 해를 말한다
+        const { partnerSex } = parseProfileTags(body.concerns);
+        teaser = buildTeaser(analysis, body.gender, body.slug === "sangun-sinjeom" ? "sangun" : "polite", partnerSex);
       } catch {
         teaser = null; // 티저는 부가물 — 실패해도 명식/결제 흐름을 막지 않는다
       }
     }
-    return NextResponse.json({ ok: true, view, teaser });
+    // 웹툰 말풍선에 꽂을 값. view·teaser·analysis 가 한자리에 있는 여기서만 한 번에 만들 수 있다
+    // (신강약은 analysis 에만, 원국 한글 읽기는 view 에만 있다).
+    let tokens: Record<string, string> = {};
+    if (body.teaser) {
+      try {
+        tokens = buildWebtoonTokens({ name: body.nickname, birthDate: body.birthDate, view, teaser, analysis });
+      } catch {
+        tokens = {}; // 토큰이 없으면 렌더러가 해당 말풍선을 숨긴다 — 흐름은 안 막는다
+      }
+    }
+    return NextResponse.json({ ok: true, view, teaser, tokens });
   } catch (e) {
     return NextResponse.json({ ok: false, reason: "api_error", detail: e instanceof Error ? e.message : String(e) });
   }

@@ -14,6 +14,23 @@
       "port": 8765
     },
     {
+      "name": "scratchpad-static",
+      "runtimeExecutable": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8790", "--directory", "C:\\Users\\HP\\AppData\\Local\\Temp\\claude\\C--Users-HP-OneDrive-Desktop-all-saju\\1d6d8967-ff6b-41bf-a0f5-1e02c367fc7a\\scratchpad"],
+      "port": 8790
+    },
+    {
+      "name": "tiktok-board",
+      "runtimeExecutable": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["C:\\Users\\HP\\OneDrive\\Desktop\\틱톡레퍼런스\\board_server.py", "--no-browser"],
+      "port": 8791
+    },
+    {
+      "name": "tiktok-factory",
+      "url": "http://localhost:8756",
+      "port": 8756
+    },
+    {
       "name": "reels-studio",
       "runtimeExecutable": "C:\\Users\\HP\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
       "runtimeArgs": ["C:\\Users\\HP\\OneDrive\\Desktop\\릴스대본\\video_studio.py", "--no-browser"],

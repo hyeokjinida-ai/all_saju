@@ -33,6 +33,25 @@ type ProductRow = {
   created_at: string;
 };
 
+// 웹툰 페이지 — 상품별 컷 구성(그림 경로 + 말풍선). 어드민에서 저장하고 렌더러가 읽는다.
+type WebtoonPageRow = {
+  id: string;
+  product_id: string;
+  kind: string;
+  slug: string;
+  name: string;
+  cuts: Json;
+  is_published: boolean; // 손님에게 보일지 — 어드민 편집기의 노출 스위치
+  updated_at: string;
+};
+
+type WebtoonPageVersionRow = {
+  id: string;
+  page_id: string;
+  cuts: Json;
+  created_at: string;
+};
+
 type OrderRow = {
   id: string;
   order_id: string;
@@ -222,6 +241,32 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<SajuAnalysisCacheRow>;
+        Relationships: [];
+      };
+      webtoon_pages: {
+        Row: WebtoonPageRow;
+        Insert: {
+          id?: string;
+          product_id: string;
+          kind?: string;
+          slug: string;
+          name?: string;
+          cuts?: Json;
+          is_published?: boolean;
+          updated_at?: string;
+        };
+        Update: Partial<WebtoonPageRow>;
+        Relationships: [];
+      };
+      webtoon_page_versions: {
+        Row: WebtoonPageVersionRow;
+        Insert: {
+          id?: string;
+          page_id: string;
+          cuts: Json;
+          created_at?: string;
+        };
+        Update: Partial<WebtoonPageVersionRow>;
         Relationships: [];
       };
       analytics_events: {

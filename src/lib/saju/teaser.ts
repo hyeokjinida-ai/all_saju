@@ -11,10 +11,20 @@ import { computeInyeonFacts, type SajuAnalysisResponse } from "./saju-api";
 
 export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
 
+// 원국 표 한 줄 — 기둥별로 천간십성 / 지지십성 / 12운성. 타이트가 티저에서 그대로 까는 표다.
+// "읽을 줄 몰라도 된다"는 전제로 낸다: 못 읽는 글자라서 오히려 계산의 증거로 읽힌다(모의구매 6/6).
+export type ChartRow = { pos: string; ganSip: string; jiSip: string; fortune: string };
+
 export type SajuTeaser = {
   voice: TeaserVoice;
   headline: string;
-  coldRead: string[]; // 3문장
+  coldRead: string[]; // 3문장 (2번째는 가능하면 과거 검증 문장)
+  /** 과거 사건 한 줄이 실제로 잡혔는지 — 잡혔으면 "판정 초대"를 띄운다 */
+  hasPastCheck: boolean;
+  /** 맞는지 틀리는지 손님이 지금 판정하게 만드는 한 줄 */
+  judgeInvite: string;
+  chartRows: ChartRow[];
+  sinsal: string[];
   turningYear: { year: number; age: number; line: string } | null;
   locked: { label: string; mask: string }[];
   note: string;
@@ -32,6 +42,118 @@ const GAN_READ: Record<string, string> = {
   甲: "갑", 乙: "을", 丙: "병", 丁: "정", 戊: "무",
   己: "기", 庚: "경", 辛: "신", 壬: "임", 癸: "계",
 };
+
+// ── ⓪ 과거 검증 문장 ─────────────────────────────────
+// 티저의 승부처. 성격 묘사는 누구에게나 맞아서 "맞혔다"가 성립하지 않는다(모의구매 6/6 지적).
+// 반대로 연도는 맞거나 틀리거나 둘 중 하나라 손님이 그 자리에서 판정할 수 있다.
+// 규칙 둘: ① 무슨 일이었는지는 단정하지 않는다(두 갈래로 열어둔다 — 틀리면 티저 전체가 죽는다)
+//          ② 만세력 실측값에서만 뽑는다. 없으면 만들지 않고 신강약 문장으로 되돌아간다.
+const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+
+type PastEvent = { year: number; age: number; line: Line };
+
+function computePastEvent(analysis: SajuAnalysisResponse): PastEvent | null {
+  const daeun = rec(analysis.daeun);
+  const nowAge = num(daeun.current_age);
+  const cur = rec(daeun.current_daeun);
+  const curStart = num(cur.year_start);
+  const curStartAge = num(cur.age_start);
+
+  // ① 대운 교체가 최근 6년 안 — 판이 통째로 바뀐 사건이라 체감이 가장 크다.
+  //    (성별·혼인여부와 무관한 유일한 객관 전환점)
+  const seunRows = arr(rec(analysis.seun).recentSeuns);
+  const latestYear = seunRows.length ? num(seunRows[0].year) : 0;
+  if (curStart && latestYear && latestYear - curStart <= 6 && latestYear - curStart >= 1) {
+    return {
+      year: curStart,
+      age: curStartAge,
+      line: {
+        ban: `${curStart}년 어름에 네 판이 한 번 통째로 바뀌었다. 그때 옮긴 자리가 지금 자리다.`,
+        jon: `${curStart}년 무렵에 판이 한 번 통째로 바뀌셨어요. 그때 옮긴 자리가 지금 자리예요.`,
+      },
+    };
+  }
+
+  // ② 최근 5년 세운 중 충·형이 걸린 해 — 끊어내거나 끊긴 해.
+  const hit = seunRows.find((r) =>
+    arr(r.hapChungRelations).some((h) => /충|형/.test(str(h.type))),
+  );
+  if (hit && num(hit.year)) {
+    const y = num(hit.year);
+    return {
+      year: y,
+      age: num(hit.age),
+      line: {
+        ban: `${y}년, 너는 하나를 끊어냈다. 사람이든 자리든 — 오래 끌던 것이었다.`,
+        jon: `${y}년에 하나를 끊어내셨어요. 사람이든 자리든 — 오래 끌던 것이었고요.`,
+      },
+    };
+  }
+
+  // ③ 최근 5년 중 가장 눌렸던 해 — 종합점수 최저.
+  const scored = seunRows
+    .map((r) => ({ y: num(r.year), a: num(r.age), s: num(rec(r.yongsinJudgment).종합점수) }))
+    .filter((x) => x.y && x.s !== 0);
+  if (scored.length >= 3) {
+    const worst = scored.reduce((a, b) => (b.s < a.s ? b : a));
+    if (worst.y !== latestYear) {
+      return {
+        year: worst.y,
+        age: worst.a,
+        line: {
+          ban: `${worst.y}년이 네게 제일 무거웠다. 그해에 버틴 것으로 지금까지 온 것이다.`,
+          jon: `${worst.y}년이 제일 무거우셨어요. 그해에 버틴 것으로 지금까지 오신 거예요.`,
+        },
+      };
+    }
+  }
+
+  void nowAge;
+  return null;
+}
+
+// ── ①-b 원국 표 — 십성·12운성 (읽을 줄 몰라도 되는 증거) ──
+const POS_LABEL: Record<string, string> = { 년: "해", 월: "달", 일: "나", 시: "시" };
+
+function buildChartRows(analysis: SajuAnalysisResponse): ChartRow[] {
+  const sip = arr(rec(analysis.sipseong).sipseongs);
+  const fortunes = arr(rec(analysis.twelveFortune).fortunes);
+  const byPos = (p: string, suffix: "간" | "지") =>
+    str(sip.find((s) => str(s.position) === `${p}${suffix}`)?.sipseong);
+  const fortuneOf = (p: string) => str(fortunes.find((f) => str(f.position) === `${p}주`)?.fortune);
+
+  return ["년", "월", "일", "시"]
+    .map((p) => ({
+      pos: POS_LABEL[p] ?? p,
+      // 일간은 기준점(나 자신)이라 십성이 없다 — 빈칸으로 두면 계산이 덜 된 것처럼 보인다.
+      ganSip: p === "일" ? "나 자신" : byPos(p, "간"),
+      jiSip: byPos(p, "지"),
+      fortune: fortuneOf(p),
+    }))
+    .filter((r) => r.jiSip || r.fortune); // 시 모름이면 시주가 통째로 빈다
+}
+
+// ── ①-c 신살 칩 — 있는 것만 ────────────────────────────
+function buildSinsal(analysis: SajuAnalysisResponse): string[] {
+  const out: string[] = [];
+  if (arr(rec(analysis.dohwa).dohwa).length) out.push("도화살");
+  if (arr(rec(analysis.hongyeom).hongyeom).length) out.push("홍염살");
+  if (arr(rec(analysis.hwagae).hwagae).length) out.push("화개살");
+  const guiin = rec(analysis.guiin);
+  if (arr(guiin.cheoneul).length) out.push("천을귀인");
+  if (arr(guiin.geumyeo).length) out.push("금여성");
+  // 12신살은 formed:true 인 것만
+  const sinsals = rec(analysis.sibisinsals);
+  const NAME: Record<string, string> = { yeokma: "역마살", dohwa: "도화살", hwagae: "화개살" };
+  for (const [k, v] of Object.entries(sinsals)) {
+    const label = NAME[k];
+    if (!label || out.includes(label)) continue;
+    const byDay = rec(rec(v).byDay);
+    const byYear = rec(rec(v).byYear);
+    if (byDay.formed === true || byYear.formed === true) out.push(label);
+  }
+  return out.slice(0, 4);
+}
 
 // ── ① 일간 — 타고난 결 ────────────────────────────────
 const ILGAN_LINE: Record<string, Line> = {
@@ -95,6 +217,8 @@ export function buildTeaser(
   analysis: SajuAnalysisResponse,
   gender: "male" | "female",
   voice: TeaserVoice,
+  /** 인연 상대의 성별 — 유료 결과지와 **같은 값**을 넣어야 티저와 결과지가 같은 해를 말한다 */
+  partnerSex?: "male" | "female",
 ): SajuTeaser | null {
   const day = rec(rec(analysis.ganji).day);
   const ganRaw = str(day.gan).trim();
@@ -107,17 +231,25 @@ export function buildTeaser(
   const l1 = ILGAN_LINE[gan];
   if (l1) coldRead.push(pick(l1, voice));
 
-  // ② 신강/신약 (7단계 → 강/중/약)
-  // 실측 값: 태왕 · 신강 · 중강 · 중화 · 중약 · 신약 · 태약 — "태왕"은 강 계열인데 '강'자가 없어
-  // /강/ 만 보면 중간 문장으로 잘못 떨어진다(실측 버그). 약을 먼저 걸러내고 강·왕을 함께 본다.
-  const strength = str(rec(analysis.sinStrength).strength);
-  if (strength) {
-    const l2 = /약/.test(strength) ? WEAK_LINE : /강|왕/.test(strength) ? STRONG_LINE : MID_LINE;
-    coldRead.push(pick(l2, voice));
+  // ② 과거 검증 문장 — 티저의 승부처. 이게 잡히면 신강약 문장 대신 여기 쓴다.
+  //    성격 문장은 누구에게나 맞아 판정이 불가능하고, 연도는 맞거나 틀리거나 둘 중 하나다.
+  //    (모의구매 6/6 전원이 "연도 하나만 맞으면 그 자리에서 샀다"고 답한 유일한 만장일치 조건)
+  const past = computePastEvent(analysis);
+  if (past) {
+    coldRead.push(pick(past.line, voice));
+  } else {
+    // 폴백: 신강/신약 (7단계 → 강/중/약)
+    // 실측 값: 태왕 · 신강 · 중강 · 중화 · 중약 · 신약 · 태약 — "태왕"은 강 계열인데 '강'자가 없어
+    // /강/ 만 보면 중간 문장으로 잘못 떨어진다(실측 버그). 약을 먼저 걸러내고 강·왕을 함께 본다.
+    const strength = str(rec(analysis.sinStrength).strength);
+    if (strength) {
+      const l2 = /약/.test(strength) ? WEAK_LINE : /강|왕/.test(strength) ? STRONG_LINE : MID_LINE;
+      coldRead.push(pick(l2, voice));
+    }
   }
 
   // ③ 콕 집는 한 줄 — 흔들림 > 없는 오행 > 십성 편중 > 도화 > 기본
-  const facts = computeInyeonFacts(analysis, gender);
+  const facts = computeInyeonFacts(analysis, gender, partnerSex);
   const oc = rec(rec(rec(rec(analysis.sipseong).cheonganHap).ohaengImpact).originalCount);
   const missing = ["수", "화", "목", "금", "토"].filter((k) => Object.keys(oc).length && !num(oc[k]));
   const sum = rec(rec(analysis.sipseong).summary);
@@ -176,6 +308,15 @@ export function buildTeaser(
     voice,
     headline: voice === "sangun" ? "네 장부, 겉장만 펴봤다" : "겉장만 먼저 펼쳐봤어요",
     coldRead,
+    hasPastCheck: !!past,
+    // 판정을 손님에게 넘긴다. 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다(모의구매 33세).
+    judgeInvite: past
+      ? voice === "sangun"
+        ? "맞으면 나머지를 열어라. 틀렸으면 여기서 닫아라. 나는 틀린 값은 안 받는다."
+        : "맞으면 나머지를 열어보세요. 틀렸으면 여기서 닫으셔도 돼요. 틀린 값은 받지 않아요."
+      : "",
+    chartRows: buildChartRows(analysis),
+    sinsal: buildSinsal(analysis),
     turningYear,
     locked,
     note:

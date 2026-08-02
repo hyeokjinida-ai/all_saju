@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildChapterPrompts } from "@/lib/saju/prompt";
+import { parseProfileTags } from "@/lib/saju/profile-tags";
 import { generateByChapters } from "@/lib/saju/llm";
 import { sendResultEmail } from "@/lib/email";
 import {
@@ -132,13 +133,16 @@ export async function generateResultForOrder(
       if (product.slug === "wealth-saju") {
         keyFacts = [keyFacts, buildWealthFactsBlock(analysis)].filter(Boolean).join("\n\n");
       }
-      // "인연 들어오는 달": 점수·달·해·나이대 확정값 주입(동일 원리, 성별로 배우자 십성이 갈림)
+      // 결제 전에 받아둔 인연 방향 — 배우자 십성이 "내 성별"이 아니라 "상대 성별"로 갈린다.
+      // 안 물었거나 "아직 모르겠다"면 undefined → 이성 인연으로 계산(예전 동작).
+      const { partnerSex } = parseProfileTags(input.concerns);
+      // "인연 들어오는 달": 점수·달·해·나이대 확정값 주입
       if (product.slug === "inyeon-saju") {
-        keyFacts = [keyFacts, buildInyeonFactsBlock(analysis, input.gender)].filter(Boolean).join("\n\n");
+        keyFacts = [keyFacts, buildInyeonFactsBlock(analysis, input.gender, partnerSex)].filter(Boolean).join("\n\n");
       }
       // "산군 신점"(포괄 확장): 재물+인연 확정값을 함께 주입 — 총운인데 달·해까지 확언하는 차별화
       if (product.slug === "sangun-sinjeom") {
-        keyFacts = [keyFacts, buildWealthFactsBlock(analysis), buildInyeonFactsBlock(analysis, input.gender)]
+        keyFacts = [keyFacts, buildWealthFactsBlock(analysis), buildInyeonFactsBlock(analysis, input.gender, partnerSex)]
           .filter(Boolean)
           .join("\n\n");
       }

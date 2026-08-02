@@ -44,6 +44,15 @@ export default async function AdminHome() {
             <span className="text-mute">→</span>
           </Link>
         </li>
+        <li>
+          <Link
+            href="/admin/webtoon"
+            className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
+          >
+            <span>웹툰 페이지 <span className="text-mute text-xs">· 상품별 결제 직전 티저</span></span>
+            <span className="text-mute">→</span>
+          </Link>
+        </li>
       </ul>
 
       <p className="mt-8 text-xs text-body leading-relaxed">

@@ -15,6 +15,7 @@ import { SangunStory } from "@/components/products/SangunWebtoon";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
+import type { WebtoonCutData } from "@/components/webtoon/WebtoonPage";
 
 type Product = { id: string; slug: string; name: string; description: string; price: number };
 type Review = { id: string; rating: number; content: string; created_at: string };
@@ -74,6 +75,7 @@ export default async function ProductDetailPage({
   let product: Product | null;
   let reviews: Review[] | null = null;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  let webtoonCuts: WebtoonCutData[] = [];
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -94,6 +96,17 @@ export default async function ProductDetailPage({
         .order("created_at", { ascending: false })
         .limit(5);
       reviews = r;
+
+      // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
+      // (webtoon_pages 는 읽기 공개 RLS라 anon 클라이언트로 충분)
+      const { data: wt } = await supabase
+        .from("webtoon_pages")
+        .select("cuts")
+        .eq("product_id", product.id)
+        .eq("kind", "teaser")
+        .eq("is_published", true)
+        .maybeSingle();
+      if (Array.isArray(wt?.cuts)) webtoonCuts = wt.cuts as WebtoonCutData[];
     }
     user = await getCurrentUser();
   } else {
@@ -130,7 +143,7 @@ export default async function ProductDetailPage({
         {isSangun ? "이제 네 차례다" : "지금 바로 시작"}
       </h2>
       <p className={`text-sm mb-3 text-center ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
-        {isSangun ? "하나씩만 답하거라 — 2분이면 된다." : "한 번에 하나씩, 차근차근 — 2분이면 충분해요."}
+        {isSangun ? "하나씩만 답해라 — 2분이면 된다." : "한 번에 하나씩, 차근차근 — 2분이면 충분해요."}
       </p>
       <p className={`text-[13px] mb-4 text-center leading-relaxed ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
         <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "시각을 몰라도 된다" : "태어난 시각 몰라도 돼요"}&nbsp;&nbsp;
@@ -144,6 +157,7 @@ export default async function ProductDetailPage({
         price={product.price}
         isLoggedIn={!!user}
         initialConcerns={concernPreset ? [concernPreset] : undefined}
+        webtoonCuts={webtoonCuts}
         variant={isSangun ? "immersive" : undefined}
         bgImage={isSangun ? "/products/sangun/face.webp" : undefined}
       />
@@ -214,6 +228,7 @@ export default async function ProductDetailPage({
               price={product.price}
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
+              webtoonCuts={webtoonCuts}
               variant="immersive"
               bgImage="/products/sangun/face.webp"
             />

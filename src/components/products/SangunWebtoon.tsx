@@ -5,6 +5,8 @@
 // 사운드는 파일 없이 Web Audio 합성(저음 바람 + 방울 딸랑) — 자산 의존 제거.
 import { useEffect, useRef, useState } from "react";
 import { StoryFooter } from "@/components/products/StoryFooter";
+import { BgMedia } from "@/components/products/BgMedia";
+import { SOCIAL_PROOF, hasSocialProof, formatCount } from "@/config/social-proof";
 
 const INK_BG = "linear-gradient(180deg,#0a0b0f 0%,#171017 100%)";
 const SCRIM =
@@ -85,42 +87,6 @@ function useShrineAmbience() {
 // ── 공용 조각(웹툰 랜딩 문법 재사용) ─────────────────────────────
 // 영상 파일이 도착하면 자동으로 살아나는 미디어 — 파일이 없으면(404) 포스터/이미지로 조용히 폴백.
 // V1~V3(Flow 생성분)을 public/products/sangun/{gate,altar,face}.mp4 로 넣기만 하면 코드 수정 없이 영상화된다.
-function BgMedia({
-  video,
-  img,
-  alt,
-  className,
-  loop = true,
-}: {
-  video: string;
-  img: string;
-  alt: string;
-  className: string;
-  loop?: boolean; // false = 1회 재생 후 마지막 프레임 정지(게이트: 문 통과 → 제단 앞 도착 연출)
-}) {
-  const [fallback, setFallback] = useState(false);
-  if (fallback) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={img} alt={alt} width={860} height={1471} className={className} />;
-  }
-  return (
-    <video
-      className={className}
-      width={860}
-      height={1471}
-      autoPlay
-      muted
-      loop={loop}
-      playsInline
-      poster={img}
-      aria-label={alt}
-      onError={() => setFallback(true)}
-    >
-      <source src={video} type="video/mp4" onError={() => setFallback(true)} />
-    </video>
-  );
-}
-
 function Cut({
   src,
   videoSrc,
@@ -264,13 +230,13 @@ function SampleCard() {
           3. 돈이 들어오는 달
         </p>
         <p>
-          <b style={{ color: "#efe6d2" }}>재물그릇 점수는 65점</b>이니라. 특히 <b style={{ color: "#efe6d2" }}>2027년 6월</b>과{" "}
-          <b style={{ color: "#efe6d2" }}>2027년 5월</b>이 가장 기대되는 달이니라. 하지만 <b style={{ color: "#efe6d2" }}>2027년 1월</b>은
-          조심해야 할 달이니, 불필요한 지출을 줄이고 신중히 결정하거라.
+          <b style={{ color: "#efe6d2" }}>재물그릇 점수는 65점</b>이다. 특히 <b style={{ color: "#efe6d2" }}>2027년 6월</b>과{" "}
+          <b style={{ color: "#efe6d2" }}>2027년 5월</b>이 가장 기대되는 달이더군. 다만 <b style={{ color: "#efe6d2" }}>2027년 1월</b>은
+          조심해야 할 달이니, 불필요한 지출을 줄이고 신중히 결정해라.
         </p>
         <div className="pt-1" style={{ borderTop: "1px dashed rgba(201,162,39,0.2)" }}>
           <p className="pt-2 font-myeongjo text-[14px] font-bold" style={{ color: GOLD }}>
-            8. 네 물음에 답하노라 — &ldquo;올해 이직해도 될까요&rdquo;
+            8. 네 물음에 답한다 — &ldquo;올해 이직해도 될까요&rdquo;
           </p>
           <p>
             <b style={{ color: "#efe6d2" }}>이직해도 좋다.</b> 올해는 변화의 때가 다가오고 있다. 이직 시점으로는… <span style={{ color: "#7d8496" }}>(결제 후 계속)</span>
@@ -284,23 +250,55 @@ function SampleCard() {
   );
 }
 
+// 후기·누적 숫자 — 값은 src/config/social-proof.ts 에서만 들고 온다.
+// 비어 있으면 아무것도 그리지 않는다. 숫자 0이나 빈 카드가 노출되는 게 없느니만 못하다.
+function SocialProofBlock() {
+  const { totalUsers, totalReviews, reviews } = SOCIAL_PROOF;
+  if (!hasSocialProof()) return null;
+  return (
+    <div className="px-5 pb-4 pt-1">
+      {(totalUsers > 0 || totalReviews > 0) && (
+        <p className="text-center font-myeongjo text-[12.5px] tracking-[0.04em]" style={{ color: "#9aa0b0" }}>
+          {totalUsers > 0 && <>지금까지 <b style={{ color: GOLD }}>{formatCount(totalUsers)}</b>명이 장부를 열었다</>}
+          {totalUsers > 0 && totalReviews > 0 && " · "}
+          {totalReviews > 0 && <>후기 <b style={{ color: GOLD }}>{formatCount(totalReviews)}</b></>}
+        </p>
+      )}
+      {reviews.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {reviews.map((r, i) => (
+            <li key={i} className="rounded-md px-3.5 py-2.5" style={{ background: "rgba(0,0,0,0.28)", border: "1px solid rgba(201,162,39,0.16)" }}>
+              <p className="text-[13px] leading-relaxed" style={{ color: "#cfd0d8" }}>{r.body}</p>
+              <p className="mt-1 text-[11.5px]" style={{ color: "#7d8496" }}>
+                {r.handle}
+                {r.when ? ` · ${r.when}` : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // 받는 것 — 9챕터 목차
 function TocCard({ priceLabel }: { priceLabel: string }) {
   const rows: [string, string][] = [
-    ["1. 타고난 네 그릇", "본바탕과 강점을 단정으로"],
-    ["2. 올해 오는 것, 떠나는 것", "기회 하나 · 정리될 것 하나"],
-    ["3. 돈이 들어오는 달", "재물그릇 점수 · 달까지 콕"],
-    ["4. 인연이 들어오는 달", "인연 그릇 점수 · 달까지 콕"],
-    ["5. 일과 자리의 시기", "움직일 때 · 엎드릴 때"],
-    ["6. 조심할 달", "흔들리는 달과 대처"],
-    ["7. 인생이 크게 바뀌는 해", "몇 살에 무엇이 달라지는지"],
-    ["8. 네 물음의 답", "[산군의 직언] 확답부터"],
-    ["9. 마지막 당부", "이번 주에 할 것 3가지"],
+    // 수위는 '중간 — 호기심만'(형님 결정). 타이트처럼 성적 표현·열등감 저격까지는 가지 않는다.
+    ["1. 타고난 네 그릇", "남들은 못 보는 네 결 하나"],
+    ["2. 올해 오는 것, 떠나는 것", "올해 네게서 빠져나갈 것 하나"],
+    ["3. 돈이 들어오는 달", "몇 월인지 · 어디로 새는지"],
+    ["4. 인연이 들어오는 달", "네 짝이 지나가는 달"],
+    ["5. 일과 자리의 시기", "지금 움직일 때인지, 엎드릴 때인지"],
+    ["6. 조심할 달", "네가 흔들리는 달 — 미리 알고 넘겨라"],
+    ["7. 인생이 크게 바뀌는 해", "몇 살에 갈리는지, 그때 뭐가 달라지는지"],
+    ["8. 네 물음의 답", "하라 · 말라로 답을 정해서"],
+    ["9. 마지막 당부", "이번 주에 당장 할 것 셋"],
   ];
   return (
     <div className="rounded-md p-6" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(201,162,39,0.2)" }}>
       <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-        받는 것 — 9장 · A4 4장 · 앞으로 12개월 전부
+        받는 것 — 9장 · 확답 일곱 이상 · 앞으로 12개월 전부
       </p>
       <ul className="space-y-2.5">
         {rows.map(([t, d]) => (
@@ -313,7 +311,10 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
         ))}
       </ul>
       <p className="mt-4 text-center text-[13px]" style={{ color: SUB }}>
-        <b style={{ color: GOLD }}>{priceLabel}</b> — 점심 한 번 값 · 몇 분 안에 도착 · 마이페이지에 계속 보관
+        {/* "점심 한 번 값"은 뺐다 — 4050 에게 '싸다'는 '부실하다'로 읽힌다(모의구매 3/3 이 거슬려 함).
+            같은 리포의 재물 랜딩(WealthWebtoon.tsx:269)처럼 철학관 가격으로 상향 앵커를 건다. */}
+        신당에 몸소 들면 복채가 <b style={{ color: GOLD }}>5만에서 20만</b>이다. 나는 서고에서 장부를 읽어 주니{" "}
+        <b style={{ color: GOLD }}>{priceLabel}</b>만 받는다 — 몇 분 안에 도착 · 마이페이지에 계속 보관
       </p>
     </div>
   );
@@ -330,7 +331,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "왜 반말인가요?",
-    "산군(호랑이 신령)이 장부를 읽어주는 콘셉트예요. 신당에서 듣는 것처럼 단호한 반말로 확답하지만, 무례하게 하대하지는 않아요. 편하게 들으시면 돼요.",
+    "산군은 산신을 받든 박수예요. 신당에서 듣는 것처럼 단호한 반말로 확답하지만, 무례하게 하대하지는 않아요. 편하게 들으시면 돼요.",
   ],
   [
     "태어난 시각을 몰라요. 음력 생일만 알아요.",
@@ -343,9 +344,10 @@ const FAQ: [string, string][] = [
 ];
 
 // ── 비주얼노벨 스토리(타이트 MZ무당 구조 이식) ─────────────────────
-// 선택지는 장식(참여감 전용) — 결제 전에는 아무것도 묻지 않는다(A안 확정 2026-07-28).
-// 이유: 이 카테고리의 구매·후기 엔진은 "안 물었는데 맞혔다"는 소름. 직업·연애 수집은
-// CRM 붙는 날 '결제 후 질문'으로 부활시킨다([프로필] 태그 파이프는 prompt.ts에 유지).
+// 선택지는 장식(참여감 전용)이다 — 타이트도 스토리 선택지로는 아무것도 수집하지 않는다
+// ("당황하며 주변을 둘러보기" 같은 반응뿐). 실제 질문은 전부 입력 단계에 몰려 있다.
+// 2026-08-03: 연애·직업·인연 방향 수집을 되살렸고, 위치는 타이트와 같이 **입력 단계**다.
+// 여기 씬 대사에서 "아무것도 묻지 않으마"를 뺀 이유도 그것 — 다음 화면에서 물으니 앞뒤가 맞아야 한다.
 
 export function SangunStory({
   priceLabel,
@@ -461,9 +463,9 @@ export function SangunStory({
         video: "/products/sangun/altar.mp4",
         line: (
           <>
-            …왔느냐.
+            …왔군.
             <br />
-            산군께서 <em className="not-italic" style={P}>네 장부</em>를 먼저 보셨다.
+            <em className="not-italic" style={P}>네 장부</em>, 내가 먼저 봤다.
           </>
         ),
         choices: [
@@ -476,10 +478,10 @@ export function SangunStory({
         video: "/products/sangun/altar.mp4",
         line: (
           <>
-            아무것도 묻지 않으마.
+            몇 가지만 답해라.
             <br />
-            장부에 <em className="not-italic" style={P}>이미 다 적혀 있으니.</em>
-            <br />…겁먹었느냐.
+            장부와 <em className="not-italic" style={P}>맞춰볼 것이 있다.</em>
+            <br />…겁먹었나.
           </>
         ),
         choices: [
@@ -492,9 +494,9 @@ export function SangunStory({
         video: "/products/sangun/face.mp4",
         line: (
           <>
-            산군께서 이미 너를 기다리신다.
+            기다리고 있었다.
             <br />
-            들을 <em className="not-italic" style={P}>준비가 되었느냐.</em>
+            들을 <em className="not-italic" style={P}>준비는 됐나.</em>
           </>
         ),
         choices: [
@@ -617,17 +619,17 @@ export function SangunStory({
         {/* 컷1 — 제단 앞 박수(뒷모습): 대면. altar.mp4 가 도착하면 자동 영상화 */}
         <Cut src="/products/sangun/altar.webp" videoSrc="/products/sangun/altar.mp4" alt="촛불 제단 앞에 선 박수의 뒷모습" priority>
           <Bubble who="박수">
-            …왔느냐.
+            …왔군.
             <br />
-            산군께서 <em className="not-italic" style={P}>네 장부</em>를 먼저 보셨다.
+            <em className="not-italic" style={P}>네 장부</em>, 내가 먼저 봤다.
           </Bubble>
         </Cut>
 
         <div className="px-8 py-9 text-center">
           <p className="font-myeongjo text-[16px] leading-[1.9]" style={{ color: "#cfd0d8" }}>
-            산군(山君) — 호랑이의 신.
+            산군(山君) — 산신을 받든 박수.
             <br />
-            명운록 서고의 <b style={{ color: GOLD }}>운명 장부</b>를 모두 읽는 이.
+            얼굴을 들지 않고 명운록 서고의 <b style={{ color: GOLD }}>운명 장부</b>를 읽는 이.
           </p>
         </div>
 
@@ -658,6 +660,9 @@ export function SangunStory({
           </p>
         </div>
 
+        {/* 소셜프루프 — src/config/social-proof.ts 에 값이 들어오면 그때 나온다(빈 껍데기 노출 방지) */}
+        <SocialProofBlock />
+
         <ThreadDivider />
 
         {/* 컷2 — 갓 그림자 정면 + CTA. face.mp4 가 도착하면 자동 영상화 */}
@@ -682,7 +687,7 @@ export function SangunStory({
                   네 장부,
                 </em>
                 <br />
-                열어 보겠느냐.
+                열어 보겠나.
               </p>
             </div>
             <button
@@ -698,7 +703,7 @@ export function SangunStory({
             >
               내 운명 장부 열기
               <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">
-                {priceLabel} · 2분이면 끝 · 태어난 시각·성별·고민까지 반영
+                {priceLabel} · 2분이면 끝 · 시각·성별·인연·하는 일까지 반영
               </span>
             </button>
             <p className="mt-2 text-center text-[12.5px]" style={{ color: SUB }}>

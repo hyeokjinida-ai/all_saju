@@ -50,7 +50,7 @@ export const productsSeed: ProductSeed[] = [
     display_order: 22,
     is_active: true,
   },
-  // 신점 라인 — 산군(호랑이 신령) 포괄 메인 상품 (2026-07-28 확장: 총운+돈 달·인연 달·바뀌는 해 확언, 테스트가 19,900)
+  // 신점 라인 — 산군(산신을 받든 박수) 포괄 메인 상품 (2026-07-28 확장: 총운+돈 달·인연 달·바뀌는 해 확언, 테스트가 19,900)
   {
     slug: "sangun-sinjeom",
     name: "산군 신점",

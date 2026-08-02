@@ -1,7 +1,7 @@
 // =====================================================
 // LLM 프로바이더 스위치
 // =====================================================
-// LLM_PROVIDER 환경변수로 openai | anthropic | gemini 선택.
+// LLM_PROVIDER 환경변수로 openai | anthropic | gemini | deepseek 선택.
 // 각 SDK는 lazy import 하여 미사용 패키지의 init 비용을 줄임.
 
 import { serverEnv } from "@/lib/env";
@@ -24,7 +24,9 @@ export async function generateInterpretation(req: LlmRequest): Promise<LlmRespon
   const env = serverEnv();
   switch (env.LLM_PROVIDER) {
     case "openai":
-      return callOpenAI(req, env.LLM_MODEL, env.OPENAI_API_KEY);
+      return callOpenAICompatible(req, env.LLM_MODEL, env.OPENAI_API_KEY, "openai");
+    case "deepseek":
+      return callOpenAICompatible(req, env.LLM_MODEL, env.DEEPSEEK_API_KEY, "deepseek");
     case "anthropic":
       return callAnthropic(req, env.LLM_MODEL, env.ANTHROPIC_API_KEY);
     case "gemini":
@@ -80,10 +82,26 @@ export async function generateByChapters(
   };
 }
 
-async function callOpenAI(req: LlmRequest, model: string, key: string | undefined): Promise<LlmResponse> {
-  if (!key) throw new Error("OPENAI_API_KEY is required when LLM_PROVIDER=openai");
+// OpenAI · 딥시크 공용 — 딥시크는 OpenAI 호환 API라 baseURL 만 갈아끼우면 같은 SDK 로 돈다.
+// 딥시크는 컨텍스트 캐시가 자동이라, 챕터마다 반복되는 [확정 사실]+[사주 풀 명식] 블록이
+// 공통 prefix 로 걸리면 입력 단가가 120배 싸진다($0.435 → $0.003625/1M).
+// 단, generateByChapters 가 전 챕터를 동시에 쏘면 전부 캐시 미스다 — 캐시를 태우려면
+// 첫 챕터를 먼저 보내 캐시를 깐 뒤 나머지를 병렬로 던져야 한다(채택 시 적용).
+const OPENAI_COMPAT: Record<string, { baseURL?: string; envKey: string }> = {
+  openai: { envKey: "OPENAI_API_KEY" },
+  deepseek: { baseURL: "https://api.deepseek.com", envKey: "DEEPSEEK_API_KEY" },
+};
+
+async function callOpenAICompatible(
+  req: LlmRequest,
+  model: string,
+  key: string | undefined,
+  provider: "openai" | "deepseek",
+): Promise<LlmResponse> {
+  const cfg = OPENAI_COMPAT[provider];
+  if (!key) throw new Error(`${cfg.envKey} is required when LLM_PROVIDER=${provider}`);
   const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey: key });
+  const client = new OpenAI({ apiKey: key, ...(cfg.baseURL ? { baseURL: cfg.baseURL } : {}) });
   const completion = await client.chat.completions.create({
     model,
     messages: [
@@ -93,7 +111,7 @@ async function callOpenAI(req: LlmRequest, model: string, key: string | undefine
     temperature: 0.7,
   });
   const text = completion.choices[0]?.message?.content ?? "";
-  return { text, provider: "openai", model };
+  return { text, provider, model };
 }
 
 async function callAnthropic(req: LlmRequest, model: string, key: string | undefined): Promise<LlmResponse> {
