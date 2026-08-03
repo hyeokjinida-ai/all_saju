@@ -426,12 +426,11 @@ export function SajuWizard({
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
               지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
               배경 그림이 스토리 3·4장면과 같은 face 라 영상도 face.mp4 를 같이 쓴다(영상 한 편 절약). */}
-          {/* 장부를 찾는 동안만 다른 영상으로 바꾼다 — 그 3~5초가 손님이 아무것도 안 하고 기다리는
+          {/* 장부를 찾는 동안만 다른 영상으로 바꾼다 — 그 3초가 손님이 아무것도 안 하고 기다리는
               유일한 구간이다. 여기까지 본 영상을 또 틀면 "기다리는 중"이라는 느낌이 안 산다.
-              ritual.mp4(방울 흔드는 컷)가 들어오면 자동으로 살아나고, 없으면 altar.mp4 로 넘어간다. */}
+              못 틀면 poster(altar.webp)로 내려앉으므로 검은 화면은 안 나온다. */}
           <BgMedia
             video={teaserLoading ? "/products/sangun/ritual.mp4" : (bgVideo ?? "/products/sangun/face.mp4")}
-            videoFallback={teaserLoading ? "/products/sangun/altar.mp4" : undefined}
             img={teaserLoading ? "/products/sangun/altar.webp" : (bgImage ?? "/products/sangun/face.webp")}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-85"

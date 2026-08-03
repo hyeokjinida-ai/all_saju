@@ -10,16 +10,12 @@ import { useEffect, useRef, useState } from "react";
 
 export function BgMedia({
   video,
-  videoFallback,
   img,
   alt,
   className,
   loop = true,
 }: {
   video: string;
-  /** video 가 아직 없을 때 대신 틀 영상. <source> 를 두 개 두면 브라우저가 첫 번째를 못 읽을 때
-   *  두 번째로 넘어간다 — 새 영상 자리를 미리 뚫어두고도 화면이 정지 이미지로 내려앉지 않는다. */
-  videoFallback?: string;
   img: string;
   alt: string;
   className: string;
@@ -28,13 +24,21 @@ export function BgMedia({
   const [fallback, setFallback] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
 
-  // 화면이 바뀌어도 React 가 같은 자리의 <video> 노드를 재사용하는데, <source> 주소만 갈아끼우면
+  // 화면이 바뀌어도 React 가 같은 자리의 <video> 노드를 재사용하는데, src 만 갈아끼우면
   // 브라우저는 다시 읽지 않는다(게이트 영상이 스토리 화면까지 그대로 남던 버그).
-  // 소스가 바뀌면 폴백 상태를 되돌리고 직접 load() 를 불러 새 영상을 읽게 한다.
+  // 소스가 바뀌면 폴백 상태를 되돌리고 직접 load() 를 부른다.
+  //
+  // 그리고 load() 뒤에는 반드시 play() 를 직접 불러야 한다. autoPlay 속성은 **처음 마운트될 때
+  // 한 번만** 동작하고, load() 로 리셋된 뒤에는 모바일 브라우저가 스스로 재생을 재개하지 않는다.
+  // 데스크톱에서는 그냥 돌아가서 안 보이는데, 폰에서는 여기서 화면이 검게 멈춘다.
   useEffect(() => {
     setFallback(false);
-    ref.current?.load();
-  }, [video, videoFallback]);
+    const el = ref.current;
+    if (!el) return;
+    el.load();
+    // 자동재생이 막히면(저전력·데이터 절약 모드) 예외가 난다 — 그때는 poster 가 그대로 보이면 된다.
+    void el.play().catch(() => {});
+  }, [video]);
 
   if (fallback) {
     // eslint-disable-next-line @next/next/no-img-element
@@ -55,9 +59,9 @@ export function BgMedia({
         aria-label={alt}
         onError={() => setFallback(true)}
       >
+        {/* <source> 를 여러 개 두면 폰에서 첫 소스를 못 읽는 동안 화면이 검게 남는다.
+            src 하나만 두고, 못 읽으면 onError 로 poster/img 에 내려앉힌다. */}
         <source src={video} type="video/mp4" />
-        {/* 첫 영상이 아직 없으면 브라우저가 여기로 넘어온다. 둘 다 없을 때만 img 로 내려앉는다. */}
-        {videoFallback && <source src={videoFallback} type="video/mp4" />}
       </video>
       {/* 생성 툴이 우하단에 남기는 워터마크를 묻는 비네팅.
           실측(720x1280): 오른쪽 125px · 아래 129px 지점, 최대 밝기 95.
