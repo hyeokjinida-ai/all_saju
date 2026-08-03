@@ -798,6 +798,8 @@ export function SajuWizard({
             cuts={webtoonCuts}
             tokens={tokens}
             productSlug={productSlug}
+            partner={form.partner}
+            gender={form.gender || "male"}
           />
         )}
       </div>
@@ -924,6 +926,157 @@ export function SajuWizard({
   );
 }
 
+/** ▓ 연속 구간을 먹 붓자국으로 그린다 — "산군이 붓으로 그어 가린 장부".
+ *  ▓ 문자를 그대로 찍으면 자리표시자로 읽혀 AI 티가 난다(형님 실측 지적).
+ *  년·월 같은 단위 글자는 남겨서 "달까지 적혀 있는데 가려져 있다"가 보이게 한다.
+ *  타이트도 같은 기법이다: "20██년 █월 █일" — 숫자만 지우고 단위는 남긴다. */
+const INK_VARIANTS = [
+  { deg: -1.6, r: "2px 7px 3px 8px / 6px 3px 7px 2px" },
+  { deg: 1.2, r: "7px 2px 8px 3px / 3px 6px 2px 7px" },
+  { deg: -0.8, r: "3px 8px 2px 6px / 7px 2px 6px 3px" },
+];
+function InkMask({ text }: { text: string }) {
+  const parts = text.match(/▓+|[^▓]+/g) ?? [];
+  let bar = 0;
+  return (
+    <span className="inline-flex items-center gap-[0.18em] whitespace-nowrap align-middle">
+      {parts.map((p, i) => {
+        if (!p.startsWith("▓")) {
+          // 단위 글자는 색을 상속 — 어두운 카드에선 밝게, 한지 대사 띠에선 먹색으로 알아서 맞는다
+          return (
+            <span key={i} className="font-myeongjo text-[0.92em]" style={{ color: "inherit" }}>
+              {p}
+            </span>
+          );
+        }
+        // 모양·기울기는 몇 번째 붓자국이냐로 고정 — 난수를 쓰면 SSR/하이드레이션이 어긋난다
+        const v = INK_VARIANTS[bar++ % INK_VARIANTS.length];
+        return (
+          <span
+            key={i}
+            aria-hidden
+            className="inline-block"
+            style={{
+              width: `${Math.max(1.6, p.length * 0.7)}em`,
+              height: "1.02em",
+              background: "linear-gradient(97deg,#2b100b,#4a1a10 30%,#33120b 62%,#1d0b07)",
+              borderRadius: v.r,
+              transform: `rotate(${v.deg}deg)`,
+              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.55), 0 0 1px rgba(122,35,23,0.4)",
+            }}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+/** 산군 대사 띠 — 스토리 화면의 대사창(SangunWebtoon Bubble)과 같은 옷.
+ *  타이트 티저 실측(22단계)의 정체는 "모든 블록을 캐릭터가 대사로 소개한 뒤에 보여준다"였다.
+ *  우리는 웹툰 5컷이 끝나면 산군이 화면에서 사라졌다 — 이 띠가 블록 사이의 연결 조직이다. */
+function SangunSay({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="relative mt-6 rounded-[5px] px-5 py-4"
+      style={{
+        background: "linear-gradient(180deg,#f3ead6,#e9dec2)",
+        border: "1px solid #c9b98e",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.45), inset 0 0 34px rgba(216,201,163,0.35)",
+      }}
+    >
+      <span
+        className="absolute -top-3 right-3 rounded-[2px] px-2.5 pb-[3px] pt-1 text-[11px] font-semibold tracking-[0.22em]"
+        style={{ background: "#8f2b1e", color: "#f3e6cf" }}
+      >
+        산군
+      </span>
+      <p className="font-myeongjo text-[15px] font-semibold leading-[1.8] text-[#241d10]">{children}</p>
+    </div>
+  );
+}
+
+/** 붉은 한자 섹션 헤더 — 타이트의 「大運」「財物」「戀愛」 자리. 章이 바뀐다는 신호. */
+function HanjaHeader({ char }: { char: string }) {
+  return (
+    <div className="mt-8 text-center" aria-hidden>
+      <div
+        className="mx-auto h-px w-28"
+        style={{ background: "linear-gradient(90deg,transparent,rgba(232,201,106,0.5),transparent)" }}
+      />
+      <div
+        className="font-brush mt-3 text-[46px] leading-none"
+        style={{ color: "rgba(143,43,30,0.9)", textShadow: "0 0 20px rgba(143,43,30,0.4)" }}
+      >
+        {char}
+      </div>
+    </div>
+  );
+}
+
+/** 운명의 상대 카드 (티저판) — 타이트의 흐린 얼굴 + 부분 마스킹 프로필.
+ *  사진 풀(partner-m1~4 / f1~4)에서 **생일로 결정적으로** 고른다 — 같은 사주는 항상 같은 얼굴이라
+ *  재접속해도 안 들통난다. 파일이 아직 없으면 실루엣으로 조용히 내려앉는다(onError). */
+function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: string; birthDate: string }) {
+  // 인연 방향 답 그대로. "모르겠다"면 결과지 계산(computeInyeonFacts)과 같은 기본값 — 이성.
+  const sex = partner === "남자" ? "m" : partner === "여자" ? "f" : gender === "female" ? "m" : "f";
+  const idx = ([...birthDate].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 4) + 1;
+  const [imgOk, setImgOk] = useState(true);
+  return (
+    <div
+      className="mx-auto mt-4 max-w-[280px] px-5 pb-5 pt-4"
+      style={{
+        backgroundImage: "url(/products/sangun/ganji.webp)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundColor: "#0c0a08",
+        border: "1px solid rgba(143,43,30,0.6)",
+      }}
+    >
+      <p className="font-myeongjo text-center text-[11.5px] tracking-[0.14em]" style={{ color: "var(--gold-soft)" }}>
+        네 운명의 상대
+      </p>
+      <div className="relative mx-auto mt-3 h-[150px] w-[118px] overflow-hidden" style={{ background: "#151009" }}>
+        {imgOk ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/products/sangun/partner-${sex}${idx}.webp`}
+            alt=""
+            onError={() => setImgOk(false)}
+            className="h-full w-full select-none object-cover"
+            draggable={false}
+            style={{ filter: "blur(10px) brightness(0.85)" }}
+          />
+        ) : (
+          /* 사진이 오기 전 실루엣 — 사람 형상만 어렴풋이 */
+          <div
+            className="h-full w-full"
+            style={{
+              background:
+                "radial-gradient(42% 26% at 50% 28%, rgba(210,190,160,0.5), rgba(21,16,9,0) 70%), radial-gradient(72% 42% at 50% 80%, rgba(210,190,160,0.35), rgba(21,16,9,0) 70%), #151009",
+              filter: "blur(6px)",
+            }}
+          />
+        )}
+      </div>
+      <div className="mt-3.5 space-y-2">
+        {(
+          [
+            ["만나는 시기", <InkMask key="t" text="20▓▓년 ▓▓월" />],
+            ["외모", <span key="l" className="inline-flex items-center gap-1">키가 <InkMask text="▓▓▓" /></span>],
+            ["성격", <InkMask key="p" text="▓▓▓▓" />],
+            ["장소", <InkMask key="w" text="▓▓▓▓" />],
+          ] as const
+        ).map(([label, val]) => (
+          <div key={label} className="flex items-center justify-between gap-3">
+            <span className="font-myeongjo shrink-0 text-[11px] text-bone-faint">{label}</span>
+            <span className="font-myeongjo text-[12px] text-bone-soft">{val}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
 // 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
 function TeaserStep({
@@ -936,6 +1089,8 @@ function TeaserStep({
   cuts,
   tokens,
   productSlug,
+  partner,
+  gender,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -946,6 +1101,9 @@ function TeaserStep({
   cuts: WebtoonCutData[];
   tokens: Record<string, string>;
   productSlug: string;
+  /** 인연 방향 답 — 운명의 상대 카드가 사진 풀(남/여)을 고르는 기준 */
+  partner: string;
+  gender: string;
 }) {
   if (loading) {
     return (
@@ -996,9 +1154,13 @@ function TeaserStep({
           : undefined
       }
     >
+      {/* 타이트 티저 실측(22단계)의 핵심 — 모든 블록을 캐릭터가 대사로 소개한 뒤 보여준다.
+          아래 대사 띠들이 그 연결 조직이다. 전부 확정값·고정 문구라 LLM 비용 0. */}
+      {imm && <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>}
+
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
-        <p className="font-myeongjo text-center text-[12px] text-gold-soft tracking-[0.14em]">{name}</p>
+        <p className={`font-myeongjo text-center text-[12px] text-gold-soft tracking-[0.14em]${imm ? " mt-4" : ""}`}>{name}</p>
       )}
 
       {/* 원국 4기둥 — 콜드리딩보다 먼저. "네 생일로 계산했다"는 증거가 먼저 서야 아래 세 줄이 산다.
@@ -1090,6 +1252,9 @@ function TeaserStep({
         </div>
       )}
 
+      {/* 콜드리딩을 시험으로 만든다 — 뒤의 "맞으면 나머지를 열어라"와 물리는 문장 */}
+      {imm && teaser && <SangunSay>안 묻고 맞혀 보마.</SangunSay>}
+
       {/* 콜드리딩 — 명식에서 나온 문장만. 2번째 줄은 연도가 박힌 과거 문장이라 강조한다. */}
       {teaser && (
         <div className={`${name || pillars ? "mt-4" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
@@ -1118,6 +1283,36 @@ function TeaserStep({
         </div>
       )}
 
+      {/* 財·緣 — 타이트의 「財物」「戀愛」 자리. 값을 읽다가 스스로 끊는다(말풍선 마스킹).
+          달 마스킹이 "몇 월인지 짚는다" 포지션을 목차보다 먼저 스토리로 흘린다. */}
+      {imm && teaser && (
+        <>
+          <SangunSay>
+            앞일도 적나라하게 말해줄 수 있다.
+            <br />
+            대신 좋은 말만 하지는 않는다.
+          </SangunSay>
+
+          <HanjaHeader char="財" />
+          <SangunSay>
+            돈부터 보자. 어차피 그게 제일 궁금할 테니.
+            <br />
+            들어오는 달이 보인다 — <InkMask text="▓▓년 ▓▓월" />. &nbsp;…여기까지.
+          </SangunSay>
+
+          <HanjaHeader char="緣" />
+          <SangunSay>네 짝도 봤다. 얼굴까지.</SangunSay>
+          <DestinyCard partner={partner} gender={gender} birthDate={birthDate} />
+
+          {teaser.turningYear && (
+            <>
+              <HanjaHeader char="命" />
+              <SangunSay>그리고 하나 더. 장부에 붉게 적힌 해가 있다.</SangunSay>
+            </>
+          )}
+        </>
+      )}
+
       {/* 크게 갈리는 해 — 연도만 공개 */}
       {teaser?.turningYear && (
         <div
@@ -1137,8 +1332,14 @@ function TeaserStep({
       {/* 받을 장부의 목차 — 타이트 결과지 실측(2026-08-03)에서 가져온 형식.
           잠긴 줄 5개는 "안 주는 게 많다"로 읽혔다. 결과지 9장과 1:1 인 목차 카드로 바꾸고,
           七장(전환점)만 열어 둔다 — 하나가 열려 있어야 나머지 잠금이 미끼가 된다. */}
+      {/* ▓ 문자를 그대로 찍으면 어디서나 보이는 자리표시자라 AI 티가 난다(형님 지적).
+          세계관대로 "산군이 붓으로 그어 가린 자국"으로 그린다 — ▓ 연속 구간만 먹 붓자국 바로
+          바꾸고 년·월 같은 단위 글자는 남긴다("달까지 적혀 있는데 가려져 있다"가 한눈에 보이게).
+          모양·기울기는 위치 기반으로 고정해 SSR/하이드레이션이 어긋나지 않게 한다(난수 금지). */}
       {teaser && (
         <>
+          {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리 */}
+          {imm && teaser.chapters.length > 0 && <SangunSay>복채 얘기를 하자.</SangunSay>}
           {teaser.chapters.length > 0 ? (
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
@@ -1214,8 +1415,8 @@ function TeaserStep({
                                   {it.peek}
                                 </span>
                               ) : (
-                                <span className="font-mono text-[10.5px] tracking-[0.05em]" style={{ color: "rgba(232,201,106,0.38)" }}>
-                                  {it.mask}
+                                <span className="text-[12px] text-bone-soft">
+                                  <InkMask text={it.mask ?? ""} />
                                 </span>
                               )}
                             </span>
