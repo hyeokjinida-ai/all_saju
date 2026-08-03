@@ -10,12 +10,16 @@ import { useEffect, useRef, useState } from "react";
 
 export function BgMedia({
   video,
+  videoFallback,
   img,
   alt,
   className,
   loop = true,
 }: {
   video: string;
+  /** video 가 아직 없을 때 대신 틀 영상. <source> 를 두 개 두면 브라우저가 첫 번째를 못 읽을 때
+   *  두 번째로 넘어간다 — 새 영상 자리를 미리 뚫어두고도 화면이 정지 이미지로 내려앉지 않는다. */
+  videoFallback?: string;
   img: string;
   alt: string;
   className: string;
@@ -30,7 +34,7 @@ export function BgMedia({
   useEffect(() => {
     setFallback(false);
     ref.current?.load();
-  }, [video]);
+  }, [video, videoFallback]);
 
   if (fallback) {
     // eslint-disable-next-line @next/next/no-img-element
@@ -51,7 +55,9 @@ export function BgMedia({
         aria-label={alt}
         onError={() => setFallback(true)}
       >
-        <source src={video} type="video/mp4" onError={() => setFallback(true)} />
+        <source src={video} type="video/mp4" />
+        {/* 첫 영상이 아직 없으면 브라우저가 여기로 넘어온다. 둘 다 없을 때만 img 로 내려앉는다. */}
+        {videoFallback && <source src={videoFallback} type="video/mp4" />}
       </video>
       {/* 생성 툴이 우하단에 남기는 워터마크를 묻는 비네팅.
           실측(720x1280): 오른쪽 125px · 아래 129px 지점, 최대 밝기 95.

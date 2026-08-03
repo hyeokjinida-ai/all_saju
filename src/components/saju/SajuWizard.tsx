@@ -132,6 +132,9 @@ const PROFILE_ASK_BY_SLUG: Record<string, number[]> = {
 const CONCERN_STEP = 7;      // 고민
 const CONFIRM_STEP = 8;      // 입력 확인
 const TEASER_STEP = 9;       // 결제 전 무료 티저(개인화) = 결제 화면
+/** 로딩 화면 최소 노출 시간. 방울 영상이 한 동작을 다 보여줄 만큼은 붙잡아 둔다.
+ *  실측: 만세력 캐시에 걸리면 응답이 1초대라 그냥 두면 영상이 시작도 전에 사라진다. */
+const MIN_TEASER_LOADING_MS = 4200;
 
 // 산군 스토리(비주얼노벨)에서 고른 직업·연애상태를 위저드로 넘기는 세션 키
 
@@ -279,6 +282,7 @@ export function SajuWizard({
   );
 
   const loadTeaser = useCallback(async () => {
+    const startedAt = Date.now();
     setTeaserLoading(true);
     setStep(TEASER_STEP);
     try {
@@ -316,6 +320,11 @@ export function SajuWizard({
     } catch {
       track("teaser_fail", { slug: productSlug, reason: "network" });
     } finally {
+      // 만세력이 캐시에 걸리면 1초 만에 끝난다. 그러면 로딩 영상이 한 동작도 못 보여주고 사라지고,
+      // 10단계를 답한 손님에게 "계산했다"는 실감이 안 남는다 → 최소 시간은 붙잡아 둔다.
+      // 느릴 땐 그냥 통과하므로 총 대기가 늘지는 않는다.
+      const left = MIN_TEASER_LOADING_MS - (Date.now() - startedAt);
+      if (left > 0) await new Promise((r) => setTimeout(r, left));
       setTeaserLoading(false);
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
@@ -416,9 +425,13 @@ export function SajuWizard({
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
               지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
               배경 그림이 스토리 3·4장면과 같은 face 라 영상도 face.mp4 를 같이 쓴다(영상 한 편 절약). */}
+          {/* 장부를 찾는 동안만 다른 영상으로 바꾼다 — 그 3~5초가 손님이 아무것도 안 하고 기다리는
+              유일한 구간이다. 여기까지 본 영상을 또 틀면 "기다리는 중"이라는 느낌이 안 산다.
+              ritual.mp4(방울 흔드는 컷)가 들어오면 자동으로 살아나고, 없으면 altar.mp4 로 넘어간다. */}
           <BgMedia
-            video={bgVideo ?? "/products/sangun/face.mp4"}
-            img={bgImage ?? "/products/sangun/face.webp"}
+            video={teaserLoading ? "/products/sangun/ritual.mp4" : (bgVideo ?? "/products/sangun/face.mp4")}
+            videoFallback={teaserLoading ? "/products/sangun/altar.mp4" : undefined}
+            img={teaserLoading ? "/products/sangun/altar.webp" : (bgImage ?? "/products/sangun/face.webp")}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-85"
           />
@@ -787,9 +800,12 @@ export function SajuWizard({
         )}
       </div>
 
-      {/* 하단 고정 버튼 */}
+      {/* 하단 고정 버튼 — 장부를 찾는 동안은 통째로 감춘다.
+          타이트 실측: 로딩 화면에 결제 요소가 하나도 없고, 티저를 다 보여준 뒤에 값이 처음 나온다.
+          우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
+          "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
       <div className="relative z-[2] w-full max-w-[560px] mx-auto px-5 pb-7">
-        {step < TOTAL - 1 ? (
+        {teaserLoading ? null : step < TOTAL - 1 ? (
           <>
             <button
               type="button"
