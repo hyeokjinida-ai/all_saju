@@ -65,6 +65,13 @@ export type WebtoonBubble = {
   rotate?: number;
   /** 최대 폭(그림 폭 대비 %). 주면 그 폭에서 자동 줄바꿈을 허용한다 */
   maxWidth?: number;
+  /**
+   * 고정 폭(그림 폭 대비 %). 주면 글자 길이와 무관하게 그 폭을 유지한다.
+   * 실사 사진에 쓰는 하단 대사 띠(영화 자막·비주얼 노벨 방식)를 만들 때 쓴다 —
+   * 말풍선은 그림체와 같은 언어라 실사 위에 얹으면 짤방처럼 읽힌다.
+   * 산군 게이트·스토리 화면(SangunWebtoon)이 이미 이 문법이라 웹툰만 다르면 상품 안에서 언어가 갈린다.
+   */
+  width?: number;
 
   /** 말풍선 모양. 기본 none = 그림에 이미 그려진 말풍선 위에 글자만 얹는다 */
   bubble?: BubbleShape;
@@ -226,8 +233,8 @@ export function WebtoonCut({
             const align = b.align ?? "center";
 
             const textStyle: React.CSSProperties = {
-              // pre = \n은 살리고 자동 줄바꿈은 막는다. maxWidth를 준 경우에만 자동 줄바꿈 허용.
-              whiteSpace: b.maxWidth ? "pre-line" : "pre",
+              // pre = \n은 살리고 자동 줄바꿈은 막는다. 폭을 정해준 경우에만 자동 줄바꿈 허용.
+              whiteSpace: b.maxWidth || b.width ? "pre-line" : "pre",
               lineHeight: b.lineHeight ?? 1.45,
               fontWeight: b.weight ?? 500,
               color: b.color ?? "#111111",
@@ -279,7 +286,7 @@ export function WebtoonCut({
                   fontSize: `${size}cqw`,
                 }}
               >
-                <div className="relative inline-block">
+                <div className={cn("relative", b.width ? "block" : "inline-block")}>
                   <div
                     className={alignClass}
                     style={{
@@ -287,7 +294,10 @@ export function WebtoonCut({
                       border: `${sw}cqw solid ${stroke}`,
                       borderRadius: pad.radius,
                       padding: `${b.padY ?? pad.y}em ${b.padX ?? pad.x}em`,
+                      // width는 글자 길이와 무관한 고정 폭(하단 대사 띠), maxWidth는 넘칠 때만 접는 상한
+                      width: b.width ? `${b.width}cqw` : undefined,
                       maxWidth: b.maxWidth ? `${b.maxWidth}cqw` : undefined,
+                      boxSizing: "border-box",
                     }}
                   >
                     <p style={textStyle}>{b.text}</p>

@@ -610,6 +610,9 @@ export function WebtoonEditor({
               </Row>
 
               <Num label="글자크기" value={cur.size ?? 4.6} step={0.1} onChange={(v) => patch(sel.c, sel.b, { size: v })} />
+              {/* 0 = 글자 길이대로. 값을 주면 그 폭 고정 — 실사 사진용 하단 대사 띠를 만들 때 쓴다 */}
+              <Num label="말풍선폭(0=자동)" value={cur.width ?? 0} step={2} min={0} max={100}
+                   onChange={(v) => patch(sel.c, sel.b, { width: v || undefined })} />
               <Num label="굵기" value={cur.weight ?? 500} step={100} min={100} max={900} onChange={(v) => patch(sel.c, sel.b, { weight: v })} />
               <Num label="줄간격" value={cur.lineHeight ?? 1.45} step={0.05} onChange={(v) => patch(sel.c, sel.b, { lineHeight: v })} />
               <Num label="기울기°" value={cur.rotate ?? 0} step={1} onChange={(v) => patch(sel.c, sel.b, { rotate: v || undefined })} />
