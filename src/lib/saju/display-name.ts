@@ -36,3 +36,14 @@ export function fullHonorific(name?: string | null, fallback = "회원"): string
   const n = (name ?? "").trim();
   return `${n || fallback}님`;
 }
+
+/**
+ * "권혁진" — 반말 캐릭터가 부를 때. 님을 붙이지 않고 성도 떼지 않는다.
+ *
+ * 위 honorific() 의 근거(청월당: 성을 떼면 거리감이 준다)는 **존댓말 상품** 얘기다.
+ * 산군은 무서운 박수라 거리감이 무기이고, 장부에서 이름을 호명하는 그림이라 성이 붙어야 맞는다.
+ * "지훈님, 됐다" 처럼 님과 하대체가 한 문장에 섞이면 캐릭터가 바로 무너진다.
+ */
+export function plainName(name?: string | null, fallback = ""): string {
+  return (name ?? "").trim() || fallback;
+}

@@ -13,7 +13,7 @@ import {
   type BubbleShape,
   type BubbleTail,
 } from "@/components/webtoon/WebtoonCut";
-import { honorific } from "@/lib/saju/display-name";
+import { honorific, plainName } from "@/lib/saju/display-name";
 import { WEBTOON_TOKENS, WEBTOON_SAMPLE_TOKENS, fillWebtoonText } from "@/lib/saju/webtoon-tokens";
 import { isTextCut, type WebtoonCutData } from "@/components/webtoon/WebtoonPage";
 import { WebtoonTextCut, TEXT_CUT_DEFAULTS, type WebtoonTextStyle } from "@/components/webtoon/WebtoonTextCut";
@@ -267,10 +267,11 @@ export function WebtoonEditor({
     setSel({ c: to, b: 0 });
   };
 
-  const who = honorific(name);
+  const who = plainName(name);      // 반말용 — 산군
+  const whoPolite = honorific(name); // 존댓말용
   // 미리보기 — 이름만 위에서 입력한 값으로 바꾸고 나머지는 샘플값.
   // 오타 난 토큰은 fillWebtoonText 가 null 을 주므로 원문을 그대로 남겨 눈에 띄게 한다.
-  const previewTokens = { ...WEBTOON_SAMPLE_TOKENS, "{이름}": who };
+  const previewTokens = { ...WEBTOON_SAMPLE_TOKENS, "{이름}": who, "{이름님}": whoPolite };
   const fillTokens = (s: string) => fillWebtoonText(s, previewTokens) ?? s;
   const cut = cuts[sel.c];
   const cur = cut?.bubbles[sel.b];
@@ -288,6 +289,7 @@ export function WebtoonEditor({
           <span className="text-bone-faint">미리보기 이름</span>
           <input value={name} onChange={(e) => setName(e.target.value)} className="w-24 rounded border border-hairline bg-wine px-2 py-1" />
           <span className="text-gold">{who}</span>
+          <span className="text-bone-faint">/ {whoPolite}</span>
         </div>
 
         <div className="mt-4 flex justify-center">

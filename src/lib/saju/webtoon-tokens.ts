@@ -10,7 +10,7 @@
 
 import type { ResultView, ElementKey } from "./result-view";
 import type { SajuTeaser } from "./teaser";
-import { honorific } from "./display-name";
+import { honorific, plainName } from "./display-name";
 
 // 편집기 토큰 버튼 + 미리보기 샘플값. 순서가 곧 버튼 순서다.
 //
@@ -18,7 +18,9 @@ import { honorific } from "./display-name";
 //   안 넘친다는 뜻이 되어야 한다. 짧은 샘플로 맞추면 실전에서 글자가 말풍선을 뚫는다.
 //   콜드리딩 실측 길이(표본 50): 콜드1 20~42자 · 콜드2 42~46자 · 콜드3 27~40자.
 export const WEBTOON_TOKENS: { token: string; hint: string; sample: string }[] = [
-  { token: "{이름}", hint: "성을 뗀 호칭", sample: "지훈님" },
+  // 반말 캐릭터(산군)가 기본이라 {이름}을 님 없는 쪽으로 둔다. 존댓말 캐릭터 상품은 {이름님}을 쓴다.
+  { token: "{이름}", hint: "반말용 — 님 없이, 성 붙여서", sample: "권혁진" },
+  { token: "{이름님}", hint: "존댓말용 — 성 떼고 님", sample: "지훈님" },
   { token: "{생년월일}", hint: "입력한 생일", sample: "1995년 12월 27일" },
   { token: "{간지}", hint: "원국 3기둥", sample: "기묘년 갑술월 임자일" },
   { token: "{일간}", hint: "타고난 기운", sample: "임수" },
@@ -81,7 +83,8 @@ export function buildWebtoonTokens(args: {
   const t: Record<string, string> = {};
   const put = (k: string, v: string) => { if (v) t[k] = v; };
 
-  put("{이름}", honorific(args.name, ""));
+  put("{이름}", plainName(args.name));
+  put("{이름님}", honorific(args.name, ""));
   put("{생년월일}", birthLine(args.birthDate));
 
   // 원국 — pillars 표시 순서는 시·일·월·년이라 뒤에서부터 년·월·일을 집는다.
