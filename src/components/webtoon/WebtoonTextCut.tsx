@@ -27,7 +27,9 @@ export const TEXT_CUT_DEFAULTS = {
   size: 4.2,
   align: "center" as const,
   font: "myeongjo" as WebtoonFont,
-  padY: 9,
+  // 스크롤에서 시간 = 세로 거리. 9로 두면 글 컷이 그림(세로 9:16)의 20%밖에 안 돼
+  // 엄지로 넘길 때 그냥 지나간다 — "쉬어가는 칸"이 되려면 그림의 1/3은 돼야 한다(실측 후 18로 올림).
+  padY: 18,
   lineHeight: 1.75,
 };
 
