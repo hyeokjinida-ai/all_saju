@@ -91,7 +91,7 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
   { hanja: "業", q: "무슨 일을 하고 계신가요?", help: "일·돈 풀이를 상황에 맞춰드립니다 (선택)", optional: true },
   { hanja: "惑", q: "요즘 가장 마음 쓰이는 건?", help: "복수 선택 가능 · 이 흐름을 먼저 살펴드립니다" },
   { hanja: "覽", q: "입력하신 정보를 확인해 주세요", help: "" },
-  { hanja: "兆", q: "겉장만 먼저 펼쳐봤어요", help: "여기까지는 무료예요" },
+  { hanja: "兆", q: "사주를 먼저 읽어봤어요", help: "여기까지는 무료예요" },
 ];
 
 // 산군(신점) 전용 반말 카피 — 단계 구성·인덱스는 공용과 동일(로직 무변경), 말만 갈아끼운다.
@@ -106,7 +106,9 @@ const STEPS_SANGUN: typeof STEPS = [
   { hanja: "業", q: "무엇으로 먹고사나", help: "네가 하는 일에 맞춰 돈 얘기를 한다 (넘겨도 된다)", optional: true },
   { hanja: "惑", q: "따로 묻고 싶은 게 있나", help: "적으면 그 물음부터 정면으로 답해준다 — 없으면 그냥 다음" },
   { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
-  { hanja: "兆", q: "네 장부, 겉장만 펴봤다", help: "여기까지는 값을 안 받는다" },
+  // "겉장만 펴봤다"는 겉장이 뭔지 한 번 되짚게 만들었다(형님 지적 — 버튼과 같은 병).
+  // 스토리에서 이미 한 말("네 장부, 내가 먼저 봤다")을 받아 해독이 필요 없는 문장으로.
+  { hanja: "兆", q: "네 장부, 다 읽고 왔다", help: "여기까지는 공짜로 보여주마" },
 ];
 
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
@@ -1138,41 +1140,89 @@ function TeaserStep({
       {teaser && (
         <>
           {teaser.chapters.length > 0 ? (
+            /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
+               간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
+               배경은 형님이 뽑은 먹 한지 + 붉은 잉크판 텍스처(ganji.webp) — 타이트의 붉은 잉크판 대응. */
             <div className="mt-4">
               <p className="font-myeongjo text-center text-[11.5px] text-bone-faint tracking-[0.16em]">
-                네 장부의 차례 — 아홉 장
+                네 장부의 차례
               </p>
-              <div className="mt-2.5 space-y-1.5">
+              <div className="mt-2.5 space-y-3">
                 {teaser.chapters.map((c) => (
                   <div
                     key={c.no}
-                    className="flex items-center gap-3 px-3 py-2.5"
+                    className="px-4 pb-4 pt-4"
                     style={{
-                      background: c.star ? "rgba(232,201,106,0.07)" : "rgba(255,255,255,0.025)",
-                      border: `1px solid ${c.star ? "rgba(232,201,106,0.4)" : "var(--gold-pale)"}`,
+                      backgroundImage: "url(/products/sangun/ganji.webp)",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundColor: "#0c0a08",
+                      border: "1px solid rgba(232,201,106,0.28)",
                     }}
                   >
-                    <span
-                      className="font-brush w-6 shrink-0 text-center text-[21px] leading-none"
-                      style={{ color: c.star ? "var(--gold-bright)" : "var(--gold-soft)" }}
-                    >
-                      {c.no}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="font-myeongjo block text-[13px] font-semibold leading-snug text-bone">{c.title}</span>
-                      <span className="font-myeongjo mt-0.5 block text-[11px] leading-relaxed text-bone-faint">{c.hint}</span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      {c.peek ? (
-                        <span className="font-myeongjo text-[12.5px] font-bold leading-tight" style={{ color: "var(--gold-bright)" }}>
-                          {c.peek}
-                        </span>
-                      ) : (
-                        <span className="font-mono text-[11px] tracking-[0.06em]" style={{ color: "rgba(232,201,106,0.38)" }}>
-                          {c.mask}
+                    {/* 간지 배너 + 태그 */}
+                    <div className="flex items-center justify-center gap-2">
+                      <span
+                        className="font-brush px-3 pb-1 pt-1.5 text-[16px] leading-none tracking-[0.28em]"
+                        style={{ background: "#7a2317", color: "#f3e6cf", textIndent: "0.28em" }}
+                      >
+                        {c.no}章
+                      </span>
+                      {c.tag && (
+                        <span
+                          className="font-myeongjo px-2 py-1 text-[10.5px] tracking-[0.08em]"
+                          style={{ border: "1px solid rgba(232,201,106,0.45)", color: "var(--gold-soft)" }}
+                        >
+                          {c.tag}
                         </span>
                       )}
-                    </span>
+                    </div>
+                    {/* 도발 부제 */}
+                    <p className="font-myeongjo mt-3 text-center text-[15px] font-bold leading-[1.55]" style={{ color: "#efe6d2" }}>
+                      {c.tease.map((line, i) => (
+                        <span key={i}>
+                          {line}
+                          {i < c.tease.length - 1 && <br />}
+                        </span>
+                      ))}
+                    </p>
+                    <div
+                      className="mx-auto mt-3 h-px w-24"
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(232,201,106,0.55),transparent)" }}
+                    />
+                    {/* 불릿 — 결과지 챕터와 1:1 */}
+                    <ul className="mt-3.5 space-y-2.5 text-left">
+                      {c.items.map((it, i) => (
+                        <li key={i} className="flex items-center gap-2.5">
+                          <span
+                            aria-hidden
+                            className="mt-0.5 h-1.5 w-1.5 shrink-0 rotate-45"
+                            style={{ background: "rgba(232,201,106,0.75)" }}
+                          />
+                          <span className="min-w-0 flex-1">
+                            {it.lead && (
+                              <span className="font-myeongjo block text-[11.5px] leading-snug text-bone-faint">{it.lead}</span>
+                            )}
+                            <span className="font-myeongjo block text-[13.5px] font-bold leading-snug" style={{ color: "#f3ead6" }}>
+                              {it.main}
+                            </span>
+                          </span>
+                          {(it.peek || it.mask) && (
+                            <span className="shrink-0 text-right">
+                              {it.peek ? (
+                                <span className="font-myeongjo text-[13px] font-bold leading-tight" style={{ color: "var(--gold-bright)" }}>
+                                  {it.peek}
+                                </span>
+                              ) : (
+                                <span className="font-mono text-[10.5px] tracking-[0.05em]" style={{ color: "rgba(232,201,106,0.38)" }}>
+                                  {it.mask}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ))}
               </div>
