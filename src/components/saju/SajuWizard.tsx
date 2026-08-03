@@ -84,7 +84,9 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
   { hanja: "生", q: "언제 태어나셨나요?", help: "양력·음력도 함께 골라주세요" },
   { hanja: "時", q: "태어난 시각을 아시나요?", help: "시각을 알면 더 정밀한 풀이가 가능합니다" },
   { hanja: "性", q: "성별을 선택해 주세요", help: "운의 흐름 방향을 정하는 데 쓰입니다" },
-  { hanja: "緣", q: "인연은 어느 쪽으로 보실까요?", help: "이 답으로 인연 풀이의 기준이 달라집니다" },
+  // 질문 안에 '남자/여자'를 넣는다 — 선택지를 보고 나서 "내 성별인가? 상대 성별인가?" 되짚으면 안 된다.
+  // 바로 앞이 성별 질문이라 더 헷갈린다.
+  { hanja: "緣", q: "마음이 가는 쪽은 남자인가요, 여자인가요?", help: "짝을 보는 자리가 이 답으로 달라집니다" },
   { hanja: "伴", q: "지금 곁에 사람이 있나요?", help: "인연 풀이를 지금 상황에 맞춰드립니다 (선택)", optional: true },
   { hanja: "業", q: "무슨 일을 하고 계신가요?", help: "일·돈 풀이를 상황에 맞춰드립니다 (선택)", optional: true },
   { hanja: "惑", q: "요즘 가장 마음 쓰이는 건?", help: "복수 선택 가능 · 이 흐름을 먼저 살펴드립니다" },
@@ -98,10 +100,10 @@ const STEPS_SANGUN: typeof STEPS = [
   { hanja: "名", q: "이름이 뭐냐", help: "장부에 적을 이름이다 (안 적어도 된다)", optional: true },
   { hanja: "生", q: "언제 태어났냐", help: "양력인지 음력인지도 같이 골라라" },
   { hanja: "時", q: "태어난 시각은 아나", help: "알면 더 깊이 본다 — 모르면 모른다 해도 된다" },
-  { hanja: "性", q: "성별은", help: "기운의 방향이 여기서 갈린다" },
-  { hanja: "緣", q: "네 인연은 어느 쪽에 적혀 있냐", help: "장부에서 볼 자리가 여기서 갈린다" },
+  { hanja: "性", q: "성별은", help: "남녀가 운의 흐름을 읽는 방향이 다르다" },
+  { hanja: "緣", q: "마음이 가는 쪽이 남자냐, 여자냐", help: "장부에서 네 짝을 찾는 자리가 달라진다" },
   { hanja: "伴", q: "지금 곁에 사람이 있나", help: "있으면 그 자리부터 본다 (없으면 그냥 넘겨라)", optional: true },
-  { hanja: "業", q: "무엇으로 먹고사나", help: "일과 돈을 그 자리에 맞춰 본다 (넘겨도 된다)", optional: true },
+  { hanja: "業", q: "무엇으로 먹고사나", help: "네가 하는 일에 맞춰 돈 얘기를 한다 (넘겨도 된다)", optional: true },
   { hanja: "惑", q: "따로 묻고 싶은 게 있나", help: "적으면 그 물음부터 정면으로 답해준다 — 없으면 그냥 다음" },
   { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
   { hanja: "兆", q: "네 장부, 겉장만 펴봤다", help: "여기까지는 값을 안 받는다" },
@@ -284,6 +286,9 @@ export function SajuWizard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // 이름이 빠져 있어서 웹툰 1컷({이름}으로 여는 칸)이 통째로 안 떴다.
+          // 손님 이름으로 시작하는 자리가 이 웹툰에서 가장 개인화된 한 줄이다.
+          nickname: form.name || undefined,
           birthDate: form.birthDate,
           birthTime: form.timeUnknown ? null : form.birthTime || null,
           timeUnknown: form.timeUnknown,
@@ -315,7 +320,7 @@ export function SajuWizard({
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
     // → 티저와 결제 후 결과지가 다른 해를 말한다. 반드시 의존성에 남겨둘 것.
-  }, [form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags]);
+  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags]);
 
   const next = useCallback(() => {
     if (step === CONFIRM_STEP) {
@@ -647,9 +652,8 @@ export function SajuWizard({
               })}
             </div>
             <p className="font-myeongjo mt-4 text-center text-[11.5px] text-bone-faint leading-relaxed">
-              {imm
-                ? "장부에서 네 짝이 적힌 자리가 여기서 갈린다. 모르겠으면 모르겠다고 해라."
-                : "인연을 보는 자리가 이 답으로 달라집니다. 모르시면 마지막을 골라 주세요."}
+              {/* 질문이 이미 남자/여자를 말하므로 여기선 반복하지 않는다. 안 정한 사람만 안심시키면 된다. */}
+              {imm ? "아직 모르겠으면 모르겠다고 해라." : "아직 정하지 않으셨다면 마지막을 골라 주세요."}
             </p>
           </div>
         )}
@@ -809,9 +813,11 @@ export function SajuWizard({
                   : "none",
               }}
             >
-              {/* (무료) 표기 필수 — 바로 위에 19,900원이 크게 떠 있어서 모의구매 2인이
-                  "이거 누르면 결제되는 줄" 알고 멈췄다. */}
-              {step === CONFIRM_STEP ? (imm ? "겉장부터 펴봐라 (무료)" : "겉장 먼저 보기 (무료)") : "다음"}
+              {/* '무료'는 반드시 남긴다 — 값이 붙어 있던 시절 모의구매 2인이
+                  "이거 누르면 결제되는 줄" 알고 멈췄다. 몰입 상품은 값을 뺐지만 겁은 그대로 남는다.
+                  버튼은 손님이 누르는 것이라 캐릭터 말투가 아니라 "내가 뭘 얻는지"로 쓴다.
+                  "겉장부터 펴봐라"는 겉장이 뭔지 모르면 되짚게 되고, 되짚는 순간 몰입이 끊긴다. */}
+              {step === CONFIRM_STEP ? "무료로 먼저 보기" : "다음"}
             </button>
             {cur.optional && (
               <button
@@ -1198,10 +1204,16 @@ function ConfirmStep({
         ))}
       </div>
 
-      <div className="mt-[18px] px-4 py-3.5 bg-gold-pale border border-gold-pale flex justify-between items-center">
-        <span className="font-myeongjo text-sm text-bone font-semibold">{productName}</span>
-        <span className="font-serif text-xl font-bold text-gold-bright">{formatKRW(price)}</span>
-      </div>
+      {/* 몰입 상품(산군)에서는 가격을 여기서 꺼내지 않는다.
+          타이트 실측: 게이트·입력 어디에도 가격이 없고 티저를 다 보여준 뒤 결제 시트에서 처음 나온다.
+          우리는 게이트에서 뺐는데 확인 화면에서 다시 꺼내고 있었다 — 앞뒤가 안 맞고,
+          무료 티저를 보기도 전에 지갑을 떠올리게 하면 여기가 이탈 지점이 된다. */}
+      {!imm && (
+        <div className="mt-[18px] px-4 py-3.5 bg-gold-pale border border-gold-pale flex justify-between items-center">
+          <span className="font-myeongjo text-sm text-bone font-semibold">{productName}</span>
+          <span className="font-serif text-xl font-bold text-gold-bright">{formatKRW(price)}</span>
+        </div>
+      )}
 
       <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.04em]">
         적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
