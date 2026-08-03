@@ -27,7 +27,27 @@ export type SajuTeaser = {
   sinsal: string[];
   turningYear: { year: number; age: number; line: string } | null;
   locked: { label: string; mask: string }[];
+  /** 받을 장부의 목차. 손님이 "돈 내면 뭘 받는지"를 보는 유일한 자리다. */
+  chapters: TeaserChapter[];
   note: string;
+};
+
+/**
+ * 목차 한 칸. 실제 결과지 챕터(prompt.ts 의 outline)와 **하나씩 대응**해야 한다.
+ * 목차에 있는데 결과지에 없으면 결제 후에 바로 들통난다.
+ */
+export type TeaserChapter = {
+  /** 一 ~ 九 */
+  no: string;
+  title: string;
+  /** 이 장에서 무엇을 말하는지 한 줄 */
+  hint: string;
+  /** 이미 공개한 값(있으면 잠금 대신 이걸 보여준다) — "이건 진짜다"의 증거가 된다 */
+  peek?: string;
+  /** 잠긴 값 표기 */
+  mask?: string;
+  /** 상품의 핵심 장(prompt.ts 에서 ★ 로 표시된 것) */
+  star?: boolean;
 };
 
 type Line = { ban: string; jon: string };
@@ -304,10 +324,31 @@ export function buildTeaser(
           { label: "적어주신 물음에 대한 답", mask: "▓▓▓▓▓▓▓▓" },
         ];
 
+  // 목차 — prompt.ts 의 sangun-sinjeom outline 아홉 줄과 1:1 로 맞춘다.
+  // 여기서 지어내면 결제 직후에 바로 들통난다. 순서·개수도 그대로다.
+  //
+  // 七장·八장에는 **이미 공개한 값**을 다시 박는다. 잠긴 줄만 늘어놓으면 "뭘 주는지" 대신
+  // "안 주는 게 많다"로 읽힌다 — 하나라도 열려 있어야 나머지 잠금이 미끼가 된다.
+  const ty = turningYear;
+  const chapters: TeaserChapter[] = [
+    { no: "一", title: "네 그릇부터 보자",       hint: "타고난 본바탕, 강점 둘, 남들과 다른 결 하나", mask: "▓▓▓▓▓▓▓▓" },
+    { no: "二", title: "올해 오는 것, 떠나는 것", hint: "분명히 오는 기회 하나와 정리될 것 하나",     mask: "▓▓▓▓▓▓▓▓" },
+    { no: "三", title: "돈이 들어오는 달",       hint: "재물그릇 점수 · 들어오는 달 둘 · 새는 달 하나", mask: "▓▓년 ▓▓월", star: true },
+    { no: "四", title: "인연이 들어오는 달",     hint: "인연 그릇 점수 · 들어오는 달 둘",            mask: "▓▓년 ▓▓월", star: true },
+    { no: "五", title: "일과 자리의 시기",       hint: "승부수를 걸 때와 엎드려 있을 때",           mask: "▓▓년 ▓▓월" },
+    { no: "六", title: "조심할 달",             hint: "마음이 흔들리는 달과 그때의 대처",           mask: "▓▓년 ▓▓월" },
+    ty
+      ? { no: "七", title: "네 인생이 크게 바뀌는 해", hint: "그 해에 무엇이 갈리는지, 그때까지 쌓아둘 것", peek: `${ty.year}년, ${ty.age}세`, mask: "▓▓▓▓▓▓▓▓", star: true }
+      : { no: "七", title: "네 인생이 크게 바뀌는 해", hint: "몇 살에 무엇이 달라지는지",              mask: "▓▓▓▓▓▓▓▓", star: true },
+    { no: "八", title: "네 물음에 답한다",       hint: "네가 적어 보낸 물음에 확답부터 박는다",       mask: "▓▓▓▓▓▓▓▓", star: true },
+    { no: "九", title: "산군의 마지막 당부",     hint: "이번 주에 할 것 세 가지",                   mask: "▓▓▓▓▓▓▓▓" },
+  ];
+
   return {
     voice,
     headline: voice === "sangun" ? "네 장부, 겉장만 펴봤다" : "겉장만 먼저 펼쳐봤어요",
     coldRead,
+    chapters,
     hasPastCheck: !!past,
     // 판정을 손님에게 넘긴다. 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다(모의구매 33세).
     judgeInvite: past
