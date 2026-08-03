@@ -329,16 +329,16 @@ export function buildTeaser(
   //
   // 七장·八장에는 **이미 공개한 값**을 다시 박는다. 잠긴 줄만 늘어놓으면 "뭘 주는지" 대신
   // "안 주는 게 많다"로 읽힌다 — 하나라도 열려 있어야 나머지 잠금이 미끼가 된다.
-  const ty = turningYear;
-  const chapters: TeaserChapter[] = [
+  // 제목이 산군 반말이라 산군에서만 만든다. 존댓말 상품은 기존 잠긴 줄(locked)을 그대로 쓴다.
+  const chapters: TeaserChapter[] = voice !== "sangun" ? [] : [
     { no: "一", title: "네 그릇부터 보자",       hint: "타고난 본바탕, 강점 둘, 남들과 다른 결 하나", mask: "▓▓▓▓▓▓▓▓" },
     { no: "二", title: "올해 오는 것, 떠나는 것", hint: "분명히 오는 기회 하나와 정리될 것 하나",     mask: "▓▓▓▓▓▓▓▓" },
     { no: "三", title: "돈이 들어오는 달",       hint: "재물그릇 점수 · 들어오는 달 둘 · 새는 달 하나", mask: "▓▓년 ▓▓월", star: true },
     { no: "四", title: "인연이 들어오는 달",     hint: "인연 그릇 점수 · 들어오는 달 둘",            mask: "▓▓년 ▓▓월", star: true },
     { no: "五", title: "일과 자리의 시기",       hint: "승부수를 걸 때와 엎드려 있을 때",           mask: "▓▓년 ▓▓월" },
     { no: "六", title: "조심할 달",             hint: "마음이 흔들리는 달과 그때의 대처",           mask: "▓▓년 ▓▓월" },
-    ty
-      ? { no: "七", title: "네 인생이 크게 바뀌는 해", hint: "그 해에 무엇이 갈리는지, 그때까지 쌓아둘 것", peek: `${ty.year}년, ${ty.age}세`, mask: "▓▓▓▓▓▓▓▓", star: true }
+    turningYear
+      ? { no: "七", title: "네 인생이 크게 바뀌는 해", hint: "그 해에 무엇이 갈리는지, 그때까지 쌓아둘 것", peek: `${turningYear.year}년, ${turningYear.age}세`, mask: "▓▓▓▓▓▓▓▓", star: true }
       : { no: "七", title: "네 인생이 크게 바뀌는 해", hint: "몇 살에 무엇이 달라지는지",              mask: "▓▓▓▓▓▓▓▓", star: true },
     { no: "八", title: "네 물음에 답한다",       hint: "네가 적어 보낸 물음에 확답부터 박는다",       mask: "▓▓▓▓▓▓▓▓", star: true },
     { no: "九", title: "산군의 마지막 당부",     hint: "이번 주에 할 것 세 가지",                   mask: "▓▓▓▓▓▓▓▓" },

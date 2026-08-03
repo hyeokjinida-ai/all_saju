@@ -1132,28 +1132,73 @@ function TeaserStep({
         </div>
       )}
 
-      {/* 잠긴 줄 */}
+      {/* 받을 장부의 목차 — 타이트 결과지 실측(2026-08-03)에서 가져온 형식.
+          잠긴 줄 5개는 "안 주는 게 많다"로 읽혔다. 결과지 9장과 1:1 인 목차 카드로 바꾸고,
+          七장(전환점)만 열어 둔다 — 하나가 열려 있어야 나머지 잠금이 미끼가 된다. */}
       {teaser && (
         <>
-          <div className="mt-4">
-            {teaser.locked.map((row, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
-                <span className="font-myeongjo text-[12.5px] text-bone-soft tracking-[0.04em]">{row.label}</span>
-                <span className="font-mono text-[13px] tracking-[0.1em]" style={{ color: "rgba(232,201,106,0.42)" }}>
-                  {row.mask}
-                </span>
+          {teaser.chapters.length > 0 ? (
+            <div className="mt-4">
+              <p className="font-myeongjo text-center text-[11.5px] text-bone-faint tracking-[0.16em]">
+                네 장부의 차례 — 아홉 장
+              </p>
+              <div className="mt-2.5 space-y-1.5">
+                {teaser.chapters.map((c) => (
+                  <div
+                    key={c.no}
+                    className="flex items-center gap-3 px-3 py-2.5"
+                    style={{
+                      background: c.star ? "rgba(232,201,106,0.07)" : "rgba(255,255,255,0.025)",
+                      border: `1px solid ${c.star ? "rgba(232,201,106,0.4)" : "var(--gold-pale)"}`,
+                    }}
+                  >
+                    <span
+                      className="font-brush w-6 shrink-0 text-center text-[21px] leading-none"
+                      style={{ color: c.star ? "var(--gold-bright)" : "var(--gold-soft)" }}
+                    >
+                      {c.no}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="font-myeongjo block text-[13px] font-semibold leading-snug text-bone">{c.title}</span>
+                      <span className="font-myeongjo mt-0.5 block text-[11px] leading-relaxed text-bone-faint">{c.hint}</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      {c.peek ? (
+                        <span className="font-myeongjo text-[12.5px] font-bold leading-tight" style={{ color: "var(--gold-bright)" }}>
+                          {c.peek}
+                        </span>
+                      ) : (
+                        <span className="font-mono text-[11px] tracking-[0.06em]" style={{ color: "rgba(232,201,106,0.38)" }}>
+                          {c.mask}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            /* 존댓말 상품은 기존 잠긴 줄 유지 */
+            <div className="mt-4">
+              {teaser.locked.map((row, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
+                  <span className="font-myeongjo text-[12.5px] text-bone-soft tracking-[0.04em]">{row.label}</span>
+                  <span className="font-mono text-[13px] tracking-[0.1em]" style={{ color: "rgba(232,201,106,0.42)" }}>
+                    {row.mask}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* 받을 것을 한 줄로 — 타이트가 "5만 자·100페이지"를 박는 자리다.
-              우린 분량으로는 못 이긴다(2,900자 vs 5만 자). 대신 확답 개수로 뒤집는다.
-              "일곱"은 프롬프트 구조상 보장되는 하한이다(돈 3 + 인연 2 + 고민 1 + 당부 1). */}
+          {/* 포지션 한 줄 — 타이트 결과지 26,198자 실측: 연도 70회 · 달 1회. 그들은 달을 못 집는다.
+              "확답 일곱 번"은 그들도 하는 것("해라" 13회)이라 버리고, 그들이 구조적으로 못 하는
+              달(돈 3 + 인연 2 + 조심 1 = 여섯)로 카피를 옮긴다. */}
           {productSlug === "sangun-sinjeom" && (
             <p className="font-myeongjo mt-3.5 text-center text-[12.5px] leading-relaxed" style={{ color: "var(--gold-soft)" }}>
-              두루뭉술한 말은 한 줄도 없다.
+              연도까지는 어디서든 말해준다.
               <br />
-              <b>하라 · 말라</b>를 <b>일곱 번 이상</b> 못 박아 뒀다.
+              이 장부는 <b>몇 월인지</b>를 짚는다 — <b>여섯 달</b>이 적혀 있다.
             </p>
           )}
 
