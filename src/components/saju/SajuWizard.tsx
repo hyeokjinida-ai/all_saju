@@ -409,18 +409,21 @@ export function SajuWizard({
       {imm ? (
         <>
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
-              지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다. */}
+              지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
+              배경 그림이 스토리 3·4장면과 같은 face 라 영상도 face.mp4 를 같이 쓴다(영상 한 편 절약). */}
           <BgMedia
-            video={bgVideo ?? "/products/sangun/input.mp4"}
+            video={bgVideo ?? "/products/sangun/face.mp4"}
             img={bgImage ?? "/products/sangun/face.webp"}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            className="absolute inset-0 h-full w-full object-cover opacity-85"
           />
+          {/* 전체를 균일하게 누르면 배경이 죽고, 안 누르면 글자가 죽는다.
+              그래서 전면 그라데이션은 적당히만 두고, 글자가 실제로 앉는 자리는 아래 스크림이 따로 잡는다. */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(7,6,9,0.74) 0%, rgba(7,6,9,0.35) 36%, rgba(7,6,9,0.92) 74%, rgba(7,6,9,0.97) 100%)",
+                "linear-gradient(180deg, rgba(7,6,9,0.58) 0%, rgba(7,6,9,0.22) 36%, rgba(7,6,9,0.90) 74%, rgba(7,6,9,0.96) 100%)",
             }}
           />
         </>

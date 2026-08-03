@@ -387,35 +387,29 @@ export function SangunStory({
           video="/products/sangun/gate.mp4"
           img="/products/sangun/gate.webp"
           alt="신당 문을 지나 제단 앞으로 들어가는 장면"
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
+          className="absolute inset-0 h-full w-full object-cover opacity-95"
           loop={false}
         />
+        {/* 첫 화면은 문이 주인공이다. 예전 값은 문과 빛줄기를 거의 검정으로 눌렀다(화면 밝기 8.6/11.2/7.5).
+            글자는 위·아래 끝에만 있으므로 가운데(문)를 열어주고 위아래만 눌러 대비를 잡는다. */}
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(7,6,9,0.72) 0%, rgba(7,6,9,0.25) 45%, rgba(7,6,9,0.92) 100%)" }}
+          style={{ background: "linear-gradient(180deg, rgba(7,6,9,0.82) 0%, rgba(7,6,9,0.08) 40%, rgba(7,6,9,0.10) 58%, rgba(7,6,9,0.90) 100%)" }}
         />
         <div className="relative mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-between px-6 pb-10 pt-14 text-center">
+          {/* 첫 화면은 '읽는 곳'이 아니라 '들어가는 곳'이다(타이트 게이트 = 검은 화면 + 입장 버튼뿐).
+              헤드라인·상품 설명·신뢰 문구를 여기 얹으면 문이 뒤로 밀리고 세일즈 페이지가 된다.
+              뺀 것들의 제자리: 상품 설명 → main 스테이지 / "만세력 계산에서 나온 달" → 티저(원국을 보여준 뒤라야 힘이 있다). */}
           <div>
-            <p className="text-[13px] tracking-[0.4em]" style={{ color: GOLD }}>
-              명운록 · 산군 신점
-            </p>
-            <h1 className="mt-4 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
-              산군이 네 운명 장부를
+            {/* 타이트 게이트 실측(2026-08-03): 브랜드·상품명·가격·설명이 전부 없고,
+                대신 캐릭터가 1인칭으로 부르는 한 줄만 있다("나를 마주할 자신이 있다면 들어오거라").
+                헤드라인을 다 걷어내되 그 한 줄은 남겨야 부르는 힘이 생긴다.
+                브랜드는 바로 다음 스토리 화면 상단("명운록 · 신당")에서 노출된다. */}
+            <h1 className="font-myeongjo text-[22px] font-bold leading-[1.7]" style={{ color: "#efe6d2" }}>
+              네 운명은 이미 여기 적혀 있다.
               <br />
-              <span
-                style={{
-                  background: `linear-gradient(90deg,#efe6d2,${GOLD})`,
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                먼저 읽었다
-              </span>
+              <span style={{ color: GOLD }}>들어와라.</span>
             </h1>
-            <p className="mt-3 text-[14.5px]" style={{ color: "#b8ad97" }}>
-              타고난 그릇부터 돈 들어오는 달, 인연 오는 달까지 — 돌려 말하지 않는다
-            </p>
           </div>
 
           <div className="w-full">
@@ -444,11 +438,7 @@ export function SangunStory({
               }}
             >
               신당으로 입장하기
-              <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">{priceLabel} · 결제는 안에서, 우선 들어와 보거라</span>
             </button>
-            <p className="mt-3 text-[12px]" style={{ color: "#6f7686" }}>
-              사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이다
-            </p>
           </div>
         </div>
       </div>
