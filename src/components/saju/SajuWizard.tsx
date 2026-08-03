@@ -995,6 +995,25 @@ function SangunSay({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** 티저 하단의 산군 컷 — 타이트는 끝까지 컷 → 대사 → 값 순서로 사진이 따라간다(형님 지적).
+ *  세로 원본을 가로띠로 잘라 쓴다: 대사 띠 위에 서는 "장면 전환" 역할이라 전신이 다 나올 필요가 없고,
+ *  높이를 눌러야 스크롤 리듬이 안 늘어진다. objectPosition 으로 갓·상체가 중앙에 오게 잡는다. */
+function TeaserCut({ src, alt, pos = "center 30%" }: { src: string; alt: string; pos?: string }) {
+  return (
+    <div className="mt-6 overflow-hidden rounded-[2px]" style={{ border: "1px solid rgba(232,201,106,0.2)" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className="h-[230px] w-full select-none object-cover"
+        loading="lazy"
+        draggable={false}
+        style={{ objectPosition: pos }}
+      />
+    </div>
+  );
+}
+
 /** 붉은 한자 섹션 헤더 — 타이트의 「大運」「財物」「戀愛」 자리. 章이 바뀐다는 신호. */
 function HanjaHeader({ char }: { char: string }) {
   return (
@@ -1156,7 +1175,13 @@ function TeaserStep({
     >
       {/* 타이트 티저 실측(22단계)의 핵심 — 모든 블록을 캐릭터가 대사로 소개한 뒤 보여준다.
           아래 대사 띠들이 그 연결 조직이다. 전부 확정값·고정 문구라 LLM 비용 0. */}
-      {imm && <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>}
+      {imm && (
+        <>
+          {/* 문을 열고 신당으로 — "장부를 편다"의 장면화 */}
+          <TeaserCut src="/products/sangun/teaser-door.webp" alt="문을 열고 신당을 들여다보는 산군" pos="center 42%" />
+          <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>
+        </>
+      )}
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
@@ -1287,6 +1312,8 @@ function TeaserStep({
           달 마스킹이 "몇 월인지 짚는다" 포지션을 목차보다 먼저 스토리로 흘린다. */}
       {imm && teaser && (
         <>
+          {/* 제단 앞에 선다 — 앞일을 읽으러 가는 장면 */}
+          <TeaserCut src="/products/sangun/teaser-altar.webp" alt="촛불 제단 앞에 선 산군의 뒷모습" pos="center 34%" />
           <SangunSay>
             앞일도 적나라하게 말해줄 수 있다.
             <br />
@@ -1338,8 +1365,14 @@ function TeaserStep({
           모양·기울기는 위치 기반으로 고정해 SSR/하이드레이션이 어긋나지 않게 한다(난수 금지). */}
       {teaser && (
         <>
-          {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리 */}
-          {imm && teaser.chapters.length > 0 && <SangunSay>복채 얘기를 하자.</SangunSay>}
+          {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리.
+              정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
+          {imm && teaser.chapters.length > 0 && (
+            <>
+              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 26%" />
+              <SangunSay>복채 얘기를 하자.</SangunSay>
+            </>
+          )}
           {teaser.chapters.length > 0 ? (
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
