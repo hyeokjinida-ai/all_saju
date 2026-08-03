@@ -31,9 +31,10 @@ export default async function CheckoutPage({
     if (result) redirect(`/results/${result.id}`);
   }
 
+  // slug: 결제 후 success 대기 화면 테마(산군 등) 판별용 — TossWidget 이 sessionStorage 에 심는다.
   const { data: product } = await service
     .from("products")
-    .select("name")
+    .select("name, slug")
     .eq("id", order.product_id)
     .single();
 
@@ -55,6 +56,7 @@ export default async function CheckoutPage({
             amount={order.amount}
             customerKey={customerKey}
             productName={product?.name ?? "사주 상품"}
+            productSlug={product?.slug ?? null}
             customerEmail={email}
           />
         </CardContent>

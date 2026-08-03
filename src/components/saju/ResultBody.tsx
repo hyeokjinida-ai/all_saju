@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
-import type { ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 
 // 명운록 결과지 본문 — 마크다운을 증서 느낌의 구획된 섹션으로 렌더.
 // ## = 결과지 대제목(상단 1회), ### = 각 챕터(디바이더 + 아이콘 + 본문).
@@ -9,6 +9,57 @@ import type { ReactNode } from "react";
 
 const BODY = "#ece6ff"; // 본문 — 어두운 배경에서 또렷하게
 const ICON = "#c9a8ff";
+
+// ── 형광펜 — 타이트 실측에서 훔쳐온 기법 ──
+// 문단 속 핵심 한 문장만 칠해서, 긴 글을 안 읽어도 하이라이트만 따라가면 요지가 잡히게.
+// 프롬프트(lib/saju/prompt.ts)가 챕터당 한 문장을 ==문장== 으로 표시하고 여기서 칠한다.
+// 타이트는 붉은 형광펜을 쓴다 — 우리 결과지는 보라/금 톤이라 붉은 칠이 오히려 대비로 선다.
+const HIGHLIGHT_STYLE: CSSProperties = {
+  background: "rgba(143,43,30,0.55)", // 어두운 결과지 위에서 살아 있는 붉은 칠
+  color: "#ffe9d8",
+  padding: "0.08em 0.25em",
+  borderRadius: 2,
+  // 줄바꿈에 걸쳐도 칠(패딩·모서리)이 각 줄에 이어지게
+  boxDecorationBreak: "clone",
+  WebkitBoxDecorationBreak: "clone",
+};
+
+// 문자열 하나에서 ==...== 짝을 찾아 <mark> 로 쪼갠다.
+// 짝이 맞는 구간만 변환하고, 홀수 개·깨진 마커는 건드리지 않는다 —
+// 어설프게 반만 변환해서 깨진 결과를 내느니 원문 그대로 두는 쪽이 안전하다.
+function highlightString(text: string): ReactNode {
+  if (!text.includes("==")) return text;
+  // [^=] 로 제한: "====" 같은 연속 = 를 빈 하이라이트로 오인하지 않게
+  const re = /==([^=]+?)==/g;
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <mark key={m.index} style={HIGHLIGHT_STYLE}>
+        {m[1]}
+      </mark>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (parts.length === 0) return text; // 짝이 하나도 안 맞음 → 원문 그대로
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+// children 의 '텍스트 노드'만 골라 형광펜 처리. remark 파싱이 끝난 뒤에 동작하므로
+// 마크다운 문법과 충돌하지 않고, **==문장==** 처럼 굵게와 겹친 경우도
+// strong 오버라이드가 자기 children 텍스트를 다시 이 함수로 처리해서 동작한다.
+// (한계: ==가 요소 경계를 넘어 갈라진 경우는 짝을 못 찾아 원문 그대로 남는다 — 의도된 폴백)
+function withHighlights(children: ReactNode): ReactNode {
+  if (typeof children === "string") return highlightString(children);
+  if (Array.isArray(children))
+    return children.map((c, i) =>
+      typeof c === "string" ? <Fragment key={`hl-${i}`}>{highlightString(c)}</Fragment> : c,
+    );
+  return children;
+}
 
 function nodeText(node: ReactNode): string {
   if (node == null || node === false) return "";
@@ -64,20 +115,20 @@ export const markdownComponents: Components = {
     <h4 className="mt-5 mb-2 font-myeongjo text-base font-semibold" style={{ color: "#f6f1ff" }}>{children}</h4>
   ),
   p: ({ children }) => (
-    <p className="my-3.5 text-[15.5px] leading-[1.9]" style={{ color: BODY }}>{children}</p>
+    <p className="my-3.5 text-[15.5px] leading-[1.9]" style={{ color: BODY }}>{withHighlights(children)}</p>
   ),
   ul: ({ children }) => <ul className="my-3 space-y-2.5 pl-1">{children}</ul>,
   ol: ({ children }) => <ol className="my-3 space-y-2.5 pl-1">{children}</ol>,
   li: ({ children }) => (
     <li className="relative pl-5 text-[15.5px] leading-[1.85] before:absolute before:left-0 before:top-[0.62em] before:h-1.5 before:w-1.5 before:rotate-45 before:bg-gold/80" style={{ color: BODY }}>
-      {children}
+      {withHighlights(children)}
     </li>
   ),
-  strong: ({ children }) => <strong className="font-bold" style={{ color: "#ffffff" }}>{children}</strong>,
+  strong: ({ children }) => <strong className="font-bold" style={{ color: "#ffffff" }}>{withHighlights(children)}</strong>,
   em: ({ children }) => <em className="not-italic font-medium" style={{ color: "#fff" }}>{children}</em>,
   blockquote: ({ children }) => (
     <blockquote className="my-4 rounded-r-md border-l-2 border-gold py-2 pl-4" style={{ color: "#ded4ff", background: "rgba(150,90,255,.08)" }}>
-      {children}
+      {withHighlights(children)}
     </blockquote>
   ),
   table: ({ children }) => (

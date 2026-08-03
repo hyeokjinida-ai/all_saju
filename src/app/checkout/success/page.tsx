@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { AnalyzingScreen } from "@/components/saju/AnalyzingScreen";
+import { LAST_ORDER_SLUG_KEY } from "@/components/checkout/TossWidget";
 
 export default function CheckoutSuccessPage() {
   return (
@@ -23,6 +24,18 @@ function CheckoutSuccessInner() {
   const [state, setState] = useState<"loading" | "ready" | "ok" | "error">("loading");
   const [message, setMessage] = useState("");
   const [resultId, setResultId] = useState<string | null>(null);
+  // 대기 화면 테마 — 결제 시작점(TossWidget)이 심어둔 slug 로 판별.
+  // 토스 리다이렉트엔 상품 정보가 없고, confirm 응답은 결과 생성이 끝난 뒤에야 오므로
+  // 로딩 화면 테마엔 못 쓴다. sessionStorage 읽기가 실패하거나 값이 없으면
+  // undefined → 기본(보라) 테마로 내려앉아 흐름은 안 깨진다.
+  const [screenTheme, setScreenTheme] = useState<"sangun" | undefined>(undefined);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(LAST_ORDER_SLUG_KEY) === "sangun-sinjeom") setScreenTheme("sangun");
+    } catch {
+      // 접근 불가 환경 — 기본 테마
+    }
+  }, []);
 
   // 결제 완료 전환 추적(결과지 생성 성공 시 1회). 금액·통화만, 개인정보 없음.
   useEffect(() => {
@@ -93,9 +106,9 @@ function CheckoutSuccessInner() {
     })();
   }, [router, search]);
 
-  // ── 대기 화면: 분석 중(회전 나경반 + 후기) — 풀스크린 ──
+  // ── 대기 화면: 분석 중 — 풀스크린. 산군이면 신당 테마로 세계관을 이어간다 ──
   if (state === "loading") {
-    return <AnalyzingScreen variant="paid" />;
+    return <AnalyzingScreen variant="paid" theme={screenTheme} />;
   }
 
   // ── 생성 완료 ──
