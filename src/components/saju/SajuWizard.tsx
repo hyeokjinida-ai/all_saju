@@ -132,9 +132,10 @@ const PROFILE_ASK_BY_SLUG: Record<string, number[]> = {
 const CONCERN_STEP = 7;      // 고민
 const CONFIRM_STEP = 8;      // 입력 확인
 const TEASER_STEP = 9;       // 결제 전 무료 티저(개인화) = 결제 화면
-/** 로딩 화면 최소 노출 시간. 방울 영상이 한 동작을 다 보여줄 만큼은 붙잡아 둔다.
- *  실측: 만세력 캐시에 걸리면 응답이 1초대라 그냥 두면 영상이 시작도 전에 사라진다. */
-const MIN_TEASER_LOADING_MS = 4200;
+/** 로딩 화면 최소 노출 시간 = ritual.mp4 길이(3.17초)에 맞춘다.
+ *  실측: 만세력 캐시에 걸리면 응답이 1초대라 그냥 두면 영상이 한 동작도 못 보여주고 사라진다.
+ *  영상보다 길게 잡으면 루프가 한 번 더 돌아 이음매(16.1)가 화면에 보인다 — 그래서 딱 맞춘다. */
+const MIN_TEASER_LOADING_MS = 3200;
 
 // 산군 스토리(비주얼노벨)에서 고른 직업·연애상태를 위저드로 넘기는 세션 키
 
