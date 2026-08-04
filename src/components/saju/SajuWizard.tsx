@@ -504,7 +504,7 @@ export function SajuWizard({
             {step === TEASER_STEP && teaserLoading ? (imm ? "네 장부를 찾는 중이다" : "명식을 계산하고 있어요") : cur.q}
           </p>
           {cur.help && !(step === TEASER_STEP && teaserLoading) && (
-            <p className="font-myeongjo mt-3 text-[12.5px] text-bone-soft tracking-[0.04em]">{cur.help}</p>
+            <p className="font-myeongjo mt-3 text-[13px] text-bone-soft tracking-[0.04em]">{cur.help}</p>
           )}
         </div>
 
@@ -545,12 +545,12 @@ export function SajuWizard({
               style={{ fontSize: 19, letterSpacing: "0.08em" }}
             />
             {birthRaw.length > 0 && birthRaw.length < 8 && (
-              <p className="mt-2 text-center text-[11.5px] text-bone-faint">
+              <p className="mt-2 text-center text-[11px] text-bone-faint">
                 숫자 여덟 자리(연4 · 월2 · 일2)를 이어서 입력해 주세요
               </p>
             )}
             {birthRaw.length === 8 && !isValidBirth(birthRaw) && (
-              <p className="mt-2 text-center text-[11.5px]" style={{ color: "#ff9a9a" }}>
+              <p className="mt-2 text-center text-[11px]" style={{ color: "#ff9a9a" }}>
                 올바른 날짜가 아니에요
               </p>
             )}
@@ -578,7 +578,7 @@ export function SajuWizard({
                 );
               })}
             </div>
-            <p className="mt-2 text-center text-[11.5px] text-bone-faint">
+            <p className="mt-2 text-center text-[11px] text-bone-faint">
               {imm ? "주민등록 생일은 보통 양력이다" : "주민등록상 생일은 보통 양력이에요"}
             </p>
           </div>
@@ -607,7 +607,7 @@ export function SajuWizard({
               </span>
               태어난 시각을 몰라요
             </button>
-            <p className="font-myeongjo mt-3 text-center text-[11.5px] text-bone-faint tracking-[0.04em] leading-relaxed">
+            <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.04em] leading-relaxed">
               시각을 몰라도 괜찮아요. 시(時) 기둥만 빼고 나머지 흐름을 봐드립니다.
             </p>
           </div>
@@ -659,14 +659,14 @@ export function SajuWizard({
                     onClick={() => { up("partner", o.value); setTimeout(next, 220); }}
                     className={`px-2 py-6 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                   >
-                    <span className={`font-myeongjo text-[14px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
                       {imm ? o.ban : o.label}
                     </span>
                   </button>
                 );
               })}
             </div>
-            <p className="font-myeongjo mt-4 text-center text-[11.5px] text-bone-faint leading-relaxed">
+            <p className="font-myeongjo mt-4 text-center text-[11px] text-bone-faint leading-relaxed">
               {/* 질문이 이미 남자/여자를 말하므로 여기선 반복하지 않는다. 안 정한 사람만 안심시키면 된다. */}
               {imm ? "아직 모르겠으면 모르겠다고 해라." : "아직 정하지 않으셨다면 마지막을 골라 주세요."}
             </p>
@@ -685,7 +685,7 @@ export function SajuWizard({
                   onClick={() => { up("relationship", on ? "" : o.value); if (!on) setTimeout(next, 220); }}
                   className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                 >
-                  <span className={`font-myeongjo text-[13.5px] text-bone tracking-[0.04em] ${on ? "font-bold" : ""}`}>
+                  <span className={`font-myeongjo text-[13px] text-bone tracking-[0.04em] ${on ? "font-bold" : ""}`}>
                     {imm ? o.ban : o.label}
                   </span>
                 </button>
@@ -706,7 +706,7 @@ export function SajuWizard({
                   onClick={() => { up("job", on ? "" : o.value); if (!on) setTimeout(next, 220); }}
                   className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                 >
-                  <span className={`font-myeongjo text-[13.5px] text-bone tracking-[0.04em] ${on ? "font-bold" : ""}`}>
+                  <span className={`font-myeongjo text-[13px] text-bone tracking-[0.04em] ${on ? "font-bold" : ""}`}>
                     {imm ? o.ban : o.label}
                   </span>
                 </button>
@@ -732,7 +732,7 @@ export function SajuWizard({
                       type="button"
                       key={ex}
                       onClick={() => up("concernText", on ? "" : ex)}
-                      className={`border px-3.5 py-2 font-myeongjo text-[12.5px] tracking-[0.02em] ${
+                      className={`border px-3.5 py-2 font-myeongjo text-[13px] tracking-[0.02em] ${
                         on
                           ? "border-gold bg-gold text-wine-deep font-bold"
                           : "border-gold-line bg-transparent text-bone-soft"
@@ -774,7 +774,7 @@ export function SajuWizard({
                 onChange={(e) => up("concernText", e.target.value)}
                 style={{ fontSize: 15 }}
               />
-              <p className="mt-2 text-center text-[11.5px] text-bone-faint">
+              <p className="mt-2 text-center text-[11px] text-bone-faint">
                 {imm ? "적으면 그 물음부터 정면으로 답해준다" : "적어주시면 그 질문부터 정면으로 답해드려요"}
               </p>
             </div>
@@ -843,7 +843,7 @@ export function SajuWizard({
               <button
                 type="button"
                 onClick={next}
-                className="w-full mt-2.5 font-myeongjo text-[12.5px] text-bone-faint tracking-[0.15em] py-2"
+                className="w-full mt-2.5 font-myeongjo text-[13px] text-bone-faint tracking-[0.15em] py-2"
               >
                 건너뛰기
               </button>
@@ -996,16 +996,37 @@ function SangunSay({ children }: { children: React.ReactNode }) {
 }
 
 /** 티저 하단의 산군 컷 — 타이트는 끝까지 컷 → 대사 → 값 순서로 사진이 따라간다(형님 지적).
- *  세로 원본을 가로띠로 잘라 쓴다: 대사 띠 위에 서는 "장면 전환" 역할이라 전신이 다 나올 필요가 없고,
- *  높이를 눌러야 스크롤 리듬이 안 늘어진다. objectPosition 으로 갓·상체가 중앙에 오게 잡는다. */
-function TeaserCut({ src, alt, pos = "center 30%" }: { src: string; alt: string; pos?: string }) {
+ *
+ *  실측 대조(2026-08-04)에서 나온 규칙 둘. 타이트 티저 캡처를 컬럼 단위로 재보니
+ *  ① **좌우 여백이 0** 이다. 컷이 화면 끝에서 끝까지 간다 — 여백이 있으면 "액자에 걸린 사진"이
+ *     되고 없으면 "화면 그 자체"가 된다. 몰입형 콘텐츠에서 여백은 "이건 문서다"라는 신호다.
+ *     우리는 위저드 컨테이너의 px-5(양쪽 20px)에 갇혀 화면의 80%밖에 못 썼다 → 음수 마진으로 뚫는다.
+ *  ② **높이가 들쭉날쭉하다**(화면폭 대비 15%~124%). 높이가 곧 강약이다. 전부 같은 높이로 두면
+ *     붉은 동그라미(에이스)와 부채 접는 컷이 같은 무게가 된다 — 강조 수단을 스스로 버리는 셈.
+ */
+const CUT_H = { sm: "h-[180px]", md: "h-[260px]", lg: "h-[360px]" } as const;
+
+function TeaserCut({
+  src,
+  alt,
+  pos = "center 30%",
+  size = "md",
+}: {
+  src: string;
+  alt: string;
+  pos?: string;
+  /** sm=전환용 짧은 띠 · md=기본 · lg=결정적 장면(전면) */
+  size?: keyof typeof CUT_H;
+}) {
   return (
-    <div className="mt-6 overflow-hidden rounded-[2px]" style={{ border: "1px solid rgba(232,201,106,0.2)" }}>
+    // 컷을 감싼 패딩 두 겹(위저드 px-5=20 + 티저 본문 판 16)을 되물려 컬럼 끝까지 채운다.
+    // 음수 마진 36px = 20+16. 판 패딩을 바꾸면 여기도 같이 바꿔야 한다(안 그러면 여백이 남는다).
+    <div className={`-mx-9 mt-6 overflow-hidden ${CUT_H[size]}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
-        className="h-[230px] w-full select-none object-cover"
+        className="h-full w-full select-none object-cover"
         loading="lazy"
         draggable={false}
         style={{ objectPosition: pos }}
@@ -1017,14 +1038,14 @@ function TeaserCut({ src, alt, pos = "center 30%" }: { src: string; alt: string;
 /** 붉은 한자 섹션 헤더 — 타이트의 「大運」「財物」「戀愛」 자리. 章이 바뀐다는 신호. */
 function HanjaHeader({ char }: { char: string }) {
   return (
-    <div className="mt-8 text-center" aria-hidden>
+    <div className="mt-10 text-center" aria-hidden>
       <div
         className="mx-auto h-px w-28"
         style={{ background: "linear-gradient(90deg,transparent,rgba(232,201,106,0.5),transparent)" }}
       />
       <div
-        className="font-brush mt-3 text-[46px] leading-none"
-        style={{ color: "rgba(143,43,30,0.9)", textShadow: "0 0 20px rgba(143,43,30,0.4)" }}
+        className="font-brush mt-4 text-[96px] leading-none"
+        style={{ color: "rgba(143,43,30,0.92)", textShadow: "0 0 34px rgba(143,43,30,0.45)" }}
       >
         {char}
       </div>
@@ -1051,7 +1072,7 @@ function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: 
         border: "1px solid rgba(143,43,30,0.6)",
       }}
     >
-      <p className="font-myeongjo text-center text-[11.5px] tracking-[0.14em]" style={{ color: "var(--gold-soft)" }}>
+      <p className="font-myeongjo text-center text-[11px] tracking-[0.14em]" style={{ color: "var(--gold-soft)" }}>
         네 운명의 상대
       </p>
       <div className="relative mx-auto mt-3 h-[150px] w-[118px] overflow-hidden" style={{ background: "#151009" }}>
@@ -1088,7 +1109,7 @@ function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: 
         ).map(([label, val]) => (
           <div key={label} className="flex items-center justify-between gap-3">
             <span className="font-myeongjo shrink-0 text-[11px] text-bone-faint">{label}</span>
-            <span className="font-myeongjo text-[12px] text-bone-soft">{val}</span>
+            <span className="font-myeongjo text-[13px] text-bone-soft">{val}</span>
           </div>
         ))}
       </div>
@@ -1178,14 +1199,14 @@ function TeaserStep({
       {imm && (
         <>
           {/* 장부 표지를 여는 손 — 대사를 문자 그대로 연기하는 컷(발주 t1) */}
-          <TeaserCut src="/products/sangun/t1-open.webp" alt="옛 장부의 표지를 여는 손" pos="center 58%" />
+          <TeaserCut src="/products/sangun/t1-open.webp" alt="옛 장부의 표지를 여는 손" pos="center 58%" size="md" />
           <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>
         </>
       )}
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
-        <p className={`font-myeongjo text-center text-[12px] text-gold-soft tracking-[0.14em]${imm ? " mt-4" : ""}`}>{name}</p>
+        <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.14em]${imm ? " mt-4" : ""}`}>{name}</p>
       )}
 
       {/* 원국 4기둥 — 콜드리딩보다 먼저. "네 생일로 계산했다"는 증거가 먼저 서야 아래 세 줄이 산다.
@@ -1193,7 +1214,7 @@ function TeaserStep({
       {shown.length > 0 && (
         <div className={name ? "mt-3" : ""}>
           {birthDate && (
-            <p className="font-myeongjo text-center text-[11.5px] text-bone-faint tracking-[0.06em]">
+            <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.06em]">
               {birthDate.replace(/-/g, ".")}
               {/* 시 모름이면 기둥이 셋이라 여섯 글자다. 증거로 내미는 화면에서 숫자가 틀리면 안 된다. */}
               {` — 이 날에서 나온 ${GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`}${imm ? " 글자" : " 글자"}`}
@@ -1211,7 +1232,7 @@ function TeaserStep({
               >
                 <span className="font-brush block text-[26px] leading-none text-gold-bright">{p.gan.char}</span>
                 <span className="font-brush block text-[26px] leading-none text-gold-bright mt-0.5">{p.ji.char}</span>
-                <span className="font-myeongjo mt-1.5 block text-[10px] text-bone-faint">
+                <span className="font-myeongjo mt-1.5 block text-[11px] text-bone-faint">
                   {p.gan.read}
                   {p.ji.read}
                 </span>
@@ -1220,7 +1241,7 @@ function TeaserStep({
           </div>
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
-          <p className="font-myeongjo mt-3 text-center text-[12.5px] leading-relaxed text-bone-soft">
+          <p className="font-myeongjo mt-3 text-center text-[13px] leading-relaxed text-bone-soft">
             {imm
               ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
               : "아래는 이름도, 적어주신 물음도 쓰지 않았어요. 이 글자에서만 나왔고요."}
@@ -1237,7 +1258,7 @@ function TeaserStep({
               {teaser.chartRows.map((r, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-2 text-[11.5px]"
+                  className="flex items-center gap-2 px-3 py-2 text-[11px]"
                   style={{
                     borderTop: i === 0 ? "none" : "1px solid var(--gold-pale)",
                     background: r.pos === "나" ? "rgba(232,201,106,0.09)" : "transparent",
@@ -1268,7 +1289,7 @@ function TeaserStep({
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
           {teaser && teaser.chartRows.length > 0 && (
-            <p className="font-myeongjo mt-2.5 text-center text-[11.5px] leading-relaxed text-bone-faint">
+            <p className="font-myeongjo mt-2.5 text-center text-[11px] leading-relaxed text-bone-faint">
               {imm
                 ? "읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고, 아래 말은 전부 여기서 나왔다."
                 : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
@@ -1281,7 +1302,7 @@ function TeaserStep({
           정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간 */}
       {imm && teaser && (
         <>
-          <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" />
+          <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" size="lg" />
           <SangunSay>안 묻고 맞혀 보마.</SangunSay>
         </>
       )}
@@ -1307,7 +1328,7 @@ function TeaserStep({
           })}
           {/* 판정을 손님에게 넘긴다 — 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다 */}
           {teaser.judgeInvite && (
-            <p className="font-myeongjo pt-1 text-[12.5px] leading-relaxed text-bone-faint">
+            <p className="font-myeongjo pt-1 text-[13px] leading-relaxed text-bone-faint">
               {teaser.judgeInvite}
             </p>
           )}
@@ -1319,7 +1340,7 @@ function TeaserStep({
       {imm && teaser && (
         <>
           {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3) */}
-          <TeaserCut src="/products/sangun/t3-snap.webp" alt="부채를 접어 쥔 손" pos="center 42%" />
+          <TeaserCut src="/products/sangun/t3-snap.webp" alt="부채를 접어 쥔 손" pos="center 62%" size="sm" />
           <SangunSay>
             앞일도 적나라하게 말해줄 수 있다.
             <br />
@@ -1328,7 +1349,7 @@ function TeaserStep({
 
           <HanjaHeader char="財" />
           {/* 엽전 꾸러미를 장부 위로 든 손(발주 t4) */}
-          <TeaserCut src="/products/sangun/t4-money.webp" alt="엽전 꾸러미를 장부 위로 들어 올린 손" pos="center 54%" />
+          <TeaserCut src="/products/sangun/t4-money.webp" alt="엽전 꾸러미를 장부 위로 들어 올린 손" pos="center 54%" size="lg" />
           <SangunSay>
             돈부터 보자. 어차피 그게 제일 궁금할 테니.
             <br />
@@ -1337,7 +1358,7 @@ function TeaserStep({
 
           <HanjaHeader char="緣" />
           {/* 새끼손가락의 붉은 실 — 설명 없이 읽히는 인연의 기호(발주 t5) */}
-          <TeaserCut src="/products/sangun/t5-thread.webp" alt="새끼손가락에 붉은 실을 감은 손" pos="center 52%" />
+          <TeaserCut src="/products/sangun/t5-thread.webp" alt="새끼손가락에 붉은 실을 감은 손" pos="center 52%" size="md" />
           <SangunSay>네 짝도 봤다. 얼굴까지.</SangunSay>
           <DestinyCard partner={partner} gender={gender} birthDate={birthDate} />
 
@@ -1345,7 +1366,7 @@ function TeaserStep({
             <>
               <HanjaHeader char="命" />
               {/* 붉은 붓으로 장부 한 줄에 동그라미 — "붉게 적힌 해"를 문자 그대로 연기(발주 t6) */}
-              <TeaserCut src="/products/sangun/t6-mark.webp" alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손" pos="center 55%" />
+              <TeaserCut src="/products/sangun/t6-mark.webp" alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손" pos="center 55%" size="lg" />
               <SangunSay>그리고 하나 더. 장부에 붉게 적힌 해가 있다.</SangunSay>
             </>
           )}
@@ -1358,13 +1379,13 @@ function TeaserStep({
           className="mt-4 px-4 py-4 text-center"
           style={{ background: "rgba(232,201,106,0.07)", border: "1px solid var(--gold-pale)" }}
         >
-          <p className="font-myeongjo text-[11.5px] text-bone-faint tracking-[0.16em]">
+          <p className="font-myeongjo text-[11px] text-bone-faint tracking-[0.16em]">
             {imm ? "장부에 붉게 표시된 해" : "장부에 붉게 표시된 해"}
           </p>
           <p className="font-serif mt-1.5 text-[27px] font-bold text-gold-bright leading-none">
             {teaser.turningYear.year}년
           </p>
-          <p className="font-myeongjo mt-2 text-[13.5px] text-bone leading-relaxed">{teaser.turningYear.line}</p>
+          <p className="font-myeongjo mt-2 text-[13px] text-bone leading-relaxed">{teaser.turningYear.line}</p>
         </div>
       )}
 
@@ -1381,7 +1402,7 @@ function TeaserStep({
               정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
           {imm && teaser.chapters.length > 0 && (
             <>
-              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 42%" />
+              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 42%" size="md" />
               <SangunSay>복채 얘기를 하자.</SangunSay>
             </>
           )}
@@ -1390,7 +1411,7 @@ function TeaserStep({
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
                배경은 형님이 뽑은 먹 한지 + 붉은 잉크판 텍스처(ganji.webp) — 타이트의 붉은 잉크판 대응. */
             <div className="mt-4">
-              <p className="font-myeongjo text-center text-[11.5px] text-bone-faint tracking-[0.16em]">
+              <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.16em]">
                 네 장부의 차례
               </p>
               <div className="mt-2.5 space-y-3">
@@ -1409,14 +1430,14 @@ function TeaserStep({
                     {/* 간지 배너 + 태그 */}
                     <div className="flex items-center justify-center gap-2">
                       <span
-                        className="font-brush px-3 pb-1 pt-1.5 text-[16px] leading-none tracking-[0.28em]"
+                        className="font-brush px-3 pb-1 pt-1.5 text-[15px] leading-none tracking-[0.28em]"
                         style={{ background: "#7a2317", color: "#f3e6cf", textIndent: "0.28em" }}
                       >
                         {c.no}章
                       </span>
                       {c.tag && (
                         <span
-                          className="font-myeongjo px-2 py-1 text-[10.5px] tracking-[0.08em]"
+                          className="font-myeongjo px-2 py-1 text-[11px] tracking-[0.08em]"
                           style={{ border: "1px solid rgba(232,201,106,0.45)", color: "var(--gold-soft)" }}
                         >
                           {c.tag}
@@ -1447,9 +1468,9 @@ function TeaserStep({
                           />
                           <span className="min-w-0 flex-1">
                             {it.lead && (
-                              <span className="font-myeongjo block text-[11.5px] leading-snug text-bone-faint">{it.lead}</span>
+                              <span className="font-myeongjo block text-[11px] leading-snug text-bone-faint">{it.lead}</span>
                             )}
-                            <span className="font-myeongjo block text-[13.5px] font-bold leading-snug" style={{ color: "#f3ead6" }}>
+                            <span className="font-myeongjo block text-[13px] font-bold leading-snug" style={{ color: "#f3ead6" }}>
                               {it.main}
                             </span>
                           </span>
@@ -1460,7 +1481,7 @@ function TeaserStep({
                                   {it.peek}
                                 </span>
                               ) : (
-                                <span className="text-[12px] text-bone-soft">
+                                <span className="text-[13px] text-bone-soft">
                                   <InkMask text={it.mask ?? ""} />
                                 </span>
                               )}
@@ -1478,7 +1499,7 @@ function TeaserStep({
             <div className="mt-4">
               {teaser.locked.map((row, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
-                  <span className="font-myeongjo text-[12.5px] text-bone-soft tracking-[0.04em]">{row.label}</span>
+                  <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.04em]">{row.label}</span>
                   <span className="font-mono text-[13px] tracking-[0.1em]" style={{ color: "rgba(232,201,106,0.42)" }}>
                     {row.mask}
                   </span>
@@ -1491,14 +1512,14 @@ function TeaserStep({
               "확답 일곱 번"은 그들도 하는 것("해라" 13회)이라 버리고, 그들이 구조적으로 못 하는
               달(돈 3 + 인연 2 + 조심 1 = 여섯)로 카피를 옮긴다. */}
           {productSlug === "sangun-sinjeom" && (
-            <p className="font-myeongjo mt-3.5 text-center text-[12.5px] leading-relaxed" style={{ color: "var(--gold-soft)" }}>
+            <p className="font-myeongjo mt-3.5 text-center text-[13px] leading-relaxed" style={{ color: "var(--gold-soft)" }}>
               연도까지는 어디서든 말해준다.
               <br />
               이 장부는 <b>몇 월인지</b>를 짚는다 — <b>여섯 달</b>이 적혀 있다.
             </p>
           )}
 
-          <p className="font-myeongjo mt-3.5 text-center text-[11.5px] text-bone-faint tracking-[0.04em]">
+          <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.04em]">
             {teaser.note}
           </p>
         </>
@@ -1548,7 +1569,7 @@ function ConfirmStep({
           >
             <span className="font-myeongjo text-xs text-bone-faint tracking-[0.12em] shrink-0">{k}</span>
             <span className="flex-1 text-right">
-              <span className="font-myeongjo text-[13.5px] text-bone tracking-[0.02em]">{v}</span>
+              <span className="font-myeongjo text-[13px] text-bone tracking-[0.02em]">{v}</span>
               <button
                 type="button"
                 onClick={() => onEdit(s)}
