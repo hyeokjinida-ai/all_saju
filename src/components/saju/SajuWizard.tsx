@@ -1177,8 +1177,8 @@ function TeaserStep({
           아래 대사 띠들이 그 연결 조직이다. 전부 확정값·고정 문구라 LLM 비용 0. */}
       {imm && (
         <>
-          {/* 문을 열고 신당으로 — "장부를 편다"의 장면화 */}
-          <TeaserCut src="/products/sangun/teaser-door.webp" alt="문을 열고 신당을 들여다보는 산군" pos="center 42%" />
+          {/* 장부 표지를 여는 손 — 대사를 문자 그대로 연기하는 컷(발주 t1) */}
+          <TeaserCut src="/products/sangun/t1-open.webp" alt="옛 장부의 표지를 여는 손" pos="center 58%" />
           <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>
         </>
       )}
@@ -1277,8 +1277,14 @@ function TeaserStep({
         </div>
       )}
 
-      {/* 콜드리딩을 시험으로 만든다 — 뒤의 "맞으면 나머지를 열어라"와 물리는 문장 */}
-      {imm && teaser && <SangunSay>안 묻고 맞혀 보마.</SangunSay>}
+      {/* 콜드리딩을 시험으로 만든다 — 뒤의 "맞으면 나머지를 열어라"와 물리는 문장.
+          정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간 */}
+      {imm && teaser && (
+        <>
+          <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" />
+          <SangunSay>안 묻고 맞혀 보마.</SangunSay>
+        </>
+      )}
 
       {/* 콜드리딩 — 명식에서 나온 문장만. 2번째 줄은 연도가 박힌 과거 문장이라 강조한다. */}
       {teaser && (
@@ -1312,8 +1318,8 @@ function TeaserStep({
           달 마스킹이 "몇 월인지 짚는다" 포지션을 목차보다 먼저 스토리로 흘린다. */}
       {imm && teaser && (
         <>
-          {/* 제단 앞에 선다 — 앞일을 읽으러 가는 장면 */}
-          <TeaserCut src="/products/sangun/teaser-altar.webp" alt="촛불 제단 앞에 선 산군의 뒷모습" pos="center 34%" />
+          {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3) */}
+          <TeaserCut src="/products/sangun/t3-snap.webp" alt="부채를 접어 쥔 손" pos="center 42%" />
           <SangunSay>
             앞일도 적나라하게 말해줄 수 있다.
             <br />
@@ -1321,6 +1327,8 @@ function TeaserStep({
           </SangunSay>
 
           <HanjaHeader char="財" />
+          {/* 엽전 꾸러미를 장부 위로 든 손(발주 t4) */}
+          <TeaserCut src="/products/sangun/t4-money.webp" alt="엽전 꾸러미를 장부 위로 들어 올린 손" pos="center 54%" />
           <SangunSay>
             돈부터 보자. 어차피 그게 제일 궁금할 테니.
             <br />
@@ -1328,12 +1336,16 @@ function TeaserStep({
           </SangunSay>
 
           <HanjaHeader char="緣" />
+          {/* 새끼손가락의 붉은 실 — 설명 없이 읽히는 인연의 기호(발주 t5) */}
+          <TeaserCut src="/products/sangun/t5-thread.webp" alt="새끼손가락에 붉은 실을 감은 손" pos="center 52%" />
           <SangunSay>네 짝도 봤다. 얼굴까지.</SangunSay>
           <DestinyCard partner={partner} gender={gender} birthDate={birthDate} />
 
           {teaser.turningYear && (
             <>
               <HanjaHeader char="命" />
+              {/* 붉은 붓으로 장부 한 줄에 동그라미 — "붉게 적힌 해"를 문자 그대로 연기(발주 t6) */}
+              <TeaserCut src="/products/sangun/t6-mark.webp" alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손" pos="center 55%" />
               <SangunSay>그리고 하나 더. 장부에 붉게 적힌 해가 있다.</SangunSay>
             </>
           )}
@@ -1369,7 +1381,7 @@ function TeaserStep({
               정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
           {imm && teaser.chapters.length > 0 && (
             <>
-              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 26%" />
+              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 42%" />
               <SangunSay>복채 얘기를 하자.</SangunSay>
             </>
           )}
