@@ -1298,41 +1298,80 @@ function TeaserStep({
         </div>
       )}
 
-      {/* 콜드리딩을 시험으로 만든다 — 뒤의 "맞으면 나머지를 열어라"와 물리는 문장.
-          정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간 */}
+      {/* 정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간.
+          대사는 아래 콜드리딩 띠 안에 합쳐 넣는다(따로 띠를 세우면 띠 3개가 연속으로 쌓인다). */}
       {imm && teaser && (
-        <>
-          <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" size="lg" />
-          <SangunSay>안 묻고 맞혀 보마.</SangunSay>
-        </>
+        <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" size="lg" />
       )}
 
-      {/* 콜드리딩 — 명식에서 나온 문장만. 2번째 줄은 연도가 박힌 과거 문장이라 강조한다. */}
+      {/* 콜드리딩 — 명식에서 나온 문장만.
+          맨 텍스트로 두면 위(컷)·아래(카드)가 다 조판된 사이에서 여기만 배경에 묻힌다(형님 지적).
+          타이트는 같은 자리(개인화 팩폭)를 병풍 액자 안에 넣는다 → 우리는 장부 종이 판에 올린다.
+          그리고 승부처인 **연도를 문장에서 뽑아 크게 세운다** — "이걸 어떻게 알았지"가 나와야 하는
+          자리라 숫자가 눈에 먼저 들어와야 한다. 판정 초대는 회색 잔글씨가 아니라 산군 대사로 건다. */}
       {teaser && (
-        <div className={`${name || pillars ? "mt-4" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
-          {teaser.coldRead.map((line, i) => {
-            const isPast = teaser.hasPastCheck && i === 1;
-            return (
-              <p
-                key={i}
-                className="font-myeongjo leading-[1.75] tracking-[0.01em]"
-                style={
-                  isPast
-                    ? { fontSize: 16, color: "var(--gold-bright)", fontWeight: 600 }
-                    : { fontSize: 15, color: "var(--bone)" }
-                }
-              >
-                {line}
-              </p>
-            );
-          })}
-          {/* 판정을 손님에게 넘긴다 — 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다 */}
-          {teaser.judgeInvite && (
-            <p className="font-myeongjo pt-1 text-[13px] leading-relaxed text-bone-faint">
-              {teaser.judgeInvite}
-            </p>
+        <>
+          {imm ? (
+            /* 콜드리딩은 문법상 100% 산군의 대사다("너는~", "네 얘기").
+               먹 한지 판(=장부에 적힌 기록)에 넣었더니 화자와 그릇이 어긋났고, 판이 어두워
+               결국 맨 텍스트로 보였다(형님 지적, 내 오판). 대사 띠로 옮긴다.
+               앞의 "안 묻고 맞혀 보마"도 이 띠 안에 합친다 — 실제로 한 호흡의 말이고,
+               따로 세우면 띠가 3개 연속으로 쌓여 대사 띠의 힘이 죽는다. */
+            <SangunSay>
+              <span className="block">안 묻고 맞혀 보마.</span>
+              <span
+                aria-hidden
+                className="mt-3 mb-3 block h-px w-16"
+                style={{ background: "rgba(122,35,23,0.35)" }}
+              />
+              {teaser.coldRead.map((line, i) => {
+                const isPast = teaser.hasPastCheck && i === 1;
+                const year = isPast ? teaser.pastYear : null;
+                // 연도를 뽑아 큰 숫자로 세우고 문장에서는 "2024년," 머리말을 지운다.
+                // 한지 바탕이라 금색은 안 보인다 → 주사색(부적 붉은 글씨)으로.
+                const body = year ? line.replace(new RegExp(`^${year}년[,\\s]*`), "") : line;
+                return (
+                  <span key={i} className={`block ${i > 0 ? "mt-4" : ""}`}>
+                    {year && (
+                      <span className="font-serif block leading-none" style={{ fontSize: 38, fontWeight: 700, color: "#7a2317" }}>
+                        {year}
+                        <span className="font-myeongjo ml-1 text-[14px] font-normal" style={{ color: "rgba(122,35,23,0.7)" }}>
+                          년
+                        </span>
+                      </span>
+                    )}
+                    <span className={`block font-normal ${year ? "mt-1.5" : ""}`}>{body}</span>
+                  </span>
+                );
+              })}
+            </SangunSay>
+          ) : (
+            <div className={`${name || pillars ? "mt-4" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
+              {teaser.coldRead.map((line, i) => (
+                <p
+                  key={i}
+                  className="font-myeongjo leading-[1.75] tracking-[0.01em]"
+                  style={
+                    teaser.hasPastCheck && i === 1
+                      ? { fontSize: 15, color: "var(--gold-bright)", fontWeight: 600 }
+                      : { fontSize: 15, color: "var(--bone)" }
+                  }
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
           )}
-        </div>
+
+          {/* 판정을 손님에게 넘긴다 — 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다.
+              산군이 직접 거는 승부라 대사 띠로 세운다(몰입 상품에서만). */}
+          {teaser.judgeInvite &&
+            (imm ? (
+              <SangunSay>{teaser.judgeInvite}</SangunSay>
+            ) : (
+              <p className="font-myeongjo mt-3 text-[13px] leading-relaxed text-bone-faint">{teaser.judgeInvite}</p>
+            ))}
+        </>
       )}
 
       {/* 財·緣 — 타이트의 「財物」「戀愛」 자리. 값을 읽다가 스스로 끊는다(말풍선 마스킹).
@@ -1508,15 +1547,30 @@ function TeaserStep({
             </div>
           )}
 
-          {/* 포지션 한 줄 — 타이트 결과지 26,198자 실측: 연도 70회 · 달 1회. 그들은 달을 못 집는다.
-              "확답 일곱 번"은 그들도 하는 것("해라" 13회)이라 버리고, 그들이 구조적으로 못 하는
-              달(돈 3 + 인연 2 + 조심 1 = 여섯)로 카피를 옮긴다. */}
+          {/* 결제 직전 마지막 한 마디.
+              타이트 대조에서 배운 것: 그들은 밑밥("눈 앞에 선하게 펼쳐지도록 말해줄 수 있어")을
+              작게 깔고 펀치("적나라하게 말이야")만 크게·붉게 세운다. 우리는 두 줄이 같은 무게라
+              눈이 멈출 곳이 없었다 → 두 박자로 끊고 뒷줄만 키운다.
+              말은 평소 쓰는 말로만: "하라·말라"(명령형 인용)·"못 박아 뒀다"(관용어)는 한 박자
+              해석이 걸린다(형님 지적) → "해야 할 것 / 하면 안 되는 것 / 적어 뒀다".
+              손해 회피가 이득 추구보다 세게 움직이므로 뒷줄에 금지를 둔다.
+              "날짜까지"는 타이트가 구조적으로 못 하는 지점이다(그들 26,198자 중 달 언급 1회). */}
           {productSlug === "sangun-sinjeom" && (
-            <p className="font-myeongjo mt-3.5 text-center text-[13px] leading-relaxed" style={{ color: "var(--gold-soft)" }}>
-              연도까지는 어디서든 말해준다.
-              <br />
-              이 장부는 <b>몇 월인지</b>를 짚는다 — <b>여섯 달</b>이 적혀 있다.
-            </p>
+            <div className="mt-5 text-center">
+              <p className="font-myeongjo text-[13px] leading-relaxed" style={{ color: "var(--bone-faint)" }}>
+                눈앞에 펼쳐 놓고 말해주마
+              </p>
+              <p
+                className="font-myeongjo mt-3 text-[19px] font-bold leading-[1.55]"
+                style={{ color: "#f3ead6" }}
+              >
+                해야 할 것과
+                <br />
+                <span style={{ color: "#d8563f" }}>하면 안 되는 것</span>을
+                <br />
+                날짜까지 적어 뒀다
+              </p>
+            </div>
           )}
 
           <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.04em]">

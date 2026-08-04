@@ -21,6 +21,9 @@ export type SajuTeaser = {
   coldRead: string[]; // 3문장 (2번째는 가능하면 과거 검증 문장)
   /** 과거 사건 한 줄이 실제로 잡혔는지 — 잡혔으면 "판정 초대"를 띄운다 */
   hasPastCheck: boolean;
+  /** 그 과거 문장의 연도. 문장 안에 묻지 말고 크게 따로 세우라고 뽑아 둔다
+   *  ("이걸 어떻게 알았지"가 나와야 할 자리라 숫자가 눈에 먼저 들어와야 한다) */
+  pastYear: number | null;
   /** 맞는지 틀리는지 손님이 지금 판정하게 만드는 한 줄 */
   judgeInvite: string;
   chartRows: ChartRow[];
@@ -380,7 +383,7 @@ export function buildTeaser(
       tease: J[1].teaseTeaser,
       items: [
         { lead: "재물그릇 점수와", main: "돈이 들어오는 달 둘 · 새는 달 하나", mask: "▓▓년 ▓▓월" },
-        { lead: "승부수를 걸 때와", main: "엎드려 있을 때", mask: "▓▓년 ▓▓월" },
+        { lead: "밀어붙일 때와", main: "기다릴 때", mask: "▓▓년 ▓▓월" },
       ],
     },
     {
@@ -412,6 +415,7 @@ export function buildTeaser(
     coldRead,
     chapters,
     hasPastCheck: !!past,
+    pastYear: past?.year ?? null,
     // 판정을 손님에게 넘긴다. 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다(모의구매 33세).
     judgeInvite: past
       ? voice === "sangun"
