@@ -2,10 +2,17 @@ import { notFound } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
+import { SangunResult } from "@/components/saju/SangunResult";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildResultView } from "@/lib/saju/result-view";
-import { extractCrossSellSignal, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
+import { parseProfileTags } from "@/lib/saju/profile-tags";
+import {
+  computeInyeonFacts,
+  computeWealthFacts,
+  extractCrossSellSignal,
+  type SajuAnalysisResponse,
+} from "@/lib/saju/saju-api";
 
 export const metadata = { title: "결과지" };
 
@@ -114,16 +121,38 @@ export default async function ResultPage({
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
-        {/* 한눈 요약 — 일간·원국·오행·영역별·대운·조언 + 목차(상세 풀이 포함) */}
-        <ResultScroll view={view} embedded extraToc={[{ label: "상세 풀이 전문", href: "#sec-detail" }]} />
+        {slug === "sangun-sinjeom" ? (
+          /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
+             달력 표의 값은 프롬프트에 들어간 확정값과 같은 계산에서 온다(본문과 표가 어긋나면 끝). */
+          <SangunResult
+            view={view}
+            markdown={result.interpretation_md}
+            name={savedInput?.name ?? null}
+            wealth={rawAnalysis ? computeWealthFacts(rawAnalysis) : null}
+            inyeon={
+              rawAnalysis
+                ? computeInyeonFacts(
+                    rawAnalysis,
+                    (savedInput?.gender as "male" | "female" | null) ?? "male",
+                    parseProfileTags(savedInput?.concerns ?? []).partnerSex,
+                  )
+                : null
+            }
+          />
+        ) : (
+          <>
+            {/* 한눈 요약 — 일간·원국·오행·영역별·대운·조언 + 목차(상세 풀이 포함) */}
+            <ResultScroll view={view} embedded extraToc={[{ label: "상세 풀이 전문", href: "#sec-detail" }]} />
 
-        {/* 상세 풀이 — LLM 전문(챕터별 카드) */}
-        <div id="sec-detail" className="mt-5" style={{ scrollMarginTop: 14 }}>
-          <div className="mb-3 px-1" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", color: "#c9a8ff" }}>
-            {product?.name ?? "사주 풀이"} · 상세 풀이
-          </div>
-          <ResultChapters markdown={result.interpretation_md} />
-        </div>
+            {/* 상세 풀이 — LLM 전문(챕터별 카드) */}
+            <div id="sec-detail" className="mt-5" style={{ scrollMarginTop: 14 }}>
+              <div className="mb-3 px-1" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", color: "#c9a8ff" }}>
+                {product?.name ?? "사주 풀이"} · 상세 풀이
+              </div>
+              <ResultChapters markdown={result.interpretation_md} />
+            </div>
+          </>
+        )}
 
         <p className="mt-5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>
           적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.

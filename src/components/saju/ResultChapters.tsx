@@ -6,10 +6,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { HeadingIcon, markdownComponents, ResultBody } from "./ResultBody";
 
-type Chapter = { title: string; body: string };
+export type Chapter = { title: string; body: string };
 
 // ## 대제목은 버리고, ### 단위로 챕터를 가른다. 첫 ### 이전 글은 intro.
-function splitChapters(md: string): { intro: string; chapters: Chapter[] } {
+// (산군 결과지(SangunResult)도 같은 파서를 쓴다 — 따로 만들면 챕터 경계가 어긋난다)
+export function splitChapters(md: string): { intro: string; chapters: Chapter[] } {
   const chapters: Chapter[] = [];
   const intro: string[] = [];
   let cur: { title: string; body: string[] } | null = null;

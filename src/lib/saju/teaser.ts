@@ -51,6 +51,26 @@ export type TeaserChapter = {
   items: TeaserChapterItem[];
 };
 
+/**
+ * 산군 4章의 공용 뼈대 — **티저 목차 카드와 결과지 챕터 간지가 같은 값을 본다.**
+ * 티저에서 본 章을 결제 후 결과지에서 다시 만나야 "약속대로 왔다"가 된다. 복사해 두면 어긋난다.
+ * chapterIdx 는 결과지 9챕터(prompt.ts outline 순서)에서 이 章에 속하는 번호들이다.
+ */
+export const SANGUN_JANG: {
+  no: string;
+  tag?: string;
+  /** 티저용 도발 부제 (미리 보여주마 톤) */
+  teaseTeaser: string[];
+  /** 결과지 간지용 한 줄 (이미 산 사람에게 미리보기 톤은 안 맞는다) */
+  teaseResult: string;
+  chapterIdx: number[];
+}[] = [
+  { no: "一", teaseTeaser: ["착한 얼굴 말고,", "네 진짜 그릇부터 보자"], teaseResult: "네 그릇부터 본다", chapterIdx: [0, 1] },
+  { no: "二", tag: "장부 기밀", teaseTeaser: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"], teaseResult: "돈 — 달까지 적었다", chapterIdx: [2, 4] },
+  { no: "三", tag: "운명 카드", teaseTeaser: ["네 짝이 적힌 자리도", "넘겨 봤다"], teaseResult: "인연 — 네 짝의 자리", chapterIdx: [3, 5] },
+  { no: "四", tag: "붉은 표시", teaseTeaser: ["장부에 붉게 적힌 해가 있다.", "이것만 미리 보여주마"], teaseResult: "붉게 적힌 해, 그리고 네 물음", chapterIdx: [6, 7, 8] },
+];
+
 export type TeaserChapterItem = {
   /** 앞부분 — 회백색 작은 글 */
   lead?: string;
@@ -343,37 +363,39 @@ export function buildTeaser(
   // "안 주는 게 많다"로 읽힌다 — 하나라도 열려 있어야 나머지 잠금이 미끼가 된다.
   // 결과지 9챕터를 4章에 담는다(불릿 아홉 = 챕터 아홉, 1:1 유지).
   // 부제는 산군 어미 규칙(~다/~라, 해체 금지)을 지키면서 한 번에 읽히게 — "생각하게 만드는" 단어 금지.
+  const J = SANGUN_JANG;
   const chapters: TeaserChapter[] = voice !== "sangun" ? [] : [
     {
-      no: "一",
-      tease: ["착한 얼굴 말고,", "네 진짜 그릇부터 보자"],
+      no: J[0].no,
+      tag: J[0].tag,
+      tease: J[0].teaseTeaser,
       items: [
         { lead: "타고난 본바탕과 강점 둘", main: "남들과 다른 결 하나", mask: "▓▓▓▓" },
         { lead: "올해 분명히 오는 기회 하나", main: "정리될 것 하나", mask: "▓▓▓▓" },
       ],
     },
     {
-      no: "二",
-      tag: "장부 기밀",
-      tease: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"],
+      no: J[1].no,
+      tag: J[1].tag,
+      tease: J[1].teaseTeaser,
       items: [
         { lead: "재물그릇 점수와", main: "돈이 들어오는 달 둘 · 새는 달 하나", mask: "▓▓년 ▓▓월" },
         { lead: "승부수를 걸 때와", main: "엎드려 있을 때", mask: "▓▓년 ▓▓월" },
       ],
     },
     {
-      no: "三",
-      tag: "운명 카드",
-      tease: ["네 짝이 적힌 자리도", "넘겨 봤다"],
+      no: J[2].no,
+      tag: J[2].tag,
+      tease: J[2].teaseTeaser,
       items: [
         { lead: "인연 그릇 점수와", main: "인연이 들어오는 달 둘", mask: "▓▓년 ▓▓월" },
         { lead: "마음이 흔들리는 달과", main: "그때 붙잡을 것", mask: "▓▓년 ▓▓월" },
       ],
     },
     {
-      no: "四",
-      tag: "붉은 표시",
-      tease: ["장부에 붉게 적힌 해가 있다.", "이것만 미리 보여주마"],
+      no: J[3].no,
+      tag: J[3].tag,
+      tease: J[3].teaseTeaser,
       items: [
         turningYear
           ? { lead: "네 인생이 크게 바뀌는 해", main: "그 해에 무엇이 갈리는지", peek: `${turningYear.year}년, ${turningYear.age}세` }

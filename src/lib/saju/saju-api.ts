@@ -369,12 +369,16 @@ export function buildKeyFactsBlock(
 // 재물그릇 점수·좋은 달·나쁜 달을 코드에서 한 번만 계산해 확정값으로 주입한다.
 // 챕터 병렬 생성 시 모델이 챕터마다 점수/달을 다르게 지어내는 모순(실측: 40점↔80점,
 // 같은 10월이 좋은 달이자 새는 달)을 지시문으로는 못 막아서, 값 자체를 고정한다.
-export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
+export type WealthMonth = { label: string; verdict: string; score: number };
+export type WealthFacts = { score: number; top: WealthMonth[]; bad: WealthMonth[] };
+
+/** 재물 확정값의 구조체 판 — 프롬프트 문자열(buildWealthFactsBlock)과 결과지 달력 표가
+ *  **같은 계산 하나**를 쓰게 뽑아냈다. 표를 따로 계산하면 결과지 본문과 표가 다른 달을 말하게 된다. */
+export function computeWealthFacts(analysis: SajuAnalysisResponse): WealthFacts {
   const rec = (v: unknown): Record<string, unknown> =>
     v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
   const w = rec(analysis.weolun);
-  type MonthRow = { label: string; verdict: string; score: number };
-  const toRow = (v: unknown): MonthRow | null => {
+  const toRow = (v: unknown): WealthMonth | null => {
     const m = rec(v);
     const j = rec(m.yongsinJudgment);
     const score = typeof j.종합점수 === "number" ? j.종합점수 : null;
@@ -385,9 +389,7 @@ export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
     toRow(w.currentWeolun),
     toRow(w.nextWeolun),
     ...(Array.isArray(w.upcomingWeoluns) ? w.upcomingWeoluns.map(toRow) : []),
-  ].filter((m): m is MonthRow => m != null);
-
-  const lines: string[] = [];
+  ].filter((m): m is WealthMonth => m != null);
 
   // 재물그릇 점수 — 십성 분포·용신으로 결정적 산출(같은 명식이면 항상 같은 점수)
   const sum = rec(rec(analysis.sipseong).summary);
@@ -401,20 +403,28 @@ export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
     38,
     Math.min(92, 42 + jae * 9 + sik * 5 + (yongIsJae ? 12 : 0) - Math.max(0, inseong - 3) * 3),
   );
-  lines.push(`- 재물그릇 점수: ${score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`);
 
+  let top: WealthMonth[] = [];
+  let bad: WealthMonth[] = [];
   if (months.length >= 4) {
     const sorted = [...months].sort((a, b) => b.score - a.score);
-    const top = sorted.slice(0, 3);
+    top = sorted.slice(0, 3);
     const topLabels = new Set(top.map((m) => m.label));
-    const bad = sorted
+    bad = sorted
       .slice(-3)
       .filter((m) => !topLabels.has(m.label) && m.score < 15)
       .sort((a, b) => a.score - b.score);
-    const fmt = (m: MonthRow) => `${m.label}(${m.verdict}${m.verdict ? " · " : ""}${m.score}점)`;
-    lines.push(`- 돈이 들어오는 달 TOP3: ${top.map(fmt).join(", ")}`);
-    if (bad.length) lines.push(`- 돈이 새는(조심할) 달: ${bad.map(fmt).join(", ")}`);
   }
+  return { score, top, bad };
+}
+
+export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
+  const { score, top, bad } = computeWealthFacts(analysis);
+  const lines: string[] = [];
+  lines.push(`- 재물그릇 점수: ${score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`);
+  const fmt = (m: WealthMonth) => `${m.label}(${m.verdict}${m.verdict ? " · " : ""}${m.score}점)`;
+  if (top.length) lines.push(`- 돈이 들어오는 달 TOP3: ${top.map(fmt).join(", ")}`);
+  if (bad.length) lines.push(`- 돈이 새는(조심할) 달: ${bad.map(fmt).join(", ")}`);
 
   return `[재물 확정값 — 점수와 달은 아래 값을 그대로 인용할 것. 다른 점수·다른 달을 지어내지 말 것]\n${lines.join("\n")}`;
 }
