@@ -175,7 +175,15 @@ export function SangunResult({
       {/* ── 표지 — 타이트는 표지 한 장으로 "책을 받았다"는 실감을 만든다 ── */}
       <div className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={coverSrc()} alt="" className="h-[420px] w-full select-none object-cover" draggable={false} />
+        {/* 표지 원본은 2:3 전신 컷인데 틀은 420×420 정사각이다. 가운데로 자르면 갓이 잘리고
+            도포 몸통만 남는다 — 위쪽으로 당겨 갓·어깨가 들어오게 한다(아래는 어두워 제목이 읽힌다). */}
+        <img
+          src={coverSrc()}
+          alt=""
+          className="h-[420px] w-full select-none object-cover"
+          draggable={false}
+          style={{ objectPosition: "center 24%" }}
+        />
         <div
           className="absolute inset-0"
           style={{ background: "linear-gradient(180deg,rgba(10,9,8,0.45) 0%,rgba(10,9,8,0.05) 40%,rgba(10,9,8,0.92) 88%)" }}

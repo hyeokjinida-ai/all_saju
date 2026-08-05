@@ -1514,8 +1514,8 @@ function TeaserStep({
           <TeaserCut
             src="/products/sangun/t5-thread.webp"
             alt="새끼손가락에 붉은 실을 감은 손"
-            pos="center 52%"
-            size="md"
+            pos="center 50%"
+            tall
             sayAt="top"
             say={<>네 짝 말이냐.<br />…봤다. 얼굴까지.</>}
           />
@@ -1529,8 +1529,8 @@ function TeaserStep({
               <TeaserCut
                 src="/products/sangun/t6-mark.webp"
                 alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손"
-                pos="center 55%"
-                size="lg"
+                pos="center 50%"
+                tall
                 sayAt="top"
                 say={<>…여기.<br />붉게 적혀 있군.</>}
               />
