@@ -382,7 +382,7 @@ export function SangunStory({
   // ── 입장 게이트(MZ무당사주 구조) — 입장 전에는 이것만 보인다 ──
   if (stage === "gate") {
     return (
-      <div className="story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
+      <div className="world-sangun story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
         <BgMedia
           video="/products/sangun/gate.mp4"
           img="/products/sangun/gate.webp"
@@ -512,7 +512,7 @@ export function SangunStory({
     const s = scenes[Math.min(scene, scenes.length - 1)];
 
     return (
-      <div className="story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
+      <div className="world-sangun story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
         <BgMedia video={s.video} img={s.img} alt="신당" className="absolute inset-0 h-full w-full object-cover opacity-85" />
         <div
           className="absolute inset-0"
@@ -579,7 +579,7 @@ export function SangunStory({
   // ── 입력 스테이지 — 씬과 같은 풀블리드(테두리·여백 없음). 상단 바만 오버레이 ──
   if (stage === "input") {
     return (
-      <div className="story-immersive relative w-full" style={{ background: "#070609" }}>
+      <div className="world-sangun story-immersive relative w-full" style={{ background: "#070609" }}>
         {/* 상단은 표제만. '신당으로' 되돌아가기 버튼은 제거했다 —
             누르면 위저드가 언마운트돼 그때까지 입력한 값이 전부 날아갔고(초안 저장은 로그인 경로에만 걸려 있음),
             바로 아래 위저드 자체 '‹' 와 뒤로가기가 겹쳐 보였다. */}
@@ -595,7 +595,7 @@ export function SangunStory({
 
   // ── 신당 내부(입장 후) ──────────────────────────────────────────
   return (
-    <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
+    <div className="world-sangun story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
         <header className="px-6 pb-5 pt-9 text-center">
           <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: GOLD }}>

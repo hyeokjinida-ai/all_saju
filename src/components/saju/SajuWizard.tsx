@@ -416,9 +416,11 @@ export function SajuWizard({
 
   return (
     <div
+      // world-sangun: 공용 --gold-*/--bone-* 토큰이 자수정 보라값이라, 이 클래스로 신당 색을 덮는다.
+      // (안 덮으면 손님 이름·원국 한자 같은 핵심이 보라로 나온다 — globals.css 주석 참고)
       className={
         imm
-          ? "wizard-immersive relative flex w-full flex-col overflow-hidden"
+          ? "world-sangun wizard-immersive relative flex w-full flex-col overflow-hidden"
           : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
       }
       style={imm ? { background: "#0a090e", minHeight: "100svh" } : undefined}

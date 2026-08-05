@@ -68,18 +68,22 @@ const config: Config = {
         "night-edge": "#0c0420",
         divider: "#2a2350",
 
-        bone: "#F1EEF9",
-        "bone-soft": "#cbb8f0",
-        "bone-faint": "#9a8cd0",
+        // 아래 두 묶음은 **CSS 변수를 가리킨다**(고정 hex 아님).
+        // 값을 여기 박아두면 .world-sangun 같은 세계관 스코프에서 색을 덮을 수 없다 —
+        // 실제로 산군 티저에서 손님 이름·원국 한자가 보라로 나왔다(2026-08-06 실측).
+        // 기본값은 globals.css :root 에, 산군 색은 .world-sangun 에 있다.
+        bone: "var(--bone)",
+        "bone-soft": "var(--bone-soft)",
+        "bone-faint": "var(--bone-faint)",
 
-        // 1차 강조 = 자수정 보라 (이름은 gold 유지). CTA 그라데이션은 흰색.
-        gold: "#c9a8ff",
-        "gold-bright": "#dcc8ff",
-        "gold-soft": "#b794ff",
+        // 1차 강조 — 이름은 gold 유지, 값은 세계관마다 다르다(기본=자수정 보라 / 산군=금색).
+        gold: "var(--gold)",
+        "gold-bright": "var(--gold-bright)",
+        "gold-soft": "var(--gold-soft)",
         "gold-grad-start": "#ffffff",
         "gold-grad-end": "#f1eaff",
-        "gold-pale": "rgba(150, 90, 255, 0.16)",
-        "gold-line": "rgba(180, 140, 255, 0.3)",
+        "gold-pale": "var(--gold-pale)",
+        "gold-line": "var(--gold-line)",
 
         // 자수정 (violet) — 코어 액센트
         violet: "#8A6BF2",

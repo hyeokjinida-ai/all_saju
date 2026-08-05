@@ -143,7 +143,7 @@ export function SangunResult({
       <section key={idx} className="mt-6">
         <h3
           className="font-myeongjo flex items-baseline gap-2.5 text-[18px] font-semibold leading-snug"
-          style={{ color: "#f6f1ff" }}
+          style={{ color: HANJI }}
         >
           <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
             {"一二三四五六七八九"[idx] ?? ""}
@@ -160,7 +160,9 @@ export function SangunResult({
   };
 
   return (
-    <div style={{ background: "#0a0908", border: `1px solid ${GOLD_PALE}` }}>
+    // world-sangun: 결과지도 같은 토큰 덮개를 쓴다 — 마크다운 본문(markdownComponents)이
+    // 공용 보라 색을 쓰고 있어서, 이게 없으면 결제 후 본문만 보라로 돌아간다.
+    <div className="world-sangun" style={{ background: "#0a0908", border: `1px solid ${GOLD_PALE}` }}>
       {/* ── 표지 — 타이트는 표지 한 장으로 "책을 받았다"는 실감을 만든다 ── */}
       <div className="relative overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
