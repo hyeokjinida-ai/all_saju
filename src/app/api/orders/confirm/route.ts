@@ -29,11 +29,15 @@ export async function POST(request: NextRequest) {
   if (orderErr || !order) {
     return NextResponse.json({ error: "주문을 찾을 수 없습니다" }, { status: 404 });
   }
+  // 비회원은 마이페이지에 못 들어간다 — 보류 응답에 이 사실을 실어 보내야
+  // 결제 성공 화면이 "마이페이지에서 확인" 같은 못 쓰는 안내를 안 준다.
+  const isGuest = !order.user_id;
+
   if (order.status === "paid") {
     // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
     const outcome = await generateResultForOrder(order.id, { service });
     if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true });
-    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, reason: outcome.reason });
+    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason });
   }
   if (order.amount !== amount) {
     return NextResponse.json({ error: "금액이 일치하지 않습니다" }, { status: 400 });
@@ -70,8 +74,11 @@ export async function POST(request: NextRequest) {
       resultId: null,
       pending: true,
       orderId,
+      guest: isGuest,
       reason: "awaiting_deposit",
-      message: "입금이 확인되면 결과지를 생성해 드려요. 마이페이지에서 확인하실 수 있습니다.",
+      message: isGuest
+        ? "입금이 확인되면 결과지를 만들어 드려요. 이 페이지 주소를 저장해 두시면 다시 열어 확인하실 수 있어요."
+        : "입금이 확인되면 결과지를 생성해 드려요. 마이페이지에서 확인하실 수 있습니다.",
     });
   }
 
@@ -87,6 +94,7 @@ export async function POST(request: NextRequest) {
     resultId: null,
     pending: true,
     orderId,
+    guest: isGuest,
     reason: outcome.reason,
     message: "결제는 완료됐어요. 결과지를 마무리하는 중이에요 — 잠시만 기다려 주세요.",
   });

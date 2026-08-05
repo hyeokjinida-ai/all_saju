@@ -41,6 +41,14 @@ function resultEmailHtml(url: string, productName: string) {
 export async function sendResultEmail(opts: { to: string; resultId: string; productName: string }): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   if (!isEmailConfigured()) return { ok: false, skipped: true };
   const base = siteUrl();
+  // 운영에서 NEXT_PUBLIC_SITE_URL 이 비었거나 localhost 면 링크가 죽은 메일이 나간다.
+  // 그런 메일은 "결과지 왔다"고 해놓고 안 열리는 것이라 아무것도 안 보내느니만 못하다 —
+  // 보내지 말고 크게 남긴다(결과지 자체는 이미 저장돼 있고, 크론이 다시 시도한다).
+  if (!base || /localhost|127\.0\.0\.1/.test(base)) {
+    const msg = `NEXT_PUBLIC_SITE_URL 이 '${base || "(비어 있음)"}' — 링크가 죽은 메일이라 발송을 막았다`;
+    console.error("[email] " + msg);
+    return { ok: false, error: msg };
+  }
   const url = `${base}/results/${opts.resultId}`;
   const from = process.env.EMAIL_FROM || "명운록 <onboarding@resend.dev>";
   try {
