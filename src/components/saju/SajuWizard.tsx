@@ -973,7 +973,11 @@ function InkMask({ text }: { text: string }) {
 
 /** 산군 대사 띠 — 스토리 화면의 대사창(SangunWebtoon Bubble)과 같은 옷.
  *  타이트 티저 실측(22단계)의 정체는 "모든 블록을 캐릭터가 대사로 소개한 뒤에 보여준다"였다.
- *  우리는 웹툰 5컷이 끝나면 산군이 화면에서 사라졌다 — 이 띠가 블록 사이의 연결 조직이다. */
+ *  우리는 웹툰 5컷이 끝나면 산군이 화면에서 사라졌다 — 이 띠가 블록 사이의 연결 조직이다.
+ *
+ *  ⚠ **한 마디만 담는다.** 문단을 여럿 넣으면 띠가 아니라 문서 카드가 되고, 밝은 크림색 박스가
+ *  화면을 먹어 검정+금 신당 세계관이 결제 직전에서 하얗게 깨진다(형님 지적, 내 오판 두 번).
+ *  긴 글은 판(LedgerPanel)에, 짧은 대사는 컷 위(CutSay)나 이 띠에. 그릇을 섞지 않는다. */
 function SangunSay({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -995,6 +999,64 @@ function SangunSay({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * 장부 판 — 산군이 장부에서 읽어 옮긴 긴 글(콜드리딩).
+ * 대사 띠와 **다른 그릇**이어야 한다: 띠는 한 마디, 판은 기록.
+ * 앞서 한 번 실패한 이유는 판이 틀려서가 아니라 배경(ganji.webp)이 너무 어두워 안 보였기 때문 —
+ * 왼쪽에 붉은 괘선을 세우고 테두리를 올려 "펴 놓은 장부 한 쪽"으로 읽히게 한다.
+ */
+function LedgerPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="relative mt-6 py-5 pl-6 pr-5"
+      style={{
+        background:
+          "linear-gradient(180deg,rgba(26,20,14,0.92),rgba(14,11,8,0.96)), url(/products/sangun/ganji.webp) center/cover",
+        border: "1px solid rgba(232,201,106,0.34)",
+        boxShadow: "inset 0 0 40px rgba(0,0,0,0.5)",
+      }}
+    >
+      {/* 장부 괘선 — 세로 붉은 줄 하나로 "적힌 것"이라는 신호를 준다 */}
+      <span
+        aria-hidden
+        className="absolute inset-y-4 left-3 w-px"
+        style={{ background: "linear-gradient(180deg,transparent,rgba(143,43,30,0.85),transparent)" }}
+      />
+      {children}
+    </div>
+  );
+}
+
+/**
+ * 컷 위 말풍선 — 타이트 방식. 대사가 그림 아래 별도 박스가 아니라 **그 장면 안에서** 나온다.
+ * 밝은 박스가 화면을 안 먹어서 어두운 신당이 끝까지 유지된다.
+ * 사진은 한쪽(위/아래)이 비어 있게 발주했고(이미지지시서_티저컷 v2), 그 빈 쪽에 앉힌다.
+ */
+function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactNode }) {
+  return (
+    <div className={`absolute inset-x-4 ${at === "top" ? "top-4" : "bottom-4"} z-10`}>
+      <div
+        className="relative rounded-[5px] px-4 py-3"
+        style={{
+          // 반투명 한지 — 사진이 비쳐 보여야 "그 장면 안의 말"이 된다
+          background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+          border: "1px solid rgba(201,185,142,0.8)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+          backdropFilter: "blur(2px)",
+        }}
+      >
+        <span
+          className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[10px] font-semibold tracking-[0.2em]"
+          style={{ background: "#8f2b1e", color: "#f3e6cf" }}
+        >
+          산군
+        </span>
+        <p className="font-myeongjo text-[14.5px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
+      </div>
+    </div>
+  );
+}
+
 /** 티저 하단의 산군 컷 — 타이트는 끝까지 컷 → 대사 → 값 순서로 사진이 따라간다(형님 지적).
  *
  *  실측 대조(2026-08-04)에서 나온 규칙 둘. 타이트 티저 캡처를 컬럼 단위로 재보니
@@ -1011,17 +1073,28 @@ function TeaserCut({
   alt,
   pos = "center 30%",
   size = "md",
+  /** 세로 4:5 원본(v2 발주분)이면 비율 그대로 세워 말풍선 자리를 만든다. 가로띠(v1)는 size 로. */
+  tall,
+  say,
+  sayAt = "bottom",
 }: {
   src: string;
   alt: string;
   pos?: string;
   /** sm=전환용 짧은 띠 · md=기본 · lg=결정적 장면(전면) */
   size?: keyof typeof CUT_H;
+  tall?: boolean;
+  /** 컷 위에 얹을 대사. 주면 CutSay 로 그리고, 아래 별도 대사 띠를 세울 필요가 없어진다. */
+  say?: React.ReactNode;
+  sayAt?: "top" | "bottom";
 }) {
   return (
     // 컷을 감싼 패딩 두 겹(위저드 px-5=20 + 티저 본문 판 16)을 되물려 컬럼 끝까지 채운다.
     // 음수 마진 36px = 20+16. 판 패딩을 바꾸면 여기도 같이 바꿔야 한다(안 그러면 여백이 남는다).
-    <div className={`-mx-9 mt-6 overflow-hidden ${CUT_H[size]}`}>
+    <div
+      className={`relative -mx-9 mt-6 overflow-hidden ${tall ? "" : CUT_H[size]}`}
+      style={tall ? { aspectRatio: "4 / 5" } : undefined}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
@@ -1031,6 +1104,21 @@ function TeaserCut({
         draggable={false}
         style={{ objectPosition: pos }}
       />
+      {/* 말풍선이 앉는 쪽을 한 번 더 눌러 흰 글씨가 확실히 읽히게 한다.
+          사진이 충분히 어두우면 티가 안 나고, 밝게 나온 컷에서도 대사가 안 묻힌다. */}
+      {say && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              sayAt === "top"
+                ? "linear-gradient(180deg,rgba(8,7,6,0.62) 0%,rgba(8,7,6,0.15) 38%,rgba(8,7,6,0) 60%)"
+                : "linear-gradient(0deg,rgba(8,7,6,0.62) 0%,rgba(8,7,6,0.15) 38%,rgba(8,7,6,0) 60%)",
+          }}
+        />
+      )}
+      {say && <CutSay at={sayAt}>{say}</CutSay>}
     </div>
   );
 }
@@ -1198,9 +1286,17 @@ function TeaserStep({
           아래 대사 띠들이 그 연결 조직이다. 전부 확정값·고정 문구라 LLM 비용 0. */}
       {imm && (
         <>
-          {/* 장부 표지를 여는 손 — 대사를 문자 그대로 연기하는 컷(발주 t1) */}
-          <TeaserCut src="/products/sangun/t1-open.webp" alt="옛 장부의 표지를 여는 손" pos="center 58%" size="md" />
-          <SangunSay>장부부터 펴자. 네 여덟 글자다.</SangunSay>
+          {/* 장부를 펴 든 손. 대사는 컷 위에 — 밝은 박스를 아래에 쌓지 않아야 신당이 어둡게 유지된다.
+              말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다"). 무당은 손님한테
+              설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리). */}
+          <TeaserCut
+            src="/products/sangun/t1-open.webp"
+            alt="옛 장부를 펴 든 손"
+            pos="center 58%"
+            size="md"
+            sayAt="top"
+            say={<>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>}
+          />
         </>
       )}
 
@@ -1301,7 +1397,14 @@ function TeaserStep({
       {/* 정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간.
           대사는 아래 콜드리딩 띠 안에 합쳐 넣는다(따로 띠를 세우면 띠 3개가 연속으로 쌓인다). */}
       {imm && teaser && (
-        <TeaserCut src="/products/sangun/t2-read.webp" alt="탁자 너머로 몸을 기울여 마주 보는 산군" pos="center 44%" size="lg" />
+        <TeaserCut
+          src="/products/sangun/t2-read.webp"
+          alt="탁자 너머로 몸을 기울여 마주 보는 산군"
+          pos="center 44%"
+          size="lg"
+          sayAt="bottom"
+          say={<>너한테는 아무것도 안 물었다.<br />그런데 보이는군.</>}
+        />
       )}
 
       {/* 콜드리딩 — 명식에서 나온 문장만.
@@ -1312,39 +1415,37 @@ function TeaserStep({
       {teaser && (
         <>
           {imm ? (
-            /* 콜드리딩은 문법상 100% 산군의 대사다("너는~", "네 얘기").
-               먹 한지 판(=장부에 적힌 기록)에 넣었더니 화자와 그릇이 어긋났고, 판이 어두워
-               결국 맨 텍스트로 보였다(형님 지적, 내 오판). 대사 띠로 옮긴다.
-               앞의 "안 묻고 맞혀 보마"도 이 띠 안에 합친다 — 실제로 한 호흡의 말이고,
-               따로 세우면 띠가 3개 연속으로 쌓여 대사 띠의 힘이 죽는다. */
-            <SangunSay>
-              <span className="block">안 묻고 맞혀 보마.</span>
-              <span
-                aria-hidden
-                className="mt-3 mb-3 block h-px w-16"
-                style={{ background: "rgba(122,35,23,0.35)" }}
-              />
+            /* 콜드리딩 = 긴 글. 대사 띠(한 마디용)에 넣었더니 324px 짜리 크림색 덩어리가 되어
+               신당 세계관이 하얗게 깨졌다(형님 지적, 내 오판 두 번째). **장부 판**으로 되돌린다 —
+               앞서 판이 실패한 건 판이 틀려서가 아니라 배경이 너무 어두워 안 보였기 때문이다.
+               괘선과 테두리를 세우고 글씨를 밝게 해서 "펴 놓은 장부 한 쪽"으로 읽히게 한다.
+               말 거는 대사("너한테는 아무것도 안 물었다")는 바로 위 컷에 얹혀 있으니, 여기는
+               읽어 내려가는 기록이면 된다. */
+            <LedgerPanel>
               {teaser.coldRead.map((line, i) => {
                 const isPast = teaser.hasPastCheck && i === 1;
                 const year = isPast ? teaser.pastYear : null;
-                // 연도를 뽑아 큰 숫자로 세우고 문장에서는 "2024년," 머리말을 지운다.
-                // 한지 바탕이라 금색은 안 보인다 → 주사색(부적 붉은 글씨)으로.
+                // 승부처인 연도만 문장 안에서 크게. 숫자만 따로 떼어 놓으면 아랫문장과 끊겨 붕 뜬다.
                 const body = year ? line.replace(new RegExp(`^${year}년[,\\s]*`), "") : line;
                 return (
-                  <span key={i} className={`block ${i > 0 ? "mt-4" : ""}`}>
+                  <p
+                    key={i}
+                    className={`font-myeongjo leading-[1.8] ${i > 0 ? "mt-3.5" : ""}`}
+                    style={{ fontSize: 15, color: isPast ? "#f3ead6" : "var(--bone)" }}
+                  >
                     {year && (
-                      <span className="font-serif block leading-none" style={{ fontSize: 38, fontWeight: 700, color: "#7a2317" }}>
-                        {year}
-                        <span className="font-myeongjo ml-1 text-[14px] font-normal" style={{ color: "rgba(122,35,23,0.7)" }}>
-                          년
-                        </span>
+                      <span
+                        className="font-serif mr-1.5"
+                        style={{ fontSize: 22, fontWeight: 700, color: "var(--gold-bright)" }}
+                      >
+                        {year}년
                       </span>
                     )}
-                    <span className={`block font-normal ${year ? "mt-1.5" : ""}`}>{body}</span>
-                  </span>
+                    {body}
+                  </p>
                 );
               })}
-            </SangunSay>
+            </LedgerPanel>
           ) : (
             <div className={`${name || pillars ? "mt-4" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
               {teaser.coldRead.map((line, i) => (
@@ -1378,35 +1479,59 @@ function TeaserStep({
           달 마스킹이 "몇 월인지 짚는다" 포지션을 목차보다 먼저 스토리로 흘린다. */}
       {imm && teaser && (
         <>
-          {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3) */}
-          <TeaserCut src="/products/sangun/t3-snap.webp" alt="부채를 접어 쥔 손" pos="center 62%" size="sm" />
-          <SangunSay>
-            앞일도 적나라하게 말해줄 수 있다.
-            <br />
-            대신 좋은 말만 하지는 않는다.
-          </SangunSay>
+          {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3). 뜸들이기("…다만")는 결정적인 자리에만. */}
+          <TeaserCut
+            src="/products/sangun/t3-snap.webp"
+            alt="부채를 접어 쥔 손"
+            pos="center 62%"
+            size="md"
+            sayAt="bottom"
+            say={<>앞일도 보인다. …다만.<br />듣기 좋은 말만 하지는 않는다.</>}
+          />
 
           <HanjaHeader char="財" />
-          {/* 엽전 꾸러미를 장부 위로 든 손(발주 t4) */}
-          <TeaserCut src="/products/sangun/t4-money.webp" alt="엽전 꾸러미를 장부 위로 들어 올린 손" pos="center 54%" size="lg" />
-          <SangunSay>
-            돈부터 보자. 어차피 그게 제일 궁금할 테니.
-            <br />
-            들어오는 달이 보인다 — <InkMask text="▓▓년 ▓▓월" />. &nbsp;…여기까지.
-          </SangunSay>
+          {/* 엽전 꾸러미를 장부 위로 든 손(발주 t4).
+              "다들 그것부터 묻더군" — 수없이 봐온 사람의 말. 무당 말투의 경험담 부품. */}
+          <TeaserCut
+            src="/products/sangun/t4-money.webp"
+            alt="엽전 꾸러미를 장부 위로 들어 올린 손"
+            pos="center 54%"
+            size="lg"
+            sayAt="bottom"
+            say={
+              <>
+                돈부터 볼까. 다들 그것부터 묻더군.
+                <br />
+                들어오는 달이 보인다 — <InkMask text="▓▓년 ▓▓월" />. &nbsp;…여기까지.
+              </>
+            }
+          />
 
           <HanjaHeader char="緣" />
           {/* 새끼손가락의 붉은 실 — 설명 없이 읽히는 인연의 기호(발주 t5) */}
-          <TeaserCut src="/products/sangun/t5-thread.webp" alt="새끼손가락에 붉은 실을 감은 손" pos="center 52%" size="md" />
-          <SangunSay>네 짝도 봤다. 얼굴까지.</SangunSay>
+          <TeaserCut
+            src="/products/sangun/t5-thread.webp"
+            alt="새끼손가락에 붉은 실을 감은 손"
+            pos="center 52%"
+            size="md"
+            sayAt="top"
+            say={<>네 짝 말이냐.<br />…봤다. 얼굴까지.</>}
+          />
           <DestinyCard partner={partner} gender={gender} birthDate={birthDate} />
 
           {teaser.turningYear && (
             <>
               <HanjaHeader char="命" />
-              {/* 붉은 붓으로 장부 한 줄에 동그라미 — "붉게 적힌 해"를 문자 그대로 연기(발주 t6) */}
-              <TeaserCut src="/products/sangun/t6-mark.webp" alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손" pos="center 55%" size="lg" />
-              <SangunSay>그리고 하나 더. 장부에 붉게 적힌 해가 있다.</SangunSay>
+              {/* 붉은 붓으로 장부 한 줄에 동그라미 — "붉게 적힌 해"를 문자 그대로 연기(발주 t6).
+                  에이스 컷이라 대사도 제일 짧게. 짧을수록 그림이 산다. */}
+              <TeaserCut
+                src="/products/sangun/t6-mark.webp"
+                alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손"
+                pos="center 55%"
+                size="lg"
+                sayAt="top"
+                say={<>…여기.<br />붉게 적혀 있군.</>}
+              />
             </>
           )}
         </>
@@ -1440,10 +1565,14 @@ function TeaserStep({
           {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리.
               정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
           {imm && teaser.chapters.length > 0 && (
-            <>
-              <TeaserCut src="/products/sangun/teaser-face.webp" alt="정면으로 마주 앉은 산군" pos="center 42%" size="md" />
-              <SangunSay>복채 얘기를 하자.</SangunSay>
-            </>
+            <TeaserCut
+              src="/products/sangun/teaser-face.webp"
+              alt="정면으로 마주 앉은 산군"
+              pos="center 42%"
+              size="md"
+              sayAt="top"
+              say={<>이제 복채 얘기를 하자.</>}
+            />
           )}
           {teaser.chapters.length > 0 ? (
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
