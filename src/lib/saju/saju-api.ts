@@ -337,12 +337,23 @@ export function buildKeyFactsBlock(
   if (ggBits.length) lines.push(`- ${ggBits.join(" · ")}`);
 
   // 만 나이 · 현재/다음 대운
+  // 나이는 **만/세는 둘 다** 적어 준다 — 하나만 주면 모델이 나머지를 스스로 계산하다 틀린다
+  // (실측: 33세여야 할 자리에 27세·36세가 나왔다). 계산하지 말고 베끼게 만든다.
   const daeun = rec(analysis.daeun);
-  if (daeun.current_age != null) lines.push(`- 현재 만나이: ${s(daeun.current_age)}세`);
+  if (daeun.current_age != null) {
+    const man = Number(daeun.current_age);
+    lines.push(
+      Number.isFinite(man)
+        ? `- 나이: 만 ${man}세 · 세는나이 ${man + 1}세 — **본문에 나이를 쓸 땐 이 둘 중 하나만 쓴다. 다른 숫자를 계산해 내지 말 것**`
+        : `- 현재 만나이: ${s(daeun.current_age)}세`,
+    );
+  }
   const cd = rec(daeun.current_daeun);
   if (cd.ganji)
+    // 한자 병기를 여기서 주면 모델이 그대로 베껴 "경신(庚申)"이 본문에 나온다(실측).
+    // 결과지 문체 규칙이 '한자 병기 금지'인데 입력이 그걸 어기고 있었다 — 입력에서 뺀다.
     lines.push(
-      `- 현재 대운: ${s(cd.ganji)}${cd.ganji_hanja ? `(${s(cd.ganji_hanja)})` : ""} · ${s(cd.age_start)}~${s(cd.age_end)}세(${s(cd.year_start)}~${s(cd.year_end)})`,
+      `- 현재 대운: ${s(cd.ganji)} · ${s(cd.age_start)}~${s(cd.age_end)}세(${s(cd.year_start)}~${s(cd.year_end)})`,
     );
   const nd = rec(daeun.next_daeun);
   if (nd.ganji) lines.push(`- 다음 대운: ${s(nd.ganji)} · ${s(nd.age_start)}~${s(nd.age_end)}세부터(${s(nd.year_start)}~)`);

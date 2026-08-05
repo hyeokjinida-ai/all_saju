@@ -15,6 +15,7 @@ import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildChapterPrompts } from "@/lib/saju/prompt";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
 import { generateByChapters } from "@/lib/saju/llm";
+import { normalizeResultVoice } from "@/lib/saju/normalize-voice";
 import { sendResultEmail } from "@/lib/email";
 import {
   isSajuApiConfigured,
@@ -167,6 +168,17 @@ export async function generateResultForOrder(
     keyFacts,
   });
   const llm = await generateByChapters(title, chapters);
+
+  // 기계적으로 정답이 하나인 위반(문어 명령형·괄호 한자·내부 판정값·2인칭 호칭)은 후처리로 못 박는다.
+  // 프롬프트로 부탁해서는 안 지켜진다는 걸 실측으로 확인했다(normalize-voice.ts 주석 참고).
+  const norm = normalizeResultVoice(llm.text, {
+    banmal: product.slug === "sangun-sinjeom",
+    name: input.name,
+  });
+  if (norm.fixed.length) {
+    console.info("[generate] 문체 교정:", norm.fixed.map((f) => `${f.rule} ${f.before}건`).join(" · "));
+  }
+  llm.text = norm.text;
 
   // 완성도 검증 — 빈/부분 결과지를 저장하면 멱등 재시도/복구 큐에서 영구 제외되어
   // 유료 고객이 잘린 풀이를 받는다. 기본은 80% 이상 챕터 성공을 요구하고,
