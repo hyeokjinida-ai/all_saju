@@ -547,9 +547,9 @@ export function SajuWizard({
               }}
               style={{ fontSize: 19, letterSpacing: "0.08em" }}
             />
+            {/* 아래 두 줄은 입력을 마치려면 **반드시 읽어야 하는** 안내다 — 장식 라벨(11px)과 같은
+                크기면 안 된다. 위저드 도움말과 같은 13px 로 올린다(타깃이 3040이라 11px 은 작다). */}
             {birthRaw.length > 0 && birthRaw.length < 8 && (
-              {/* 입력을 마치기 위해 **반드시 읽어야 하는** 안내다 — 장식 라벨(11px)과 같은 크기면 안 된다.
-                  위저드 도움말(13px)과 같은 급으로 올린다. 타깃이 3040이라 11px 기능문구는 작다. */}
               <p className="mt-2 text-center text-[13px] text-bone-faint">
                 숫자 여덟 자리(연4 · 월2 · 일2)를 이어서 입력해 주세요
               </p>
