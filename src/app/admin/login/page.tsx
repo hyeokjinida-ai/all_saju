@@ -19,9 +19,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
     const password = String(formData.get("password") ?? "");
     const fromField = String(formData.get("from") ?? "/admin");
     const target = fromField.startsWith("/admin") ? fromField : "/admin";
-    const ok = await setAdminCookie(password);
-    if (!ok) {
-      redirect(`/admin/login?from=${encodeURIComponent(target)}&error=1`);
+    const result = await setAdminCookie(password);
+    if (result !== "ok") {
+      redirect(`/admin/login?from=${encodeURIComponent(target)}&error=${result}`);
     }
     redirect(target);
   }
@@ -59,7 +59,11 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
             autoFocus
             disabled={!configured}
           />
-          {error === "1" ? (
+          {error === "locked" ? (
+            <p className="mt-2 text-xs text-red-600">
+              시도가 너무 많습니다. 15분 뒤에 다시 시도해 주세요.
+            </p>
+          ) : error ? (
             <p className="mt-2 text-xs text-red-600">비밀번호가 일치하지 않습니다.</p>
           ) : null}
         </div>
