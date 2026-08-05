@@ -53,7 +53,7 @@ function Ganji({ no, tag, line }: { no: string; tag?: string; line: string }) {
         </span>
         {tag && (
           <span
-            className="font-myeongjo px-2 py-1 text-[10.5px] tracking-[0.08em]"
+            className="font-myeongjo px-2 py-1 text-[11px] tracking-[0.08em]"
             style={{ border: "1px solid rgba(232,201,106,0.45)", color: GOLD_SOFT }}
           >
             {tag}
@@ -79,10 +79,10 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
         className="flex items-center justify-between px-3.5 py-2.5"
         style={{ background: "rgba(232,201,106,0.08)", borderBottom: `1px solid ${GOLD_PALE}` }}
       >
-        <span className="font-myeongjo text-[12.5px] font-bold" style={{ color: HANJI }}>
+        <span className="font-myeongjo text-[13px] font-bold" style={{ color: HANJI }}>
           {title}
         </span>
-        <span className="font-myeongjo text-[12px] font-bold" style={{ color: GOLD }}>
+        <span className="font-myeongjo text-[13px] font-bold" style={{ color: GOLD }}>
           그릇 {score}점
         </span>
       </div>
@@ -97,10 +97,10 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
               className="flex items-center justify-between px-3.5 py-2.5"
               style={{ borderTop: i === 0 ? "none" : `1px solid rgba(232,201,106,0.12)` }}
             >
-              <span className="font-myeongjo text-[12px]" style={{ color: warn ? "rgba(216,140,120,0.9)" : undefined }}>
+              <span className="font-myeongjo text-[13px]" style={{ color: warn ? "rgba(216,140,120,0.9)" : undefined }}>
                 <span className={warn ? "" : "text-bone-faint"}>{r.kind}</span>
               </span>
-              <span className="font-myeongjo text-[13.5px] font-bold" style={{ color: warn ? "#e8695a" : HANJI }}>
+              <span className="font-myeongjo text-[13px] font-bold" style={{ color: warn ? "#e8695a" : HANJI }}>
                 {r.label}
               </span>
             </div>
@@ -145,13 +145,17 @@ export function SangunResult({
       ]
     : [];
 
-  const chapterBlock = (idx: number) => {
+  // 챕터 앞 여백은 **문단 사이보다 확실히 커야** 새 장이 시작된 게 느껴진다.
+  // 실측(2026-08-06): 문단 사이 28px인데 챕터 앞이 38px이라 챕터가 문단처럼 읽혔다.
+  // mt-12(48px) 로 벌리면 시각 공백 62px ≈ 문단 사이의 2.2배가 된다.
+  // 단, 章 간지 카드 바로 다음 챕터는 카드가 이미 갈라 주므로 mt-6 을 유지한다(과하면 카드와 따로 논다).
+  const chapterBlock = (idx: number, firstInJang = false) => {
     const c = chapters[idx];
     if (!c) return null;
     return (
-      <section key={idx} className="mt-6">
+      <section key={idx} className={firstInJang ? "mt-6" : "mt-12"}>
         <h3
-          className="font-myeongjo flex items-baseline gap-2.5 text-[18px] font-semibold leading-snug"
+          className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
           style={{ color: HANJI }}
         >
           <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
@@ -189,7 +193,7 @@ export function SangunResult({
           style={{ background: "linear-gradient(180deg,rgba(10,9,8,0.45) 0%,rgba(10,9,8,0.05) 40%,rgba(10,9,8,0.92) 88%)" }}
         />
         <div className="absolute inset-x-0 bottom-6 text-center">
-          <p className="font-myeongjo text-[11.5px] tracking-[0.3em]" style={{ color: GOLD_SOFT }}>
+          <p className="font-myeongjo text-[11px] tracking-[0.3em]" style={{ color: GOLD_SOFT }}>
             命運錄 · 신당
           </p>
           {who && (
@@ -197,7 +201,7 @@ export function SangunResult({
               {who}
             </p>
           )}
-          <p className="font-myeongjo mt-2 text-[15px] font-bold" style={{ color: GOLD }}>
+          <p className="font-myeongjo mt-2 text-[16px] font-bold" style={{ color: GOLD }}>
             산군이 읽은 운명 장부
           </p>
           {view.birthLine && (
@@ -210,7 +214,7 @@ export function SangunResult({
         {/* ── 원국 — 오행 색 카드(타이트 5단 표 대응). 못 읽어도 계산의 증거로 읽힌다 ── */}
         {pillars.length > 0 && (
           <div className="mt-5">
-            <p className="font-myeongjo text-center text-[11.5px] tracking-[0.16em] text-bone-faint">
+            <p className="font-myeongjo text-center text-[11px] tracking-[0.16em] text-bone-faint">
               네 여덟 글자
             </p>
             <div className="mt-2.5 flex justify-center gap-2">
@@ -238,7 +242,7 @@ export function SangunResult({
                         {p.ji.char}
                       </span>
                     </div>
-                    <span className="font-myeongjo mt-1 block text-[10px] text-bone-faint">
+                    <span className="font-myeongjo mt-1 block text-[11px] text-bone-faint">
                       {p.gan.read}
                       {p.ji.read}
                       {p.isDay ? " · 나" : ""}
@@ -265,7 +269,7 @@ export function SangunResult({
               {/* 달력 표는 해당 章 머리에 — 본문이 말하는 달과 같은 계산값이라 표가 예고, 본문이 해설이 된다 */}
               {j.no === "二" && wealth && <MonthTable title="돈의 달력" score={wealth.score} rows={wealthRows} />}
               {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
-              {j.chapterIdx.map((idx) => chapterBlock(idx))}
+              {j.chapterIdx.map((idx, i) => chapterBlock(idx, i === 0))}
             </div>
           ))
         ) : (
