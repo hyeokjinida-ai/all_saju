@@ -87,16 +87,25 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
         </span>
       </div>
       {rows.map((r, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between px-3.5 py-2.5"
-          style={{ borderTop: i === 0 ? "none" : `1px solid rgba(232,201,106,0.12)` }}
-        >
-          <span className="font-myeongjo text-[12px] text-bone-faint">{r.kind}</span>
-          <span className="font-myeongjo text-[13.5px] font-bold" style={{ color: HANJI }}>
-            {r.label}
-          </span>
-        </div>
+        // 경고 줄(새는 달·흔들리는 달)만 붉게 — 라벨과 값만이고 본문 문장은 안 건드린다.
+        // 결과지 톤 규칙이 "겁주지 말고 대처로 감싼다"라 문단까지 붉으면 불안 조장 톤이 된다.
+        (() => {
+          const warn = /새는|흔들리는|조심/.test(r.kind);
+          return (
+            <div
+              key={i}
+              className="flex items-center justify-between px-3.5 py-2.5"
+              style={{ borderTop: i === 0 ? "none" : `1px solid rgba(232,201,106,0.12)` }}
+            >
+              <span className="font-myeongjo text-[12px]" style={{ color: warn ? "rgba(216,140,120,0.9)" : undefined }}>
+                <span className={warn ? "" : "text-bone-faint"}>{r.kind}</span>
+              </span>
+              <span className="font-myeongjo text-[13.5px] font-bold" style={{ color: warn ? "#e8695a" : HANJI }}>
+                {r.label}
+              </span>
+            </div>
+          );
+        })()
       ))}
     </div>
   );

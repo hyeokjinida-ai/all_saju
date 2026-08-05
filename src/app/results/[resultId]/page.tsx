@@ -107,6 +107,10 @@ export default async function ResultPage({
     showDaeun,
   });
 
+  // 산군은 페이지 바탕까지 검정이어야 한다 — 결과지 판(#0a0908)만 검게 하고 페이지가 보라면
+  // 검은 판이 보라 위에 떠 있는 이물감이 남는다. 위쪽 촛불빛만 살짝 남긴 어둠으로 깐다.
+  const isSangun = slug === "sangun-sinjeom";
+
   return (
     <div
       style={{
@@ -115,13 +119,15 @@ export default async function ResultPage({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        background: "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
+        background: isSangun
+          ? "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)"
+          : "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
         padding: "30px 12px 64px",
         color: "#fff",
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
-        {slug === "sangun-sinjeom" ? (
+        {isSangun ? (
           /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
              달력 표의 값은 프롬프트에 들어간 확정값과 같은 계산에서 온다(본문과 표가 어긋나면 끝). */
           <SangunResult
@@ -154,7 +160,7 @@ export default async function ResultPage({
           </>
         )}
 
-        <p className="mt-5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>
+        <p className="mt-5 text-center" style={{ fontSize: 11, color: isSangun ? "rgba(232,201,106,0.42)" : "#9a8cd0" }}>
           적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
         </p>
 
@@ -164,6 +170,7 @@ export default async function ResultPage({
             input={crossSellInput}
             signal={crossSellSignal}
             email={(order as { guest_email?: string | null } | null)?.guest_email ?? null}
+            tone={isSangun ? "sangun" : "saju"}
           />
         )}
       </div>

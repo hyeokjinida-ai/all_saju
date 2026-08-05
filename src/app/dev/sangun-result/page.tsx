@@ -3,6 +3,9 @@
 // sample-results.ts 가 만든 샘플(md) + 명식 캐시(json)를 그대로 SangunResult 에 흘린다.
 // 실제 결제 파이프라인과 같은 부품(buildResultView·computeWealthFacts·computeInyeonFacts)만 쓴다 —
 // 여기서만 다른 계산을 쓰면 미리보기가 거짓말이 된다.
+//
+// ※ 이 미리보기에만 보라색 사이트 헤더·푸터가 뜬다. 실제 결과지(/results/…)는 ChromeGate 의
+//   bare 목록에 들어 있어 크롬이 아예 안 붙는다 — 여기 보이는 보라는 쫓아갈 버그가 아니다.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -59,7 +62,8 @@ export default async function DevSangunResultPage() {
         minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
-        background: "#070609",
+        // 실제 결과지 페이지(results/[resultId])의 산군 바탕과 같은 값 — 다르면 미리보기가 거짓말이 된다
+        background: "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)",
         padding: "30px 12px 64px",
       }}
     >

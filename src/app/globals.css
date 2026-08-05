@@ -455,6 +455,33 @@
   }
   .svc-fade { animation: svcFade 0.45s ease-out both; }
 
+  /* 붓으로 그려지는 동그라미 — 전환점 연도 위.
+     "장부에 붉게 표시된 해"라는 문구의 완성형은 색이 아니라 **산군이 지금 붓을 대고 있다**는
+     라이브감이다. 색만 바꾸면 그냥 붉은 도장이고, 그려져야 사람이 방금 친 표시가 된다.
+     path 쪽에서 pathLength=1 로 길이를 정규화하므로 여기 값은 실제 경로 길이와 무관하다 —
+     경로를 다시 그려도 이 규칙은 그대로 맞는다. */
+  @keyframes inkDraw {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: 0; }
+  }
+  .ink-circle {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: inkDraw 1.1s cubic-bezier(0.5, 0, 0.35, 1) 0.35s forwards;
+  }
+
+  /* 형광펜이 좌→우로 칠해지는 결과지 하이라이트 — 같은 원리(붓이 지나간다) */
+  @keyframes inkSwipe {
+    from { background-size: 0% 100%; }
+    to   { background-size: 100% 100%; }
+  }
+
+  /* 모션을 줄이도록 설정한 사용자에겐 결과만 보여준다(그려지는 과정 생략) */
+  @media (prefers-reduced-motion: reduce) {
+    .ink-circle { animation: none; stroke-dashoffset: 0; }
+    mark { animation: none !important; background-size: 100% 100% !important; }
+  }
+
   /* 결제 전 블러 처리(미리보기) */
   .svc-blur { filter: blur(6px); opacity: 0.7; }
 }

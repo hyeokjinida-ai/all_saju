@@ -15,7 +15,15 @@ const ICON = "#c9a8ff";
 // 프롬프트(lib/saju/prompt.ts)가 챕터당 한 문장을 ==문장== 으로 표시하고 여기서 칠한다.
 // 타이트는 붉은 형광펜을 쓴다 — 우리 결과지는 보라/금 톤이라 붉은 칠이 오히려 대비로 선다.
 const HIGHLIGHT_STYLE: CSSProperties = {
-  background: "rgba(143,43,30,0.55)", // 어두운 결과지 위에서 살아 있는 붉은 칠
+  // 붓이 좌→우로 지나가며 칠해진다. 단색 배경으로 두면 "이미 칠해져 있던 것"이고,
+  // 그려지면 "산군이 방금 그은 것"이 된다 — 전환점 카드의 붓 동그라미와 같은 원리.
+  // mark 는 브라우저 기본 스타일이 background-color: yellow 다. 반투명 붉은 칠을 그 위에 얹으면
+  // 노랑이 비쳐 올리브색이 된다(실측에서 걸렸다) — 기본 배경부터 지우고 칠한다.
+  backgroundColor: "transparent",
+  backgroundImage: "linear-gradient(rgba(143,43,30,0.62), rgba(143,43,30,0.62))",
+  backgroundRepeat: "no-repeat",
+  backgroundSize: "0% 100%",
+  animation: "inkSwipe 0.55s cubic-bezier(0.4,0,0.2,1) 0.2s forwards",
   color: "#ffe9d8",
   padding: "0.08em 0.25em",
   borderRadius: 2,

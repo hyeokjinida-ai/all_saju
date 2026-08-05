@@ -1540,18 +1540,43 @@ function TeaserStep({
       )}
 
       {/* 크게 갈리는 해 — 연도만 공개 */}
+      {/* 문구가 "장부에 **붉게** 표시된 해"인데 카드가 금색이었다 — 말과 그림이 어긋난 결함.
+          붉은 판으로 바꾸고, 연도 위에 붓 동그라미가 실제로 **그려지게** 한다.
+          바로 위 t6 컷(붉은 붓으로 장부에 동그라미 치는 손)이 한 동작을 여기서 이어받는 셈이다. */}
       {teaser?.turningYear && (
         <div
-          className="mt-4 px-4 py-4 text-center"
-          style={{ background: "rgba(232,201,106,0.07)", border: "1px solid var(--gold-pale)" }}
+          className="mt-4 px-4 py-5 text-center"
+          style={{ background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }}
         >
-          <p className="font-myeongjo text-[11px] text-bone-faint tracking-[0.16em]">
-            {imm ? "장부에 붉게 표시된 해" : "장부에 붉게 표시된 해"}
+          <p className="font-myeongjo text-[11px] tracking-[0.16em]" style={{ color: "rgba(216,140,120,0.85)" }}>
+            장부에 붉게 표시된 해
           </p>
-          <p className="font-serif mt-1.5 text-[27px] font-bold text-gold-bright leading-none">
-            {teaser.turningYear.year}년
-          </p>
-          <p className="font-myeongjo mt-2 text-[13px] text-bone leading-relaxed">{teaser.turningYear.line}</p>
+          {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
+              좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
+          <span className="relative mt-2 inline-block px-6 py-2">
+            <p className="font-serif text-[30px] font-bold leading-none" style={{ color: "#e8695a" }}>
+              {teaser.turningYear.year}년
+            </p>
+            {/* 손으로 친 동그라미 — 정원이면 도장처럼 보인다. 살짝 찌그러뜨리고 끝을 안 닫는다.
+                pathLength=1 로 길이를 정규화해 두면 경로를 고쳐도 CSS(dasharray 1)를 안 건드려도 된다. */}
+            <svg
+              aria-hidden
+              viewBox="0 0 120 56"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+            >
+              <path
+                className="ink-circle"
+                pathLength={1}
+                d="M104 12 C117 25, 100 52, 60 53 C22 54, 3 42, 5 26 C7 10, 34 2, 64 3 C88 4, 104 9, 111 20"
+                fill="none"
+                stroke="#c0392b"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <p className="font-myeongjo mt-3 text-[13px] leading-relaxed text-bone">{teaser.turningYear.line}</p>
         </div>
       )}
 
