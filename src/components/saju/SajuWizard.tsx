@@ -10,6 +10,7 @@ import type { ResultView } from "@/lib/saju/result-view";
 import { WebtoonPage, type WebtoonCutData } from "@/components/webtoon/WebtoonPage";
 import { tag, displayOf, PROFILE_KEYS, PARTNER_OPTIONS, RELATIONSHIP_OPTIONS, JOB_OPTIONS } from "@/lib/saju/profile-tags";
 import { BgMedia } from "@/components/products/BgMedia";
+import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
 type Pillar = ResultView["pillars"][number];
@@ -1294,8 +1295,7 @@ function TeaserStep({
           <TeaserCut
             src="/products/sangun/t1-open.webp"
             alt="옛 장부를 펴 든 손"
-            pos="center 58%"
-            size="md"
+            tall
             sayAt="top"
             say={<>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>}
           />
@@ -1401,9 +1401,8 @@ function TeaserStep({
       {imm && teaser && (
         <TeaserCut
           src="/products/sangun/t2-read.webp"
-          alt="탁자 너머로 몸을 기울여 마주 보는 산군"
-          pos="center 44%"
-          size="lg"
+          alt="탁자 너머로 고개를 숙이고 마주 앉은 산군"
+          tall
           sayAt="bottom"
           say={<>너한테는 아무것도 안 물었다.<br />그런데 보이는군.</>}
         />
@@ -1485,9 +1484,8 @@ function TeaserStep({
           <TeaserCut
             src="/products/sangun/t3-snap.webp"
             alt="부채를 접어 쥔 손"
-            pos="center 62%"
-            size="md"
-            sayAt="bottom"
+            tall
+            sayAt="top"
             say={<>앞일도 보인다. …다만.<br />듣기 좋은 말만 하지는 않는다.</>}
           />
 
@@ -1496,10 +1494,9 @@ function TeaserStep({
               "다들 그것부터 묻더군" — 수없이 봐온 사람의 말. 무당 말투의 경험담 부품. */}
           <TeaserCut
             src="/products/sangun/t4-money.webp"
-            alt="엽전 꾸러미를 장부 위로 들어 올린 손"
-            pos="center 54%"
-            size="lg"
-            sayAt="bottom"
+            alt="엽전 꾸러미를 장부 위로 내리는 손"
+            tall
+            sayAt="top"
             say={
               <>
                 돈부터 볼까. 다들 그것부터 묻더군.
@@ -1513,8 +1510,7 @@ function TeaserStep({
           {/* 새끼손가락의 붉은 실 — 설명 없이 읽히는 인연의 기호(발주 t5) */}
           <TeaserCut
             src="/products/sangun/t5-thread.webp"
-            alt="새끼손가락에 붉은 실을 감은 손"
-            pos="center 50%"
+            alt="손가락에 붉은 실을 감고 장부를 짚은 손"
             tall
             sayAt="top"
             say={<>네 짝 말이냐.<br />…봤다. 얼굴까지.</>}
@@ -1529,7 +1525,6 @@ function TeaserStep({
               <TeaserCut
                 src="/products/sangun/t6-mark.webp"
                 alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손"
-                pos="center 50%"
                 tall
                 sayAt="top"
                 say={<>…여기.<br />붉게 적혀 있군.</>}
@@ -1557,23 +1552,44 @@ function TeaserStep({
             <p className="font-serif text-[30px] font-bold leading-none" style={{ color: "#e8695a" }}>
               {teaser.turningYear.year}년
             </p>
-            {/* 손으로 친 동그라미 — 정원이면 도장처럼 보인다. 살짝 찌그러뜨리고 끝을 안 닫는다.
-                pathLength=1 로 길이를 정규화해 두면 경로를 고쳐도 CSS(dasharray 1)를 안 건드려도 된다. */}
+            {/* 먹으로 친 동그라미 — 선이 아니라 굵기가 변하는 도형이다(ink-circle-path.ts 참고).
+                마스크가 중심선을 따라 훑으며 획을 드러내서 "지금 붓이 지나간다"가 된다.
+                pathLength=1 로 정규화 — 경로를 고쳐도 CSS(dasharray 1)는 그대로 맞는다. */}
             <svg
               aria-hidden
               viewBox="0 0 120 56"
               preserveAspectRatio="none"
               className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
             >
+              <defs>
+                <mask id="ink-reveal" maskUnits="userSpaceOnUse" x="-6" y="-6" width="132" height="68">
+                  {/* 폭 12 = 획 최대 폭(약 4.1)보다 넉넉히 — 붓끝이 획보다 살짝 앞서 지나간다 */}
+                  <path
+                    className="ink-circle"
+                    pathLength={1}
+                    d={INK_CENTERLINE}
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                  />
+                </mask>
+                {/* 먹의 농담 — 붓을 댄 쪽이 짙고, 들어올리는 끝이 옅다 */}
+                <linearGradient id="ink-tone" x1="1" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#b0301d" />
+                  <stop offset="42%" stopColor="#d24430" />
+                  <stop offset="100%" stopColor="#8f2b1e" />
+                </linearGradient>
+              </defs>
+              {/* 번짐 — 종이에 먹이 스민 자국. 본획보다 먼저 깔린다 */}
               <path
-                className="ink-circle"
-                pathLength={1}
-                d="M104 12 C117 25, 100 52, 60 53 C22 54, 3 42, 5 26 C7 10, 34 2, 64 3 C88 4, 104 9, 111 20"
-                fill="none"
-                stroke="#c0392b"
-                strokeWidth="2.6"
-                strokeLinecap="round"
+                d={INK_STROKE}
+                fill="#8f2b1e"
+                opacity={0.45}
+                mask="url(#ink-reveal)"
+                style={{ filter: "blur(1.1px)" }}
               />
+              <path d={INK_STROKE} fill="url(#ink-tone)" mask="url(#ink-reveal)" />
             </svg>
           </span>
           <p className="font-myeongjo mt-3 text-[13px] leading-relaxed text-bone">{teaser.turningYear.line}</p>
