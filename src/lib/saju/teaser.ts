@@ -8,6 +8,7 @@
 //  - 크게 바뀌는 해 = 유료 결과지가 쓰는 computeInyeonFacts 와 **같은 계산**을 인용한다.
 //    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
 import { computeInyeonFacts, type SajuAnalysisResponse } from "./saju-api";
+import { buildPartnerFace, type PartnerFace } from "./partner-face";
 
 export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
 
@@ -29,6 +30,8 @@ export type SajuTeaser = {
   chartRows: ChartRow[];
   sinsal: string[];
   turningYear: { year: number; age: number; line: string } | null;
+  /** 짝의 얼굴 — 결과지가 여는 것과 **같은 장**. 여기선 흐리게, 결제 후엔 그대로 열린다. */
+  partnerFace: PartnerFace;
   locked: { label: string; mask: string }[];
   /** 받을 장부의 목차. 손님이 "돈 내면 뭘 받는지"를 보는 유일한 자리다. */
   chapters: TeaserChapter[];
@@ -425,6 +428,7 @@ export function buildTeaser(
     chartRows: buildChartRows(analysis),
     sinsal: buildSinsal(analysis),
     turningYear,
+    partnerFace: buildPartnerFace(facts),
     locked,
     note:
       voice === "sangun"

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import type { SajuTeaser } from "@/lib/saju/teaser";
+import type { PartnerFace } from "@/lib/saju/partner-face";
 import type { ResultView } from "@/lib/saju/result-view";
 import { WebtoonPage, type WebtoonCutData } from "@/components/webtoon/WebtoonPage";
 import { tag, displayOf, PROFILE_KEYS, PARTNER_OPTIONS, RELATIONSHIP_OPTIONS, JOB_OPTIONS } from "@/lib/saju/profile-tags";
@@ -803,8 +804,6 @@ export function SajuWizard({
             cuts={webtoonCuts}
             tokens={tokens}
             productSlug={productSlug}
-            partner={form.partner}
-            gender={form.gender || "male"}
           />
         )}
       </div>
@@ -1147,12 +1146,14 @@ function HanjaHeader({ char }: { char: string }) {
 }
 
 /** 운명의 상대 카드 (티저판) — 타이트의 흐린 얼굴 + 부분 마스킹 프로필.
- *  사진 풀(partner-m1~4 / f1~4)에서 **생일로 결정적으로** 고른다 — 같은 사주는 항상 같은 얼굴이라
- *  재접속해도 안 들통난다. 파일이 아직 없으면 실루엣으로 조용히 내려앉는다(onError). */
-function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: string; birthDate: string }) {
-  // 인연 방향 답 그대로. "모르겠다"면 결과지 계산(computeInyeonFacts)과 같은 기본값 — 이성.
-  const sex = partner === "남자" ? "m" : partner === "여자" ? "f" : gender === "female" ? "m" : "f";
-  const idx = ([...birthDate].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 4) + 1;
+ *
+ *  얼굴은 **배우자성(정·편관 / 정·편재)의 오행**으로 고른다(buildPartnerFace). 예전엔 생일
+ *  문자코드로 골랐는데, 그러면 사진이 사주와 아무 상관이 없어서 결과지에서 회수할 근거가 없었다.
+ *  지금은 이 얼굴이 결제 후 결과지에서 **블러만 걷힌 채 그대로** 열린다.
+ *
+ *  결을 뜻하는 오행 한 글자는 가리지 않는다 — 여기서 본 글자가 결과지 본문에도 그대로 나와야
+ *  "계산해서 고른 얼굴"이 증명된다. 파일이 아직 없으면 실루엣으로 조용히 내려앉는다(onError). */
+function DestinyCard({ face }: { face: PartnerFace }) {
   const [imgOk, setImgOk] = useState(true);
   return (
     <div
@@ -1172,7 +1173,7 @@ function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: 
         {imgOk ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={`/products/sangun/partner-${sex}${idx}.webp`}
+            src={face.src}
             alt=""
             onError={() => setImgOk(false)}
             className="h-full w-full select-none object-cover"
@@ -1206,6 +1207,10 @@ function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: 
           </div>
         ))}
       </div>
+      {/* 얼굴을 고른 근거. 가리지 않는 유일한 값이라 "아무 사진이나 띄웠다"는 의심을 여기서 끊는다. */}
+      <p className="font-myeongjo mt-3.5 text-center text-[10px] leading-[1.6] text-bone-faint">
+        네 배우자 자리는 <span style={{ color: "var(--gold-soft)" }}>{face.ohKo}</span>의 결 — 그 결로 얼굴을 골랐다
+      </p>
     </div>
   );
 }
@@ -1314,8 +1319,6 @@ function TeaserStep({
   cuts,
   tokens,
   productSlug,
-  partner,
-  gender,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -1326,9 +1329,6 @@ function TeaserStep({
   cuts: WebtoonCutData[];
   tokens: Record<string, string>;
   productSlug: string;
-  /** 인연 방향 답 — 운명의 상대 카드가 사진 풀(남/여)을 고르는 기준 */
-  partner: string;
-  gender: string;
 }) {
   if (loading) {
     return (
@@ -1576,7 +1576,8 @@ function TeaserStep({
             sayAt="top"
             say={<>네 짝 말이냐.<br />…봤다. 얼굴까지.</>}
           />
-          <DestinyCard partner={partner} gender={gender} birthDate={birthDate} />
+          {/* 옛 캐시(초안 복원)에는 partnerFace 가 없을 수 있다 — 없으면 카드만 조용히 건너뛴다 */}
+          {teaser.partnerFace && <DestinyCard face={teaser.partnerFace} />}
 
           {teaser.turningYear && (
             <>

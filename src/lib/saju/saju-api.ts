@@ -473,6 +473,15 @@ const NEAR_YEARS = 5;
 // 12운성 이름 → 활력 순위(레벨 필드가 없을 때 폴백)
 const FORTUNE_RANK: Record<string, number> = { 장생: 10, 목욕: 6, 관대: 9, 건록: 11, 제왕: 12, 쇠: 5, 병: 3, 사: 2, 묘: 1, 절: 1, 태: 4, 양: 7 };
 
+// 천간·지지 한 글자 → 오행. API 가 한글로 줄 때도 한자로 줄 때도 같은 답이 나오게 둘 다 깐다.
+// (한글 "신"은 천간 辛·지지 申 둘 다인데 오행이 똑같이 금이라 충돌하지 않는다.)
+const OH_OF: Record<string, string> = {
+  갑: "목", 을: "목", 병: "화", 정: "화", 무: "토", 기: "토", 경: "금", 신: "금", 임: "수", 계: "수",
+  甲: "목", 乙: "목", 丙: "화", 丁: "화", 戊: "토", 己: "토", 庚: "금", 辛: "금", 壬: "수", 癸: "수",
+  자: "수", 축: "토", 인: "목", 묘: "목", 진: "토", 사: "화", 오: "화", 미: "토", 유: "금", 술: "토", 해: "수",
+  子: "수", 丑: "토", 寅: "목", 卯: "목", 辰: "토", 巳: "화", 午: "화", 未: "토", 申: "금", 酉: "금", 戌: "토", 亥: "수",
+};
+
 // 인연 확정값의 "계산" 부분 — 문자열 조립과 분리해서 무료 티저도 같은 값을 쓰게 한다.
 // (티저에서 "2029년에 크게 바뀐다" 라고 해놓고 결제 후 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝난다.)
 export type InyeonRow = {
@@ -499,6 +508,12 @@ export type InyeonFacts = {
   heeOh: string;
   meetHint: string;
   ageDir: string;
+  /** 짝의 결(오행 한 글자: 목/화/토/금/수) — 얼굴 카드와 본문의 인상이 갈라지지 않게 잡는 키 */
+  spouseOh: string;
+  /** 정(正)=바르게 오래 가는 인연 / 편(偏)=강렬하게 끌리는 인연 */
+  spouseType: "정" | "편";
+  /** 상대 성별 — 얼굴 카드가 남/여 풀을 고르는 기준(손님 성별이 아니다) */
+  spouseSex: "male" | "female";
   top3: InyeonRow[];
   shaky: InyeonRow[];
   topYears: InyeonRow[];
@@ -528,6 +543,23 @@ export function computeInyeonFacts(
   const spouseCount = partner === "male" ? n(sum.gwanseong) : n(sum.jaeseong);
   const spouseMain = partner === "male" ? "정관" : "정재"; // 결혼으로 이어지는 인연
   const spouseSub = partner === "male" ? "편관" : "편재"; // 강렬한 인연
+
+  // 짝의 결(오행) — 결제 전 얼굴 카드와 결제 후 '네 짝의 인상' 단락이 같은 사람을 그리게 하는 키다.
+  // 배우자성이 붙은 글자에서 뽑되 정(正)을 먼저 보고, 배우자성이 아예 없으면 배우자궁인 일지로 본다
+  // (무관·무재는 궁으로 본다는 통설. 이 폴백이 없으면 배우자성 0인 명식이 통째로 빈칸이 된다.)
+  const sipCells = arr(rec(analysis.sipseong).sipseongs);
+  const spouseCell =
+    sipCells.find((p) => s(p.sipseong) === spouseMain) ?? sipCells.find((p) => s(p.sipseong) === spouseSub);
+  const spouseType: "정" | "편" = spouseCell && s(spouseCell.sipseong) === spouseSub ? "편" : "정";
+  // ganji 는 그 자리 한 글자일 수도, "경신"처럼 기둥 두 글자일 수도 있다.
+  // position("년간"/"월지"…)의 끝 글자로 어느 쪽을 집을지 가른다 — 두 글자인데 무조건 뒤를 집으면
+  // 천간 자리에서 지지 글자를 읽어 오행이 통째로 틀어진다.
+  const cellChar = (() => {
+    const g = s(spouseCell?.ganji).trim();
+    if (g.length <= 1) return g;
+    return s(spouseCell?.position).endsWith("간") ? g.slice(0, 1) : g.slice(-1);
+  })();
+  const spouseOh = OH_OF[cellChar] || OH_OF[ilji] || "";
 
   const dohwaArr = arr(rec(analysis.dohwa).dohwa);
   const hongyeomArr = arr(rec(analysis.hongyeom).hongyeom);
@@ -632,8 +664,7 @@ export function computeInyeonFacts(
   const topYears = [...(nearPool.length >= 2 ? nearPool : yearPool)].sort(byScore).slice(0, 2);
 
   // ⑦ 나이대 방향 — 반드시 한쪽으로만
-  const sipArr = arr(rec(analysis.sipseong).sipseongs);
-  const spousePos = sipArr.filter((p) => s(p.sipseong) === spouseMain || s(p.sipseong) === spouseSub).map((p) => s(p.position));
+  const spousePos = sipCells.filter((p) => s(p.sipseong) === spouseMain || s(p.sipseong) === spouseSub).map((p) => s(p.position));
   const inElder = spousePos.some((p) => p.startsWith("년") || p.startsWith("월"));
   const inYounger = spousePos.some((p) => p.startsWith("일") || p.startsWith("시"));
   let ageDir: string;
@@ -663,6 +694,9 @@ export function computeInyeonFacts(
     heeOh,
     meetHint,
     ageDir,
+    spouseOh,
+    spouseType,
+    spouseSex: partner,
     top3,
     shaky,
     topYears,
@@ -683,7 +717,10 @@ export function buildInyeonFactsBlock(
     `- 계산 근거: 짝을 뜻하는 자리 ${f.spouseCount}개 · 눈에 띄는 신호 ${f.dohwaCount ? "도화 있음" : "도화 없음"}${f.hongyeomCount ? "·홍염 있음" : ""} · 배우자 자리 활력 ${f.iljiLevel}/12${iljuHurtNote(f.iljiHurt)}`,
     `- 타고난 끌림 신호: ${[f.dohwaCount ? `도화 ${f.dohwaCount}개` : "", f.hongyeomCount ? `홍염 ${f.hongyeomCount}개` : "", f.hasCheoneul ? "천을귀인" : "", f.hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
     `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}(${f.iljiLevel}/12)` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
-    `- 만날 사람의 결: ${f.yongOh || "미상"}${f.heeOh ? ` · 도움이 되는 결 ${f.heeOh}` : ""}`,
+    // 짝의 결과 내 용신은 다른 값이다. 예전엔 용신 하나를 "만날 사람의 결"로 줬는데,
+    // 그러면 결제 전 얼굴 카드(배우자성 오행)와 본문이 다른 사람을 그리게 된다 — 갈라놓는다.
+    `- 짝의 결(오행): ${f.spouseOh || "미상"} · ${f.spouseType === "편" ? "편(강렬하게 끌리는 인연)" : "정(바르게 오래 가는 인연)"} — '네 짝의 인상'은 반드시 이 결로 그릴 것`,
+    `- 나에게 이로운 결: ${f.yongOh || "미상"}${f.heeOh ? ` · 도움이 되는 결 ${f.heeOh}` : ""}`,
     f.meetHint ? `- 만나는 길 힌트: ${f.meetHint}` : "",
     `- 나이대: ${f.ageDir} — 이 한쪽으로만 쓸 것`,
     `- 인연이 들어오는 달 TOP3: ${f.top3.map(fmt).join(", ")}`,

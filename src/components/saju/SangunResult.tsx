@@ -17,6 +17,7 @@ import { splitChapters } from "./ResultChapters";
 import { SANGUN_JANG } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import { ELEMENT_META, type ResultView } from "@/lib/saju/result-view";
+import { buildPartnerFace, type PartnerFace } from "@/lib/saju/partner-face";
 import type { WealthFacts, InyeonFacts } from "@/lib/saju/saju-api";
 
 const GOLD = "#e8c96a";
@@ -29,6 +30,78 @@ const RED = "#8f2b1e";
 function coverSrc(): string {
   const p = path.join(process.cwd(), "public", "products", "sangun", "cover.webp");
   return fs.existsSync(p) ? "/products/sangun/cover.webp" : "/products/sangun/altar.webp";
+}
+
+/** 짝의 얼굴 파일이 실제로 있는지 — 10장(오행5 × 성별2)이 아직 안 왔을 때
+ *  깨진 이미지 아이콘 대신 실루엣을 세운다. 표지와 같은 방식(서버에서 판정). */
+function faceSrc(src: string): string | null {
+  const p = path.join(process.cwd(), "public", src.replace(/^\//, ""));
+  return fs.existsSync(p) ? src : null;
+}
+
+/** 짝의 얼굴 — 결제 전 티저에서 흐리게 보여준 **그 장**을 여기서 연다.
+ *
+ *  티저와 결과지가 같은 계산(buildPartnerFace)으로 같은 파일을 집기 때문에 얼굴이 바뀌지 않는다.
+ *  여기서 하는 일은 두 가지뿐이다 — 블러를 걷고, 가려뒀던 네 줄을 실제 값으로 채운다.
+ *  결제의 회수 지점이라 인연 章에서 제일 먼저 세운다(손님의 마지막 기억이 이 카드다). */
+function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth: string; ageDir: string }) {
+  const src = faceSrc(face.src);
+  const rows: [string, string][] = [
+    ["만나는 시기", meetMonth || "아래 인연의 달력 참고"],
+    ["외모", face.look],
+    ["성격", face.nature],
+    ["만나는 자리", face.place],
+    ["나이대", ageDir],
+  ];
+  return (
+    <div
+      className="mt-6 px-5 pb-5 pt-5"
+      style={{
+        backgroundImage: "url(/products/sangun/ganji.webp)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundColor: "#0c0a08",
+        border: `1px solid ${RED}`,
+      }}
+    >
+      <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: GOLD_SOFT }}>
+        네 운명의 상대
+      </p>
+      <div className="relative mx-auto mt-3.5 h-[212px] w-[168px] overflow-hidden" style={{ background: "#151009", border: `1px solid ${GOLD_PALE}` }}>
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="h-full w-full select-none object-cover" draggable={false} />
+        ) : (
+          <div
+            className="h-full w-full"
+            style={{
+              background:
+                "radial-gradient(42% 26% at 50% 28%, rgba(210,190,160,0.5), rgba(21,16,9,0) 70%), radial-gradient(72% 42% at 50% 80%, rgba(210,190,160,0.35), rgba(21,16,9,0) 70%), #151009",
+              filter: "blur(6px)",
+            }}
+          />
+        )}
+      </div>
+      <div className="mt-4">
+        {rows.map(([label, val], i) => (
+          <div
+            key={label}
+            className="py-2"
+            style={{ borderTop: i === 0 ? "none" : `1px solid ${GOLD_PALE}` }}
+          >
+            <span className="font-myeongjo block text-[11px] tracking-[0.08em] text-bone-faint">{label}</span>
+            <span className="font-myeongjo mt-0.5 block text-[14px] leading-[1.7]" style={{ color: HANJI }}>
+              {val}
+            </span>
+          </div>
+        ))}
+      </div>
+      {/* 얼굴을 고른 근거 — 티저 카드에 적힌 글자와 **같은 글자**여야 한다(다르면 그 자리에서 들통난다) */}
+      <p className="font-myeongjo mt-3 text-center text-[10.5px] leading-[1.6] text-bone-faint">
+        네 배우자 자리는 <span style={{ color: GOLD_SOFT }}>{face.ohKo}</span>의 결 — 그 결로 얼굴을 골랐다
+      </p>
+    </div>
+  );
 }
 
 /** 챕터 간지 — 티저 4章 카드와 같은 옷(ganji.webp + 붉은 배너 + 태그). "약속대로 왔다"의 장치 */
@@ -268,6 +341,14 @@ export function SangunResult({
               <Ganji no={j.no} tag={j.tag} line={j.teaseResult} />
               {/* 달력 표는 해당 章 머리에 — 본문이 말하는 달과 같은 계산값이라 표가 예고, 본문이 해설이 된다 */}
               {j.no === "二" && wealth && <MonthTable title="돈의 달력" score={wealth.score} rows={wealthRows} />}
+              {/* 인연 章은 얼굴부터 — 티저에서 흐리게 본 카드가 여기서 열리는 게 결제의 회수다 */}
+              {j.no === "三" && inyeon && (
+                <PartnerCard
+                  face={buildPartnerFace(inyeon)}
+                  meetMonth={inyeon.top3[0]?.label ?? ""}
+                  ageDir={inyeon.ageDir}
+                />
+              )}
               {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
               {j.chapterIdx.map((idx, i) => chapterBlock(idx, i === 0))}
             </div>
