@@ -38,7 +38,7 @@ export function StickyBuyBar({ name, price }: { name: string; price: number }) {
           href="#start"
           onClick={go}
           className="shrink-0 rounded-md px-5 py-2.5 text-sm font-bold"
-          style={{ background: "linear-gradient(180deg,#ffffff,#f1eaff)", color: "var(--wine-deep)", fontFamily: "'Noto Serif KR', serif" }}
+          style={{ background: "linear-gradient(180deg,#ffffff,#f1eaff)", color: "var(--wine-deep)", fontFamily: "var(--font-serif-kr), serif" }}
         >
           내 사주 풀이 시작 →
         </a>

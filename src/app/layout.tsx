@@ -6,6 +6,7 @@ import { ChromeGate } from "@/components/layout/ChromeGate";
 import { siteConfig, businessInfo } from "@/config/site";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getCurrentUser } from "@/lib/auth";
+import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,7 +26,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isLoggedIn = isSupabaseConfigured() ? !!(await getCurrentUser()) : false;
 
   return (
-    <html lang="ko">
+    <html lang="ko" className={fontVariables}>
+      <head>
+        {/* Pretendard·Wanted Sans 는 Google Fonts 에 없어 next/font 로 못 옮긴다.
+            대신 globals.css 의 @import(요청이 3단으로 밀림)에서 꺼내 여기로 올렸다 —
+            HTML 파싱 즉시 요청이 나가고, preconnect 로 TLS 왕복까지 미리 끝낸다.
+            Pretendard 는 통짜(static)에서 dynamic-subset 으로 바꿨다: 한글을 유니코드
+            블록별로 쪼개 실제 쓰는 조각만 내려온다. */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css"
+        />
+      </head>
       <body suppressHydrationWarning>
         <Analytics />
         <ChromeGate header={<SiteHeader isLoggedIn={isLoggedIn} />} footer={<SiteFooter />}>

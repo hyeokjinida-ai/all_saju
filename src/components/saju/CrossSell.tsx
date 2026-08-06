@@ -99,8 +99,8 @@ export function CrossSell({
   return (
     <section style={{ marginTop: 26 }}>
       <div style={{ textAlign: "center", marginBottom: 14 }}>
-        <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 26, color: c.hanja, lineHeight: 1 }}>緣</div>
-        <h2 style={{ marginTop: 8, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19, color: c.title }}>
+        <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 26, color: c.hanja, lineHeight: 1 }}>緣</div>
+        <h2 style={{ marginTop: 8, fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 19, color: c.title }}>
           같은 사주로 이어서 보기
         </h2>
         <p style={{ marginTop: 7, fontSize: 12.5, lineHeight: 1.6, color: c.sub }}>
@@ -121,7 +121,7 @@ export function CrossSell({
         <span style={{ display: "inline-block", marginBottom: 12, padding: "4px 11px", borderRadius: 999, background: c.badgeBg, color: c.badgeText, fontSize: 11, fontWeight: 800 }}>
           추천 · 끝판왕 풀이
         </span>
-        <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{premium.name}</div>
+        <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{premium.name}</div>
         <p style={{ marginTop: 9, fontSize: 13, lineHeight: 1.7, color: c.body }}>
           인생 60년의 큰 흐름과 재물·직업·관계·건강운을 한 번에 통합 분석합니다. 지금 보신 풀이의 큰 그림까지 이어서 봐요.
         </p>

@@ -50,7 +50,7 @@ export function SajuLabLanding() {
 
         {/* app bar — 명운록 워드마크 + SAJU LAB */}
         <div className="relative z-30 flex flex-none flex-col items-center pb-1 pt-6">
-          <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 20, letterSpacing: ".1em", color: "#f3edff" }}>
+          <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 20, letterSpacing: ".1em", color: "#f3edff" }}>
             명운록
           </div>
           <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".24em", textIndent: ".24em", color: "#c9a8ff", marginTop: 4 }}>
@@ -64,7 +64,7 @@ export function SajuLabLanding() {
             <h1
               style={{
                 margin: 0,
-                fontFamily: "'Wanted Sans','Pretendard',sans-serif",
+                fontFamily: "'Wanted Sans Variable','Wanted Sans','Pretendard Variable','Pretendard',sans-serif",
                 fontWeight: 900,
                 fontSize: 56,
                 lineHeight: 0.98,
@@ -122,7 +122,7 @@ export function SajuLabLanding() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%,-50%)",
-              fontFamily: "'Wanted Sans',sans-serif",
+              fontFamily: "'Wanted Sans Variable','Wanted Sans',sans-serif",
               fontWeight: 900,
               fontStyle: "italic",
               fontSize: 108,

@@ -51,7 +51,7 @@ export function Naegyeongban({ size = 250 }: { size?: number }) {
           inset: 10,
           borderRadius: "50%",
           animation: "spinwheel 90s linear infinite",
-          fontFamily: "'Ma Shan Zheng', cursive",
+          fontFamily: "var(--font-hanja), cursive",
           fontSize: 15,
           color: "#dcc8ff",
           fontWeight: 700,

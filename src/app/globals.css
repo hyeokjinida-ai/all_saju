@@ -1,11 +1,11 @@
 /* 명운록 (命運錄) — 밤하늘 먹빛 + 금 + 자수정 무드 (붓글씨·명조·Pretendard)
    디자인 핸드오프: design_handoff_saju_funnel/README.md */
 
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-@import url('https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@latest/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Ma+Shan+Zheng&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-/* 웹툰 컷 대사용 글씨체 — 말풍선마다 골라 쓴다(WebtoonCut의 WEBTOON_FONTS) */
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gaegu:wght@300;400;700&family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Kirang+Haerang&family=East+Sea+Dokdo&family=Poor+Story&family=Hi+Melody&family=Gamja+Flower&family=Gugi&family=Yeon+Sung&display=swap');
+/* 글씨체는 여기서 부르지 않는다 (2026-08-06).
+   - Google Fonts 계열 6종 → src/lib/fonts.ts 의 next/font (빌드 때 받아 self-host + preload)
+   - Pretendard·Wanted Sans → app/layout.tsx 의 <head> <link> (@import 3단 워터폴 제거)
+   - 웹툰 말풍선 12종·송명조 → WebtoonCut 이 쓸 때만 (전 방문자에게 미리 안기지 않는다)
+   아래 font-family 들은 그 변수(--font-*)를 가리키기만 한다. */
 
 @tailwind base;
 @tailwind components;
@@ -132,7 +132,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
     text-wrap: pretty;
     /* 자수정 씬 (전역 배경) */
     background-color: #160a36;
@@ -143,13 +143,13 @@
     min-height: 100vh;
   }
   code, pre, kbd, samp {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
   /* 제목 = 명조 (Gowun Batang). 감성 헤드라인은 .brush 로 별도 지정. */
   h1, h2, h3 {
     @apply tracking-tight;
     font-weight: 700;
-    font-family: 'Gowun Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif;
+    font-family: var(--font-myeongjo), 'Gowun Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif;
   }
   /* 입력창은 다크 톤 — 콘트라스트 위해 따로 처리 */
   input, textarea, select {
@@ -164,20 +164,21 @@
 
 /* ── 폰트·글로우 유틸리티 ──────────────────────────────────── */
 @layer utilities {
-  .font-sans-kr    { font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
-  .font-serif-kr   { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
-  .font-myeongjo   { font-family: 'Gowun Batang', 'Nanum Myeongjo', serif; }
-  .font-batang     { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
-  .font-brush      { font-family: 'Nanum Brush Script', 'Gowun Batang', cursive; }
-  .font-mono-kr    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .font-sans-kr    { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
+  .font-serif-kr   { font-family: var(--font-serif-kr), 'Noto Serif KR', serif; }
+  .font-myeongjo   { font-family: var(--font-myeongjo), 'Gowun Batang', 'Nanum Myeongjo', serif; }
+  .font-batang     { font-family: var(--font-myeongjo), 'Gowun Batang', 'Noto Serif KR', serif; }
+  .font-brush      { font-family: var(--font-brush), 'Nanum Brush Script', 'Gowun Batang', cursive; }
+  .font-mono-kr    { font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace; }
 
   /* 핸드오프 프로토타입 호환 별칭 (sans / serif / brush) */
-  .sans     { font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
-  .serif    { font-family: 'Gowun Batang', 'Noto Serif KR', serif; }
-  .myeong   { font-family: 'Song Myung', 'Gowun Batang', serif; }
-  .myeongjo { font-family: 'Gowun Batang', 'Nanum Myeongjo', serif; }
-  .brush    { font-family: 'Nanum Brush Script', 'Gowun Batang', cursive; }
-  .mono     { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .sans     { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif; }
+  .serif    { font-family: var(--font-myeongjo), 'Gowun Batang', 'Noto Serif KR', serif; }
+  /* .myeong 은 송명조를 쓰던 자리다 — 송명조는 전역 로딩에서 뺐으므로 명조로 내려앉는다 */
+  .myeong   { font-family: var(--font-myeongjo), 'Gowun Batang', serif; }
+  .myeongjo { font-family: var(--font-myeongjo), 'Gowun Batang', 'Nanum Myeongjo', serif; }
+  .brush    { font-family: var(--font-brush), 'Nanum Brush Script', 'Gowun Batang', cursive; }
+  .mono     { font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace; }
 
   .glow-bone   { text-shadow: 0 0 18px rgba(241,238,249,0.35), 0 0 2px rgba(241,238,249,0.6); }
   .glow-gold   { text-shadow: 0 0 24px rgba(225,193,123,0.45), 0 0 2px rgba(225,193,123,0.8); }
@@ -292,7 +293,7 @@
     justify-content: center;
     background: var(--seal);
     color: var(--paper-warm);
-    font-family: 'Ma Shan Zheng', 'Nanum Myeongjo', serif;
+    font-family: var(--font-hanja), 'Ma Shan Zheng', 'Nanum Myeongjo', serif;
     letter-spacing: 0.04em;
     box-shadow:
       inset 0 0 0 2px var(--paper-warm),
@@ -308,7 +309,7 @@
     color: var(--kakao-text);
     border: none;
     padding: 16px 22px;
-    font-family: 'Pretendard', -apple-system, sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
     font-weight: 700;
     font-size: 15px;
     letter-spacing: 0.02em;
@@ -327,7 +328,7 @@
     color: var(--gold);
     border: 1px solid var(--gold-soft);
     padding: 14px 20px;
-    font-family: 'Pretendard', sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', sans-serif;
     letter-spacing: 0.06em;
     cursor: pointer;
   }
@@ -410,7 +411,7 @@
     background: var(--wine-2); border: 1px solid var(--cardline);
     color: var(--bone); outline: none;
     border-radius: 11px;
-    font-family: 'Pretendard', -apple-system, sans-serif; font-size: 16px; letter-spacing: 0.01em;
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif; font-size: 16px; letter-spacing: 0.01em;
     transition: border-color 0.2s;
   }
   .ap-input:focus { border-color: var(--gold); }
@@ -490,12 +491,12 @@
 @layer components {
   .prose-saju h2 {
     @apply mt-10 mb-3 text-2xl font-semibold;
-    font-family: 'Gowun Batang', 'Noto Serif KR', serif;
+    font-family: var(--font-myeongjo), 'Gowun Batang', 'Noto Serif KR', serif;
     color: var(--gold-bright);
   }
   .prose-saju h3 {
     @apply mt-6 mb-2 text-lg font-semibold;
-    font-family: 'Gowun Batang', 'Noto Serif KR', serif;
+    font-family: var(--font-myeongjo), 'Gowun Batang', 'Noto Serif KR', serif;
     color: var(--bone);
   }
   .prose-saju p {

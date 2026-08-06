@@ -17,13 +17,19 @@
 
 import { cn } from "@/lib/utils";
 
-/** 말풍선 글씨체 — 웹폰트는 globals.css에서 한 번에 불러온다.
- *  라벨은 편집기 드롭다운에 그대로 뜨는 이름이다. */
+/** 말풍선 글씨체.
+ *  라벨은 편집기 드롭다운에 그대로 뜨는 이름이다.
+ *
+ *  2026-08-06: 이 12종을 globals.css 에서 전 방문자에게 미리 안기던 것을 끊었다.
+ *  웹툰 컷은 어드민이 만들어 켰을 때만 나오는데(대개 티저 맨 위 몇 컷), 그 때문에
+ *  모든 방문자가 패밀리 12개를 기다릴 이유가 없다. 지금은 컷이 실제로 쓰는 글씨체만
+ *  아래 WEBTOON_FONT_HREF 로 그 자리에서 부른다.
+ *  sans·myeongjo·brush 는 전역(next/font)에 이미 있으므로 추가 요청이 없다. */
 export const WEBTOON_FONTS = {
-  sans:      { label: "고딕 (기본 대사)",   css: "Pretendard, 'Apple SD Gothic Neo', sans-serif" },
-  myeongjo:  { label: "명조 (격식)",        css: "'Gowun Batang', serif" },
+  sans:      { label: "고딕 (기본 대사)",   css: "'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', sans-serif" },
+  myeongjo:  { label: "명조 (격식)",        css: "var(--font-myeongjo), 'Gowun Batang', serif" },
   songmyung: { label: "송명조 (묵직)",      css: "'Song Myung', serif" },
-  brush:     { label: "붓글씨",             css: "'Nanum Brush Script', cursive" },
+  brush:     { label: "붓글씨",             css: "var(--font-brush), 'Nanum Brush Script', cursive" },
   dokdo:     { label: "거친 붓 (공포)",     css: "'East Sea Dokdo', cursive" },
   pen:       { label: "펜 손글씨 (속마음)", css: "'Nanum Pen Script', cursive" },
   gaegu:     { label: "개구 (가벼운)",      css: "Gaegu, cursive" },
@@ -39,6 +45,50 @@ export const WEBTOON_FONTS = {
 } as const;
 
 export type WebtoonFont = keyof typeof WEBTOON_FONTS;
+
+/** 전역에 없는 글씨체만 — 쓰는 컷이 화면에 있을 때 그 자리에서 부른다.
+ *  sans·myeongjo·brush 가 없는 건 이미 next/font 로 올라와 있기 때문이다. */
+const WEBTOON_FONT_HREF: Partial<Record<WebtoonFont, string>> = {
+  songmyung: "https://fonts.googleapis.com/css2?family=Song+Myung&display=swap",
+  dokdo:     "https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap",
+  pen:       "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap",
+  gaegu:     "https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap",
+  gamja:     "https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap",
+  melody:    "https://fonts.googleapis.com/css2?family=Hi+Melody&display=swap",
+  poor:      "https://fonts.googleapis.com/css2?family=Poor+Story&display=swap",
+  jua:       "https://fonts.googleapis.com/css2?family=Jua&display=swap",
+  dohyeon:   "https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap",
+  blackhan:  "https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap",
+  kirang:    "https://fonts.googleapis.com/css2?family=Kirang+Haerang&display=swap",
+  gugi:      "https://fonts.googleapis.com/css2?family=Gugi&display=swap",
+  yeonsung:  "https://fonts.googleapis.com/css2?family=Yeon+Sung&display=swap",
+};
+
+/** 말풍선이 쓰는 글씨체만 골라 <link> 를 낸다.
+ *  React 19 가 같은 href 를 알아서 하나로 합치고 <head> 로 올려 준다 —
+ *  컷이 여러 개라도 요청은 글씨체 종류 수만큼만 나간다. */
+export function WebtoonFontLinks({ fonts }: { fonts: (WebtoonFont | undefined)[] }) {
+  const hrefs = [...new Set(fonts.map((f) => (f ? WEBTOON_FONT_HREF[f] : undefined)).filter(Boolean))];
+  if (hrefs.length === 0) return null;
+  return (
+    <>
+      {hrefs.map((href) => (
+        <link key={href} rel="stylesheet" href={href as string} precedence="default" />
+      ))}
+    </>
+  );
+}
+
+/** 편집기 전용 — 드롭다운 미리보기 때문에 전부 필요하다. 어드민에서만 쓴다. */
+export function WebtoonAllFontLinks() {
+  return (
+    <>
+      {[...new Set(Object.values(WEBTOON_FONT_HREF))].map((href) => (
+        <link key={href} rel="stylesheet" href={href} precedence="default" />
+      ))}
+    </>
+  );
+}
 
 export type BubbleShape = "none" | "rect" | "round" | "ellipse" | "thought";
 export type BubbleTail =
@@ -214,6 +264,8 @@ export function WebtoonCut({
       // cqw의 기준이 되는 컨테이너. 그림이 w-full이므로 컨테이너 폭 = 그림 표시 폭이다.
       style={{ containerType: "inline-size", aspectRatio: ratio ? String(ratio) : undefined }}
     >
+      {/* 이 컷의 말풍선이 쓰는 글씨체만 부른다 — 전역 로딩에서 뺀 12종의 대체 경로 */}
+      <WebtoonFontLinks fonts={bubbles.map((b) => b.font)} />
       {single ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={alt} loading={priority ? "eager" : "lazy"} className={imgClass} draggable={false} />

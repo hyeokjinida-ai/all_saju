@@ -416,7 +416,7 @@ export default async function ProductDetailPage({
         <a
           href="#start"
           className="inline-flex items-center gap-2 rounded-md px-7 py-3.5 font-bold text-sm tracking-[0.06em]"
-          style={{ background: "linear-gradient(180deg,#ffffff,#f1eaff)", color: "#241a08", fontFamily: "'Gowun Batang', serif" }}
+          style={{ background: "linear-gradient(180deg,#ffffff,#f1eaff)", color: "#241a08", fontFamily: "var(--font-myeongjo), serif" }}
         >
           나도 지금 받아보기 <span className="font-brush">命</span>
         </a>

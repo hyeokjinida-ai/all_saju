@@ -68,9 +68,9 @@ export function ProgressHeader({ step, total = 6, onBack }: { step: number; tota
 export function QuestionHead({ hanja, title, sub }: { hanja: string; title: ReactNode; sub: string }) {
   return (
     <>
-      <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 44, color: "#c9a8ff", lineHeight: 1 }}>{hanja}</div>
+      <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 44, color: "#c9a8ff", lineHeight: 1 }}>{hanja}</div>
       <div
-        style={{ marginTop: 13, fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24, lineHeight: 1.3 }}
+        style={{ marginTop: 13, fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24, lineHeight: 1.3 }}
       >
         {title}
       </div>

@@ -822,7 +822,7 @@ export function SajuWizard({
               disabled={!canNext() || (step === CONFIRM_STEP && teaserLoading)}
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.25em] disabled:cursor-default"
               style={{
-                fontFamily: "'Noto Serif KR', serif",
+                fontFamily: "var(--font-serif-kr), serif",
                 background: canNext()
                   ? imm
                     ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
@@ -861,7 +861,7 @@ export function SajuWizard({
             disabled={submitting}
             className="w-full min-h-[58px] border-none font-bold text-base tracking-[0.16em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
-              fontFamily: "'Noto Serif KR', serif",
+              fontFamily: "var(--font-serif-kr), serif",
               background: imm
                 ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
                 : "linear-gradient(180deg,#ffffff,#f1eaff)",
@@ -894,7 +894,7 @@ export function SajuWizard({
               disabled={submitting || !guestEmailValid}
               className="w-full min-h-[56px] border-none font-bold text-base tracking-[0.1em] disabled:opacity-45"
               style={{
-                fontFamily: "'Noto Serif KR', serif",
+                fontFamily: "var(--font-serif-kr), serif",
                 background: imm
                   ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
                   : "linear-gradient(180deg,#ffffff,#f1eaff)",

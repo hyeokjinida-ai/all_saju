@@ -116,7 +116,7 @@ export function AnalyzingScreen({
               命
             </span>
           )}
-          <h1 style={{ marginTop: 16, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 24, lineHeight: 1.35 }}>
+          <h1 style={{ marginTop: 16, fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 24, lineHeight: 1.35 }}>
             {sangun ? (
               "네 장부를 쓰는 중이다"
             ) : (

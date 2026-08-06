@@ -111,7 +111,7 @@ function PillarCell({ char, read, element, day }: { char: string; read: string; 
         gap: 1,
       }}
     >
-      <span style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 24, lineHeight: 1, color: e.text }}>{char}</span>
+      <span style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 24, lineHeight: 1, color: e.text }}>{char}</span>
       {read && (
         <span style={{ fontSize: 9.5, lineHeight: 1.1, color: e.text, opacity: 0.85 }}>
           {read} · {e.ko}
@@ -202,7 +202,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
 
       {/* 헤더 — 랜딩과 동일하게 중앙 워드마크, 공유는 우측 상단 */}
       <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", padding: `16px ${PAD}px 0` }}>
-        <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 18, letterSpacing: ".1em", color: "#f3edff" }}>{view.brand.title}</div>
+        <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 18, letterSpacing: ".1em", color: "#f3edff" }}>{view.brand.title}</div>
         <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".22em", textIndent: ".22em", color: "#c9a8ff", marginTop: 3 }}>{view.brand.sub}</div>
         {!locked && <span style={{ position: "absolute", right: PAD, top: 16, fontSize: 16, color: "#b8a4e0" }}>⤴</span>}
       </div>
@@ -223,7 +223,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={il.orb} alt={`${il.ko} 오브`} width={148} height={148} style={{ width: 148, height: 148, display: "block", margin: "0 auto", filter: "drop-shadow(0 14px 30px rgba(20,10,40,.5))" }} />
         <div style={{ marginTop: 6, fontSize: 12.5, color: "#cbb8f0" }}>회원님이 타고난 기운은</div>
-        <div style={{ marginTop: 6, fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 25 }}>{view.ilgan.title}</div>
+        <div style={{ marginTop: 6, fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 25 }}>{view.ilgan.title}</div>
         <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 13px", borderRadius: 999, background: `rgba(${il.rgb},.16)`, border: `1px solid rgba(${il.rgb},.35)`, fontSize: 12, fontWeight: 700, color: il.text }}>
           {view.ilgan.type}
         </div>
@@ -298,7 +298,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
         <>
           <Divider />
           <div id="sec-areas" style={{ ...anchor, padding: `8px ${PAD}px 0` }}>
-            <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19 }}>영역별 풀이</div>
+            <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 19 }}>영역별 풀이</div>
           </div>
           {view.categories.map((c, i) => {
             const ic = CAT_ICON[c.key];
@@ -349,7 +349,7 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
         <>
           <Divider />
           <div id="sec-daeun" style={{ ...anchor, padding: `6px ${PAD}px 0` }}>
-            <div style={{ fontFamily: "'Nanum Myeongjo',serif", fontWeight: 800, fontSize: 19 }}>인생의 큰 흐름</div>
+            <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 19 }}>인생의 큰 흐름</div>
             <div style={{ marginTop: 6, fontSize: 12, color: "#9a8cd0" }}>10년마다 바뀌는 인생의 큰 계절 · 대운(大運)</div>
             <DaeunChart points={view.daeun.points} />
           </div>

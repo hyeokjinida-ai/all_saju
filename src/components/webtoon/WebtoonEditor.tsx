@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   WebtoonCut,
+  WebtoonAllFontLinks,
   WEBTOON_FONTS,
   type WebtoonBubble,
   type WebtoonFont,
@@ -278,6 +279,9 @@ export function WebtoonEditor({
 
   return (
     <div className="flex flex-col gap-5 lg:flex-row">
+      {/* 편집기는 드롭다운에서 글씨체를 눈으로 고르는 곳이라 12종이 전부 필요하다.
+          손님 화면에서는 컷이 실제로 쓰는 것만 내려간다(WebtoonCut). */}
+      <WebtoonAllFontLinks />
       {/* ── 페이지 미리보기 (컷을 세로로 이어붙인 것) ── */}
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-3 text-xs">

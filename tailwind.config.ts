@@ -119,9 +119,13 @@ const config: Config = {
         md: "calc(var(--radius) - 3px)",
         sm: "calc(var(--radius) - 5px)",
       },
+      // next/font 는 패밀리명을 해시해서 넣는다(예: __Gowun_Batang_a1b2c3) —
+      // "Gowun Batang" 이라고 적으면 이제 아무것도 안 걸린다. 반드시 변수를 먼저 세운다.
+      // 뒤에 남긴 원래 이름들은 변수가 비었을 때(폰트 로딩 실패)의 그물이다.
       fontFamily: {
-        // 본문·UI = Pretendard (또렷한 가독성)
+        // 본문·UI = Pretendard (또렷한 가독성) — CDN <link> 라 이름 그대로 유효
         sans: [
+          "Pretendard Variable",
           "Pretendard",
           "-apple-system",
           "BlinkMacSystemFont",
@@ -133,29 +137,34 @@ const config: Config = {
         ],
         // 제목·전통 = 명조 (Gowun Batang)
         serif: [
+          "var(--font-myeongjo)",
           "Gowun Batang",
           "Noto Serif KR",
           "Nanum Myeongjo",
           "serif",
         ],
         myeongjo: [
+          "var(--font-myeongjo)",
           "Gowun Batang",
           "Nanum Myeongjo",
           "Noto Serif KR",
           "serif",
         ],
         batang: [
+          "var(--font-myeongjo)",
           "Gowun Batang",
           "Noto Serif KR",
           "serif",
         ],
         // 감성 헤드라인·워드마크 = 붓글씨
         brush: [
+          "var(--font-brush)",
           "Nanum Brush Script",
           "Gowun Batang",
           "cursive",
         ],
         mono: [
+          "var(--font-mono)",
           "JetBrains Mono",
           "ui-monospace",
           "SFMono-Regular",

@@ -98,11 +98,11 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
     >
       <div className="flex h-full flex-col items-center justify-center text-center" style={{ minHeight: 420 }}>
         <div
-          style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(160deg,rgba(160,120,255,.3),rgba(80,40,160,.4))", border: "1px solid rgba(190,150,255,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Ma Shan Zheng', cursive", fontSize: 46, color: "#e6dbff", boxShadow: "0 10px 30px rgba(20,8,60,.5)" }}
+          style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(160deg,rgba(160,120,255,.3),rgba(80,40,160,.4))", border: "1px solid rgba(190,150,255,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-hanja), cursive", fontSize: 46, color: "#e6dbff", boxShadow: "0 10px 30px rgba(20,8,60,.5)" }}
         >
           命
         </div>
-        <div style={{ marginTop: 24, fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>
+        <div style={{ marginTop: 24, fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24 }}>
           로그인하고 전체 풀이 받기
         </div>
         <p style={{ margin: "12px 0 0", fontSize: 14, lineHeight: 1.6, color: "#cdb8f5" }}>
@@ -226,7 +226,7 @@ export function BirthScreen({ ctx }: { ctx: FunnelCtx }) {
           value={fmtBirth(raw)}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0000.00.00"
-          style={{ ...frostedInputStyle, fontSize: 19, letterSpacing: "0.08em", textAlign: "center", fontFamily: "'JetBrains Mono', monospace" }}
+          style={{ ...frostedInputStyle, fontSize: 19, letterSpacing: "0.08em", textAlign: "center", fontFamily: "var(--font-mono), monospace" }}
         />
         {raw.length > 0 && raw.length < 8 && (
           <div style={{ marginTop: 8, fontSize: 11.5, color: "#9a8cd0" }}>여덟 자리(연4·월2·일2)를 모두 입력해 주세요</div>
@@ -318,7 +318,7 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
       header={<ProgressHeader step={ctx.step} onBack={ctx.prev} />}
       footer={<PrimaryCTA label="무료 기본 분석 받기" onClick={ctx.next} />}
     >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>이대로 분석할게요</div>
+      <div style={{ fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24 }}>이대로 분석할게요</div>
       <div className="mt-5 flex flex-col">
         {rows.map((r) => (
           <div key={r.label} className="flex justify-between" style={{ padding: "13px 0", borderBottom: "1px solid rgba(180,140,255,.18)" }}>
@@ -421,7 +421,7 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
             <ResultScroll view={view} embedded locked />
           ) : (
             <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: 360 }}>
-              <div style={{ fontFamily: "'Ma Shan Zheng', cursive", fontSize: 42, color: "#c9a8ff" }}>命</div>
+              <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 42, color: "#c9a8ff" }}>命</div>
               <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#cbb8f0" }}>
                 사주를 불러오지 못했어요. 그래도 전체 풀이는 받을 수 있어요.
               </div>
@@ -592,7 +592,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
         </>
       }
     >
-      <div style={{ fontFamily: "'Nanum Myeongjo', serif", fontWeight: 800, fontSize: 24 }}>받아볼 풀이를 골라주세요</div>
+      <div style={{ fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24 }}>받아볼 풀이를 골라주세요</div>
 
       {/* 회원 할인 안내 배지 (실제 할인만) */}
       {!ctx.isAuthed && (

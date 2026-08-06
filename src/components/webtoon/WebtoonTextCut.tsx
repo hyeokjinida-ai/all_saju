@@ -4,7 +4,7 @@
 // 웹툰에서 장면 전환·독백·시간 경과를 알리는 문장은 칸 자체가 글이어야 한다.
 // 글자 크기는 그림 컷과 같은 컨테이너 쿼리 단위(cqw)를 써서 폭이 바뀌어도 비율이 안 깨진다.
 
-import { WEBTOON_FONTS, type WebtoonFont } from "./WebtoonCut";
+import { WEBTOON_FONTS, WebtoonFontLinks, type WebtoonFont } from "./WebtoonCut";
 
 export type WebtoonTextStyle = {
   /** 본문. 줄바꿈은 \n 으로 직접 통제한다 */
@@ -38,6 +38,8 @@ export function WebtoonTextCut({ text, bg, color, size, align, font, padY, lineH
   return (
     // cqw 의 기준이 되는 컨테이너 — 그림 컷과 폭이 같으므로 글자 크기가 같은 잣대로 맞는다
     <div style={{ containerType: "inline-size", background: bg ?? d.bg }}>
+      {/* 글씨체 12종은 전역에서 뺐다 — 이 컷이 쓰는 것만 부른다(WebtoonCut 과 같은 규칙) */}
+      <WebtoonFontLinks fonts={[font ?? d.font]} />
       <p
         style={{
           margin: 0,

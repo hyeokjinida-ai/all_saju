@@ -140,7 +140,7 @@ function CheckoutSuccessInner() {
             href={`/results/${resultId}`}
             className="inline-flex items-center justify-center gap-2 w-full max-w-xs mx-auto py-4 font-bold text-base tracking-[0.1em]"
             style={{
-              fontFamily: "'Noto Serif KR', serif",
+              fontFamily: "var(--font-serif-kr), serif",
               background: "linear-gradient(180deg,#ffffff,#f1eaff)",
               color: "var(--wine-deep)",
               boxShadow: "0 0 24px rgba(150,90,255,0.3)",
