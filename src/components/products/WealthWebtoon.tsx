@@ -60,7 +60,7 @@ function Bubble({ who, children }: { who: string; children: React.ReactNode }) {
       >
         {who}
       </span>
-      <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">{children}</p>
+      <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
     </div>
   );
 }
@@ -72,10 +72,10 @@ function TeaserLock() {
       className="flex items-baseline justify-between gap-3 rounded-[4px] px-4 py-3"
       style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(201,162,39,0.22)" }}
     >
-      <span className="shrink-0 text-[14px]" style={{ color: "#9aa3b8" }}>
+      <span className="shrink-0 text-[15px]" style={{ color: "#9aa3b8" }}>
         {label}
       </span>
-      <span className="font-myeongjo text-[16px] font-bold tracking-[0.08em]" style={{ color: "#e8c96a" }}>
+      <span className="font-myeongjo text-[17px] font-bold tracking-[0.06em]" style={{ color: "#e8c96a" }}>
         {value}
       </span>
     </div>
@@ -91,7 +91,7 @@ function TeaserLock() {
       }}
     >
       <div className="mb-5 text-center">
-        <p className="font-brush text-lg tracking-[0.2em]" style={{ color: "#e8c96a" }}>
+        <p className="font-brush text-lg tracking-[0.22em]" style={{ color: "#e8c96a" }}>
           財
         </p>
         <p className="mt-1 font-myeongjo text-[17px] font-bold" style={{ color: "#efe6d2" }}>
@@ -109,7 +109,7 @@ function TeaserLock() {
       </div>
       <div className="mt-4 text-center">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-myeongjo text-[12px]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-myeongjo text-[13px]"
           style={{ border: "1px solid rgba(201,162,39,0.4)", color: "#e8c96a", background: "rgba(0,0,0,0.3)" }}
         >
           ⌥ 결제 후 전체가 선명하게 열립니다
@@ -140,7 +140,7 @@ function WealthToc() {
       </p>
       <ul className="space-y-2.5">
         {rows.map(([t, d]) => (
-          <li key={t} className="flex items-baseline justify-between gap-3 text-[13.5px]">
+          <li key={t} className="flex items-baseline justify-between gap-3 text-[13px]">
             <span style={{ color: "#cfd0d8" }}>{t}</span>
             <span className="text-right" style={{ color: "#7d8496" }}>
               {d}
@@ -179,8 +179,8 @@ const WFAQ: [string, string][] = [
 // 컷 사이 내레이션(스토리 연결부) — 템플릿 섹션 대신 이야기 톤 한 줄
 function Narration({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-8 py-9 text-center">
-      <p className="font-myeongjo text-[16px] leading-[1.9]" style={{ color: "#cfd0d8" }}>
+    <div className="px-8 py-8 text-center">
+      <p className="font-myeongjo text-[17px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
         {children}
       </p>
     </div>
@@ -198,11 +198,11 @@ export function WealthStory({
     <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
         {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
-        <header className="px-6 pb-10 pt-10 text-center">
-          <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: "#c9a227" }}>
+        <header className="px-6 pb-10 pt-8 text-center">
+          <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: "#c9a227" }}>
             財 · 명운록
           </a>
-          <h1 className="mt-3 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
+          <h1 className="mt-3 font-myeongjo text-[26px] font-bold leading-[1.75]" style={{ color: "#efe6d2" }}>
             재물운이 좋다는데
             <br />
             <span
@@ -216,7 +216,7 @@ export function WealthStory({
               왜 통장은 그대로일까요
             </span>
           </h1>
-          <p className="mt-3 text-[14.5px]" style={{ color: "#a89f8d" }}>
+          <p className="mt-3 text-[15px]" style={{ color: "#a89f8d" }}>
             &lsquo;좋다&rsquo;는 말은 그만 — 들어오는 달을 콕 집어드립니다
           </p>
           <div className="mx-auto mt-8 h-px w-[46px]" style={{ background: "#c9a227", opacity: 0.6 }} />
@@ -255,17 +255,17 @@ export function WealthStory({
         </Cut>
 
         {/* ▓ 잠금 티저 */}
-        <div className="px-5 pb-2 pt-10">
+        <div className="px-5 py-4">
           <TeaserLock />
         </div>
 
         {/* 받는 것 — 7챕터 목차 */}
-        <div className="px-5 pb-2 pt-6">
+        <div className="px-5 py-4">
           <WealthToc />
         </div>
 
         {/* 가격 앵커 한 줄 */}
-        <p className="px-8 pb-4 pt-4 text-center text-[13.5px] leading-relaxed" style={{ color: "#7d8496" }}>
+        <p className="px-8 pb-4 pt-4 text-center text-[15px] leading-[1.75]" style={{ color: "#7d8496" }}>
           철학관에서 재물운을 보면 한 번에 5만~30만원 —
           <br />
           같은 사주 계산을 <b style={{ color: "#e8c96a" }}>{priceLabel}</b>에 받아보세요
@@ -288,7 +288,7 @@ export function WealthStory({
               >
                 금두꺼비 선생
               </span>
-              <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">
+              <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">
                 당신의{" "}
                 <em className="not-italic" style={POINT}>
                   &lsquo;그 달&rsquo;
@@ -300,7 +300,7 @@ export function WealthStory({
             </div>
             <a
               href="#start"
-              className="block rounded-[6px] py-4 text-center font-bold tracking-[0.04em]"
+              className="block rounded-[6px] py-4 text-center font-bold tracking-[0.06em]"
               style={{
                 background: "linear-gradient(135deg,#e8c96a,#c9a227 60%,#a9861f)",
                 boxShadow: "0 8px 26px rgba(201,162,39,0.35), inset 0 1px 0 #ffe9a8",
@@ -309,18 +309,18 @@ export function WealthStory({
               }}
             >
               내 돈 들어오는 달 확인하기
-              <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">
+              <span className="mt-0.5 block text-[13px] font-normal opacity-80">
                 {priceLabel} · 생년월일만 입력하면 끝
               </span>
             </a>
-            <p className="mt-2 text-center text-[12.5px]" style={{ color: "#9aa3b8" }}>
+            <p className="mt-2 text-center text-[13px]" style={{ color: "#9aa3b8" }}>
               결과지가 제대로 만들어지지 않으면 전액 환불해 드립니다.
             </p>
           </div>
         </Cut>
 
         {/* 입력 위저드(#start)·안심·신뢰 — 페이지에서 주입 */}
-        <div className="px-5 pb-6 pt-12">{children}</div>
+        <div className="px-5 py-4">{children}</div>
 
         {/* 상품 전용 FAQ */}
         <section className="px-5 pb-16 pt-4">
@@ -333,7 +333,7 @@ export function WealthStory({
                 <p className="mb-1.5 font-myeongjo text-[15px] font-semibold" style={{ color: "#efe6d2" }}>
                   Q. {q}
                 </p>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: "#cfd0d8" }}>
+                <p className="text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
                   {a}
                 </p>
               </li>

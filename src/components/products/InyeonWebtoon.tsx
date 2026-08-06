@@ -76,7 +76,7 @@ function Bubble({ who, children }: { who: string; children: React.ReactNode }) {
       >
         {who}
       </span>
-      <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">{children}</p>
+      <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
     </div>
   );
 }
@@ -90,10 +90,10 @@ function TeaserLock() {
       className="flex items-baseline justify-between gap-3 rounded-[4px] px-4 py-3"
       style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.22)" }}
     >
-      <span className="shrink-0 text-[14px]" style={{ color: SUB }}>
+      <span className="shrink-0 text-[15px]" style={{ color: SUB }}>
         {label}
       </span>
-      <span className="text-right font-myeongjo text-[16.5px] font-bold tracking-[0.06em]" style={{ color: MOON }}>
+      <span className="text-right font-myeongjo text-[17px] font-bold tracking-[0.06em]" style={{ color: MOON }}>
         {value}
       </span>
     </div>
@@ -133,7 +133,7 @@ function TeaserLock() {
       </div>
       <div className="mt-4 text-center">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-myeongjo text-[12.5px] font-semibold"
+          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-myeongjo text-[13px] font-semibold"
           style={{ background: RED, color: "#f3e6cf", boxShadow: "0 4px 14px rgba(143,43,30,0.4)" }}
         >
           결제 후 전체가 선명하게 열려요
@@ -153,11 +153,11 @@ function SampleCard() {
       <p className="mb-1 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
         이렇게 나와요
       </p>
-      <p className="mb-4 text-center text-[12px]" style={{ color: "#7d8496" }}>
+      <p className="mb-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
         예시 · 1993년생 여성의 실제 결과지에서
       </p>
-      <div className="space-y-3 text-[13.5px] leading-[1.85]" style={{ color: "#cfd0d8" }}>
-        <p className="font-myeongjo text-[14px] font-bold" style={{ color: MOON }}>
+      <div className="space-y-3 text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
+        <p className="font-myeongjo text-[15px] font-bold" style={{ color: MOON }}>
           3. 인연이 들어오는 달 세 개
         </p>
         <p>
@@ -175,7 +175,7 @@ function SampleCard() {
           잡아보세요. 이 기회를 통해 새로운 인연이 생길 가능성이 높습니다.
         </p>
         <div className="pt-1" style={{ borderTop: "1px dashed rgba(217,199,232,0.2)" }}>
-          <p className="pt-2 font-myeongjo text-[14px] font-bold" style={{ color: MOON }}>
+          <p className="pt-2 font-myeongjo text-[15px] font-bold" style={{ color: MOON }}>
             4. 내게 올 사람
           </p>
           <p>
@@ -184,7 +184,7 @@ function SampleCard() {
           </p>
         </div>
       </div>
-      <p className="mt-4 text-center text-[12px]" style={{ color: "#7d8496" }}>
+      <p className="mt-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
         여기 적힌 달은 예시예요. 당신 달은 당신 사주에서 다시 계산돼요.
       </p>
     </div>
@@ -213,7 +213,7 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
       </p>
       <ul className="space-y-2.5">
         {rows.map(([t, d]) => (
-          <li key={t} className="flex items-baseline justify-between gap-3 text-[13.5px]">
+          <li key={t} className="flex items-baseline justify-between gap-3 text-[13px]">
             <span style={{ color: "#cfd0d8" }}>{t}</span>
             <span className="text-right" style={{ color: "#7d8496" }}>
               {d}
@@ -230,8 +230,8 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
 
 function Narration({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-8 py-9 text-center">
-      <p className="font-myeongjo text-[16px] leading-[1.9]" style={{ color: "#cfd0d8" }}>
+    <div className="px-8 py-8 text-center">
+      <p className="font-myeongjo text-[17px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
         {children}
       </p>
     </div>
@@ -293,11 +293,11 @@ export function InyeonStory({
     <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
         {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
-        <header className="px-6 pb-5 pt-9 text-center">
-          <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: MOON }}>
+        <header className="px-6 pb-5 pt-8 text-center">
+          <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: MOON }}>
             명운록 · 인연 들어오는 달
           </a>
-          <h1 className="mt-3 font-myeongjo text-[27px] font-bold leading-[1.6]" style={{ color: "#efe6d2" }}>
+          <h1 className="mt-3 font-myeongjo text-[26px] font-bold leading-[1.75]" style={{ color: "#efe6d2" }}>
             &lsquo;때가 되면 만난다&rsquo;는데
             <br />
             <span
@@ -311,11 +311,11 @@ export function InyeonStory({
               그 때가 대체 언제인가요
             </span>
           </h1>
-          <p className="mt-3 text-[14.5px]" style={{ color: "#a89f8d" }}>
+          <p className="mt-3 text-[15px]" style={{ color: "#a89f8d" }}>
             &lsquo;곧 온다&rsquo;는 말은 그만 — 인연이 들어오는 달을 콕 집어드려요
           </p>
 
-          <p className="mt-4 text-[12.5px]" style={{ color: "#7d8496" }}>
+          <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
             사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이에요 · {priceLabel}
           </p>
         </header>
@@ -340,7 +340,7 @@ export function InyeonStory({
 
         {/* 상태 배지 3종 — 어떤 상황이든 손님을 배제하지 않는다(페르소나 지적 #1·#2) */}
         <div className="px-6 pt-7 text-center">
-          <p className="text-[12.5px]" style={{ color: "#7d8496" }}>
+          <p className="text-[13px]" style={{ color: "#7d8496" }}>
             지금 상황에 제일 가까운 걸 고르면, 거기에 맞춰 풀어드려요
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -384,7 +384,7 @@ export function InyeonStory({
         </Cut>
 
         {/* ▓ 잠금 티저 */}
-        <div className="px-5 pb-2 pt-10">
+        <div className="px-5 py-4">
           <TeaserLock />
           <p className="mt-2 text-center">
             <a href="#sample" className="text-[13px] underline underline-offset-2" style={{ color: SUB }}>
@@ -394,16 +394,16 @@ export function InyeonStory({
         </div>
 
         {/* 예시 결과지 — 진짜 문장을 보여준다(페르소나 3/3 지적) */}
-        <div id="sample" className="scroll-mt-4 px-5 pb-2 pt-6">
+        <div id="sample" className="scroll-mt-4 px-5 py-4">
           <SampleCard />
         </div>
 
         <ThreadDivider />
 
         {/* 목차 카드 — 철학관 가격 앵커 대신 받는 것의 양으로 (페르소나 3/3 거부 반영) */}
-        <div className="px-5 pb-4 pt-3">
+        <div className="px-5 py-4">
           <TocCard priceLabel={priceLabel} />
-          <p className="mt-3 text-center text-[12.5px] leading-relaxed" style={{ color: "#7d8496" }}>
+          <p className="mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "#7d8496" }}>
             이번 달이 당신의 &lsquo;열리는 달&rsquo;일 수도 있어요 — 지나간 달은 다음 계산에서 빠져요.
           </p>
         </div>
@@ -427,7 +427,7 @@ export function InyeonStory({
               >
                 까치 아씨
               </span>
-              <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">
+              <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">
                 <em className="not-italic" style={P}>
                   조급해하지 않아도 돼요.
                 </em>
@@ -437,7 +437,7 @@ export function InyeonStory({
             </div>
             <a
               href="#start"
-              className="block rounded-[6px] py-4 text-center font-bold tracking-[0.04em]"
+              className="block rounded-[6px] py-4 text-center font-bold tracking-[0.06em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${MOON} 70%,#b9a6cf)`,
                 boxShadow: "0 8px 26px rgba(217,199,232,0.3), inset 0 1px 0 #fff",
@@ -446,18 +446,18 @@ export function InyeonStory({
               }}
             >
               내 인연 들어오는 달 확인하기
-              <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">
+              <span className="mt-0.5 block text-[13px] font-normal opacity-80">
                 {priceLabel} · 2분이면 끝 · 태어난 시각·성별·고민까지 반영
               </span>
             </a>
-            <p className="mt-2 text-center text-[12.5px]" style={{ color: SUB }}>
+            <p className="mt-2 text-center text-[13px]" style={{ color: SUB }}>
               결과지가 제대로 만들어지지 않으면 전액 환불해요. 결과지를 열기 전이면 7일 안에 취소돼요.
             </p>
           </div>
         </Cut>
 
         {/* 입력 위저드(#start)·안심 — 페이지에서 주입 */}
-        <div className="px-5 pb-6 pt-12">{children}</div>
+        <div className="px-5 py-4">{children}</div>
 
         {/* 상품 전용 FAQ — 1번이 손님을 자르지 않게 순서 설계(페르소나 지적 #3) */}
         <section className="px-5 pb-10 pt-4">
@@ -470,7 +470,7 @@ export function InyeonStory({
                 <p className="mb-1.5 font-myeongjo text-[15px] font-semibold" style={{ color: "#efe6d2" }}>
                   Q. {q}
                 </p>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: "#cfd0d8" }}>
+                <p className="text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
                   {a}
                 </p>
               </li>
