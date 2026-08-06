@@ -138,7 +138,7 @@ function Bubble({ who, children }: { who: string; children: React.ReactNode }) {
       >
         {who}
       </span>
-      <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">{children}</p>
+      <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
     </div>
   );
 }
@@ -161,10 +161,10 @@ function LedgerLock({ onOpen }: { onOpen: () => void }) {
       className="flex items-baseline justify-between gap-3 rounded-[4px] px-4 py-3"
       style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(201,162,39,0.22)" }}
     >
-      <span className="shrink-0 text-[14px]" style={{ color: SUB }}>
+      <span className="shrink-0 text-[15px]" style={{ color: SUB }}>
         {label}
       </span>
-      <span className="text-right font-myeongjo text-[16.5px] font-bold tracking-[0.06em]" style={{ color: GOLD }}>
+      <span className="text-right font-myeongjo text-[17px] font-bold tracking-[0.06em]" style={{ color: GOLD }}>
         {value}
       </span>
     </div>
@@ -205,7 +205,7 @@ function LedgerLock({ onOpen }: { onOpen: () => void }) {
       </div>
       <div className="mt-4 text-center">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-myeongjo text-[12.5px] font-semibold"
+          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-myeongjo text-[13px] font-semibold"
           style={{ background: RED, color: "#f3e6cf", boxShadow: "0 4px 14px rgba(143,43,30,0.4)" }}
         >
           결제 후 전체가 열린다
@@ -222,11 +222,11 @@ function SampleCard() {
       <p className="mb-1 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
         이렇게 나온다
       </p>
-      <p className="mb-4 text-center text-[12px]" style={{ color: "#7d8496" }}>
+      <p className="mb-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
         예시 · 1993년생 여성의 실제 결과지에서
       </p>
-      <div className="space-y-3 text-[13.5px] leading-[1.85]" style={{ color: "#cfd0d8" }}>
-        <p className="font-myeongjo text-[14px] font-bold" style={{ color: GOLD }}>
+      <div className="space-y-3 text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
+        <p className="font-myeongjo text-[15px] font-bold" style={{ color: GOLD }}>
           3. 돈이 들어오는 달
         </p>
         <p>
@@ -235,7 +235,7 @@ function SampleCard() {
           조심해야 할 달이니, 불필요한 지출을 줄이고 신중히 결정해라.
         </p>
         <div className="pt-1" style={{ borderTop: "1px dashed rgba(201,162,39,0.2)" }}>
-          <p className="pt-2 font-myeongjo text-[14px] font-bold" style={{ color: GOLD }}>
+          <p className="pt-2 font-myeongjo text-[15px] font-bold" style={{ color: GOLD }}>
             8. 네 물음에 답한다 — &ldquo;올해 이직해도 될까요&rdquo;
           </p>
           <p>
@@ -243,7 +243,7 @@ function SampleCard() {
           </p>
         </div>
       </div>
-      <p className="mt-4 text-center text-[12px]" style={{ color: "#7d8496" }}>
+      <p className="mt-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
         여기 적힌 달은 예시다. 네 달은 네 사주에서 다시 계산된다.
       </p>
     </div>
@@ -256,9 +256,9 @@ function SocialProofBlock() {
   const { totalUsers, totalReviews, reviews } = SOCIAL_PROOF;
   if (!hasSocialProof()) return null;
   return (
-    <div className="px-5 pb-4 pt-1">
+    <div className="px-5 py-4">
       {(totalUsers > 0 || totalReviews > 0) && (
-        <p className="text-center font-myeongjo text-[12.5px] tracking-[0.04em]" style={{ color: "#9aa0b0" }}>
+        <p className="text-center font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "#9aa0b0" }}>
           {totalUsers > 0 && <>지금까지 <b style={{ color: GOLD }}>{formatCount(totalUsers)}</b>명이 장부를 열었다</>}
           {totalUsers > 0 && totalReviews > 0 && " · "}
           {totalReviews > 0 && <>후기 <b style={{ color: GOLD }}>{formatCount(totalReviews)}</b></>}
@@ -268,8 +268,8 @@ function SocialProofBlock() {
         <ul className="mt-3 space-y-2">
           {reviews.map((r, i) => (
             <li key={i} className="rounded-md px-3.5 py-2.5" style={{ background: "rgba(0,0,0,0.28)", border: "1px solid rgba(201,162,39,0.16)" }}>
-              <p className="text-[13px] leading-relaxed" style={{ color: "#cfd0d8" }}>{r.body}</p>
-              <p className="mt-1 text-[11.5px]" style={{ color: "#7d8496" }}>
+              <p className="text-[13px] leading-[1.75]" style={{ color: "#cfd0d8" }}>{r.body}</p>
+              <p className="mt-1 text-[11px]" style={{ color: "#7d8496" }}>
                 {r.handle}
                 {r.when ? ` · ${r.when}` : ""}
               </p>
@@ -300,9 +300,11 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
       <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
         받는 것 — 9장 · 확답 일곱 이상 · 앞으로 12개월 전부
       </p>
+      {/* 목차만 13px 로 남긴다. 본문 눈금(15px)에 맞춰 올렸더니 9행 중 4행이 두 줄로 넘어갔다 —
+          제목과 설명이 한 줄에서 좌우로 맞물려야 훑어지는 목록이라, 키우는 쪽이 오히려 나빴다. */}
       <ul className="space-y-2.5">
         {rows.map(([t, d]) => (
-          <li key={t} className="flex items-baseline justify-between gap-3 text-[13.5px]">
+          <li key={t} className="flex items-baseline justify-between gap-3 text-[13px]">
             <span style={{ color: "#cfd0d8" }}>{t}</span>
             <span className="text-right" style={{ color: "#7d8496" }}>
               {d}
@@ -405,7 +407,7 @@ export function SangunStory({
                 대신 캐릭터가 1인칭으로 부르는 한 줄만 있다("나를 마주할 자신이 있다면 들어오거라").
                 헤드라인을 다 걷어내되 그 한 줄은 남겨야 부르는 힘이 생긴다.
                 브랜드는 바로 다음 스토리 화면 상단("명운록 · 신당")에서 노출된다. */}
-            <h1 className="font-myeongjo text-[22px] font-bold leading-[1.7]" style={{ color: "#efe6d2" }}>
+            <h1 className="font-myeongjo text-[23px] font-bold leading-[1.75]" style={{ color: "#efe6d2" }}>
               네 운명은 이미 여기 적혀 있다.
               <br />
               <span style={{ color: GOLD }}>들어와라.</span>
@@ -429,7 +431,7 @@ export function SangunStory({
             <button
               type="button"
               onClick={() => setStage("story")}
-              className="block w-full rounded-[6px] py-4 text-center font-bold tracking-[0.04em]"
+              className="block w-full rounded-[6px] py-4 text-center font-bold tracking-[0.06em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
                 boxShadow: "0 8px 26px rgba(201,162,39,0.35), inset 0 1px 0 #ffe9a8",
@@ -518,12 +520,12 @@ export function SangunStory({
           className="absolute inset-0"
           style={{ background: "linear-gradient(180deg, rgba(7,6,9,0.55) 0%, rgba(7,6,9,0.15) 40%, rgba(7,6,9,0.94) 100%)" }}
         />
-        <div key={scene} className="svc-fade relative mx-auto flex min-h-screen w-full max-w-[480px] flex-col justify-between px-5 pb-8 pt-5">
+        <div key={scene} className="svc-fade relative mx-auto flex min-h-screen w-full max-w-[480px] flex-col justify-between px-5 py-4">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
+            <span className="text-[13px] tracking-[0.22em]" style={{ color: GOLD, opacity: 0.85 }}>
               명운록 · 신당
             </span>
-            <button type="button" onClick={() => toMain()} className="px-2 py-1 text-[12.5px]" style={{ color: "#8b91a3" }}>
+            <button type="button" onClick={() => toMain()} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
               건너뛰기 &gt;
             </button>
           </div>
@@ -543,7 +545,7 @@ export function SangunStory({
               >
                 박수
               </span>
-              <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">{s.line}</p>
+              <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{s.line}</p>
             </div>
             <div className="space-y-2">
               {s.choices.map((c) => (
@@ -551,7 +553,7 @@ export function SangunStory({
                   key={c.label}
                   type="button"
                   onClick={c.act}
-                  className="block w-full rounded-[6px] px-4 py-3.5 text-center text-[15px] font-semibold tracking-[0.02em]"
+                  className="block w-full rounded-[6px] px-4 py-3.5 text-center text-[15px] font-semibold"
                   style={
                     c.primary
                       ? {
@@ -584,7 +586,7 @@ export function SangunStory({
             누르면 위저드가 언마운트돼 그때까지 입력한 값이 전부 날아갔고(초안 저장은 로그인 경로에만 걸려 있음),
             바로 아래 위저드 자체 '‹' 와 뒤로가기가 겹쳐 보였다. */}
         <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-center px-5 pt-4">
-          <span className="text-[12px] tracking-[0.3em]" style={{ color: GOLD, opacity: 0.85 }}>
+          <span className="text-[13px] tracking-[0.22em]" style={{ color: GOLD, opacity: 0.85 }}>
             명운록 · 산군 신점
           </span>
         </div>
@@ -597,11 +599,11 @@ export function SangunStory({
   return (
     <div className="world-sangun story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
-        <header className="px-6 pb-5 pt-9 text-center">
-          <a href="/" className="inline-block text-[13px] tracking-[0.4em]" style={{ color: GOLD }}>
+        <header className="px-6 pb-5 pt-8 text-center">
+          <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: GOLD }}>
             명운록 · 산군 신점
           </a>
-          <p className="mt-4 text-[12.5px]" style={{ color: "#7d8496" }}>
+          <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
             신당에 들었다 — 산군이 장부를 편다 · {priceLabel}
           </p>
         </header>
@@ -615,8 +617,8 @@ export function SangunStory({
           </Bubble>
         </Cut>
 
-        <div className="px-8 py-9 text-center">
-          <p className="font-myeongjo text-[16px] leading-[1.9]" style={{ color: "#cfd0d8" }}>
+        <div className="px-8 py-8 text-center">
+          <p className="font-myeongjo text-[17px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
             산군(山君) — 산신을 받든 박수.
             <br />
             얼굴을 들지 않고 명운록 서고의 <b style={{ color: GOLD }}>운명 장부</b>를 읽는 이.
@@ -626,7 +628,7 @@ export function SangunStory({
         <ThreadDivider />
 
         {/* ▓ 장부 티저 */}
-        <div className="px-5 pb-2 pt-3">
+        <div className="px-5 py-4">
           <LedgerLock onOpen={toInput} />
           <p className="mt-2 text-center">
             <a href="#sample" className="text-[13px] underline underline-offset-2" style={{ color: SUB }}>
@@ -636,16 +638,16 @@ export function SangunStory({
         </div>
 
         {/* 예시 결과지 */}
-        <div id="sample" className="scroll-mt-4 px-5 pb-2 pt-6">
+        <div id="sample" className="scroll-mt-4 px-5 py-4">
           <SampleCard />
         </div>
 
         <ThreadDivider />
 
         {/* 목차 */}
-        <div className="px-5 pb-4 pt-3">
+        <div className="px-5 py-4">
           <TocCard priceLabel={priceLabel} />
-          <p className="mt-3 text-center text-[12.5px] leading-relaxed" style={{ color: "#7d8496" }}>
+          <p className="mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "#7d8496" }}>
             이번 달이 네 &lsquo;열리는 달&rsquo;일 수도 있다 — 지나간 달은 다음 계산에서 빠진다.
           </p>
         </div>
@@ -672,7 +674,7 @@ export function SangunStory({
               >
                 박수
               </span>
-              <p className="font-myeongjo text-[17px] font-semibold leading-[1.8] text-[#241d10]">
+              <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">
                 <em className="not-italic" style={P}>
                   네 장부,
                 </em>
@@ -683,7 +685,7 @@ export function SangunStory({
             <button
               type="button"
               onClick={toInput}
-              className="block w-full rounded-[6px] py-[18px] text-center font-bold tracking-[0.04em]"
+              className="block w-full rounded-[6px] py-[18px] text-center font-bold tracking-[0.06em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
                 boxShadow: "0 8px 26px rgba(201,162,39,0.35), inset 0 1px 0 #ffe9a8",
@@ -692,11 +694,11 @@ export function SangunStory({
               }}
             >
               내 운명 장부 열기
-              <span className="mt-0.5 block text-[12.5px] font-normal opacity-80">
+              <span className="mt-0.5 block text-[13px] font-normal opacity-80">
                 {priceLabel} · 2분이면 끝 · 시각·성별·인연·하는 일까지 반영
               </span>
             </button>
-            <p className="mt-2 text-center text-[12.5px]" style={{ color: SUB }}>
+            <p className="mt-2 text-center text-[13px]" style={{ color: SUB }}>
               결과지가 제대로 만들어지지 않으면 전액 환불해요. 결과지를 열기 전이면 7일 안에 취소돼요.
             </p>
           </div>
@@ -713,7 +715,7 @@ export function SangunStory({
                 <p className="mb-1.5 font-myeongjo text-[15px] font-semibold" style={{ color: "#efe6d2" }}>
                   Q. {q}
                 </p>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: "#cfd0d8" }}>
+                <p className="text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
                   {a}
                 </p>
               </li>
