@@ -1210,6 +1210,98 @@ function DestinyCard({ partner, gender, birthDate }: { partner: string; gender: 
   );
 }
 
+/** 오행 → 한자 칸 바탕색.
+ *  타이트는 오행을 금·빨강·초록 원색 카드로 칠한다. 우리는 먹+금 세계관이라 그대로 쓰면
+ *  배경 사진(촛불·놋쇠의 호박색)과 UI 가 따로 논다 — 색상만 빌리고 채도를 낮춰 은은하게 깐다.
+ *  글자는 금색을 유지해 신당 톤을 지킨다. */
+const ELEMENT_TINT: Record<string, string> = {
+  wood: "rgba(96,150,116,0.20)",
+  fire: "rgba(160,54,38,0.26)",
+  earth: "rgba(232,201,106,0.15)",
+  metal: "rgba(198,204,212,0.14)",
+  water: "rgba(96,118,168,0.22)",
+};
+
+/** 원국 한 판 — 한자·십성·기운을 기둥별 세로줄로 세운다.
+ *
+ *  실측(2026-08-06)으로 배운 것: 한자 카드와 십성 표를 따로 두면 「비견·겁재·묘」가
+ *  어느 글자 얘긴지 연결이 끊긴다. 타이트는 글자 바로 위아래에 십성을 붙여 눈으로 잇는다.
+ *
+ *      해      달      나      ← 기둥
+ *     비견    겁재  나 자신    ← 천간이 무슨 자리인지
+ *     [甲]    [己]    [戊]     ← 천간 (오행 바탕)
+ *     [戌]    [巳]    [午]     ← 지지 (오행 바탕)
+ *     갑술    기사    무오     ← 한글 읽기
+ *     비견    편인    정인     ← 지지가 무슨 자리인지
+ *   ─────────────────
+ *      묘     건록    제왕     ← 12운성
+ *
+ *  rows(십성·기운)는 없을 수 있다(티저 생성 실패). 그때도 한자 판은 서야 하므로 빈칸으로 둔다. */
+function PillarChart({ shown, rows }: { shown: Pillar[]; rows: { pos: string; ganSip: string; jiSip: string; fortune: string }[] }) {
+  if (shown.length === 0) return null;
+  // shown 은 년→월→일(→시), rows 도 같은 순서로 만들어진다(teaser.ts buildChartRows).
+  // 시 모름일 때 거르는 조건이 서로 달라 길이가 어긋날 수 있으므로 인덱스로만 조심해서 집는다.
+  const cols = shown.map((p, i) => ({ p, r: rows[i] }));
+  const hasMeta = rows.length > 0;
+  const grid = { display: "grid", gridTemplateColumns: `repeat(${cols.length}, minmax(0,1fr))` } as const;
+
+  const Glyph = ({ char, element, isDay }: { char: string; element: string; isDay?: boolean }) => (
+    <span
+      className="font-brush block py-1.5 text-[26px] leading-none text-gold-bright"
+      style={{
+        background: ELEMENT_TINT[element] ?? "rgba(255,255,255,0.035)",
+        border: `1px solid ${isDay ? "var(--gold)" : "var(--gold-pale)"}`,
+      }}
+    >
+      {char}
+    </span>
+  );
+
+  return (
+    <div className="mt-2.5 border border-gold-pale px-2 py-3" style={{ background: "rgba(255,255,255,0.03)" }}>
+      <div style={grid} className="gap-x-1.5 gap-y-1 text-center">
+        {/* 기둥 이름 — 일주는 "나" 라서 내가 어디인지 바로 보인다(타이트의 「일간(나)」와 같은 자리) */}
+        {cols.map(({ p, r }, i) => (
+          <span key={`pos-${i}`} className="font-myeongjo text-[11px]" style={{ color: p.isDay ? "var(--gold-bright)" : "var(--gold-soft)" }}>
+            {r?.pos ?? "—"}
+          </span>
+        ))}
+        {hasMeta &&
+          cols.map(({ r }, i) => (
+            <span key={`gs-${i}`} className="font-myeongjo text-[13px] text-bone-soft">{r?.ganSip || "—"}</span>
+          ))}
+        {cols.map(({ p }, i) => (
+          <Glyph key={`g-${i}`} char={p.gan.char} element={p.gan.element} isDay={p.isDay} />
+        ))}
+        {cols.map(({ p }, i) => (
+          <Glyph key={`j-${i}`} char={p.ji.char} element={p.ji.element} isDay={p.isDay} />
+        ))}
+        {cols.map(({ p }, i) => (
+          <span key={`r-${i}`} className="font-myeongjo text-[11px] text-bone-faint">
+            {p.gan.read}
+            {p.ji.read}
+          </span>
+        ))}
+        {hasMeta &&
+          cols.map(({ r }, i) => (
+            <span key={`js-${i}`} className="font-myeongjo text-[13px] text-bone-soft">{r?.jiSip || "—"}</span>
+          ))}
+        {hasMeta && (
+          <>
+            {/* 구분선은 표 전체 폭으로 한 번만 — 기운은 글자가 아니라 그 자리의 세기라 성격이 다르다 */}
+            <div style={{ gridColumn: "1 / -1", borderTop: "1px solid var(--gold-pale)", marginTop: 4 }} />
+            {cols.map(({ r }, i) => (
+              <span key={`f-${i}`} className="font-myeongjo text-[13px]" style={{ color: "var(--gold-soft)" }}>
+                {r?.fortune || "—"}
+              </span>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
 // 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
 function TeaserStep({
@@ -1320,25 +1412,12 @@ function TeaserStep({
               {` — 이 날에서 나온 ${GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`}${imm ? " 글자" : " 글자"}`}
             </p>
           )}
-          <div className="mt-2.5 flex justify-center gap-2">
-            {shown.map((p, i) => (
-              <div
-                key={i}
-                className="flex-1 max-w-[74px] py-2 text-center"
-                style={{
-                  background: p.isDay ? "rgba(232,201,106,0.13)" : "rgba(255,255,255,0.035)",
-                  border: `1px solid ${p.isDay ? "var(--gold)" : "var(--gold-pale)"}`,
-                }}
-              >
-                <span className="font-brush block text-[26px] leading-none text-gold-bright">{p.gan.char}</span>
-                <span className="font-brush block text-[26px] leading-none text-gold-bright mt-0.5">{p.ji.char}</span>
-                <span className="font-myeongjo mt-1.5 block text-[11px] text-bone-faint">
-                  {p.gan.read}
-                  {p.ji.read}
-                </span>
-              </div>
-            ))}
-          </div>
+          {/* 한자와 십성·기운을 한 표로 — 타이트(MZ무당) 실측 배치를 따랐다.
+              전에는 한자 카드가 위에, 십성 표가 아래에 따로 있었다. 그러면 「비견·겁재·묘」가
+              어느 글자 얘긴지 알 수가 없어서 표가 붕 뜬다(형님 실사용 반응: "뭔 말인지 모르겠다").
+              타이트는 戊 바로 위에 「일간(나)」, 바로 아래에 「정인」을 붙여 눈으로 잇는다.
+              용어 자체는 타이트도 안 풀어준다 — 목표는 이해가 아니라 "내 생일로 진짜 계산했다"는 증거다. */}
+          <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
           <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
@@ -1347,47 +1426,6 @@ function TeaserStep({
               : "아래는 이름도, 적어주신 물음도 쓰지 않았어요. 이 글자에서만 나왔고요."}
           </p>
 
-          {/* 원국 표 — 십성·12운성. 읽을 줄 몰라도 되는 게 핵심이다(못 읽는 글자라 계산의 증거로 읽힌다).
-              배경에 박수 사진이 opacity .7 로 깔려 있어 투명하게 두면 얼굴·촛불 무늬가 글자 사이로 비친다
-              → 어두운 판을 깔아 사진 위에 '종이'처럼 앉힌다. */}
-          {teaser && teaser.chartRows.length > 0 && (
-            <div
-              className="mt-3 border border-gold-pale"
-              style={{ background: "rgba(255,255,255,0.03)" }}
-            >
-              {/* 머리글 — 없을 때가 제일 나빴다(실측 2026-08-06).
-                  네 열이 뭔지 표시가 없으니 손님은 "비견·건록"을 읽으려다 막힌다.
-                  못 읽는 건 괜찮지만(아래 안내), 무엇의 목록인지도 모르면 증거가 아니라 장식이 된다.
-                  천간=겉으로 드러나는 결, 지지=속에 깔린 결, 12운성=그 자리에서의 기운 세기. */}
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 text-[11px]"
-                style={{ borderBottom: "1px solid var(--gold-pale)", background: "rgba(255,255,255,0.02)", color: "var(--gold-soft)" }}
-              >
-                <span className="font-myeongjo w-8 shrink-0">자리</span>
-                <span className="font-myeongjo flex-1">겉으로</span>
-                <span className="font-myeongjo flex-1">속으로</span>
-                <span className="font-myeongjo w-12 shrink-0">기운</span>
-              </div>
-              {teaser.chartRows.map((r, i) => (
-                // 네 열 모두 왼쪽에서 시작한다 — 마지막만 오른쪽 끝에 붙어 있어 시선이 좌·좌·좌·우로 튀었다
-                <div
-                  key={i}
-                  className="flex items-center gap-2 px-3 py-2.5 text-[13px]"
-                  style={{
-                    borderTop: i === 0 ? "none" : "1px solid var(--gold-pale)",
-                    background: r.pos === "나" ? "rgba(232,201,106,0.09)" : "transparent",
-                  }}
-                >
-                  <span className="font-myeongjo w-8 shrink-0 text-bone-faint">{r.pos}</span>
-                  <span className="font-myeongjo flex-1 text-bone-soft">{r.ganSip || "—"}</span>
-                  <span className="font-myeongjo flex-1 text-bone-soft">{r.jiSip || "—"}</span>
-                  <span className="font-myeongjo w-12 shrink-0" style={{ color: "var(--gold-soft)" }}>
-                    {r.fortune || "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
           {teaser && teaser.sinsal.length > 0 && (
             <div className="mt-2 flex flex-wrap justify-center gap-1.5">
               {teaser.sinsal.map((s) => (
