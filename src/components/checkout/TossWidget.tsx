@@ -18,9 +18,14 @@ type Props = {
   productName: string;
   productSlug?: string | null;
   customerEmail: string | null;
+  /** 결제 버튼 바로 위 — 환불 보장처럼 마지막 불안을 더는 문구가 앉는 자리.
+   *  카드 바깥 아래에 두면 버튼을 누르는 순간에는 시야 밖이라 아무 일도 못 한다. */
+  beforeButton?: React.ReactNode;
+  /** 버튼 글자. "결제"라는 말은 남긴다 — 세계관보다 결제 명확성이 먼저다. */
+  ctaLabel?: string;
 };
 
-export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail }: Props) {
+export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail, beforeButton, ctaLabel }: Props) {
   const paymentMethodsRef = useRef<HTMLDivElement>(null);
   const agreementRef = useRef<HTMLDivElement>(null);
   const widgetsRef = useRef<Awaited<ReturnType<typeof loadWidgets>> | null>(null);
@@ -80,8 +85,9 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
     <div className="space-y-4">
       <div id="payment-methods" ref={paymentMethodsRef} />
       <div id="agreement" ref={agreementRef} />
+      {beforeButton}
       <Button onClick={handlePay} disabled={!ready || paying} size="lg" className="w-full">
-        {paying ? "결제 진행 중..." : "결제하기"}
+        {paying ? "결제 진행 중..." : (ctaLabel ?? "결제하기")}
       </Button>
     </div>
   );
