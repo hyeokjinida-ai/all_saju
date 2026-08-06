@@ -1355,10 +1355,24 @@ function TeaserStep({
               className="mt-3 border border-gold-pale"
               style={{ background: "rgba(255,255,255,0.03)" }}
             >
+              {/* 머리글 — 없을 때가 제일 나빴다(실측 2026-08-06).
+                  네 열이 뭔지 표시가 없으니 손님은 "비견·건록"을 읽으려다 막힌다.
+                  못 읽는 건 괜찮지만(아래 안내), 무엇의 목록인지도 모르면 증거가 아니라 장식이 된다.
+                  천간=겉으로 드러나는 결, 지지=속에 깔린 결, 12운성=그 자리에서의 기운 세기. */}
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 text-[11px]"
+                style={{ borderBottom: "1px solid var(--gold-pale)", background: "rgba(255,255,255,0.02)", color: "var(--gold-soft)" }}
+              >
+                <span className="font-myeongjo w-8 shrink-0">자리</span>
+                <span className="font-myeongjo flex-1">겉으로</span>
+                <span className="font-myeongjo flex-1">속으로</span>
+                <span className="font-myeongjo w-12 shrink-0">기운</span>
+              </div>
               {teaser.chartRows.map((r, i) => (
+                // 네 열 모두 왼쪽에서 시작한다 — 마지막만 오른쪽 끝에 붙어 있어 시선이 좌·좌·좌·우로 튀었다
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-2 text-[11px]"
+                  className="flex items-center gap-2 px-3 py-2.5 text-[13px]"
                   style={{
                     borderTop: i === 0 ? "none" : "1px solid var(--gold-pale)",
                     background: r.pos === "나" ? "rgba(232,201,106,0.09)" : "transparent",
@@ -1367,7 +1381,7 @@ function TeaserStep({
                   <span className="font-myeongjo w-8 shrink-0 text-bone-faint">{r.pos}</span>
                   <span className="font-myeongjo flex-1 text-bone-soft">{r.ganSip || "—"}</span>
                   <span className="font-myeongjo flex-1 text-bone-soft">{r.jiSip || "—"}</span>
-                  <span className="font-myeongjo w-12 shrink-0 text-right" style={{ color: "var(--gold-soft)" }}>
+                  <span className="font-myeongjo w-12 shrink-0" style={{ color: "var(--gold-soft)" }}>
                     {r.fortune || "—"}
                   </span>
                 </div>
