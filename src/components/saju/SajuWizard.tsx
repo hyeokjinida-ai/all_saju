@@ -1426,17 +1426,24 @@ function TeaserStep({
               : "아래는 이름도, 적어주신 물음도 쓰지 않았어요. 이 글자에서만 나왔고요."}
           </p>
 
+          {/* 신살 — 11px 배지는 원국 판 옆에서 읽히지도 않고 뭔지도 몰랐다.
+              13px 로 키우고, 무엇의 목록인지 한 줄 얹는다(타이트는 이걸 표 맨 아랫줄에 넣는다). */}
           {teaser && teaser.sinsal.length > 0 && (
-            <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-              {teaser.sinsal.map((s) => (
-                <span
-                  key={s}
-                  className="font-myeongjo px-2 py-1 text-[11px]"
-                  style={{ border: "1px solid var(--gold-pale)", color: "var(--gold-soft)" }}
-                >
-                  {s}
-                </span>
-              ))}
+            <div className="mt-3">
+              <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+                {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
+              </p>
+              <div className="mt-1.5 flex flex-wrap justify-center gap-2">
+                {teaser.sinsal.map((s) => (
+                  <span
+                    key={s}
+                    className="font-myeongjo px-3 py-1.5 text-[13px]"
+                    style={{ border: "1px solid var(--gold-line)", background: "rgba(232,201,106,0.08)", color: "var(--gold-bright)" }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
