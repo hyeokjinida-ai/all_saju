@@ -14,9 +14,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
-import { SANGUN_JANG } from "@/lib/saju/teaser";
+import { PillarChart } from "./PillarChart";
+import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
-import { ELEMENT_META, type ResultView } from "@/lib/saju/result-view";
+import type { ResultView } from "@/lib/saju/result-view";
 import { buildPartnerFace, type PartnerFace } from "@/lib/saju/partner-face";
 import type { WealthFacts, InyeonFacts } from "@/lib/saju/saju-api";
 
@@ -190,19 +191,23 @@ export function SangunResult({
   name,
   wealth,
   inyeon,
+  chartRows,
 }: {
   view: ResultView;
   markdown: string;
   name: string | null;
   wealth: WealthFacts | null;
   inyeon: InyeonFacts | null;
+  /** 십성·12운성 줄 — raw_analysis 에서 buildChartRows 로. 없으면(옛 결과지) 한자 판만 선다 */
+  chartRows?: ChartRow[];
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
   // 4章 간지는 결과지가 정확히 9챕터일 때만 — 옛 결과지(다른 구성)는 순서대로 폴백
   const useJang = chapters.length === 9;
 
-  const pillars = view.pillars.slice().reverse(); // 년→월→일→시 읽기 순서
+  // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
+  const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
 
   const wealthRows = wealth
     ? [
@@ -284,46 +289,14 @@ export function SangunResult({
       </div>
 
       <div className="px-4 pb-8 pt-2">
-        {/* ── 원국 — 오행 색 카드(타이트 5단 표 대응). 못 읽어도 계산의 증거로 읽힌다 ── */}
-        {pillars.length > 0 && (
+        {/* ── 원국 — 티저와 **같은 판**(PillarChart). 결제 전엔 십성·12운성이 붙어 있었는데
+            결제 후에 한자만 남으면 돈 내고 정보가 줄어든 셈이 된다 — 같은 컴포넌트로 통일 ── */}
+        {shown.length > 0 && (
           <div className="mt-5">
             <p className="font-myeongjo text-center text-[11px] tracking-[0.16em] text-bone-faint">
-              네 여덟 글자
+              네 {shown.length === 3 ? "여섯" : "여덟"} 글자
             </p>
-            <div className="mt-2.5 flex justify-center gap-2">
-              {pillars.map((p, i) => {
-                const g = ELEMENT_META[p.gan.element];
-                const j = ELEMENT_META[p.ji.element];
-                return (
-                  <div key={i} className="w-full max-w-[74px] text-center">
-                    <div
-                      className="py-1.5"
-                      style={{
-                        background: `rgba(${g.rgb},0.16)`,
-                        border: `1px solid rgba(${g.rgb},${p.isDay ? 0.75 : 0.4})`,
-                      }}
-                    >
-                      <span className="font-myeongjo block text-[24px] font-bold leading-tight" style={{ color: g.text }}>
-                        {p.gan.char}
-                      </span>
-                    </div>
-                    <div
-                      className="mt-1 py-1.5"
-                      style={{ background: `rgba(${j.rgb},0.16)`, border: `1px solid rgba(${j.rgb},0.4)` }}
-                    >
-                      <span className="font-myeongjo block text-[24px] font-bold leading-tight" style={{ color: j.text }}>
-                        {p.ji.char}
-                      </span>
-                    </div>
-                    <span className="font-myeongjo mt-1 block text-[11px] text-bone-faint">
-                      {p.gan.read}
-                      {p.ji.read}
-                      {p.isDay ? " · 나" : ""}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <PillarChart shown={shown} rows={chartRows ?? []} />
           </div>
         )}
 

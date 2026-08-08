@@ -173,7 +173,7 @@ function computePastEvent(analysis: SajuAnalysisResponse): PastEvent | null {
 // ── ①-b 원국 표 — 십성·12운성 (읽을 줄 몰라도 되는 증거) ──
 const POS_LABEL: Record<string, string> = { 년: "해", 월: "달", 일: "나", 시: "시" };
 
-function buildChartRows(analysis: SajuAnalysisResponse): ChartRow[] {
+export function buildChartRows(analysis: SajuAnalysisResponse): ChartRow[] {
   const sip = arr(rec(analysis.sipseong).sipseongs);
   const fortunes = arr(rec(analysis.twelveFortune).fortunes);
   const byPos = (p: string, suffix: "간" | "지") =>

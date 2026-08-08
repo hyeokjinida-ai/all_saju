@@ -6,6 +6,7 @@ import { SangunResult } from "@/components/saju/SangunResult";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildResultView } from "@/lib/saju/result-view";
+import { buildChartRows } from "@/lib/saju/teaser";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
 import {
   computeInyeonFacts,
@@ -134,6 +135,7 @@ export default async function ResultPage({
             view={view}
             markdown={result.interpretation_md}
             name={savedInput?.name ?? null}
+            chartRows={rawAnalysis ? buildChartRows(rawAnalysis) : []}
             wealth={rawAnalysis ? computeWealthFacts(rawAnalysis) : null}
             inyeon={
               rawAnalysis

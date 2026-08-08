@@ -12,6 +12,7 @@ import path from "node:path";
 import { notFound } from "next/navigation";
 import { SangunResult } from "@/components/saju/SangunResult";
 import { buildResultView } from "@/lib/saju/result-view";
+import { buildChartRows } from "@/lib/saju/teaser";
 import {
   computeInyeonFacts,
   computeWealthFacts,
@@ -72,6 +73,7 @@ export default async function DevSangunResultPage() {
           view={view}
           markdown={markdown}
           name="지수"
+          chartRows={buildChartRows(analysis)}
           wealth={computeWealthFacts(analysis)}
           inyeon={computeInyeonFacts(analysis, "female", undefined)}
         />
