@@ -83,6 +83,7 @@ async function main() {
   const saju = await import("../src/lib/saju/saju-api");
   const { buildChapterPrompts } = await import("../src/lib/saju/prompt");
   const { generateByChapters } = await import("../src/lib/saju/llm");
+  const { normalizeResultVoice } = await import("../src/lib/saju/normalize-voice");
   const model = process.env.LLM_MODEL ?? "?";
   const tag = model.replace(/[^a-z0-9]/gi, "");
   console.log(`\n=== 모델: ${process.env.LLM_PROVIDER}/${model} ===\n`);
@@ -138,14 +139,19 @@ async function main() {
     const t0 = Date.now();
     const llm = await generateByChapters(title, chapters);
     const ms = Date.now() - t0;
-    const sc = measure(llm.text, c.expectAges);
+    // 실제 파이프라인(generate-result.ts)은 여기서 후처리를 한 번 거친다. 샘플이 이걸 건너뛰면
+    // 린터가 손님이 절대 보지 않는 문장(하라체·"대흉")을 잡아, 자가 실제보다 나쁜 값을 낸다.
+    const text = normalizeResultVoice(llm.text, { banmal: c.slug === "sangun-sinjeom", name: c.name }).text;
+    const sc = measure(text, c.expectAges);
 
-    const header = `<!-- slug=${c.slug} · ${c.name} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${llm.text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
+    // birth= 는 린터가 현재 나이를 계산하는 근거다(없으면 린터가 생년을 하드코딩하게 된다).
+    const birth = `${bi.birthYear}-${bi.birthMonth.padStart(2, "0")}-${bi.birthDay.padStart(2, "0")}`;
+    const header = `<!-- slug=${c.slug} · ${c.name} · birth=${birth} · gender=${bi.gender} · concern=${c.concern ?? ""} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
     const out = resolve(tmpdir(), `sample-${c.slug}-${tag}.md`);
-    writeFileSync(out, header + llm.text, "utf8");
+    writeFileSync(out, header + text, "utf8");
 
     console.log(
-      `  ▶ [${c.slug}] 헷지 ${sc.hedge}회 · 나이오류 ${sc.badAges.length ? JSON.stringify(sc.badAges) : "없음"} · 가족언급 ${sc.family}${sc.family ? "(" + sc.familyList.join(",") + ")" : ""} · 6/10월 등장챕터 ${sc.timingChapters}/${sc.totalChapters} · ${llm.text.length}자 · ${ms}ms`,
+      `  ▶ [${c.slug}] 헷지 ${sc.hedge}회 · 나이오류 ${sc.badAges.length ? JSON.stringify(sc.badAges) : "없음"} · 가족언급 ${sc.family}${sc.family ? "(" + sc.familyList.join(",") + ")" : ""} · 6/10월 등장챕터 ${sc.timingChapters}/${sc.totalChapters} · ${text.length}자 · ${ms}ms`,
     );
     console.log(`     → ${out}\n`);
   }

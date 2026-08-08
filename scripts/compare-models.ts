@@ -38,6 +38,14 @@ const CANDIDATES: Candidate[] = [
     price: { in: 0.15, out: 0.6 },
   },
   {
+    // 싼 쪽도 같이 본다 — 지금(4o-mini)보다 원가가 낮으면서 문체를 지키면 그게 최선이다.
+    label: "deepseek-v4-flash",
+    model: "deepseek-v4-flash",
+    baseURL: "https://api.deepseek.com",
+    envKey: "DEEPSEEK_API_KEY",
+    price: { in: 0.14, out: 0.28, cacheHit: 0.0028 },
+  },
+  {
     label: "deepseek-v4-pro",
     model: "deepseek-v4-pro",
     baseURL: "https://api.deepseek.com",
