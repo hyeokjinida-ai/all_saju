@@ -10,6 +10,9 @@
 import { serverEnv } from "@/lib/env";
 import { recordSajuApiCall, getUsageCount, TOTAL_LIMIT, type SajuApiSource } from "./usage";
 import { birthCacheKey, getCachedAnalysis, putCachedAnalysis } from "./analysis-cache";
+// 얼굴 카드 문구를 프롬프트에도 넣기 위해서만 쓴다. partner-face 는 이 파일을 type 으로만 참조하므로
+// 런타임 순환이 생기지 않는다.
+import { buildPartnerFace } from "./partner-face";
 
 export type AnalysisField =
   | "ganji"            // 천간지지 (사주 원국)
@@ -709,6 +712,7 @@ export function buildInyeonFactsBlock(
   partnerSex?: "male" | "female",
 ): string {
   const f = computeInyeonFacts(analysis, gender, partnerSex);
+  const face = buildPartnerFace(f);
 
   // ⑨ 출력
   const fmt = (r: InyeonRow) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
@@ -719,7 +723,16 @@ export function buildInyeonFactsBlock(
     `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}(${f.iljiLevel}/12)` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
     // 짝의 결과 내 용신은 다른 값이다. 예전엔 용신 하나를 "만날 사람의 결"로 줬는데,
     // 그러면 결제 전 얼굴 카드(배우자성 오행)와 본문이 다른 사람을 그리게 된다 — 갈라놓는다.
-    `- 짝의 결(오행): ${f.spouseOh || "미상"} · ${f.spouseType === "편" ? "편(강렬하게 끌리는 인연)" : "정(바르게 오래 가는 인연)"} — '네 짝의 인상'은 반드시 이 결로 그릴 것`,
+    // "정/편"은 내부 판정값이다 — 글자를 그대로 주면 본문에 "정(바르게 오래 가는 인연)"처럼
+    // 괄호째 튀어나온다(실측). 대길/대흉과 같은 병이라 여기서부터 말로 바꿔서 준다.
+    `- 짝의 결(오행): ${f.spouseOh || "미상"} · ${f.spouseType === "편" ? "강렬하게 끌리는 인연(불꽃이 먼저 튄다)" : "바르게 오래 가는 인연(신뢰가 먼저 쌓인다)"} — '네 짝'은 반드시 이 결로 그릴 것`,
+    // 얼굴 카드는 결과지 인연 章 머리에 표로 먼저 떠 있다. 모델이 이 표를 못 보면 같은 오행을 받고도
+    // 다른 인상을 쓴다(실측: 카드는 "눈매가 깊고", 본문은 "키가 크고").
+    // 그렇다고 표를 그냥 주면 작은 모델은 통째로 베껴 오고(실측), 줄이다가 비문까지 만든다
+    // ("조직이나 직장 내에서 높을 가능성이 높으니"). 그래서 **역할을 갈라서** 준다 —
+    // 표가 인상을 맡고, 본문은 근거와 그다음(어떻게 만나 어떻게 흘러가는지)을 맡는다.
+    `- 얼굴 카드가 이 단락 바로 위에 표로 떠 있다. 표에 적힌 것은 **전부 상대(짝)의 것이지 독자 본인의 것이 아니다** — 외모 "${face.look}" / 성격 "${face.nature}" / 만나는 자리 "${face.place}"`,
+    `  → 이 세 줄을 **다시 묘사하지 말 것**(바로 위에 있는 표를 되풀이하면 값이 없어 보인다). 본문은 ①왜 그런 사람인지(배우자 자리의 결) ②어디서 어떻게 만나게 되는지 ③나이대 ④만난 뒤 관계가 어떻게 흘러가는지를 쓴다. 표와 어긋나는 인상(다른 외모·다른 성격)은 절대 쓰지 말 것`,
     `- 나에게 이로운 결: ${f.yongOh || "미상"}${f.heeOh ? ` · 도움이 되는 결 ${f.heeOh}` : ""}`,
     f.meetHint ? `- 만나는 길 힌트: ${f.meetHint}` : "",
     `- 나이대: ${f.ageDir} — 이 한쪽으로만 쓸 것`,
