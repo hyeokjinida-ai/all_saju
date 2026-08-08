@@ -20,18 +20,31 @@ export type LlmResponse = {
   totalCount?: number; // 전체 챕터 수
 };
 
+export type LlmProvider = "openai" | "deepseek" | "anthropic" | "gemini";
+
+/** 프로바이더·모델을 직접 지정해 부른다. 설계도 패스는 챕터와 다른(더 강한) 모델을 쓸 수 있어야 해서
+ *  env 를 읽는 부분과 실제 호출을 갈라 둔다. */
+export async function generateWithProvider(
+  req: LlmRequest,
+  provider: LlmProvider,
+  model: string,
+): Promise<LlmResponse> {
+  const env = serverEnv();
+  switch (provider) {
+    case "openai":
+      return callOpenAICompatible(req, model, env.OPENAI_API_KEY, "openai");
+    case "deepseek":
+      return callOpenAICompatible(req, model, env.DEEPSEEK_API_KEY, "deepseek");
+    case "anthropic":
+      return callAnthropic(req, model, env.ANTHROPIC_API_KEY);
+    case "gemini":
+      return callGemini(req, model, env.GOOGLE_GENERATIVE_AI_API_KEY);
+  }
+}
+
 export async function generateInterpretation(req: LlmRequest): Promise<LlmResponse> {
   const env = serverEnv();
-  switch (env.LLM_PROVIDER) {
-    case "openai":
-      return callOpenAICompatible(req, env.LLM_MODEL, env.OPENAI_API_KEY, "openai");
-    case "deepseek":
-      return callOpenAICompatible(req, env.LLM_MODEL, env.DEEPSEEK_API_KEY, "deepseek");
-    case "anthropic":
-      return callAnthropic(req, env.LLM_MODEL, env.ANTHROPIC_API_KEY);
-    case "gemini":
-      return callGemini(req, env.LLM_MODEL, env.GOOGLE_GENERATIVE_AI_API_KEY);
-  }
+  return generateWithProvider(req, env.LLM_PROVIDER as LlmProvider, env.LLM_MODEL);
 }
 
 // 가족 단정 재생성 지시 — 검출 시 1회만 다시 시도.
@@ -50,7 +63,10 @@ export async function generateByChapters(
 ): Promise<LlmResponse> {
   const genOne = async (c: { system: string; user: string }) => {
     try {
-      let r = await generateInterpretation(c);
+      // 챕터 하나가 죽으면 그 장이 결과지에서 조용히 사라진다 — 티저 목차가 약속한 장이라
+      // 빠지면 들통이다(실측: deepseek-v4-pro 9챕터 중 1장이 통째로 실패). 한 번은 다시 던진다.
+      let r = await generateInterpretation(c).catch(() => generateInterpretation(c));
+      if (!r.text.trim()) r = await generateInterpretation(c);
       if (findFamilyAssertions(r.text).length > 0) {
         try {
           const retry = await generateInterpretation({ system: c.system, user: c.user + FAMILY_RETRY_NOTE });

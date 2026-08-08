@@ -4,6 +4,8 @@
 // 상품 slug 별로 톤/분량을 다르게. 수강생은 여기서 본인 톤으로 갈아끼우면 됩니다.
 
 import type { Myeongsik } from "./manseryeok";
+// 문자열 조립 함수만 쓴다(순수 함수) — 설계도 생성(LLM 호출)은 generate-result 쪽 일이다.
+import { blueprintLines, blueprintArcBlock, monthPlanLine } from "./blueprint";
 
 export type PromptInput = {
   productSlug: string;
@@ -20,6 +22,10 @@ export type PromptInput = {
   concerns: string[];
   // 이미 계산된 확정 사실 카드(saju-api buildKeyFactsBlock). 모델이 추론하지 않고 인용만 하도록 떠먹여 줌.
   keyFacts?: string | null;
+  // 장부 설계도(blueprint.ts) — 없으면 예전처럼 동작한다(설계도 실패가 결과지를 막으면 안 된다).
+  blueprint?: import("./blueprint").ResultBlueprint | null;
+  // 달 배정표 — 어느 장이 어느 달을 말할지. 없으면 배정 지시를 붙이지 않는다.
+  monthPlan?: import("./blueprint").MonthAssignment[] | null;
 };
 
 // 형광펜 지시 — 타이트 실측: 문단 속 핵심 한 문장만 붉게 칠해, 긴 글을 안 읽어도
@@ -324,6 +330,13 @@ function stripTimingSections(saju: string): string {
     .join("\n\n");
 }
 
+/** 상품의 챕터 짧은 제목 목록 — 설계도(blueprint)와 달 배정표가 장을 찾을 때 쓴다.
+ *  buildChapterPrompts 의 heading 과 같은 규칙(★ 제거 + " — " 앞부분)으로 만든다. */
+export function outlineTitles(productSlug: string): string[] {
+  const style = STYLE_BY_SLUG[productSlug] ?? STYLE_BY_SLUG["basic-saju"];
+  return style.outline.map((s) => s.replace(/^★\s*/, "").split(" — ")[0]);
+}
+
 export function buildChapterPrompts(input: PromptInput): {
   title: string;
   chapters: ChapterPrompt[];
@@ -373,14 +386,19 @@ export function buildChapterPrompts(input: PromptInput): {
     const clean = sectionTitle.replace(/^★\s*/, "");
     const heading = `### ${i + 1}. ${clean.split(" — ")[0]}`;
     const others = allTitles.filter((_, j) => j !== i).join(" / ");
-    const isConcern = /고민/.test(sectionTitle);
+    const isConcern = /고민|물음/.test(sectionTitle);
     // ★ 표시 챕터는 상품의 핵심 챕터 — 고민 챕터와 같은 심화 분량을 준다.
     const isCore = sectionTitle.startsWith("★");
+    // 분량이 아니라 **밀도**를 지시한다(형님 지시 2026-08-08: 글자수만 많은 건 목표가 아니다).
+    // 타이트 실측에서 배운 값어치의 구조: 근거(명식) → 장면(독자의 실제 생활 장면) → 행동(해라/마라).
+    // "○○자로 써라"는 채워넣기를 부르고, 이 3박자는 파고들기를 부른다 — 길이는 부산물로 따라온다.
+    const density =
+      "단락마다 ①명식 근거 → ②그 사람 생활에서 벌어지는 실제 장면 → ③해라/마라 행동, 세 박자를 갖추세요. 장면 없이 성격 형용사만 늘어놓는 문장, 근거 없이 좋은 말만 하는 문장은 쓰지 마세요.";
     const lenHint = isConcern || isCore
-      ? "이 챕터는 결과지의 핵심이므로 가장 깊고 길게 (300~450자)"
-      : /행동/.test(sectionTitle)
+      ? `이 챕터는 결과지의 핵심입니다 — 소제목마다 깊게. ${density}`
+      : /당부|행동/.test(sectionTitle)
         ? "번호 매긴 3가지, 각 1~2문장의 구체적 실천"
-        : "150~250자";
+        : density;
 
     const concernLine =
       isConcern && hasConcern
@@ -411,14 +429,31 @@ export function buildChapterPrompts(input: PromptInput): {
       ? "\n■ 이 챕터에서는 '재물그릇 ○○점' · '인연 그릇 ○○점' 같은 점수를 쓰지 마세요(점수를 말하는 챕터가 따로 있습니다)."
       : "";
 
+    // 설계도(있으면): 이 장의 주장·소제목·전체 실타래. 과거 서사 장에는 arc 블록을 통째로.
+    const bpBlock = /걸어온 길/.test(sectionTitle)
+      ? blueprintLines(input.blueprint ?? null, i) + blueprintArcBlock(input.blueprint ?? null)
+      : blueprintLines(input.blueprint ?? null, i);
+    // 배정표(있으면): 이 장이 말할 달 / 달 언급 금지.
+    const planLine = monthPlanLine(input.monthPlan?.[i]);
+
+    // 소제목 — 타이트 실측(24,000자 결과지)에서 배운 값어치의 절반. 긴 장을 「네 본질 →
+    // 니가 안 보여주는 얼굴 → 열등감의 정체」처럼 2~3덩이로 갈라야 파고드는 구조가 생긴다.
+    // 설계도가 소제목을 이미 정했으면 그걸 쓰고(bpBlock 에 지시 포함), 없으면 여기서 직접 시킨다.
+    // 당부(번호 목록)·행동 챕터는 제외 — 목록에 소제목을 얹으면 오히려 부스러진다.
+    const hasBpSections = !!input.blueprint?.chapters[i]?.sections?.length;
+    const sectionLine =
+      hasBpSections || /당부|행동/.test(sectionTitle)
+        ? ""
+        : `\n■ 장 안을 **소제목 ${isCore || isConcern ? "2~3" : "2"}개**로 가르세요 — 소제목은 굵은 글씨 한 줄(**이렇게**)로 세우고, 밋밋한 이름표("성격 분석")가 아니라 읽고 싶어지는 말("네가 숨겨온 얼굴", "돈이 새는 구멍")로 짓습니다. 맨 첫 줄의 장 제목("${heading}")은 그대로 두고, 소제목에만 ### 대신 굵은 글씨를 쓰세요.`;
+
     const user = `${sajuSection}
 
-${baseInfo}
+${baseInfo}${bpBlock}
 
 지금은 '${title}' 결과지 중 아래 한 챕터만 작성합니다.
 ■ 이 챕터: ${clean}
-■ 분량: ${lenHint}
-■ 다른 챕터(여기서 다루지 마세요): ${others}${concernLine}${scoreBan}
+■ 쓰는 법: ${lenHint}
+■ 다른 챕터(여기서 다루지 마세요): ${others}${planLine}${sectionLine}${concernLine}${scoreBan}
 ■ **이 챕터에서 가장 중요한 한 문장을 골라 앞뒤를 == 로 감싸세요(==이렇게==). 정확히 한 문장, 반드시 한 번.** 빠뜨리지 마세요.
 
 "${heading}" 소제목으로 시작해, 이 챕터 내용만 쓰세요. 다른 챕터와 같은 문장·같은 사실을 반복하지 말고 이 챕터만의 새로운 내용을 쓰세요. 위 [좋은/나쁜 문장 예시]의 '좋은' 스타일을 반드시 따르세요.${factsCite}${

@@ -12,7 +12,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
-import { buildChapterPrompts } from "@/lib/saju/prompt";
+import { buildChapterPrompts, outlineTitles } from "@/lib/saju/prompt";
+import {
+  buildMonthPlan,
+  generateBlueprint,
+  type ResultBlueprint,
+  type MonthAssignment,
+} from "@/lib/saju/blueprint";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
 import { generateByChapters } from "@/lib/saju/llm";
 import { normalizeResultVoice } from "@/lib/saju/normalize-voice";
@@ -24,8 +30,11 @@ import {
   buildKeyFactsBlock,
   buildWealthFactsBlock,
   buildInyeonFactsBlock,
+  computeWealthFacts,
+  computeInyeonFacts,
   ganjiToMyeongsik,
   type BirthInfo,
+  type SajuAnalysisResponse,
 } from "@/lib/saju/saju-api";
 
 type SajuInputRow = {
@@ -37,6 +46,58 @@ type SajuInputRow = {
   gender: "male" | "female";
   concerns: string[];
 };
+
+/** 설계도가 인생 서사를 지어내지 않게 — 대운 연대와 나이구간만 추려 준다. */
+function buildArcHint(analysis: SajuAnalysisResponse): string {
+  const daeun = analysis.daeun as Record<string, unknown> | undefined;
+  if (!daeun) return "";
+  const all = daeun.all_daeun as Array<Record<string, unknown>> | undefined;
+  const lines: string[] = [];
+  if (daeun.current_age != null) lines.push(`- 현재 나이: ${daeun.current_age}`);
+  if (Array.isArray(all)) {
+    lines.push(
+      ...all.map((d) => `- ${d.age_start}~${d.age_end}세 ${d.ganji ?? ""} 대운${d.start_date ? ` (${String(d.start_date).slice(0, 4)}년 시작)` : ""}`),
+    );
+  }
+  return lines.join("\n");
+}
+
+/** 산군 전용 설계도 + 달 배정표. 다른 상품·계산 실패·설계도 실패 — 전부 null 로 조용히 내려앉는다. */
+async function buildPlanForSangun(
+  slug: string,
+  rawAnalysis: unknown,
+  input: SajuInputRow,
+  keyFacts: string | undefined,
+): Promise<{ blueprint: ResultBlueprint | null; monthPlan: MonthAssignment[] | null }> {
+  if (slug !== "sangun-sinjeom" || !rawAnalysis || !keyFacts) return { blueprint: null, monthPlan: null };
+  const analysis = rawAnalysis as SajuAnalysisResponse;
+  const titles = outlineTitles(slug);
+
+  // 배정표 — 순수 계산. 이것만 있어도 달 반복은 죽는다.
+  let monthPlan: MonthAssignment[] | null = null;
+  try {
+    const { partnerSex } = parseProfileTags(input.concerns);
+    monthPlan = buildMonthPlan(
+      titles,
+      computeWealthFacts(analysis),
+      computeInyeonFacts(analysis, input.gender, partnerSex),
+    );
+  } catch {
+    monthPlan = null;
+  }
+
+  // 설계도 — LLM 1회. 실패하면 null(생성은 계속 간다).
+  const concern = input.concerns.filter((c) => !c.startsWith("[프로필]")).join(", ");
+  const t0 = Date.now();
+  const blueprint = await generateBlueprint({
+    keyFacts,
+    concern,
+    chapterTitles: titles,
+    arcHint: buildArcHint(analysis),
+  });
+  console.info(`[generate] 설계도 ${blueprint ? "OK" : "실패 → 배정표만으로 진행"} · ${Date.now() - t0}ms`);
+  return { blueprint, monthPlan };
+}
 
 // saju_inputs row → luckyloveme BirthInfo
 function toBirthInfo(input: SajuInputRow): BirthInfo {
@@ -153,7 +214,11 @@ export async function generateResultForOrder(
   }
   if (!myeongsik) return { ok: false, reason: "manseryeok", detail: "ganji missing" };
 
-  // 3. LLM 풀이
+  // 3. 장부 설계도 + 달 배정표 — 챕터들이 병렬이라 서로 못 보는 걸 여기서 조율한다.
+  //    산군만 태운다(재물+인연 확정값이 다 있는 상품). 설계도 실패는 결과지를 막지 않는다.
+  const plan = await buildPlanForSangun(product.slug, rawAnalysis, input, keyFacts);
+
+  // 4. LLM 풀이
   const { title, chapters } = buildChapterPrompts({
     productSlug: product.slug,
     productName: product.name,
@@ -166,6 +231,8 @@ export async function generateResultForOrder(
     gender: input.gender,
     concerns: input.concerns,
     keyFacts,
+    blueprint: plan.blueprint,
+    monthPlan: plan.monthPlan,
   });
   const llm = await generateByChapters(title, chapters);
 

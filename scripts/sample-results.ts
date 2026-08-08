@@ -81,9 +81,10 @@ function measure(text: string, expectAges: number[]) {
 
 async function main() {
   const saju = await import("../src/lib/saju/saju-api");
-  const { buildChapterPrompts } = await import("../src/lib/saju/prompt");
+  const { buildChapterPrompts, outlineTitles } = await import("../src/lib/saju/prompt");
   const { generateByChapters } = await import("../src/lib/saju/llm");
   const { normalizeResultVoice } = await import("../src/lib/saju/normalize-voice");
+  const { buildMonthPlan, generateBlueprint } = await import("../src/lib/saju/blueprint");
   const model = process.env.LLM_MODEL ?? "?";
   const tag = model.replace(/[^a-z0-9]/gi, "");
   console.log(`\n=== 모델: ${process.env.LLM_PROVIDER}/${model} ===\n`);
@@ -120,6 +121,28 @@ async function main() {
       console.log("  [확정값 주입]\n" + keyFacts.split("[재물 확정값")[1]?.slice(0, 600));
     }
 
+    // 설계도 + 배정표 — 실제 파이프라인(generate-result.buildPlanForSangun)과 같은 재료.
+    // 샘플이 이걸 건너뛰면 개편의 핵심을 안 잰 채 "좋아졌다"고 말하게 된다.
+    let blueprint = null, monthPlan = null;
+    if (c.slug === "sangun-sinjeom") {
+      const titles = outlineTitles(c.slug);
+      try {
+        monthPlan = buildMonthPlan(
+          titles,
+          saju.computeWealthFacts(analysis),
+          saju.computeInyeonFacts(analysis, c.birthInfo.gender, undefined),
+        );
+      } catch { monthPlan = null; }
+      const tBp = Date.now();
+      blueprint = await generateBlueprint({
+        keyFacts,
+        concern: c.concern ?? "",
+        chapterTitles: titles,
+        arcHint: "", // 스크립트엔 대운 힌트 생략 — 설계도가 연도를 지어내는지도 겸사겸사 본다
+      });
+      console.log(`  설계도: ${blueprint ? "OK" : "실패(폴백)"} · ${Date.now() - tBp}ms${blueprint ? ` · 판정="${blueprint.verdict}"` : ""}`);
+    }
+
     const bi = c.birthInfo;
     const { title, chapters } = buildChapterPrompts({
       productSlug: c.slug,
@@ -133,6 +156,8 @@ async function main() {
       gender: bi.gender,
       concerns: c.concern ? [c.concern] : [],
       keyFacts,
+      blueprint,
+      monthPlan,
     });
 
     console.log(`  ${chapters.length}개 챕터 생성 중(${model})…`);
