@@ -4,6 +4,11 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
 import { generateResultForOrder } from "@/lib/saju/generate-result";
 
+// 이 라우트는 결제 승인 + 결과지 생성(사주 API + LLM 9챕터)을 한 번에 태운다.
+// Vercel 기본 제한(15초)으로는 못 끝낸다 — 실측 gpt-4o-mini 8~19초, deepseek-v4-pro 53초.
+// 잘리면 손님은 결제만 되고 결과지가 없는 상태로 떨어진다(자가복구 크론은 하루 1회다).
+export const maxDuration = 60;
+
 const bodySchema = z.object({
   paymentKey: z.string().min(1),
   orderId: z.string().min(1),

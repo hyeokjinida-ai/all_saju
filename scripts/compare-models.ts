@@ -11,6 +11,8 @@
 // - 결과지 전문은 docs-private/llm-ab-<STAMP>/ 에 md 로 저장(gitignore 대상)
 
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 
 for (const f of [".env.local", ".env"]) {
   try { process.loadEnvFile(f); } catch { /* 없으면 다음 것 */ }
@@ -73,6 +75,7 @@ async function main() {
   const api = await import("../src/lib/saju/saju-api");
   const { buildChapterPrompts } = await import("../src/lib/saju/prompt");
   const { findFamilyAssertions } = await import("../src/lib/saju/quality-gate");
+  const { normalizeResultVoice } = await import("../src/lib/saju/normalize-voice");
   const { default: OpenAI } = await import("openai");
 
   mkdirSync(OUT_DIR, { recursive: true });
@@ -107,6 +110,11 @@ async function main() {
     const analysis = await api.fetchSajuAnalysis(birthInfo, [], { source: "demo" });
     const myeongsik = api.ganjiToMyeongsik(analysis);
     if (!myeongsik) { console.log(`표본 ${si + 1} 명식 변환 실패 — 건너뜀`); continue; }
+
+    // 린터가 이 표본의 확정값을 다시 계산할 수 있게 명식을 옆에 깔아 둔다.
+    // (lint-result.ts 는 헤더의 slug 로 temp/analysis-<slug>.json 을 찾는다)
+    const sampleSlug = `cmp${si + 1}`;
+    writeFileSync(resolve(tmpdir(), `analysis-${sampleSlug}.json`), JSON.stringify(analysis), "utf8");
 
     const keyFacts = [
       api.buildKeyFactsBlock(analysis, birthInfo),
@@ -174,10 +182,16 @@ async function main() {
 
       const usd =
         ((inTok - hit) * c.price.in + hit * (c.price.cacheHit ?? c.price.in) + outTok * c.price.out) / 1e6;
-      const chk = checkText(md, findFamilyAssertions(md).length);
+      // 실제 파이프라인은 여기서 후처리를 거친다. 안 거치고 재면 손님이 보지도 않을 문장으로
+      // 모델을 떨어뜨리게 된다(하라체·"대흉"은 코드가 잡는다). 모델의 소질은 raw 로,
+      // 서비스 품질은 후처리본으로 — 표에는 후처리본을 쓴다.
+      const norm = normalizeResultVoice(md, { banmal: true, name: "김지영" }).text;
+      const chk = checkText(norm, findFamilyAssertions(norm).length);
 
       const slugName = c.model.replace(/[^a-z0-9.-]/gi, "");
-      writeFileSync(`${OUT_DIR}/표본${si + 1}_${slugName}.md`, md, "utf8");
+      // lint-result.ts 가 읽는 헤더 — slug 로 temp/analysis-<slug>.json 을 찾아 달 검사를 돈다.
+      const header = `<!-- slug=${sampleSlug} · 김지영 · birth=${s.birthDate} · gender=${s.gender} · concern=돈·인연 · ${c.model} · ${chapters.length}챕터 -->\n\n`;
+      writeFileSync(`${OUT_DIR}/표본${si + 1}_${slugName}.md`, header + norm, "utf8");
 
       say(
         `| ${c.label} | ${secs}초 | ${inTok.toLocaleString()} | ${hit.toLocaleString()} | ${outTok.toLocaleString()} ` +

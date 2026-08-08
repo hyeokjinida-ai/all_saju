@@ -6,6 +6,9 @@ import { generateResultForOrder } from "@/lib/saju/generate-result";
 // 결제 완료된 '내 주문'의 결과지 생성을 재시도한다(자가복구).
 // confirm 직후 결과가 보류(pending)면 결제 성공 페이지가 이 엔드포인트를 몇 차례
 // 폴링해 결과를 받아낸다. luckyloveme/LLM 의 일시적 장애를 사용자가 떠나기 전에 흡수.
+// confirm 과 같은 이유로 기본 제한(15초)을 늘린다 — 여기서 잘리면 폴링이 영원히 pending 만 받는다.
+export const maxDuration = 60;
+
 const bodySchema = z.object({ orderId: z.string().min(1), paymentKey: z.string().optional() });
 
 export async function POST(request: NextRequest) {
