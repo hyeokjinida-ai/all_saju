@@ -133,7 +133,9 @@ async function callOpenAICompatible(
       { role: "system", content: req.system },
       { role: "user", content: req.user },
     ],
-    temperature: 0.7,
+    // GPT-5.6 계열은 temperature 지정을 400 으로 거부한다(기본 1만 허용) — A/B 실측.
+    // 이 분기 없이 LLM_MODEL 만 gpt-5.6-luna 로 바꾸면 결과지 생성이 전부 터진다.
+    ...(model.startsWith("gpt-5.6") ? {} : { temperature: 0.7 }),
   });
   const text = completion.choices[0]?.message?.content ?? "";
   return { text, provider, model };

@@ -36,16 +36,9 @@ type Candidate = {
   voiceBoost?: string;
 };
 
-// 루나 무당 보정 실험(2026-08-09) — 루나는 규율(헷지2·해체0·13초)은 1등인데 결이 컨설턴트다.
-// pro 문장에서 팔리는 요소를 지시로 옮겼다: 물상·비유·신점 어미·장부 소품. 지시를 제일 잘
-// 따르는 모델이니, 이게 먹히면 속도·비용·규율·세계관을 다 가진다.
-const SANGUN_BOOST = `
-
-[문장의 결 — 이 지시가 문체의 반이다]
-- **일간·오행은 물상으로 그려라.** "기토라서 안정적이다" ✗ → "기토는 가을걷이 끝난 밭이다. 씨를 받아 품을 줄 알고, 한 번 품으면 계절이 바뀌어도 놓지 않는다" ○
-- **소제목마다 비유를 최소 하나 박아라.** 명식의 구조를 사물의 그림으로 바꿔 말한다 — "월지 양인에 장성살이면 논밭에 칼날 심은 격이다"처럼.
-- **산군이 장부를 읽는 소리를 내라.** "장부를 펼쳐 보니", "네 장부 둘째 줄에 적혀 있다", "~하더군" 같은 신점의 말버릇을 장마다 한 번은 쓴다.
-- 단, 어미 규칙은 그대로다: 평서는 "~다", 시킬 땐 "~라". 해체(~어/~지/~야/~겠지)는 이야기에 몰입해도 절대 쓰지 않는다.`;
+// 무당 보정(2026-08-09 A/B 승인) — **prompt.ts 산군 voice 의 [문장의 결] 블록으로 편입됨.**
+// 이제 모든 후보가 프롬프트를 통해 보정을 받으므로 voiceBoost 후보는 지웠다(이중 적용 방지).
+// 새 어투 실험을 할 땐 voiceBoost 필드에 실험 지시만 얹어 A/B 하면 된다.
 
 const CANDIDATES: Candidate[] = [
   {
@@ -64,21 +57,12 @@ const CANDIDATES: Candidate[] = [
     noTemp: true,
   },
   {
-    label: "luna+무당보정",
-    model: "gpt-5.6-luna",
-    envKey: "OPENAI_API_KEY",
-    price: { in: 0.2, out: 1.2, cacheHit: 0.02 },
-    noTemp: true,
-    voiceBoost: SANGUN_BOOST,
-  },
-  {
-    // "문장 맛 2할을 돈으로 살 수 있나"의 답 — 루나의 중상위 형제, 같은 보정으로 맞붙인다.
-    label: "terra+무당보정",
+    // 업그레이드 대기 후보 — 루나 대비 문장 순간 포착이 한 수 위(₩650/건). 후기 반응 보고 올릴 자리.
+    label: "gpt-5.6-terra",
     model: "gpt-5.6-terra",
     envKey: "OPENAI_API_KEY",
     price: { in: 2.0, out: 12.0, cacheHit: 0.2 },
     noTemp: true,
-    voiceBoost: SANGUN_BOOST,
   },
   {
     label: "deepseek-v4-pro",
