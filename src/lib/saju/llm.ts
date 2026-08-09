@@ -117,7 +117,16 @@ async function callOpenAICompatible(
   const cfg = OPENAI_COMPAT[provider];
   if (!key) throw new Error(`${cfg.envKey} is required when LLM_PROVIDER=${provider}`);
   const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey: key, ...(cfg.baseURL ? { baseURL: cfg.baseURL } : {}) });
+  // timeout: deepseek-v4-pro 실측 지연이 챕터당 30~90초인데, 꼬리가 길어지면 SDK 기본
+  // 재시도(2회, 지수 백오프)와 겹쳐 한 번 생성에 633초까지 찍혔다(2026-08-09 실측).
+  // 우리는 generateByChapters 가 챕터 재시도를 직접 하므로 SDK 재시도는 끄고,
+  // 한 시도를 150초에서 끊는다 — 최악 (150+150)초 < confirm maxDuration 300초.
+  const client = new OpenAI({
+    apiKey: key,
+    timeout: 150_000,
+    maxRetries: 0,
+    ...(cfg.baseURL ? { baseURL: cfg.baseURL } : {}),
+  });
   const completion = await client.chat.completions.create({
     model,
     messages: [

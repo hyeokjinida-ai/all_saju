@@ -439,6 +439,14 @@ export function buildWealthFactsBlock(analysis: SajuAnalysisResponse): string {
   const fmt = (m: WealthMonth) => `${m.label}(${m.verdict}${m.verdict ? " · " : ""}${m.score}점)`;
   if (top.length) lines.push(`- 돈이 들어오는 달 TOP3: ${top.map(fmt).join(", ")}`);
   if (bad.length) lines.push(`- 돈이 새는(조심할) 달: ${bad.map(fmt).join(", ")}`);
+  // 연 단위 재물 피크 — 달력 표의 "크게 벌리는 해" 행과 같은 계산. 해 얘기는
+  // '크게 바뀌는 해' 장이 독점하므로 어느 장에서 쓰는지도 여기서 못 박는다.
+  const years = computeWealthYears(analysis);
+  if (years.length) {
+    lines.push(
+      `- 크게 벌리는 해: ${years.map(fmt).join(", ")} — 이 해는 '네 인생이 크게 바뀌는 해' 장에서만 언급할 것`,
+    );
+  }
 
   return `[재물 확정값 — 점수와 달은 아래 값을 그대로 인용할 것. 다른 점수·다른 달을 지어내지 말 것]\n${lines.join("\n")}`;
 }
@@ -746,6 +754,119 @@ export function buildInyeonFactsBlock(
 
 function iljuHurtNote(hurt: boolean): string {
   return hurt ? " (흔들림 감점 반영)" : "";
+}
+
+// ── 대운 연대기 (결정론 · LLM 0원) ───────────────────
+// 타이트 결과지의 "억까가 끝나는 시기" 서사가 이 데이터다 — 대운 열 개를 표로 세우면
+// 결과지에 인생 전체가 걸린다. 유불리는 result-view 대운 곡선과 같은 잣대(용신/희신/기신/구신)를
+// 쓴다 — 곡선과 연대기가 다른 판정을 내면 한 결과지 안에서 두 명이 말하는 꼴이 된다.
+
+export type DaeunRow = {
+  /** "27~36세" */
+  range: string;
+  /** "2019~2028" — 서사 앵커용(과거 검증 문장이 이 연도를 짚는다) */
+  years: string;
+  ganji: string;
+  /** "정재·상관" — 간/지 십성 이름 */
+  sip: string;
+  /** 유리 | 보통 | 조심 | 무거움 */
+  favor: string;
+  /** 조견표 한 줄 — 십성 카테고리 × 유불리 */
+  line: string;
+  when: "past" | "now" | "future";
+};
+
+const DAEUN_CATEGORY_LINE: Record<string, string> = {
+  비겁성: "내 힘과 사람이 붙는 때",
+  식상성: "말·재주·일 벌임이 커지는 때",
+  재성: "돈과 현실이 손에 잡히는 때",
+  관성: "자리·책임·이름이 붙는 때",
+  인성: "배움·문서·귀인이 드는 때",
+};
+const DAEUN_FAVOR_LINE: Record<string, string> = {
+  유리: "바람이 등 뒤에서 분다",
+  보통: "평지 걸음이다",
+  조심: "기운이 과열되니 눌러 가야 한다",
+  무거움: "무겁게 지나는 구간이다",
+};
+
+export function computeDaeunTimeline(analysis: SajuAnalysisResponse): DaeunRow[] {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const n = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
+  const d = rec(analysis.daeun);
+  const all = Array.isArray(d.all_daeun) ? (d.all_daeun as unknown[]) : [];
+  if (!all.length) return [];
+
+  const gg = rec(analysis.gyeokguk);
+  const yong = String(rec(gg.yongsin).오행 ?? "");
+  const hee = String(gg.희신오행 ?? "");
+  const gi = String(gg.기신오행 ?? "");
+  const gu = String(gg.구신오행 ?? "");
+  const nowAge = n(d.current_age);
+
+  return all.map((item) => {
+    const o = rec(item);
+    const sip = rec(o.sipseong);
+    const ganjiKo = String(o.ganji ?? "");
+    // 유불리 잣대는 천간 오행(대운의 얼굴). result-view deriveDaeun 과 같은 기준.
+    const elKo = OH_OF[ganjiKo.charAt(0)] ?? "";
+    const favor = elKo && (elKo === yong || elKo === hee) ? "유리" : elKo === gi ? "조심" : elKo === gu ? "무거움" : "보통";
+    const cat = String(sip.ganCategory ?? "");
+    const ageStart = n(o.age_start);
+    const ageEnd = n(o.age_end);
+    return {
+      range: `${ageStart}~${ageEnd}세`,
+      years: o.year_start && o.year_end ? `${o.year_start}~${o.year_end}` : "",
+      ganji: ganjiKo,
+      sip: [String(sip.gan ?? ""), String(sip.ji ?? "")].filter(Boolean).join("·"),
+      favor,
+      line: `${DAEUN_CATEGORY_LINE[cat] ?? "흐름이 바뀌는 때"} — ${DAEUN_FAVOR_LINE[favor]}`,
+      when: ageEnd < nowAge ? "past" : ageStart <= nowAge && nowAge <= ageEnd ? "now" : "future",
+    };
+  });
+}
+
+// ── 크게 벌리는 해 (결정론 · LLM 0원) ─────────────────
+// 인연 topYears 와 같은 패턴을 재물 잣대로 — 세운 용신 점수에 재성(정재·편재)·식상 가점.
+// 식상을 치는 이유: 재성이 "돈 자체"라면 식상은 "돈을 만드는 일"이라, 식상 해에 벌인 일이
+// 재성 해에 돈이 된다(고전 식상생재). 재성만 보면 벌 준비가 된 해를 놓친다.
+
+export function computeWealthYears(analysis: SajuAnalysisResponse): WealthMonth[] {
+  const rec = (v: unknown): Record<string, unknown> =>
+    v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+  const n = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
+  const s = (v: unknown): string => (v == null ? "" : String(v));
+
+  const se = rec(analysis.seun);
+  const rows: { label: string; year: number; score: number; verdict: string }[] = [];
+  const seen = new Set<string>();
+  for (const y of [se.currentSeun, ...arr(se.upcomingSeuns)]) {
+    const o = rec(y);
+    if (o.year == null) continue;
+    const label = `${s(o.year)}년(${s(o.age)}세)`;
+    if (seen.has(label)) continue;
+    seen.add(label);
+    const j = rec(o.yongsinJudgment);
+    let sc = Math.trunc(Math.max(-120, Math.min(120, n(j.종합점수))) / 8);
+    const relG = s(rec(o.sipseongRelation).gan);
+    const relJ = s(rec(o.sipseongRelation).ji);
+    if (/^(정재|편재)$/.test(relG)) sc += 20;
+    if (/^(정재|편재)$/.test(relJ)) sc += 10;
+    if (/^(식신|상관)$/.test(relG)) sc += 8;
+    rows.push({ label, year: n(o.year), score: sc, verdict: s(j.종합판정) });
+  }
+
+  // 인연 topYears 와 같은 창(NEAR_YEARS) — "11년 뒤에 번다"는 상품이 안 된다.
+  const baseYear = n(rec(se.currentSeun).year);
+  let pool = rows.filter((r) => r.verdict !== "대흉");
+  if (pool.length < 2) pool = rows;
+  const near = baseYear ? pool.filter((r) => r.year >= baseYear && r.year < baseYear + NEAR_YEARS) : pool;
+  return [...(near.length >= 2 ? near : pool)]
+    .sort((a, b) => b.score - a.score || a.year - b.year)
+    .slice(0, 2)
+    .map((r) => ({ label: r.label, verdict: r.verdict, score: r.score }));
 }
 
 // ── 크로스셀 개인화 신호 ────────────────────────────

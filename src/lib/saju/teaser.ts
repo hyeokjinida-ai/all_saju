@@ -7,7 +7,7 @@
 //    값 자체가 그 사람 명식에서 나온 거라 "맞혔다" 효과는 그대로 난다.
 //  - 크게 바뀌는 해 = 유료 결과지가 쓰는 computeInyeonFacts 와 **같은 계산**을 인용한다.
 //    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
-import { computeInyeonFacts, type SajuAnalysisResponse } from "./saju-api";
+import { computeInyeonFacts, computeDaeunTimeline, type SajuAnalysisResponse } from "./saju-api";
 import { buildPartnerFace, type PartnerFace } from "./partner-face";
 
 export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
@@ -71,10 +71,12 @@ export const SANGUN_JANG: {
   teaseResult: string;
   chapterIdx: number[];
 }[] = [
-  { no: "一", teaseTeaser: ["착한 얼굴 말고,", "네 진짜 그릇부터 보자"], teaseResult: "네 그릇부터 본다", chapterIdx: [0, 1] },
-  { no: "二", tag: "장부 기밀", teaseTeaser: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"], teaseResult: "돈 — 달까지 적었다", chapterIdx: [2, 4] },
-  { no: "三", tag: "운명 카드", teaseTeaser: ["네 짝이 적힌 자리도", "넘겨 봤다"], teaseResult: "인연 — 네 짝의 자리", chapterIdx: [3, 5] },
-  { no: "四", tag: "붉은 표시", teaseTeaser: ["장부에 붉게 적힌 해가 있다.", "이것만 미리 보여주마"], teaseResult: "붉게 적힌 해, 그리고 네 물음", chapterIdx: [6, 7, 8] },
+  // chapterIdx 는 11장 목차(prompt.ts outline) 기준. 9장 옛 결과지는 SangunResult 의
+  // LEGACY_JANG_IDX 가 따로 든다 — 여기 숫자를 옛 결과지에 대면 장이 뒤섞인다.
+  { no: "一", teaseTeaser: ["착한 얼굴 말고,", "네 진짜 그릇부터 보자"], teaseResult: "네 그릇부터 본다", chapterIdx: [0, 1, 2] },
+  { no: "二", tag: "장부 기밀", teaseTeaser: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"], teaseResult: "돈 — 달까지 적었다", chapterIdx: [3, 5] },
+  { no: "三", tag: "운명 카드", teaseTeaser: ["네 짝이 적힌 자리도", "넘겨 봤다"], teaseResult: "인연 — 네 짝의 자리", chapterIdx: [4, 6] },
+  { no: "四", tag: "붉은 표시", teaseTeaser: ["장부에 붉게 적힌 해가 있다.", "이것만 미리 보여주마"], teaseResult: "붉게 적힌 해, 그리고 네 물음", chapterIdx: [7, 8, 9, 10] },
 ];
 
 export type TeaserChapterItem = {
@@ -110,7 +112,31 @@ const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as
 
 type PastEvent = { year: number; age: number; line: Line };
 
-function computePastEvent(analysis: SajuAnalysisResponse): PastEvent | null {
+// export: 결과지 '네가 걸어온 길' 장이 **같은 연도**를 짚어야 한다 — 티저에서 2021년을 맞혀 놓고
+// 결제 후 결과지가 2019년을 말하면 그 자리에서 어긋난다(따로 계산 금지).
+export function computePastEvent(analysis: SajuAnalysisResponse): PastEvent | null {
+  return computePastEventInner(analysis);
+}
+
+/** '네가 걸어온 길' 확정값 — 대운 연대기(과거·현재만) + 티저 콜드리딩과 같은 과거 검증 연도.
+ *  전부 결정론이라 여기(티저 옆)에 둔다: 티저가 짚는 연도와 결과지가 짚는 연도의 출처가 한 곳이어야
+ *  결제 전후가 안 어긋난다. generate-result 와 sample-results 가 같이 쓴다. */
+export function buildPastBlock(analysis: SajuAnalysisResponse): string {
+  const rows = computeDaeunTimeline(analysis).filter((r) => r.when !== "future");
+  if (!rows.length) return "";
+  const lines = rows.map(
+    (r) => `- ${r.when === "now" ? "지금" : "지나온"} 대운 ${r.range}${r.years ? `(${r.years})` : ""} ${r.ganji}: ${r.line}`,
+  );
+  const past = computePastEvent(analysis);
+  if (past) {
+    lines.push(
+      `- 과거 검증 후보: ${past.year}년(${past.age}세) — 이 연도를 본문에서 반드시 짚을 것. 무슨 일이었는지는 두 갈래로 열어 둘 것`,
+    );
+  }
+  return `[걸어온 길 확정값 — 연도·나이는 이 값만 쓸 것. 이 장 머리에 대운 연대기 표가 떠 있다]\n${lines.join("\n")}`;
+}
+
+function computePastEventInner(analysis: SajuAnalysisResponse): PastEvent | null {
   const daeun = rec(analysis.daeun);
   const nowAge = num(daeun.current_age);
   const cur = rec(daeun.current_daeun);
@@ -367,7 +393,8 @@ export function buildTeaser(
   //
   // 七장·八장에는 **이미 공개한 값**을 다시 박는다. 잠긴 줄만 늘어놓으면 "뭘 주는지" 대신
   // "안 주는 게 많다"로 읽힌다 — 하나라도 열려 있어야 나머지 잠금이 미끼가 된다.
-  // 결과지 9챕터를 4章에 담는다(불릿 아홉 = 챕터 아홉, 1:1 유지).
+  // 결과지 11챕터를 4章에 담는다(불릿 열하나 = 챕터 열하나, 1:1 유지 — 목차에 있는데
+  // 결과지에 없으면 들통 규칙 그대로).
   // 부제는 산군 어미 규칙(~다/~라, 해체 금지)을 지키면서 한 번에 읽히게 — "생각하게 만드는" 단어 금지.
   const J = SANGUN_JANG;
   const chapters: TeaserChapter[] = voice !== "sangun" ? [] : [
@@ -377,6 +404,10 @@ export function buildTeaser(
       tease: J[0].teaseTeaser,
       items: [
         { lead: "타고난 본바탕과 강점 둘", main: "남들과 다른 결 하나", mask: "▓▓▓▓" },
+        // 걸어온 길 — 과거 검증이 잡혔으면 그 연도를 미리 깐다(콜드리딩과 같은 값이라 어긋날 일 없다)
+        past
+          ? { lead: "네가 걸어온 대운을 되짚어", main: "지나온 해까지 맞춰 보인다", peek: `${past.year}년의 그 일` }
+          : { lead: "네가 걸어온 대운을 되짚어", main: "지나온 해까지 맞춰 보인다", mask: "▓▓▓▓년" },
         { lead: "올해 분명히 오는 기회 하나", main: "정리될 것 하나", mask: "▓▓▓▓" },
       ],
     },
@@ -407,6 +438,7 @@ export function buildTeaser(
           ? { lead: "네 인생이 크게 바뀌는 해", main: "그 해에 무엇이 갈리는지", peek: `${turningYear.year}년, ${turningYear.age}세` }
           : { lead: "네 인생이", main: "크게 바뀌는 해", mask: "▓▓▓▓년" },
         { lead: "네가 적어 보낸 물음에", main: "확답부터 박는다", mask: "▓▓▓▓" },
+        { lead: "네게 맞는 방향·색·자리까지", main: "산군의 처방으로 적었다", mask: "▓▓▓▓" },
         { lead: "이번 주에 할 것", main: "세 가지", mask: "▓▓▓▓" },
       ],
     },

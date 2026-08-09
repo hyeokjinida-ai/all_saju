@@ -85,6 +85,8 @@ async function main() {
   const { generateByChapters } = await import("../src/lib/saju/llm");
   const { normalizeResultVoice } = await import("../src/lib/saju/normalize-voice");
   const { buildMonthPlan, generateBlueprint } = await import("../src/lib/saju/blueprint");
+  const { buildPastBlock } = await import("../src/lib/saju/teaser");
+  const { computePrescription, buildPrescriptionBlock } = await import("../src/lib/saju/prescription");
   const model = process.env.LLM_MODEL ?? "?";
   const tag = model.replace(/[^a-z0-9]/gi, "");
   console.log(`\n=== 모델: ${process.env.LLM_PROVIDER}/${model} ===\n`);
@@ -121,9 +123,9 @@ async function main() {
       console.log("  [확정값 주입]\n" + keyFacts.split("[재물 확정값")[1]?.slice(0, 600));
     }
 
-    // 설계도 + 배정표 — 실제 파이프라인(generate-result.buildPlanForSangun)과 같은 재료.
+    // 설계도 + 배정표 + 장별 확정값 — 실제 파이프라인(generate-result.buildPlanForSangun)과 같은 재료.
     // 샘플이 이걸 건너뛰면 개편의 핵심을 안 잰 채 "좋아졌다"고 말하게 된다.
-    let blueprint = null, monthPlan = null;
+    let blueprint = null, monthPlan = null, pastBlock = null, prescriptionBlock = null;
     if (c.slug === "sangun-sinjeom") {
       const titles = outlineTitles(c.slug);
       try {
@@ -131,8 +133,11 @@ async function main() {
           titles,
           saju.computeWealthFacts(analysis),
           saju.computeInyeonFacts(analysis, c.birthInfo.gender, undefined),
+          saju.computeWealthYears(analysis),
         );
-      } catch { monthPlan = null; }
+        pastBlock = buildPastBlock(analysis) || null;
+        prescriptionBlock = buildPrescriptionBlock(computePrescription(analysis)) || null;
+      } catch { /* 확정값 실패 시 예전 방식으로 */ }
       const tBp = Date.now();
       blueprint = await generateBlueprint({
         keyFacts,
@@ -140,7 +145,7 @@ async function main() {
         chapterTitles: titles,
         arcHint: "", // 스크립트엔 대운 힌트 생략 — 설계도가 연도를 지어내는지도 겸사겸사 본다
       });
-      console.log(`  설계도: ${blueprint ? "OK" : "실패(폴백)"} · ${Date.now() - tBp}ms${blueprint ? ` · 판정="${blueprint.verdict}"` : ""}`);
+      if (blueprint) console.log(`  설계도: OK · ${Date.now() - tBp}ms · 판정="${blueprint.verdict}"`);
     }
 
     const bi = c.birthInfo;
@@ -158,6 +163,8 @@ async function main() {
       keyFacts,
       blueprint,
       monthPlan,
+      pastBlock,
+      prescriptionBlock,
     });
 
     console.log(`  ${chapters.length}개 챕터 생성 중(${model})…`);

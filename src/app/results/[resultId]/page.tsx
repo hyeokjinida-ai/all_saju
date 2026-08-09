@@ -11,9 +11,12 @@ import { parseProfileTags } from "@/lib/saju/profile-tags";
 import {
   computeInyeonFacts,
   computeWealthFacts,
+  computeWealthYears,
+  computeDaeunTimeline,
   extractCrossSellSignal,
   type SajuAnalysisResponse,
 } from "@/lib/saju/saju-api";
+import { computePrescription } from "@/lib/saju/prescription";
 
 export const metadata = { title: "결과지" };
 
@@ -146,6 +149,9 @@ export default async function ResultPage({
                   )
                 : null
             }
+            wealthYears={rawAnalysis ? computeWealthYears(rawAnalysis) : null}
+            daeunTimeline={rawAnalysis ? computeDaeunTimeline(rawAnalysis) : null}
+            prescription={rawAnalysis ? computePrescription(rawAnalysis) : null}
           />
         ) : (
           <>

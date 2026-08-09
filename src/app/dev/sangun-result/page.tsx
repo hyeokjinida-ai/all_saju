@@ -16,9 +16,12 @@ import { buildChartRows } from "@/lib/saju/teaser";
 import {
   computeInyeonFacts,
   computeWealthFacts,
+  computeWealthYears,
+  computeDaeunTimeline,
   ganjiToMyeongsik,
   type SajuAnalysisResponse,
 } from "@/lib/saju/saju-api";
+import { computePrescription } from "@/lib/saju/prescription";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "산군 결과지 미리보기 (dev)" };
@@ -76,6 +79,9 @@ export default async function DevSangunResultPage() {
           chartRows={buildChartRows(analysis)}
           wealth={computeWealthFacts(analysis)}
           inyeon={computeInyeonFacts(analysis, "female", undefined)}
+          wealthYears={computeWealthYears(analysis)}
+          daeunTimeline={computeDaeunTimeline(analysis)}
+          prescription={computePrescription(analysis)}
         />
       </div>
     </div>

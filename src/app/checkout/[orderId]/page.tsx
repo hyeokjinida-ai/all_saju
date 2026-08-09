@@ -71,7 +71,7 @@ export default async function CheckoutPage({
               전에는 이 화면 글자가 통틀어 43자였고 재확신 요소가 하나도 없었다. */}
           <div className="mt-6 border border-gold-pale px-5 py-4" style={{ background: "rgba(255,255,255,0.03)" }}>
             <p className="font-myeongjo text-center text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-              네 장부 아홉 장
+              네 장부 열한 장
             </p>
             <p className="font-myeongjo mt-1.5 text-center text-[13px] leading-[1.75] text-bone-soft">
               확답 일곱 이상 · 앞으로 12개월 전부

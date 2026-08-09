@@ -32,10 +32,13 @@ import {
   buildInyeonFactsBlock,
   computeWealthFacts,
   computeInyeonFacts,
+  computeWealthYears,
   ganjiToMyeongsik,
   type BirthInfo,
   type SajuAnalysisResponse,
 } from "@/lib/saju/saju-api";
+import { computePrescription, buildPrescriptionBlock } from "@/lib/saju/prescription";
+import { buildPastBlock } from "@/lib/saju/teaser";
 
 type SajuInputRow = {
   name: string | null;
@@ -62,31 +65,42 @@ function buildArcHint(analysis: SajuAnalysisResponse): string {
   return lines.join("\n");
 }
 
-/** 산군 전용 설계도 + 달 배정표. 다른 상품·계산 실패·설계도 실패 — 전부 null 로 조용히 내려앉는다. */
+/** 산군 전용 설계도 + 달 배정표 + 장별 확정값. 실패는 전부 null 로 조용히 내려앉는다. */
 async function buildPlanForSangun(
   slug: string,
   rawAnalysis: unknown,
   input: SajuInputRow,
   keyFacts: string | undefined,
-): Promise<{ blueprint: ResultBlueprint | null; monthPlan: MonthAssignment[] | null }> {
-  if (slug !== "sangun-sinjeom" || !rawAnalysis || !keyFacts) return { blueprint: null, monthPlan: null };
+): Promise<{
+  blueprint: ResultBlueprint | null;
+  monthPlan: MonthAssignment[] | null;
+  pastBlock: string | null;
+  prescriptionBlock: string | null;
+}> {
+  const none = { blueprint: null, monthPlan: null, pastBlock: null, prescriptionBlock: null };
+  if (slug !== "sangun-sinjeom" || !rawAnalysis || !keyFacts) return none;
   const analysis = rawAnalysis as SajuAnalysisResponse;
   const titles = outlineTitles(slug);
 
-  // 배정표 — 순수 계산. 이것만 있어도 달 반복은 죽는다.
+  // 배정표 + 장별 확정값 — 순수 계산. 이것만 있어도 달 반복은 죽는다.
   let monthPlan: MonthAssignment[] | null = null;
+  let pastBlock: string | null = null;
+  let prescriptionBlock: string | null = null;
   try {
     const { partnerSex } = parseProfileTags(input.concerns);
     monthPlan = buildMonthPlan(
       titles,
       computeWealthFacts(analysis),
       computeInyeonFacts(analysis, input.gender, partnerSex),
+      computeWealthYears(analysis),
     );
+    pastBlock = buildPastBlock(analysis) || null;
+    prescriptionBlock = buildPrescriptionBlock(computePrescription(analysis)) || null;
   } catch {
-    monthPlan = null;
+    /* 확정값이 없어도 결과지는 나가야 한다 — 그 장들은 예전 방식으로 쓴다 */
   }
 
-  // 설계도 — LLM 1회. 실패하면 null(생성은 계속 간다).
+  // 설계도 — LLM 1회(기본 꺼짐). 실패하면 null(생성은 계속 간다).
   const concern = input.concerns.filter((c) => !c.startsWith("[프로필]")).join(", ");
   const t0 = Date.now();
   const blueprint = await generateBlueprint({
@@ -95,8 +109,8 @@ async function buildPlanForSangun(
     chapterTitles: titles,
     arcHint: buildArcHint(analysis),
   });
-  console.info(`[generate] 설계도 ${blueprint ? "OK" : "실패 → 배정표만으로 진행"} · ${Date.now() - t0}ms`);
-  return { blueprint, monthPlan };
+  if (blueprint) console.info(`[generate] 설계도 OK · ${Date.now() - t0}ms`);
+  return { blueprint, monthPlan, pastBlock, prescriptionBlock };
 }
 
 // saju_inputs row → luckyloveme BirthInfo
@@ -233,6 +247,8 @@ export async function generateResultForOrder(
     keyFacts,
     blueprint: plan.blueprint,
     monthPlan: plan.monthPlan,
+    pastBlock: plan.pastBlock,
+    prescriptionBlock: plan.prescriptionBlock,
   });
   const llm = await generateByChapters(title, chapters);
 

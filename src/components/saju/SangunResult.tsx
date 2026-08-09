@@ -19,7 +19,8 @@ import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import type { ResultView } from "@/lib/saju/result-view";
 import { buildPartnerFace, type PartnerFace } from "@/lib/saju/partner-face";
-import type { WealthFacts, InyeonFacts } from "@/lib/saju/saju-api";
+import type { WealthFacts, WealthMonth, InyeonFacts, DaeunRow } from "@/lib/saju/saju-api";
+import type { Prescription } from "@/lib/saju/prescription";
 
 const GOLD = "#e8c96a";
 const GOLD_SOFT = "rgba(232,201,106,0.75)";
@@ -185,6 +186,94 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
   );
 }
 
+/** 9장 시절(2026-08-08 이전 결제분)의 章 배치 — 이미 산 손님의 재열람이 걸려 있어 지우면 안 된다.
+ *  SANGUN_JANG.chapterIdx 는 11장 기준으로 바뀌었으므로, 옛 결과지는 이 표로 갈라 담는다. */
+const LEGACY_JANG_IDX: Record<string, number[]> = {
+  一: [0, 1],
+  二: [2, 4],
+  三: [3, 5],
+  四: [6, 7, 8],
+};
+
+// 11장이 되면서 "一二三四五六七八九"[idx] 한 글자 인덱싱이 十(10)·十一(11)에서 깨진다 — 배열로.
+const CHAPTER_NUM = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一"];
+
+/** 대운 연대기 — '네가 걸어온 길' 장 머리. 인생 전체가 한 표에 걸리는 자리라 행이 많아도 줄이지 않는다.
+ *  유불리(favor)는 본문·대운 곡선과 같은 잣대(computeDaeunTimeline)라 서로 다른 판정이 나올 수 없다. */
+function DaeunTimelineTable({ rows }: { rows: DaeunRow[] }) {
+  return (
+    <div className="mt-5" style={{ border: `1px solid ${GOLD_PALE}` }}>
+      <div
+        className="flex items-center justify-between px-3.5 py-2.5"
+        style={{ background: "rgba(232,201,106,0.08)", borderBottom: `1px solid ${GOLD_PALE}` }}
+      >
+        <span className="font-myeongjo text-[13px] font-bold" style={{ color: HANJI }}>
+          네 대운 연대기
+        </span>
+        <span className="font-myeongjo text-[11px]" style={{ color: GOLD_SOFT }}>
+          10년마다 판이 바뀐다
+        </span>
+      </div>
+      {rows.map((r, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-2.5 px-3.5 py-2"
+          style={{
+            borderTop: i === 0 ? "none" : "1px solid rgba(232,201,106,0.12)",
+            background: r.when === "now" ? "rgba(143,43,30,0.14)" : undefined,
+          }}
+        >
+          <span className="font-myeongjo w-[64px] shrink-0 text-[12px] text-bone-faint">{r.range}</span>
+          <span className="font-brush w-[44px] shrink-0 text-[15px]" style={{ color: r.when === "now" ? GOLD : GOLD_SOFT }}>
+            {r.ganji}
+          </span>
+          <span className="font-myeongjo grow text-[12px] leading-[1.6]" style={{ color: r.when === "past" ? "rgba(239,230,210,0.55)" : HANJI }}>
+            {r.line}
+          </span>
+          {r.when === "now" && (
+            <span className="font-myeongjo shrink-0 px-1.5 py-0.5 text-[10px]" style={{ background: "#7a2317", color: "#f3e6cf" }}>
+              지금
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 산군의 처방 — 용신/기신 생활 조견표. 해라/피해라 2열(타이트 처방표 대응). */
+function PrescriptionTable({ p }: { p: Prescription }) {
+  return (
+    <div className="mt-5" style={{ border: `1px solid ${GOLD_PALE}` }}>
+      <div
+        className="flex items-center justify-between px-3.5 py-2.5"
+        style={{ background: "rgba(232,201,106,0.08)", borderBottom: `1px solid ${GOLD_PALE}` }}
+      >
+        <span className="font-myeongjo text-[13px] font-bold" style={{ color: HANJI }}>
+          산군의 처방
+        </span>
+        <span className="font-myeongjo text-[11px]" style={{ color: GOLD_SOFT }}>
+          네게 이로운 결 {p.yongKo}
+          {p.giKo ? ` · 누를 결 ${p.giKo}` : ""}
+        </span>
+      </div>
+      {p.rows.map((r, i) => (
+        <div key={r.label} className="px-3.5 py-2.5" style={{ borderTop: i === 0 ? "none" : "1px solid rgba(232,201,106,0.12)" }}>
+          <span className="font-myeongjo block text-[11px] tracking-[0.08em] text-bone-faint">{r.label}</span>
+          <div className="mt-1 space-y-0.5">
+            <p className="font-myeongjo text-[13px] leading-[1.65]" style={{ color: HANJI }}>
+              <span style={{ color: GOLD_SOFT }}>해라</span> — {r.do_}
+            </p>
+            <p className="font-myeongjo text-[13px] leading-[1.65]" style={{ color: "rgba(216,140,120,0.9)" }}>
+              <span style={{ color: "#e8695a" }}>피해라</span> — {r.avoid}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SangunResult({
   view,
   markdown,
@@ -192,6 +281,9 @@ export function SangunResult({
   wealth,
   inyeon,
   chartRows,
+  wealthYears,
+  daeunTimeline,
+  prescription,
 }: {
   view: ResultView;
   markdown: string;
@@ -200,11 +292,20 @@ export function SangunResult({
   inyeon: InyeonFacts | null;
   /** 십성·12운성 줄 — raw_analysis 에서 buildChartRows 로. 없으면(옛 결과지) 한자 판만 선다 */
   chartRows?: ChartRow[];
+  /** 크게 벌리는 해 — 돈의 달력 아래 합류(computeWealthYears) */
+  wealthYears?: WealthMonth[] | null;
+  /** 대운 연대기 — '네가 걸어온 길' 장 머리(computeDaeunTimeline) */
+  daeunTimeline?: DaeunRow[] | null;
+  /** 용신 처방 — '산군의 처방' 장 머리(computePrescription) */
+  prescription?: Prescription | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
-  // 4章 간지는 결과지가 정확히 9챕터일 때만 — 옛 결과지(다른 구성)는 순서대로 폴백
-  const useJang = chapters.length === 9;
+  // 4章 간지는 9장(구)·11장(신) 결과지에서만 — 그 외 구성은 간지 없이 순서대로 폴백
+  const useJang = chapters.length === 9 || chapters.length === 11;
+  const jangIdx = (no: string, idx11: number[]) => (chapters.length === 11 ? idx11 : LEGACY_JANG_IDX[no] ?? idx11);
+  // 표를 어느 장 앞에 세울지는 **챕터 제목**으로 찾는다 — 장 번호를 박으면 구/신 구성에서 어긋난다.
+  const titleOf = (idx: number) => chapters[idx]?.title ?? "";
 
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
@@ -213,6 +314,8 @@ export function SangunResult({
     ? [
         ...wealth.top.map((m) => ({ kind: "돈이 드는 달", label: m.label })),
         ...wealth.bad.map((m) => ({ kind: "새는 달", label: m.label })),
+        // 연 단위 피크 — 본문(크게 바뀌는 해 장)과 같은 계산값(computeWealthYears)
+        ...(wealthYears ?? []).map((y) => ({ kind: "크게 벌리는 해", label: y.label })),
       ]
     : [];
   const inyeonRows = inyeon
@@ -237,7 +340,7 @@ export function SangunResult({
           style={{ color: HANJI }}
         >
           <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
-            {"一二三四五六七八九"[idx] ?? ""}
+            {CHAPTER_NUM[idx] ?? ""}
           </span>
           <span>{c.title}</span>
         </h3>
@@ -323,11 +426,18 @@ export function SangunResult({
                 />
               )}
               {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
-              {j.chapterIdx.map((idx, i) => chapterBlock(idx, i === 0))}
+              {jangIdx(j.no, j.chapterIdx).map((idx, i) => (
+                <div key={idx}>
+                  {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
+                  {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
+                  {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
+                  {chapterBlock(idx, i === 0)}
+                </div>
+              ))}
             </div>
           ))
         ) : (
-          // 9챕터가 아니면(옛 결과지·다른 구성) 간지 없이 순서대로
+          // 9/11챕터가 아니면(다른 구성) 간지 없이 순서대로
           chapters.map((_, i) => chapterBlock(i))
         )}
       </div>

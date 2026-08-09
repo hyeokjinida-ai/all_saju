@@ -14,7 +14,10 @@ export function splitChapters(md: string): { intro: string; chapters: Chapter[] 
   const chapters: Chapter[] = [];
   const intro: string[] = [];
   let cur: { title: string; body: string[] } | null = null;
-  for (const line of md.split("\n")) {
+  // CRLF 내성: 윈도우에서 저장·복사된 md 는 줄끝에 \r 이 남는다. \r 이 있으면 `(.*)$` 가
+  // 통째로 안 걸려 챕터 0개 → 결과지 전체가 intro 로 뭉개진다(회귀 테스트에서 실측).
+  for (const rawLine of md.split("\n")) {
+    const line = rawLine.replace(/\r$/, "");
     const h3 = line.match(/^###\s+(.*)$/);
     if (h3) {
       if (cur) chapters.push({ title: cur.title, body: cur.body.join("\n").trim() });

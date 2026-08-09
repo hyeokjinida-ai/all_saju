@@ -42,6 +42,8 @@ export function buildMonthPlan(
   chapterTitles: string[],
   wealth: WealthFacts | null,
   inyeon: InyeonFacts | null,
+  /** 크게 벌리는 해(computeWealthYears) — 인연 topYears 와 함께 '크게 바뀌는 해' 장이 독점한다 */
+  wealthYears?: { label: string }[] | null,
 ): MonthAssignment[] {
   const plan: MonthAssignment[] = chapterTitles.map(() => ({ allow: [], ownsYears: false }));
   const set = (i: number, allow: string[], ownsYears = false) => {
@@ -52,16 +54,28 @@ export function buildMonthPlan(
   const wBad = wealth?.bad.map((m) => m.label) ?? [];
   const iTop = inyeon?.top3.map((r) => r.label) ?? [];
   const iShaky = inyeon?.shaky.map((r) => r.label) ?? [];
-  const iYears = inyeon?.topYears.map((r) => r.label) ?? [];
+  // 연 단위는 인연 해 + 재물 해를 한 장에 몰아준다(중복 라벨은 하나로).
+  const years = [...new Set([...(inyeon?.topYears.map((r) => r.label) ?? []), ...(wealthYears?.map((r) => r.label) ?? [])])];
 
   set(findIdx(chapterTitles, /돈이 들어오는/), [...wTop.slice(0, 2), wBad[0]]);
   set(findIdx(chapterTitles, /인연이 들어오는/), iTop.slice(0, 2));
   // 이직·계약 시점은 돈 흐름이 근거다. TOP1 하나만 다시 인용하게 허용하고 나머지는 새 달로 채운다.
   set(findIdx(chapterTitles, /일과 자리/), [wTop[0], ...wBad.slice(1)]);
   set(findIdx(chapterTitles, /조심할 달/), iShaky);
-  set(findIdx(chapterTitles, /크게 바뀌는 해/), iYears, true);
-  // 걸어온 길은 과거 전용 — 미래 달을 여기서 말하면 서사가 흐려진다(연 단위는 설계도 arc 가 준다).
+  set(findIdx(chapterTitles, /크게 바뀌는 해/), years, true);
+  // 걸어온 길은 과거 전용 — 미래 달을 여기서 말하면 서사가 흐려진다(연도 근거는 pastBlock 이 준다).
   set(findIdx(chapterTitles, /걸어온 길/), []);
+  // 처방 장은 생활 지침 전용 — 시기를 말하기 시작하면 달력 장들과 겹친다.
+  set(findIdx(chapterTitles, /산군의 처방/), []);
+  // 물음 장은 답의 재총합 자리 — 시기로 답해야 하는데 달을 금지하면 지어낸다(실측: 2026-4 환각).
+  // 돈 TOP2 + 인연 TOP1 재인용을 허용한다. 달도배(3장 이상)는 린터가 계속 지킨다.
+  set(findIdx(chapterTitles, /물음/), [wTop[0], wTop[1], iTop[0]]);
+  // 당부는 "가장 가까운 좋은 달"과 연결하라고 시키는 장 — 후보 중 제일 이른 달 하나만 허용.
+  const soonest = [...wTop, ...iTop]
+    .map((l) => ({ l, m: l.match(/(20\d{2})년\s*(\d{1,2})월/) }))
+    .filter((x) => x.m)
+    .sort((a, b) => Number(a.m![1]) * 100 + Number(a.m![2]) - (Number(b.m![1]) * 100 + Number(b.m![2])))[0]?.l;
+  set(findIdx(chapterTitles, /당부/), soonest ? [soonest] : []);
 
   return plan;
 }
