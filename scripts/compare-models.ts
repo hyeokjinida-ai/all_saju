@@ -72,6 +72,15 @@ const CANDIDATES: Candidate[] = [
     voiceBoost: SANGUN_BOOST,
   },
   {
+    // "문장 맛 2할을 돈으로 살 수 있나"의 답 — 루나의 중상위 형제, 같은 보정으로 맞붙인다.
+    label: "terra+무당보정",
+    model: "gpt-5.6-terra",
+    envKey: "OPENAI_API_KEY",
+    price: { in: 2.0, out: 12.0, cacheHit: 0.2 },
+    noTemp: true,
+    voiceBoost: SANGUN_BOOST,
+  },
+  {
     label: "deepseek-v4-pro",
     model: "deepseek-v4-pro",
     baseURL: "https://api.deepseek.com",
