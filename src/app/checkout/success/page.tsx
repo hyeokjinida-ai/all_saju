@@ -62,9 +62,13 @@ function CheckoutSuccessInner() {
     }
     // 결제 보류 시 결과지 생성을 몇 차례 재시도(자가복구) — 사용자가 떠나기 전에
     // 일시적 API/LLM 장애를 흡수한다. 끝내 실패하면 크론/웹훅이 백업으로 마무리.
+    // 폴링 창은 **생성 시간보다 넉넉해야** 한다. 예전 6초×4=24초는 gpt-4o-mini(8~19초)
+    // 기준이었는데, 루나 11장 결과지는 실측 평균 26초·최대 36초다(15인 배치) — 그대로 두면
+    // 정상 생성인데도 "보류" 화면을 보게 된다. 8초×8=64초로 늘려 첫 화면에서 끝내게 한다.
+    // (그래도 못 받으면 기존대로 크론·웹훅이 백업)
     const selfHeal = async (oid: string): Promise<boolean> => {
-      for (let i = 0; i < 4; i++) {
-        await new Promise((r) => setTimeout(r, 6000));
+      for (let i = 0; i < 8; i++) {
+        await new Promise((r) => setTimeout(r, 8000));
         try {
           const r = await fetch("/api/orders/generate", {
             method: "POST",
