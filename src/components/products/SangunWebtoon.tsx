@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { StoryFooter } from "@/components/products/StoryFooter";
 import { BgMedia } from "@/components/products/BgMedia";
 import { SOCIAL_PROOF, hasSocialProof, formatCount } from "@/config/social-proof";
+import { track } from "@/lib/analytics";
 
 const INK_BG = "linear-gradient(180deg,#0a0b0f 0%,#171017 100%)";
 const SCRIM =
@@ -365,6 +366,9 @@ export function SangunStory({
   const { on, toggle } = useShrineAmbience();
 
   const toMain = () => {
+    // 퍼널 첫 칸 — 게이트를 넘어 상품을 실제로 본 지점. 이게 없으면 "광고 클릭 → 게이트 이탈"과
+    // "상품까지 보고 이탈"을 구분할 수 없다(게이트 이탈률이 이 세션 분석의 최대 미지수였다).
+    track("product_view", { slug: "sangun-sinjeom" });
     setStage("main");
     setTimeout(() => window.scrollTo(0, 0), 0);
   };
