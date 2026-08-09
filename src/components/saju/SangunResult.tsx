@@ -34,12 +34,71 @@ function coverSrc(): string {
   return fs.existsSync(p) ? "/products/sangun/cover.webp" : "/products/sangun/altar.webp";
 }
 
-/** 짝의 얼굴 파일이 실제로 있는지 — 10장(오행5 × 성별2)이 아직 안 왔을 때
- *  깨진 이미지 아이콘 대신 실루엣을 세운다. 표지와 같은 방식(서버에서 판정). */
-function faceSrc(src: string): string | null {
+/** public 에 그 파일이 실제로 있는지 — 없으면 null. 아직 안 온 이미지(얼굴 10장·신규 컷)를
+ *  깨진 아이콘으로 보여주지 않고 조용히 건너뛰기 위한 것. 표지와 같은 방식(서버에서 판정). */
+function assetSrc(src: string): string | null {
   const p = path.join(process.cwd(), "public", src.replace(/^\//, ""));
   return fs.existsSync(p) ? src : null;
 }
+
+/** 장 머리에 세우는 웹툰 컷 + 말풍선 — 타이트 결과지 실측(8-2)의 「웹툰 컷 + 말풍선」 자리.
+ *
+ *  그들의 진짜 상품은 글이 아니라 조판이고, 14,000자를 끝까지 읽히게 하는 건 이 리듬이다.
+ *  글 → 그림 → 표 → 글 로 숨을 끊어 줘야 긴 결과지가 벽으로 안 읽힌다.
+ *  티저 컷과 같은 옷(한지 말풍선 + 붉은 「산군」 배지)이라 결제 전후 세계관이 이어진다. */
+function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: string; say: string; pos?: string }) {
+  const ok = assetSrc(src);
+  if (!ok) return null; // 아직 안 온 컷(money·close)은 그 자리만 조용히 비운다
+  return (
+    // 본문 패딩(px-4=16)을 되물려 컬럼 끝까지 채운다 — 판 패딩을 바꾸면 이 값도 같이 바꿔야 한다.
+    <div className="relative -mx-4 mt-7 h-[220px] overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={ok}
+        alt={alt}
+        className="h-full w-full select-none object-cover"
+        loading="lazy"
+        draggable={false}
+        style={{ objectPosition: pos }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.66) 0%,rgba(8,7,6,0.15) 42%,rgba(8,7,6,0) 64%)" }}
+      />
+      <div className="absolute inset-x-4 bottom-3.5 z-10">
+        <div
+          className="relative rounded-[5px] px-4 py-2.5"
+          style={{
+            background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+            border: "1px solid rgba(201,185,142,0.8)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+          }}
+        >
+          <span
+            className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
+            style={{ background: RED, color: "#f3e6cf" }}
+          >
+            산군
+          </span>
+          <p className="font-myeongjo text-[14.5px] font-semibold leading-[1.7] text-[#241d10]">{say}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 장 제목 → 컷 배치표. 장 번호가 아니라 **제목**으로 매칭하므로 9장(구)·11장(신) 양쪽에서
+ *  해당 장이 있는 자리에만 알아서 선다(없는 장은 자연 생략 — 하위호환 공짜). */
+const CHAPTER_CUTS: { match: RegExp; src: string; alt: string; say: string; pos?: string }[] = [
+  { match: /그릇부터/, src: "/products/sangun/t2-read.webp", alt: "탁자 너머로 고개를 숙이고 마주 앉은 산군", say: "네 본바탕부터 읽는다.", pos: "center 28%" },
+  { match: /걸어온 길/, src: "/products/sangun/t1-open.webp", alt: "옛 장부를 펴 든 손", say: "지나온 장부터 넘긴다." },
+  { match: /돈이 들어오는/, src: "/products/sangun/money.webp", alt: "엽전 꾸러미를 든 손과 펼친 장부", say: "돈 얘기다. 몇 월인지까지 적어 뒀다." },
+  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "움직일 때와 엎드릴 때가 갈린다." },
+  { match: /인연이 들어오는/, src: "/products/sangun/t5-thread.webp", alt: "손가락에 붉은 실을 감고 장부를 짚은 손", say: "네 짝이 적힌 자리다." },
+  { match: /크게 바뀌는 해/, src: "/products/sangun/t6-mark.webp", alt: "붉은 붓으로 장부의 한 해에 동그라미를 치는 손", say: "장부에 붉게 적힌 해가 있다." },
+  { match: /산군의 처방/, src: "/products/sangun/altar.webp", alt: "촛불 제단 앞에 선 박수의 뒷모습", say: "마지막으로, 네가 지니고 살 것들이다.", pos: "center 40%" },
+];
 
 /** 짝의 얼굴 — 결제 전 티저에서 흐리게 보여준 **그 장**을 여기서 연다.
  *
@@ -47,7 +106,7 @@ function faceSrc(src: string): string | null {
  *  여기서 하는 일은 두 가지뿐이다 — 블러를 걷고, 가려뒀던 네 줄을 실제 값으로 채운다.
  *  결제의 회수 지점이라 인연 章에서 제일 먼저 세운다(손님의 마지막 기억이 이 카드다). */
 function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth: string; ageDir: string }) {
-  const src = faceSrc(face.src);
+  const src = assetSrc(face.src);
   const rows: [string, string][] = [
     ["만나는 시기", meetMonth || "아래 인연의 달력 참고"],
     ["외모", face.look],
@@ -426,20 +485,35 @@ export function SangunResult({
                 />
               )}
               {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
-              {jangIdx(j.no, j.chapterIdx).map((idx, i) => (
-                <div key={idx}>
-                  {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
-                  {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
-                  {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
-                  {chapterBlock(idx, i === 0)}
-                </div>
-              ))}
+              {jangIdx(j.no, j.chapterIdx).map((idx, i) => {
+                // 타이트 8-2 리듬: 컷(그림+말) → 표(개인화 그래픽) → 본문. 그림이 먼저 와야
+                // 장이 바뀐 게 눈으로 먼저 읽힌다.
+                const cut = CHAPTER_CUTS.find((c) => c.match.test(titleOf(idx)));
+                return (
+                  <div key={idx}>
+                    {cut && <ResultCut src={cut.src} alt={cut.alt} say={cut.say} pos={cut.pos} />}
+                    {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
+                    {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
+                    {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
+                    {chapterBlock(idx, i === 0)}
+                  </div>
+                );
+              })}
             </div>
           ))
         ) : (
           // 9/11챕터가 아니면(다른 구성) 간지 없이 순서대로
           chapters.map((_, i) => chapterBlock(i))
         )}
+
+        {/* 맺음 컷 — 장부를 덮고 낙관을 찍는 손. "다시 열어라"가 재열람 루프의 씨앗이고,
+            나중에 후기·추가질문 버튼이 이 자리 아래 붙는다. */}
+        <ResultCut
+          src="/products/sangun/close.webp"
+          alt="장부의 마지막 장에 붉은 낙관을 찍는 손"
+          say="여기까지가 네 장부다. 적어 준 달이 오거든 다시 열어봐라."
+          pos="center 45%"
+        />
       </div>
     </div>
   );
