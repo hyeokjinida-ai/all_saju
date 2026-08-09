@@ -32,7 +32,20 @@ type Candidate = {
   price: { in: number; out: number; cacheHit?: number };
   /** GPT-5.6 계열은 temperature 지정을 거부한다(기본 1만 허용) — true 면 안 보낸다 */
   noTemp?: boolean;
+  /** 어투 실험용 — 챕터 system 뒤에 덧붙는 지시. 프로덕션 프롬프트는 안 건드리고 A/B 만 한다 */
+  voiceBoost?: string;
 };
+
+// 루나 무당 보정 실험(2026-08-09) — 루나는 규율(헷지2·해체0·13초)은 1등인데 결이 컨설턴트다.
+// pro 문장에서 팔리는 요소를 지시로 옮겼다: 물상·비유·신점 어미·장부 소품. 지시를 제일 잘
+// 따르는 모델이니, 이게 먹히면 속도·비용·규율·세계관을 다 가진다.
+const SANGUN_BOOST = `
+
+[문장의 결 — 이 지시가 문체의 반이다]
+- **일간·오행은 물상으로 그려라.** "기토라서 안정적이다" ✗ → "기토는 가을걷이 끝난 밭이다. 씨를 받아 품을 줄 알고, 한 번 품으면 계절이 바뀌어도 놓지 않는다" ○
+- **소제목마다 비유를 최소 하나 박아라.** 명식의 구조를 사물의 그림으로 바꿔 말한다 — "월지 양인에 장성살이면 논밭에 칼날 심은 격이다"처럼.
+- **산군이 장부를 읽는 소리를 내라.** "장부를 펼쳐 보니", "네 장부 둘째 줄에 적혀 있다", "~하더군" 같은 신점의 말버릇을 장마다 한 번은 쓴다.
+- 단, 어미 규칙은 그대로다: 평서는 "~다", 시킬 땐 "~라". 해체(~어/~지/~야/~겠지)는 이야기에 몰입해도 절대 쓰지 않는다.`;
 
 const CANDIDATES: Candidate[] = [
   {
@@ -49,6 +62,14 @@ const CANDIDATES: Candidate[] = [
     envKey: "OPENAI_API_KEY",
     price: { in: 0.2, out: 1.2, cacheHit: 0.02 },
     noTemp: true,
+  },
+  {
+    label: "luna+무당보정",
+    model: "gpt-5.6-luna",
+    envKey: "OPENAI_API_KEY",
+    price: { in: 0.2, out: 1.2, cacheHit: 0.02 },
+    noTemp: true,
+    voiceBoost: SANGUN_BOOST,
   },
   {
     label: "deepseek-v4-pro",
@@ -165,6 +186,9 @@ async function main() {
     say(`|---|---|---|---|---|---|---|---|---|---|---|`);
 
     for (const c of CANDIDATES) {
+      // CANDIDATE_FILTER=보정 처럼 라벨 부분일치로 골라 돌린다 — 전 후보 재실행은 돈·시간 낭비.
+      const filter = process.env.CANDIDATE_FILTER;
+      if (filter && !c.label.includes(filter)) continue;
       const key = process.env[c.envKey];
       if (!key) { say(`| ${c.label} | ${c.envKey} 없음 — 건너뜀 | | | | | | | | | |`); continue; }
       // timeout: pro 꼬리 지연이 스크립트 전체를 물고 늘어진다(실측 600초 킬) — llm.ts 와 같은 150초 컷.
@@ -176,7 +200,7 @@ async function main() {
           const r = await client.chat.completions.create({
             model: c.model,
             messages: [
-              { role: "system", content: ch.system },
+              { role: "system", content: ch.system + (c.voiceBoost ?? "") },
               { role: "user", content: ch.user },
             ],
             ...(c.noTemp ? {} : { temperature: 0.7 }),
@@ -212,7 +236,8 @@ async function main() {
       const norm = normalizeResultVoice(md, { banmal: true, name: "김지영" }).text;
       const chk = checkText(norm, findFamilyAssertions(norm).length);
 
-      const slugName = c.model.replace(/[^a-z0-9.-]/gi, "");
+      // 라벨 기준 — 같은 모델을 보정 전/후로 두 번 돌릴 때 파일이 덮어써지지 않게.
+      const slugName = c.label.replace(/[^\w.가-힣-]/g, "");
       // lint-result.ts 가 읽는 헤더 — slug 로 temp/analysis-<slug>.json 을 찾아 달 검사를 돈다.
       const header = `<!-- slug=${sampleSlug} · 김지영 · birth=${s.birthDate} · gender=${s.gender} · concern=돈·인연 · ${c.model} · ${chapters.length}챕터 -->\n\n`;
       writeFileSync(`${OUT_DIR}/표본${si + 1}_${slugName}.md`, header + norm, "utf8");
