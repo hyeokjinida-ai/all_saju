@@ -214,7 +214,10 @@ async function main() {
     const md = saved.interpretation_md ?? "";
     const { chapters } = splitChapters(md);
     push("저장 확인", "OK", `${md.length}자 · ${saved.llm_provider}/${saved.llm_model}`);
-    push("챕터 수", chapters.length === 9 ? "OK" : "FAIL", `${chapters.length}/9 — 9가 아니면 결과지 간지(4章)가 폴백된다`);
+    // 11장(2026-08-09 개편) 또는 9장(그 이전 결제분) 둘 다 정상 — SangunResult 가 양쪽을 든다.
+    // 그 밖의 숫자면 章 간지가 폴백되고 표·컷 배치도 어긋난다.
+    const okChapters = chapters.length === 11 || chapters.length === 9;
+    push("챕터 수", okChapters ? "OK" : "FAIL", `${chapters.length}장 — 11(현행) 또는 9(구)여야 章 간지가 선다`);
     push("명식 저장", saved.myeongsik ? "OK" : "FAIL", saved.myeongsik ? "있음" : "없음 — 표지·원국 카드가 빈다");
     push("raw_analysis", saved.raw_analysis ? "OK" : "FAIL", saved.raw_analysis ? "있음" : "없음 — 달력 표가 통째로 사라진다");
 
