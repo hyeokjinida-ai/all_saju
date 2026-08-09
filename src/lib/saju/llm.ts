@@ -117,14 +117,22 @@ async function callOpenAICompatible(
   const cfg = OPENAI_COMPAT[provider];
   if (!key) throw new Error(`${cfg.envKey} is required when LLM_PROVIDER=${provider}`);
   const { default: OpenAI } = await import("openai");
-  // timeout: deepseek-v4-pro 실측 지연이 챕터당 30~90초인데, 꼬리가 길어지면 SDK 기본
-  // 재시도(2회, 지수 백오프)와 겹쳐 한 번 생성에 633초까지 찍혔다(2026-08-09 실측).
-  // 우리는 generateByChapters 가 챕터 재시도를 직접 하므로 SDK 재시도는 끄고,
-  // 한 시도를 150초에서 끊는다 — 최악 (150+150)초 < confirm maxDuration 300초.
+  // 재시도·타임아웃은 프로바이더마다 **정반대 이유**로 갈린다.
+  //
+  //  deepseek: 꼬리 지연이 문제였다 — 챕터당 30~90초인데 SDK 기본 재시도와 겹쳐 한 번
+  //    생성에 633초까지 찍혔다(2026-08-09 실측). 그래서 재시도를 끄고 150초에서 끊는다.
+  //  openai(루나): 꼬리가 없다(20~30초). 대신 **429(분당 토큰 한도)** 가 실제 위험이다 —
+  //    결과지 1건이 입력 ~20만 토큰이라, 결제가 몰리면 두 번째 손님부터 전 챕터가
+  //    즉시 거절된다(배치 검증에서 15명 중 14명이 이걸로 죽었다). 429 는 잠깐 기다리면
+  //    풀리는 것이므로 SDK 백오프(retry-after 헤더 존중)에 맡긴다.
+  //    최악 시간: 120초 × (1+2회) = 360초지만, 실제로는 첫 시도 20~30초에 끝나고
+  //    429 일 때만 대기가 붙는다. 그마저 실패하면 80% 게이트가 부분 저장을 막고
+  //    폴링·크론이 이어받는다(generate-result 참고).
+  const isDeepseek = provider === "deepseek";
   const client = new OpenAI({
     apiKey: key,
-    timeout: 150_000,
-    maxRetries: 0,
+    timeout: isDeepseek ? 150_000 : 120_000,
+    maxRetries: isDeepseek ? 0 : 2,
     ...(cfg.baseURL ? { baseURL: cfg.baseURL } : {}),
   });
   const completion = await client.chat.completions.create({
