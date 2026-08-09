@@ -22,7 +22,7 @@ for (const f of [".env.local", ".env"]) {
 }
 
 type Severity = "FAIL" | "WARN";
-type Rule = {
+export type Rule = {
   id: string;
   what: string;
   why: string;
@@ -30,7 +30,7 @@ type Rule = {
   /** 본문에서 위반 조각을 뽑는다 */
   find: (text: string, ctx: Ctx) => string[];
 };
-type Ctx = {
+export type Ctx = {
   name: string;
   birthYear: number;
   thisYear: number;
@@ -61,7 +61,7 @@ function monthsInText(t: string): string[] {
   return [...t.matchAll(/(20\d{2})년\s*(\d{1,2})월/g)].map((m) => monthKey(m[1], m[2]));
 }
 
-const RULES: Rule[] = [
+export const RULES: Rule[] = [
   {
     id: "존대-당신",
     what: '독자를 "당신"이라 부름',
@@ -194,9 +194,13 @@ const RULES: Rule[] = [
     severity: "WARN",
     find: (t) => {
       const chs = chapters(t);
-      // 어느 장에서 나왔는지까지 찍는다 — 배정표(1단계)를 짤 때 어디를 떼어낼지 바로 보이게.
+      // '네 물음'과 '마지막 당부'는 **앞 장의 달을 도로 끌어와 매듭짓는 자리**다(배정표가 그렇게
+      // 허용한다). 답을 시기로 맺고 이번 주 할 일을 가장 가까운 좋은 달에 거는 게 상품이라,
+      // 여기서 나온 재인용까지 세면 정상 결과지가 전부 위반으로 잡힌다(실측 15/15).
+      // 그래서 **재인용 장은 세지 않는다** — 진짜 도배(설명을 되풀이하는 장들)만 남긴다.
       const where = new Map<string, number[]>();
       chs.forEach((c, i) => {
+        if (/물음|당부/.test(c.split("\n")[0] ?? "")) return;
         new Set(monthsInText(c)).forEach((m) => where.set(m, [...(where.get(m) ?? []), i + 1]));
       });
       return [...where.entries()]
@@ -256,7 +260,7 @@ const RULES: Rule[] = [
 
 /** 명식 캐시에서 **확정값을 다시 계산**해 (표에 실리는 달, 월운에 존재하는 달) 두 집합을 만든다.
  *  저장된 결과지 값을 믿지 않는다 — 계산이 곧 정답지고, 그게 표에 그려지는 값이다. */
-async function loadMonthSets(
+export async function loadMonthSets(
   slug: string,
   gender: "male" | "female",
 ): Promise<{ table: Set<string>; data: Set<string> } | null> {
@@ -352,4 +356,8 @@ async function main() {
   process.exit(total ? 1 : 0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// 다른 스크립트가 RULES 를 import 해 쓸 때(verify-batch) 이 CLI 까지 같이 돌면 안 된다 —
+// 남의 실행을 "검사할 md 가 없다"로 죽여 버린다(실측). 직접 실행일 때만 돈다.
+if (/lint-result/.test(process.argv[1] ?? "")) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}
