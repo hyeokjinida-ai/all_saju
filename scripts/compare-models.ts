@@ -30,6 +30,8 @@ type Candidate = {
   envKey: string;
   /** $/1M 토큰 */
   price: { in: number; out: number; cacheHit?: number };
+  /** GPT-5.6 계열은 temperature 지정을 거부한다(기본 1만 허용) — true 면 안 보낸다 */
+  noTemp?: boolean;
 };
 
 const CANDIDATES: Candidate[] = [
@@ -40,12 +42,13 @@ const CANDIDATES: Candidate[] = [
     price: { in: 0.15, out: 0.6 },
   },
   {
-    // 싼 쪽도 같이 본다 — 지금(4o-mini)보다 원가가 낮으면서 문체를 지키면 그게 최선이다.
-    label: "deepseek-v4-flash",
-    model: "deepseek-v4-flash",
-    baseURL: "https://api.deepseek.com",
-    envKey: "DEEPSEEK_API_KEY",
-    price: { in: 0.14, out: 0.28, cacheHit: 0.0028 },
+    // 신형 최저가 도전자 — pro 의 1/4 가격(₩44/건 추정). 자를 통과하면 env 한 줄로 갈아탄다.
+    // (flash 는 2026-08-09 A/B 에서 탈락: 존댓말·나이오류 치명 + 80~109초 — 후보에서 뺌)
+    label: "gpt-5.6-luna",
+    model: "gpt-5.6-luna",
+    envKey: "OPENAI_API_KEY",
+    price: { in: 0.2, out: 1.2, cacheHit: 0.02 },
+    noTemp: true,
   },
   {
     label: "deepseek-v4-pro",
@@ -73,9 +76,12 @@ function checkText(text: string, familyHits: number) {
 
 async function main() {
   const api = await import("../src/lib/saju/saju-api");
-  const { buildChapterPrompts } = await import("../src/lib/saju/prompt");
+  const { buildChapterPrompts, outlineTitles } = await import("../src/lib/saju/prompt");
   const { findFamilyAssertions } = await import("../src/lib/saju/quality-gate");
   const { normalizeResultVoice } = await import("../src/lib/saju/normalize-voice");
+  const { buildMonthPlan } = await import("../src/lib/saju/blueprint");
+  const { buildPastBlock } = await import("../src/lib/saju/teaser");
+  const { computePrescription, buildPrescriptionBlock } = await import("../src/lib/saju/prescription");
   const { default: OpenAI } = await import("openai");
 
   mkdirSync(OUT_DIR, { recursive: true });
@@ -122,6 +128,20 @@ async function main() {
       api.buildInyeonFactsBlock(analysis, s.gender, undefined),
     ].filter(Boolean).join("\n\n");
 
+    // 배정표 + 장별 확정값 — 실서비스(generate-result.buildPlanForSangun)와 같은 재료.
+    // 이거 없이 재면 걸어온 길·처방 장이 확정값 없이 돌아 실제와 다른 결과지를 비교하게 된다.
+    let monthPlan = null, pastBlock = null, prescriptionBlock = null;
+    try {
+      monthPlan = buildMonthPlan(
+        outlineTitles(SLUG),
+        api.computeWealthFacts(analysis),
+        api.computeInyeonFacts(analysis, s.gender, undefined),
+        api.computeWealthYears(analysis),
+      );
+      pastBlock = buildPastBlock(analysis) || null;
+      prescriptionBlock = buildPrescriptionBlock(computePrescription(analysis)) || null;
+    } catch { /* 확정값 실패 시 예전 방식 그대로 */ }
+
     const { title, chapters } = buildChapterPrompts({
       productSlug: SLUG,
       productName: "산군 신점",
@@ -134,6 +154,9 @@ async function main() {
       gender: s.gender,
       concerns: ["돈", "인연"],
       keyFacts,
+      monthPlan,
+      pastBlock,
+      prescriptionBlock,
     });
 
     const label = `표본${si + 1} ${s.birthDate} ${s.gender === "female" ? "여" : "남"} ${s.birthTime ?? "시간모름"}`;
@@ -144,7 +167,8 @@ async function main() {
     for (const c of CANDIDATES) {
       const key = process.env[c.envKey];
       if (!key) { say(`| ${c.label} | ${c.envKey} 없음 — 건너뜀 | | | | | | | | | |`); continue; }
-      const client = new OpenAI({ apiKey: key, ...(c.baseURL ? { baseURL: c.baseURL } : {}) });
+      // timeout: pro 꼬리 지연이 스크립트 전체를 물고 늘어진다(실측 600초 킬) — llm.ts 와 같은 150초 컷.
+      const client = new OpenAI({ apiKey: key, timeout: 150_000, maxRetries: 0, ...(c.baseURL ? { baseURL: c.baseURL } : {}) });
 
       const t0 = Date.now();
       const parts = await Promise.all(chapters.map(async (ch) => {
@@ -155,7 +179,7 @@ async function main() {
               { role: "system", content: ch.system },
               { role: "user", content: ch.user },
             ],
-            temperature: 0.7,
+            ...(c.noTemp ? {} : { temperature: 0.7 }),
           });
           const u = (r.usage ?? {}) as unknown as Record<string, unknown>;
           const details = (u.prompt_tokens_details ?? {}) as Record<string, number>;
