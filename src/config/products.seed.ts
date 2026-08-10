@@ -11,6 +11,13 @@ export type ProductSeed = {
   price: number;
   display_order: number;
   is_active: boolean;
+  // 0010 업셀 —
+  //  compare_at_price: 취소선 정가(앵커). null/생략이면 할인 표기 없음. price 이상이어야 한다.
+  //  bundle_slugs:     패키지 구성품. 결제 1건 → 구성품 수만큼 결과지가 나온다.
+  //  is_addon:         홈·상품목록·사이트맵·크로스셀에서 감춘다(퍼널 안에서만 파는 상품).
+  compare_at_price?: number | null;
+  bundle_slugs?: string[] | null;
+  is_addon?: boolean;
 };
 
 export const productsSeed: ProductSeed[] = [
@@ -65,7 +72,49 @@ export const productsSeed: ProductSeed[] = [
     name: "박수무당 사주",
     description: "얼굴 없는 박수가 네 운명 장부를 먼저 읽었다 — 타고난 그릇부터 돈 들어오는 달, 인연 오는 달, 인생이 바뀌는 해까지 돌려 말하지 않고 고한다",
     price: 19900,
+    // 정가 앵커(2026-08-11) — 경쟁 3사 전부 "정가 인플레 + 큰 할인" 공식을 쓰는데 우리만 없었다.
+    // 이 값이 있어야 아래 패키지의 '할인율 역전'(단품 33% vs 패키지 44%)이 성립한다.
+    // 기존 구매자가 없는 지금이 정가를 세울 마지막 시점이라 광고 전에 박는다.
+    compare_at_price: 29900,
     display_order: 21,
+    is_active: true,
+  },
+  // ─── 패키지(번들) — 결제 시트 업셀. 타이트 실측 공식: 정가 앵커 + 할인율 역전 + '추천' 뱃지 ───
+  // 단품 33% ↔ 패키지 44%. 단품만 사면 손해처럼 보이게 만드는 게 이 상품의 일이다.
+  // is_addon: 홈·목록에 안 뜬다(전용 랜딩이 없다). 산군 결제 시트에서만 고를 수 있다.
+  // 정가 = 구성품 정가 합(29,900 + 17,900 = 47,800). 산수가 화면에서 그대로 검산된다.
+  {
+    slug: "bundle-sangun-inyeon",
+    name: "박수무당 사주 + 인연 들어오는 달",
+    description: "네 장부 전체와 인연 장부를 함께 편다 — 박수무당 사주에 '인연 들어오는 달'을 더한 묶음",
+    price: 26900,
+    compare_at_price: 47800, // 29,900(산군 정가) + 17,900(인연) — 화면에서 검산되는 산수여야 한다
+    bundle_slugs: ["sangun-sinjeom", "inyeon-saju"],
+    is_addon: true,
+    display_order: 23,
+    is_active: true,
+  },
+  {
+    slug: "bundle-sangun-wealth",
+    name: "박수무당 사주 + 돈 들어오는 달",
+    description: "네 장부 전체와 재물 장부를 함께 편다 — 박수무당 사주에 '돈 들어오는 달'을 더한 묶음",
+    price: 24900,
+    compare_at_price: 44800, // 29,900(산군 정가) + 14,900(재물)
+    bundle_slugs: ["sangun-sinjeom", "wealth-saju"],
+    is_addon: true,
+    display_order: 24,
+    is_active: true,
+  },
+  // ─── 추가질문권 — 결과지를 다 본 자리에서 하나 더 묻는다(운세위키 발명, 무당 컨셉에 네이티브) ───
+  // "복채를 더 내고 하나 더 묻는다"라 세계관이 그대로 성립하고, 고민 확답 엔진을 재활용한다.
+  // 결제 후 부모 결과지로 돌아가 답변이 붙는다(별도 결과지를 만들지 않는다).
+  {
+    slug: "extra-question",
+    name: "추가 질문 한 가지",
+    description: "결과지를 받고 나서 생긴 물음 하나 — 같은 명식으로 그 질문만 정면으로 답해 드립니다",
+    price: 5000,
+    is_addon: true,
+    display_order: 25,
     is_active: true,
   },
   // 고민별 심화 ② 부부·자녀 (연애는 inyeon-saju가 담당 — 카니발 방지로 축소)

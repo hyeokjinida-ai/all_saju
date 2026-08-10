@@ -31,6 +31,10 @@ type ProductRow = {
   display_order: number;
   is_active: boolean;
   created_at: string;
+  // 0010 업셀 — 취소선 정가 / 패키지 구성품 / 퍼널 안에서만 파는 상품(홈·목록에서 숨김)
+  compare_at_price: number | null;
+  bundle_slugs: string[] | null;
+  is_addon: boolean;
 };
 
 // 웹툰 페이지 — 상품별 컷 구성(그림 경로 + 말풍선). 어드민에서 저장하고 렌더러가 읽는다.
@@ -88,17 +92,35 @@ type SajuResultRow = {
   llm_provider: string;
   llm_model: string;
   raw_analysis: Json | null; // 0005 마이그레이션 — luckyloveme 16종 원본 분석
+  // 0010 — 패키지 주문은 한 order_id 에 구성품 수만큼 행이 생긴다. unique(order_id, product_slug).
+  product_slug: string;
   created_at: string;
+};
+
+// 0010 — 추가질문권. 유료(결제)와 보상(리뷰 작성 시 무료)을 한 테이블로 처리.
+type ExtraQuestionRow = {
+  id: string;
+  parent_order_id: string;
+  order_id: string | null;
+  source: "paid" | "review_reward";
+  status: "credited" | "pending" | "answered" | "failed";
+  question: string | null;
+  answer_md: string | null;
+  created_at: string;
+  answered_at: string | null;
 };
 
 type ReviewRow = {
   id: string;
-  user_id: string;
+  // 0010 — 비회원도 후기를 쓴다(본인 확인은 라우트에서 toss_payment_key capability 로).
+  user_id: string | null;
+  guest_email: string | null;
   order_id: string;
   product_id: string;
   rating: number;
   content: string;
   is_public: boolean;
+  is_approved: boolean; // 어드민 노출 토글
   created_at: string;
 };
 
@@ -154,6 +176,9 @@ export type Database = {
           display_order?: number;
           is_active?: boolean;
           created_at?: string;
+          compare_at_price?: number | null;
+          bundle_slugs?: string[] | null;
+          is_addon?: boolean;
         };
         Update: Partial<ProductRow>;
         Relationships: [];
@@ -202,6 +227,7 @@ export type Database = {
           llm_provider: string;
           llm_model: string;
           raw_analysis?: Json | null;
+          product_slug: string;
           created_at?: string;
         };
         Update: Partial<SajuResultRow>;
@@ -211,15 +237,33 @@ export type Database = {
         Row: ReviewRow;
         Insert: {
           id?: string;
-          user_id: string;
+          user_id?: string | null;
+          guest_email?: string | null;
           order_id: string;
           product_id: string;
           rating: number;
           content: string;
           is_public?: boolean;
+          is_approved?: boolean;
           created_at?: string;
         };
         Update: Partial<ReviewRow>;
+        Relationships: [];
+      };
+      extra_questions: {
+        Row: ExtraQuestionRow;
+        Insert: {
+          id?: string;
+          parent_order_id: string;
+          order_id?: string | null;
+          source: "paid" | "review_reward";
+          status?: "credited" | "pending" | "answered" | "failed";
+          question?: string | null;
+          answer_md?: string | null;
+          created_at?: string;
+          answered_at?: string | null;
+        };
+        Update: Partial<ExtraQuestionRow>;
         Relationships: [];
       };
       saju_api_calls: {

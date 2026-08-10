@@ -13,11 +13,12 @@ export async function ProductLineup() {
       .from("products")
       .select("slug, name, description, price")
       .eq("is_active", true)
+      .eq("is_addon", false) // 번들·추가질문권은 퍼널 안에서만 판다
       .order("display_order", { ascending: true });
     products = data;
   } else {
     products = productsSeed
-      .filter((p) => p.is_active)
+      .filter((p) => p.is_active && !p.is_addon)
       .sort((a, b) => a.display_order - b.display_order)
       .map(({ slug, name, description, price }) => ({ slug, name, description, price }));
   }

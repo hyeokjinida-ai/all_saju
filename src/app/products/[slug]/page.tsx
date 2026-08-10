@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { SajuWizard } from "@/components/saju/SajuWizard";
+import { SajuWizard, type BundleOption } from "@/components/saju/SajuWizard";
 import { TrustStrip } from "@/components/saju/TrustStrip";
 import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
@@ -17,7 +17,14 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
 import type { WebtoonCutData } from "@/components/webtoon/WebtoonPage";
 
-type Product = { id: string; slug: string; name: string; description: string; price: number };
+type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  price: number;
+  compare_at_price?: number | null;
+};
 type Review = { id: string; rating: number; content: string; created_at: string };
 
 // 상품별 SEO 메타데이터 — 검색/공유 시 상품명·설명이 그대로 노출되게(기존엔 전부 "명운록")
@@ -38,7 +45,7 @@ export async function generateMetadata({
       .maybeSingle();
     p = data;
   } else {
-    const s = productsSeed.find((x) => x.slug === slug && x.is_active);
+    const s = productsSeed.find((x) => x.slug === slug && x.is_active && !x.is_addon);
     p = s ? { name: s.name, description: s.description } : null;
   }
   if (!p) return { title: "상품" };
@@ -76,11 +83,15 @@ export default async function ProductDetailPage({
   let reviews: Review[] | null = null;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let webtoonCuts: WebtoonCutData[] = [];
+  let bundles: BundleOption[] = [];
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
+      // 0010 컬럼(compare_at_price·is_addon)은 여기서 안 읽는다 —
+      // 마이그레이션 전 배포에서도 **상품 페이지만은 반드시 살아 있어야** 하기 때문이다.
+      // 업셀 정보는 아래에서 따로, 실패해도 조용히 비는 방식으로 읽는다.
       .select("id, slug, name, description, price")
       .eq("slug", slug)
       .eq("is_active", true)
@@ -88,6 +99,16 @@ export default async function ProductDetailPage({
     product = data;
 
     if (product) {
+      // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
+      const { data: upsell } = await supabase
+        .from("products")
+        .select("compare_at_price, is_addon")
+        .eq("id", product.id)
+        .maybeSingle();
+      // 번들·추가질문권엔 상세 랜딩이 없다 → 없는 페이지로 돌린다.
+      if ((upsell as { is_addon?: boolean } | null)?.is_addon) notFound();
+      product.compare_at_price = (upsell as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
+
       const { data: r } = await supabase
         .from("reviews")
         .select("id, rating, content, created_at")
@@ -107,6 +128,30 @@ export default async function ProductDetailPage({
         .eq("is_published", true)
         .maybeSingle();
       if (Array.isArray(wt?.cuts)) webtoonCuts = wt.cuts as WebtoonCutData[];
+
+      // 결제 시트에 함께 세울 패키지 — 이 상품을 구성품으로 포함하는 번들만.
+      // 구성품 이름은 카드에 "산군 + 인연"처럼 그대로 찍힌다.
+      const { data: bundleRows } = await supabase
+        .from("products")
+        .select("id, slug, name, price, compare_at_price, bundle_slugs")
+        .eq("is_active", true)
+        .contains("bundle_slugs", [product.slug])
+        .order("display_order", { ascending: true });
+
+      const memberSlugs = [...new Set((bundleRows ?? []).flatMap((b) => b.bundle_slugs ?? []))];
+      const { data: memberRows } = memberSlugs.length
+        ? await supabase.from("products").select("slug, name").in("slug", memberSlugs)
+        : { data: [] };
+      const memberName = new Map((memberRows ?? []).map((m) => [m.slug as string, m.name as string]));
+
+      bundles = (bundleRows ?? []).map((b) => ({
+        productId: b.id as string,
+        slug: b.slug as string,
+        name: b.name as string,
+        price: b.price as number,
+        compareAtPrice: (b.compare_at_price as number | null) ?? null,
+        includes: ((b.bundle_slugs as string[] | null) ?? []).map((s) => memberName.get(s) ?? s),
+      }));
     }
     user = await getCurrentUser();
   } else {
@@ -155,6 +200,8 @@ export default async function ProductDetailPage({
         productSlug={product.slug}
         productName={product.name}
         price={product.price}
+        compareAtPrice={product.compare_at_price ?? null}
+        bundles={bundles}
         isLoggedIn={!!user}
         initialConcerns={concernPreset ? [concernPreset] : undefined}
         webtoonCuts={webtoonCuts}
@@ -232,6 +279,8 @@ export default async function ProductDetailPage({
               productSlug={product.slug}
               productName={product.name}
               price={product.price}
+              compareAtPrice={product.compare_at_price ?? null}
+              bundles={bundles}
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
               webtoonCuts={webtoonCuts}

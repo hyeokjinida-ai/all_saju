@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { ExtraQuestions } from "@/components/saju/ExtraQuestions";
+import { EXTRA_QUESTION_SLUG } from "@/lib/saju/generate-result";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
 import { SangunResult } from "@/components/saju/SangunResult";
@@ -30,7 +33,7 @@ export default async function ResultPage({
 
   const { data: result } = await service
     .from("saju_results")
-    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id, raw_analysis")
+    .select("id, myeongsik, interpretation_md, llm_provider, llm_model, created_at, order_id, raw_analysis, product_slug")
     .eq("id", resultId)
     .maybeSingle();
 
@@ -38,7 +41,7 @@ export default async function ResultPage({
 
   const { data: order } = await service
     .from("orders")
-    .select("product_id, paid_at, guest_email, user_id")
+    .select("product_id, paid_at, guest_email, user_id, toss_payment_key")
     .eq("id", result.order_id)
     .single();
 
@@ -49,9 +52,40 @@ export default async function ResultPage({
     const { data: { user } } = await (await createClient()).auth.getUser();
     if (user && user.id !== ownerId) notFound();
   }
+  // 패키지 주문은 한 주문에 결과지가 여러 장이다 — 이 결과지가 '어느 상품의 것인지'는
+  // 주문의 상품(=패키지)이 아니라 결과지 행의 product_slug 가 정답이다.
+  const { data: siblings } = await service
+    .from("saju_results")
+    .select("id, product_slug")
+    .eq("order_id", result.order_id)
+    .order("created_at", { ascending: true });
+
+  const resultSlug = (result as { product_slug?: string | null }).product_slug || "";
+  const slugsInOrder = (siblings ?? []).map((s) => s.product_slug).filter(Boolean);
+  const { data: slugProducts } = slugsInOrder.length
+    ? await service.from("products").select("slug, name").in("slug", slugsInOrder)
+    : { data: [] };
+  const nameBySlug = new Map((slugProducts ?? []).map((p) => [p.slug as string, p.name as string]));
+
   const { data: product } = order
     ? await service.from("products").select("name, slug").eq("id", order.product_id).single()
     : { data: null };
+
+  // 추가질문권으로 산 답변들 — 결과지 맨 아래에 붙는다(원 주문 기준).
+  const { data: extraQuestions } = await service
+    .from("extra_questions")
+    .select("id, question, answer_md, status, created_at")
+    .eq("parent_order_id", result.order_id)
+    .eq("status", "answered")
+    .order("created_at", { ascending: true });
+
+  // 값이 없으면(시드 전·비활성) 블록을 통째로 렌더하지 않는다 — 가격 없는 CTA 는 내보내지 않는다.
+  const { data: questionProduct } = await service
+    .from("products")
+    .select("price, is_active")
+    .eq("slug", EXTRA_QUESTION_SLUG)
+    .maybeSingle();
+  const questionPrice = questionProduct?.is_active ? (questionProduct.price as number) : null;
 
   // 결제 후 크로스셀 + 결과지 개인화에 쓸 저장된 명식 입력
   const { data: savedInput } = await service
@@ -66,6 +100,7 @@ export default async function ResultPage({
       .from("products")
       .select("id, slug, name, description, price")
       .eq("is_active", true)
+      .eq("is_addon", false) // 번들·추가질문권은 크로스셀 목록에 섞이면 안 된다
       .neq("id", order.product_id)
       .order("display_order", { ascending: true });
     crossSellProducts = (others ?? []).map((p) => ({
@@ -91,7 +126,9 @@ export default async function ResultPage({
 
   const myeongsik = result.myeongsik as unknown as Myeongsik;
   const rawAnalysis = ((result as { raw_analysis?: unknown }).raw_analysis ?? null) as SajuAnalysisResponse | null;
-  const slug = (product as { slug?: string } | null)?.slug ?? "";
+  // 패키지면 구성품 slug 가, 단품이면 주문 상품 slug 가 이 결과지의 정체다.
+  const slug = resultSlug || (product as { slug?: string } | null)?.slug || "";
+  const displayName = nameBySlug.get(slug) ?? product?.name ?? "사주 풀이";
   const showScores = !!rawAnalysis && !["basic-saju", "today-fortune"].includes(slug);
   const showDaeun = !!rawAnalysis && slug === "premium-saju";
   const crossSellSignal = rawAnalysis ? extractCrossSellSignal(rawAnalysis) : null;
@@ -131,6 +168,36 @@ export default async function ResultPage({
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* 패키지로 산 사람은 결과지가 두 장이다 — 한 장만 보고 나가지 않게 위에서 먼저 보여준다.
+            (단품이면 형제가 1개라 이 줄은 렌더되지 않는다) */}
+        {(siblings?.length ?? 0) > 1 && (
+          <nav aria-label="장부 고르기" className="mb-4 flex gap-2">
+            {(siblings ?? []).map((s) => {
+              const active = s.id === result.id;
+              return (
+                <Link
+                  key={s.id}
+                  href={`/results/${s.id}`}
+                  className="font-myeongjo flex-1 border px-3 py-2.5 text-center text-[13px] font-bold leading-[1.4]"
+                  style={{
+                    borderColor: active
+                      ? isSangun
+                        ? "var(--gold-bright, #e8c96a)"
+                        : "#c9a8ff"
+                      : isSangun
+                        ? "rgba(232,201,106,0.22)"
+                        : "rgba(150,90,255,0.28)",
+                    color: active ? (isSangun ? "var(--gold-bright, #e8c96a)" : "#c9a8ff") : isSangun ? "rgba(232,201,106,0.55)" : "#9a8cd0",
+                    background: active ? (isSangun ? "rgba(232,201,106,0.08)" : "rgba(150,90,255,0.12)") : "transparent",
+                  }}
+                >
+                  {nameBySlug.get(s.product_slug) ?? "풀이"}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         {isSangun ? (
           /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
              달력 표의 값은 프롬프트에 들어간 확정값과 같은 계산에서 온다(본문과 표가 어긋나면 끝). */
@@ -161,7 +228,7 @@ export default async function ResultPage({
             {/* 상세 풀이 — LLM 전문(챕터별 카드) */}
             <div id="sec-detail" className="mt-5" style={{ scrollMarginTop: 14 }}>
               <div className="mb-3 px-1" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", color: "#c9a8ff" }}>
-                {product?.name ?? "사주 풀이"} · 상세 풀이
+                {displayName} · 상세 풀이
               </div>
               <ResultChapters markdown={result.interpretation_md} />
             </div>
@@ -171,6 +238,21 @@ export default async function ResultPage({
         <p className="mt-5 text-center" style={{ fontSize: 11, color: isSangun ? "rgba(232,201,106,0.42)" : "#9a8cd0" }}>
           적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
         </p>
+
+        {/* 추가질문권 — 다른 상품으로 넘기기 전에 '같은 상담을 이어가는' 업셀을 먼저 둔다.
+            문턱이 제일 낮고(5,000원), 무당 컨셉에서는 '복채를 더 내고 하나 더 묻는' 것이라 세계관 그대로다. */}
+        {questionPrice != null && (
+          <ExtraQuestions
+            resultId={result.id}
+            price={questionPrice}
+            answered={(extraQuestions ?? []).map((q) => ({
+              id: q.id as string,
+              question: (q.question as string) ?? "",
+              answer_md: (q.answer_md as string) ?? null,
+            }))}
+            tone={isSangun ? "sangun" : "saju"}
+          />
+        )}
 
         {crossSellInput && crossSellProducts.length > 0 && (
           <CrossSell

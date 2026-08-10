@@ -484,3 +484,63 @@ ${baseInfo}${bpBlock}
 
   return { title, chapters };
 }
+
+// =====================================================
+// 추가질문권 — 결과지를 받은 뒤 하나 더 묻는다 (0010 업셀)
+// =====================================================
+// 결과지 한 권이 아니라 '답변 한 장'이다. 챕터 구조·목차·소제목을 만들지 않는다.
+// 말투는 **부모 상품을 그대로 따른다** — 산군에게 물었으면 산군이 반말로 답해야 한다.
+// 결제 직전까지 반말이던 화자가 추가 질문에서만 존댓말로 바뀌면 딴사람이 된다.
+export function buildExtraQuestionPrompt(input: {
+  parentSlug: string; // 부모 결과지의 상품 slug — 말투가 여기서 나온다
+  question: string;
+  name?: string | null;
+  myeongsik: Myeongsik;
+  manseryeokText?: string;
+  birthDate: string;
+  birthTime: string | null;
+  timeUnknown: boolean;
+  gender: "male" | "female";
+  keyFacts?: string | null;
+}): { system: string; user: string } {
+  const style = STYLE_BY_SLUG[input.parentSlug] ?? STYLE_BY_SLUG["basic-saju"];
+  const m = input.myeongsik;
+  const pillar = (p: { cheongan: string; jiji: string } | null) => (p ? `${p.cheongan}${p.jiji}` : "(시 미상)");
+
+  const baseSaju = input.manseryeokText
+    ? `[사주 풀 명식]\n${input.manseryeokText}`
+    : [
+        `[사주 4기둥]`,
+        `- 년주: ${pillar(m.year)}`,
+        `- 월주: ${pillar(m.month)}`,
+        `- 일주: ${pillar(m.day)}`,
+        `- 시주: ${pillar(m.hour)}`,
+      ].join("\n");
+  // 추가 질문은 대부분 '언제·할까 말까'라 시기 데이터를 빼면 답이 안 나온다 → 풀 명식을 준다.
+  const sajuSection = input.keyFacts ? `${input.keyFacts}\n\n${baseSaju}` : baseSaju;
+
+  const user = `${sajuSection}
+
+[기본 정보]
+- 생년월일: ${input.birthDate}${input.timeUnknown ? " (태어난 시각 모름)" : input.birthTime ? ` ${input.birthTime}` : ""}
+- 성별: ${input.gender === "male" ? "남성" : "여성"}
+
+이미 이 사람의 결과지를 한 권 써서 보냈습니다. 그걸 다 읽고 나서 **하나만 더** 물어온 것입니다.
+복채를 따로 낸 질문이니, 결과지에 이미 쓴 일반론을 되풀이하면 안 됩니다. 이 물음에만 답하세요.
+
+■ 물어온 것: "${input.question}"
+
+■ 쓰는 법
+1) **첫 줄은 한 문장 확답**입니다. 하라/하지 마라, 간다/안 간다, 지금/언제 중 한쪽으로 분명히 기웁니다. "상황에 따라 다르다", "본인 마음에 달렸다"로 시작하면 이 답변은 실패입니다.
+2) 그다음 그렇게 답한 이유를 위 [확정 사실]의 일간·십성·대운·세운으로 짧게 댑니다. 이론 설명이 아니라 근거로만.
+3) **시기는 달(月)까지 집습니다.** 연도만 말하고 끝내지 마세요 — 달을 집는 것이 이 결과지의 값어치입니다. 위 [월운]·[확정 사실]에 있는 달만 쓰고 새 달을 지어내지 마세요.
+4) 마지막은 지금 당장 할 수 있는 행동 1~2가지로 맺습니다.
+5) 분량은 500~800자. 소제목·목차·번호 매긴 챕터를 만들지 마세요. 문단 2~4개의 '말'로 씁니다.
+6) 가장 중요한 한 문장의 앞뒤를 == 로 감싸세요(==이렇게==). 정확히 한 번.
+7) 사주를 모르는 사람이 읽습니다. 한자를 괄호로 병기하지 마세요.
+8) 가족·학력·출산처럼 사실로 들통나는 단정은 하지 마세요.
+
+"### 물어온 것에 답한다" 로 시작하세요.`;
+
+  return { system: style.voice ? `${SYSTEM_BASE}\n\n${style.voice}` : SYSTEM_BASE, user };
+}

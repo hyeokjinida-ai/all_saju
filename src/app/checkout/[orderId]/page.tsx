@@ -23,12 +23,14 @@ export default async function CheckoutPage({
 
   if (!order) notFound();
   if (order.status === "paid") {
-    const { data: result } = await service
+    // 패키지 주문은 결과지가 여러 장이라 maybeSingle() 이 터진다 — 먼저 만들어진 것으로 보낸다.
+    const { data: results } = await service
       .from("saju_results")
       .select("id")
       .eq("order_id", order.id)
-      .maybeSingle();
-    if (result) redirect(`/results/${result.id}`);
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (results?.[0]) redirect(`/results/${results[0].id}`);
   }
 
   // slug: 결제 후 success 대기 화면 테마(산군 등) 판별용 — TossWidget 이 sessionStorage 에 심는다.

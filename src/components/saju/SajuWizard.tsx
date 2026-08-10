@@ -24,12 +24,29 @@ const GLYPH_COUNT: Record<number, string> = { 1: "두", 2: "네", 3: "여섯", 4
 type Gender = "male" | "female";
 type Calendar = "solar" | "lunar";
 
+// 결제 시트 옵션 — 단품 위에 얹는 패키지(0010 업셀).
+// 타이트 실측 공식: 정가 앵커 + **할인율 역전**(단품 33% vs 패키지 44%) + '추천' 뱃지.
+// 단품만 사면 손해처럼 보이게 만드는 것이 이 카드의 일이다.
+export type BundleOption = {
+  productId: string;
+  slug: string;
+  name: string;
+  price: number;
+  compareAtPrice: number | null;
+  /** 구성품 이름들 — "무엇이 하나 더 오는지"를 카드에서 바로 읽히게 한다 */
+  includes: string[];
+};
+
 // 단일 상품 직접 구매 위저드 — 입력을 모아 바로 주문을 생성한다.
 type Props = {
   productId: string;
   productSlug: string;
   productName: string;
   price: number;
+  /** 취소선 정가. 없으면 할인 표기를 안 한다. */
+  compareAtPrice?: number | null;
+  /** 결제 시트에 함께 세울 패키지들. 비어 있으면 예전처럼 단품 버튼만 나온다. */
+  bundles?: BundleOption[];
   isLoggedIn?: boolean;
   // 랜딩 상태 배지(?c=…) → 고민 프리셀렉트. CONCERN_BY_SLUG 옵션에 있는 값만 반영.
   initialConcerns?: string[];
@@ -170,6 +187,8 @@ export function SajuWizard({
   productSlug,
   productName,
   price,
+  compareAtPrice = null,
+  bundles = [],
   isLoggedIn = false,
   initialConcerns,
   webtoonCuts = [],
@@ -179,6 +198,8 @@ export function SajuWizard({
 }: Props) {
   const imm = variant === "immersive";
   const router = useRouter();
+  // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
+  const [selectedId, setSelectedId] = useState(productId);
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
   const [step, setStep] = useState(0);
@@ -387,6 +408,26 @@ export function SajuWizard({
 
   const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
 
+  // ─── 결제 시트 옵션 ────────────────────────────────
+  // 단품을 맨 위에 두고 패키지를 아래에 둔다. 할인율이 아래로 갈수록 커져야
+  // "단품만 사면 손해"가 눈으로 읽힌다(타이트 결제 시트와 같은 배치).
+  const checkoutOptions: BundleOption[] = [
+    { productId, slug: productSlug, name: productName, price, compareAtPrice, includes: [] },
+    ...bundles,
+  ];
+  const selected = checkoutOptions.find((o) => o.productId === selectedId) ?? checkoutOptions[0];
+  const effectivePrice = selected.price;
+  // 추천 뱃지 — 이미 받아둔 연애 상태로 가른다(타이트가 솔로에게 '솔탈 패키지'를 붙이는 자리).
+  // 혼자·정리 중이면 인연 장부, 그 외(만나는 사람 있음·기혼·무응답)는 재물 장부.
+  const wantsInyeon = form.relationship === "혼자" || form.relationship === "정리 중" || !form.relationship;
+  const recommended = bundles.find((b) =>
+    wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth"),
+  );
+  const discountPct = (o: BundleOption) =>
+    o.compareAtPrice && o.compareAtPrice > o.price
+      ? Math.round((1 - o.price / o.compareAtPrice) * 100)
+      : null;
+
   // 단일 상품 주문 생성 → 결제 (회원=계정 수령 / 비회원=이메일 수령)
   async function createOrder() {
     if (!form.birthDate) {
@@ -404,14 +445,14 @@ export function SajuWizard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId,
+          productId: selected.productId, // 단품이거나 손님이 고른 패키지
           ...payload(),
           email: isLoggedIn ? undefined : guestEmail.trim(),
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "주문 생성 실패");
-      track("begin_checkout", { slug: productSlug, value: price, currency: "KRW" });
+      track("begin_checkout", { slug: selected.slug, value: effectivePrice, currency: "KRW" });
       router.push(`/checkout/${json.orderId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
@@ -859,7 +900,80 @@ export function SajuWizard({
               </button>
             )}
           </>
-        ) : isLoggedIn ? (
+        ) : (
+          <>
+            {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
+                할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
+                패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
+            {bundles.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {checkoutOptions.map((o) => {
+                  const on = o.productId === selected.productId;
+                  const pct = discountPct(o);
+                  const isRec = !!recommended && o.productId === recommended.productId;
+                  return (
+                    <button
+                      key={o.productId}
+                      type="button"
+                      onClick={() => setSelectedId(o.productId)}
+                      className="relative w-full border px-4 py-3 text-left"
+                      style={{
+                        borderColor: on
+                          ? imm ? "#e8c96a" : "#c9a8ff"
+                          : imm ? "rgba(232,201,106,0.22)" : "rgba(150,90,255,0.28)",
+                        background: on
+                          ? imm ? "rgba(232,201,106,0.10)" : "rgba(150,90,255,0.14)"
+                          : "transparent",
+                      }}
+                    >
+                      {isRec && (
+                        <span
+                          className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
+                          style={{ background: imm ? "#e8c96a" : "#c9a8ff", color: imm ? "#241a08" : "#1b1230" }}
+                        >
+                          추천
+                        </span>
+                      )}
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span
+                          className="font-myeongjo text-[14px] font-bold leading-[1.4]"
+                          style={{ color: on ? (imm ? "#efe6d2" : "#efe6ff") : "var(--bone-soft)" }}
+                        >
+                          {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
+                        </span>
+                        <span className="shrink-0 text-right">
+                          {o.compareAtPrice && o.compareAtPrice > o.price && (
+                            <span className="mr-1.5 text-[11px] line-through" style={{ color: "var(--bone-faint)" }}>
+                              {formatKRW(o.compareAtPrice)}
+                            </span>
+                          )}
+                          <span
+                            className="font-myeongjo text-[15px] font-bold"
+                            style={{ color: imm ? "#e8c96a" : "#c9a8ff" }}
+                          >
+                            {formatKRW(o.price)}
+                          </span>
+                        </span>
+                      </div>
+                      {pct != null && (
+                        <p className="mt-1 text-[11px]" style={{ color: pct >= 40 ? "#d8563f" : "var(--bone-faint)" }}>
+                          {pct}% 할인
+                          {o.includes.length > 1 && ` · ${formatKRW(o.price - price)} 더 내고 장부 한 권 더`}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+                {/* 중복 반론 — "산군에도 인연 달이 나오잖아"에 세계관으로 답한다 */}
+                {selected.includes.length > 1 && imm && (
+                  <p className="font-myeongjo pt-1 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+                    겉장은 내가 봤다. 장부 통째는 다른 얘기다.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isLoggedIn ? (
           <button
             type="button"
             onClick={createOrder}
@@ -877,11 +991,11 @@ export function SajuWizard({
             {submitting
               ? "주문 생성 중…"
               : imm
-                ? `${formatKRW(Math.max(0, price - 1900))} 내고 장부 전체 열기`
-                : `${formatKRW(Math.max(0, price - 1900))} 결제하러 가기 (회원 할인 적용)`}
+                ? `${formatKRW(Math.max(0, effectivePrice - 1900))} 내고 장부 전체 열기`
+                : `${formatKRW(Math.max(0, effectivePrice - 1900))} 결제하러 가기 (회원 할인 적용)`}
             {!submitting && <span className="font-brush text-[19px]" style={{ color: imm ? "#241a08" : "var(--wine-deep)" }}>受</span>}
           </button>
-        ) : (
+            ) : (
           <div className="space-y-2.5">
             {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
             <input
@@ -912,8 +1026,8 @@ export function SajuWizard({
             {submitting
                 ? "주문 생성 중…"
                 : imm
-                  ? `${formatKRW(price)} 내고 장부 전체 열기`
-                  : `${formatKRW(price)} 결제하고 전체 보기`}
+                  ? `${formatKRW(effectivePrice)} 내고 장부 전체 열기`
+                  : `${formatKRW(effectivePrice)} 결제하고 전체 보기`}
             </button>
             {/* 카카오 로그인 넛지는 제거했다 — provider 가 아직 안 열려서, 누르면 고객에게
                 "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
@@ -925,6 +1039,8 @@ export function SajuWizard({
                 : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
             </p>
           </div>
+            )}
+          </>
         )}
         {imm && (
           <p className="mt-3 text-center text-[11px]" style={{ color: "#5b6274" }}>
