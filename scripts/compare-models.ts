@@ -158,7 +158,7 @@ async function main() {
 
     const { title, chapters } = buildChapterPrompts({
       productSlug: SLUG,
-      productName: "산군 신점",
+      productName: "박수무당 사주",
       name: "김지영",
       myeongsik,
       manseryeokText: api.formatSajuCompact(analysis, birthInfo),

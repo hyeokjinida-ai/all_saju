@@ -25,7 +25,7 @@ export function AnalyzingScreen({
 }: {
   name?: string | null;
   variant?: "paid" | "free";
-  // "sangun": 산군 신점 전용 — 결제 직전까지 검정+금+반말(신당 세계관)인데 대기 화면만
+  // "sangun": 박수무당 사주 전용 — 결제 직전까지 검정+금+반말(신당 세계관)인데 대기 화면만
   // 보라 나경반+존댓말이면 세계관이 끊긴다(타이트는 결제 후 로딩에도 같은 캐릭터가 말을 건다).
   theme?: "sangun";
   onBack?: () => void;

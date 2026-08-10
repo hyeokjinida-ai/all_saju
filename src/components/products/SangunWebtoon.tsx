@@ -1,6 +1,6 @@
 "use client";
 
-// "산군 신점" 포괄 메인 랜딩 — 타이트 MZ무당사주 구조 이식(2026-07-28 형님 지시).
+// "박수무당 사주" 포괄 메인 랜딩 — 타이트 MZ무당사주 구조 이식(2026-07-28 형님 지시).
 // 스크롤 설득문이 아니라 "입장 의식": 사운드 게이트 → 신당 입장 → 박수 대면 → 장부 티저 → 페이월.
 // 사운드는 파일 없이 Web Audio 합성(저음 바람 + 방울 딸랑) — 자산 의존 제거.
 import { useEffect, useRef, useState } from "react";
@@ -593,7 +593,7 @@ export function SangunStory({
             바로 아래 위저드 자체 '‹' 와 뒤로가기가 겹쳐 보였다. */}
         <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-center px-5 pt-4">
           <span className="text-[13px] tracking-[0.22em]" style={{ color: GOLD, opacity: 0.85 }}>
-            명운록 · 산군 신점
+            명운록 · 박수무당 사주
           </span>
         </div>
         {wizard}
@@ -607,7 +607,7 @@ export function SangunStory({
       <div className="mx-auto w-full max-w-[480px]">
         <header className="px-6 pb-5 pt-8 text-center">
           <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: GOLD }}>
-            명운록 · 산군 신점
+            명운록 · 박수무당 사주
           </a>
           <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
             신당에 들었다 — 산군이 장부를 편다 · {priceLabel}

@@ -30,7 +30,7 @@ async function main() {
     api.computeWealthYears(analysis),
   );
   const { chapters } = buildChapterPrompts({
-    productSlug: "sangun-sinjeom", productName: "산군 신점", name: "지수",
+    productSlug: "sangun-sinjeom", productName: "박수무당 사주", name: "지수",
     myeongsik: api.ganjiToMyeongsik(analysis)!, manseryeokText: api.formatSajuCompact(analysis, birthInfo),
     birthDate: "1993-05-15", birthTime: "14:30", timeUnknown: false, gender: "female",
     concerns: ["올해 이직해도 될까요"], keyFacts, monthPlan,

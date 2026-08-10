@@ -35,7 +35,7 @@ type Case = {
 };
 
 const CASES: Case[] = [
-  // "산군 신점"(포괄 확장) 검증 — 인연 검증과 같은 명식(캐시 재사용). 예상: 인연 68점·TOP3 2026-12/2027-05/2027-06 인용 일치 + 재물 점수·달 인용 일치
+  // "박수무당 사주"(포괄 확장) 검증 — 인연 검증과 같은 명식(캐시 재사용). 예상: 인연 68점·TOP3 2026-12/2027-05/2027-06 인용 일치 + 재물 점수·달 인용 일치
   {
     slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [33, 34, 40, 45],
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
