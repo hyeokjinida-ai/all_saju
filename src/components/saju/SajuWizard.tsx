@@ -978,33 +978,9 @@ function InkMask({ text }: { text: string }) {
   );
 }
 
-/** 산군 대사 띠 — 스토리 화면의 대사창(SangunWebtoon Bubble)과 같은 옷.
- *  타이트 티저 실측(22단계)의 정체는 "모든 블록을 캐릭터가 대사로 소개한 뒤에 보여준다"였다.
- *  우리는 웹툰 5컷이 끝나면 산군이 화면에서 사라졌다 — 이 띠가 블록 사이의 연결 조직이다.
- *
- *  ⚠ **한 마디만 담는다.** 문단을 여럿 넣으면 띠가 아니라 문서 카드가 되고, 밝은 크림색 박스가
- *  화면을 먹어 검정+금 신당 세계관이 결제 직전에서 하얗게 깨진다(형님 지적, 내 오판 두 번).
- *  긴 글은 판(LedgerPanel)에, 짧은 대사는 컷 위(CutSay)나 이 띠에. 그릇을 섞지 않는다. */
-function SangunSay({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="relative mt-6 rounded-[5px] px-5 py-4"
-      style={{
-        background: "linear-gradient(180deg,#f3ead6,#e9dec2)",
-        border: "1px solid #c9b98e",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.45), inset 0 0 34px rgba(216,201,163,0.35)",
-      }}
-    >
-      <span
-        className="absolute -top-3 right-3 rounded-[2px] px-2.5 pb-[3px] pt-1 text-[11px] font-semibold tracking-[0.22em]"
-        style={{ background: "#8f2b1e", color: "#f3e6cf" }}
-      >
-        산군
-      </span>
-      <p className="font-myeongjo text-[15px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
-    </div>
-  );
-}
+/* 산군 대사 "띠"(사진 없는 크림색 단독 말풍선)는 2026-08-11 폐기 — 글·사진 교차 리듬에서
+ * 글 두 블록을 연속시키는 주범이었다(형님 지적). 짧은 대사는 전부 컷 위(CutSay)에 얹는다.
+ * 긴 글은 판(LedgerPanel)에. 그릇을 섞지 않는다. */
 
 /**
  * 장부 판 — 산군이 장부에서 읽어 옮긴 긴 글(콜드리딩).
@@ -1440,10 +1416,19 @@ function TeaserStep({
           )}
 
           {/* 판정을 손님에게 넘긴다 — 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다.
-              산군이 직접 거는 승부라 대사 띠로 세운다(몰입 상품에서만). */}
+              콜드리딩 판 바로 밑에 말풍선을 또 세우면 글이 두 번 연속된다(형님 지적: 글·사진 교차) —
+              산군이 정면으로 선 전신 컷(stand.webp, 마스터 m1 변환) 위에 대사로 얹는다.
+              승부를 거는 순간이라 그림도 처음으로 몸 전체를 보여주는 대면이 맞다. */}
           {teaser.judgeInvite &&
             (imm ? (
-              <SangunSay>{teaser.judgeInvite}</SangunSay>
+              <TeaserCut
+                src="/products/sangun/stand.webp"
+                alt="장부를 덮고 정면으로 선 산군"
+                tall
+                pos="center 16%"
+                sayAt="bottom"
+                say={teaser.judgeInvite}
+              />
             ) : (
               <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
             ))}

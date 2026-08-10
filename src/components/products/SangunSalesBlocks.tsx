@@ -10,12 +10,15 @@
 import { StoryFooter } from "@/components/products/StoryFooter";
 
 // 예시 결과지 — 실제 엔진 출력(1993-05-15 여) 그대로. 손으로 다듬지 않는다.
-export function SampleCard() {
+// noTitle: 티저 꼬리에서는 바로 위 표지 컷의 말풍선이 소개를 대신하므로 제목을 뺀다(같은 말 두 번 금지).
+export function SampleCard({ noTitle }: { noTitle?: boolean } = {}) {
   return (
     <div className="rounded-md p-6" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--gold-line)" }}>
-      <p className="mb-1 text-center font-myeongjo text-[15px] font-bold" style={{ color: "var(--bone)" }}>
-        이렇게 나온다
-      </p>
+      {!noTitle && (
+        <p className="mb-1 text-center font-myeongjo text-[15px] font-bold" style={{ color: "var(--bone)" }}>
+          이렇게 나온다
+        </p>
+      )}
       <p className="mb-4 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         예시 · 1993년생 여성의 실제 결과지에서
       </p>
@@ -154,16 +157,94 @@ export function SangunFaq({ className = "" }: { className?: string }) {
   );
 }
 
+// 티저 꼬리 전용 컷 — 글카드 사이에 사진을 끼우는 리듬 부품(형님 원칙: 글·사진 교차).
+// 위저드 컨테이너의 px-5(20px)만 음수 마진으로 뚫는다. 장부 판(패딩 16px) 바깥이라 -mx-9 가 아니다.
+// 대사 말풍선·스크림은 티저 본문의 CutSay 와 같은 옷 — 화면 안에서 문법이 갈리면 안 된다.
+function TailCut({
+  src,
+  alt,
+  pos = "center 30%",
+  sayAt = "top",
+  say,
+}: {
+  src: string;
+  alt: string;
+  pos?: string;
+  sayAt?: "top" | "bottom";
+  say: React.ReactNode;
+}) {
+  return (
+    <div className="relative -mx-5 mt-6 overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className="h-full w-full select-none object-cover"
+        loading="lazy"
+        draggable={false}
+        style={{ objectPosition: pos }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            sayAt === "top"
+              ? "linear-gradient(180deg,rgba(8,7,6,0.62) 0%,rgba(8,7,6,0.15) 38%,rgba(8,7,6,0) 60%)"
+              : "linear-gradient(0deg,rgba(8,7,6,0.62) 0%,rgba(8,7,6,0.15) 38%,rgba(8,7,6,0) 60%)",
+        }}
+      />
+      <div className={`absolute inset-x-4 ${sayAt === "top" ? "top-4" : "bottom-4"} z-10`}>
+        <div
+          className="relative rounded-[5px] px-4 py-3"
+          style={{
+            background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+            border: "1px solid rgba(201,185,142,0.8)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <span
+            className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
+            style={{ background: "#8f2b1e", color: "#f3e6cf" }}
+          >
+            산군
+          </span>
+          <p className="font-myeongjo text-[15px] font-semibold leading-[1.75] text-[#241d10]">{say}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 티저 하단 묶음 — 결제 버튼 바로 위에 붙는 설득 구역.
 // 타이트 순서를 따랐다: 목차(위의 4章 카드) → 분량·가격 → 예시 결과지 → 신뢰. 걔넨 FAQ 가 없지만
 // 우리는 비회원 결제·시각 모름·환불이 실제로 자주 걸리는 질문이라 남긴다.
+// 글카드만 4연속으로 쌓았다가 형님 지적(글·사진 교차 리듬)으로 컷 3장을 끼웠다 — 결과지용으로
+// 만들어 둔 money(엽전)·cover(표지)·close(낙관) 재활용, 새 발주 0장. 대사는 임시 3줄(교체 쉬움).
 export function TeaserSalesTail({ priceLabel }: { priceLabel: string }) {
   return (
-    <div className="mt-6">
+    <div className="mt-2">
+      <TailCut src="/products/sangun/money.webp" alt="엽전 꾸러미를 든 손과 펼친 장부" sayAt="top" say="받을 것부터 세어 봐라." />
       <ValueSpecCard priceLabel={priceLabel} />
+      {/* 예시 앞은 낙관 컷(완성 증표가 찍힌 장부) — "표지" 대사에 전신 사진을 붙였다가
+          말과 그림이 어긋나 교체. 전신 정면은 아래 FAQ(물음 받는 자세) 앞이 맞다. */}
+      <TailCut
+        src="/products/sangun/close.webp"
+        alt="장부를 덮고 낙관을 찍는 손"
+        sayAt="top"
+        say="완성된 장부에서 한 쪽 떼 왔다."
+      />
       <div className="mt-5">
-        <SampleCard />
+        <SampleCard noTitle />
       </div>
+      <TailCut
+        src="/products/sangun/cover.webp"
+        alt="정면으로 선 산군"
+        pos="center 24%"
+        sayAt="bottom"
+        say="궁금한 건 묻고 가라."
+      />
       <SangunFaq className="mt-6" />
       <StoryFooter />
     </div>
