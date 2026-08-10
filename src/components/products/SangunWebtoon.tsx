@@ -419,14 +419,14 @@ export function SangunStory({
             <br />네 <em className="not-italic" style={P}>생년월일</em>이 필요하다.
           </>
         ),
-        choices: [
-          { label: "생년월일 알려주기", act: toInput, primary: true },
-          // 전에는 여기서 세일즈 페이지로 보냈다. 도착하면 산군이 방금 한 인사("…왔군. 네 장부, 내가
-          // 먼저 봤다")를 같은 그림으로 또 하고 자기소개를 다시 해서, 대화를 마친 손님이 처음 만난
-          // 사람 취급을 받았다(형님 지적). 타이트도 스킵의 도착지는 상품 소개가 아니라 입력이다 —
-          // 스킵해도 입력을 피하는 길이 없다. 가격·목차·예시 결과지는 티저 아래로 옮겨 두었다.
-          { label: "됐고, 바로 펴봐라", act: toInput },
-        ],
+        // 마지막 씬만 선택지가 하나다. 앞 씬들의 두 선택지는 같은 반응의 맛 차이라 어느 쪽을 골라도
+        // 손해가 없지만, 여기는 스토리에서 유일하게 전환이 걸리는 칸이다. 둘로 나누면 목적지가 같은데
+        // 의도가 다른 두 선택으로 읽혀 고민만 얹는다(형님 지적). 타이트도 마지막 씬은 버튼 하나다.
+        //
+        // 전에는 두 번째 선택지가 세일즈 페이지로 갔다. 도착하면 산군이 방금 한 인사("…왔군. 네 장부,
+        // 내가 먼저 봤다")를 같은 그림으로 또 하고 자기소개를 다시 해서, 대화를 마친 손님이 처음 만난
+        // 사람 취급을 받았다. 가격·목차·예시 결과지는 티저 아래로 옮겨 두었다.
+        choices: [{ label: "생년월일 알려주기", act: toInput, primary: true }],
       },
     ] as { img: string; video: string; line: React.ReactNode; choices: { label: string; act: () => void; primary?: boolean }[] }[];
     const s = scenes[Math.min(scene, scenes.length - 1)];
@@ -444,10 +444,16 @@ export function SangunStory({
               명운록 · 신당
             </span>
             {/* 스킵의 도착지도 입력이다(위 선택지 주석 참고). 광고 진입 랜딩으로서의 세일즈 페이지는
-                URL 로 살아 있지만, 스토리를 탄 손님의 동선에서는 빠진다. */}
-            <button type="button" onClick={toInput} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
-              건너뛰기 &gt;
-            </button>
+                URL 로 살아 있지만, 스토리를 탄 손님의 동선에서는 빠진다.
+                마지막 씬에서는 숨긴다 — 바로 아래 금색 버튼과 목적지가 같은데 회색 잔글씨로 또 있으면
+                "이건 뭐가 다르지" 하고 멈추는 자리가 된다. 갈 길이 남은 앞 씬에서만 지름길로 쓴다. */}
+            {scene < scenes.length - 1 ? (
+              <button type="button" onClick={toInput} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
+                건너뛰기 &gt;
+              </button>
+            ) : (
+              <span aria-hidden />
+            )}
           </div>
 
           <div>
