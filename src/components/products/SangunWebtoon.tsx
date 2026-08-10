@@ -6,6 +6,8 @@
 import { useEffect, useRef, useState } from "react";
 import { StoryFooter } from "@/components/products/StoryFooter";
 import { BgMedia } from "@/components/products/BgMedia";
+// 세일즈 블록(예시 결과지·목차·가격 앵커·FAQ)은 티저 화면과 공유한다 — SangunSalesBlocks.tsx 머리말 참고.
+import { SampleCard, TocCard, SangunFaq } from "@/components/products/SangunSalesBlocks";
 import { SOCIAL_PROOF, hasSocialProof, formatCount } from "@/config/social-proof";
 import { track } from "@/lib/analytics";
 
@@ -216,41 +218,6 @@ function LedgerLock({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-// 예시 결과지 — 실제 엔진 출력(1993-05-15 여) 그대로. 손으로 다듬지 않는다.
-function SampleCard() {
-  return (
-    <div className="rounded-md p-6" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(201,162,39,0.2)" }}>
-      <p className="mb-1 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-        이렇게 나온다
-      </p>
-      <p className="mb-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
-        예시 · 1993년생 여성의 실제 결과지에서
-      </p>
-      <div className="space-y-3 text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
-        <p className="font-myeongjo text-[15px] font-bold" style={{ color: GOLD }}>
-          3. 돈이 들어오는 달
-        </p>
-        <p>
-          <b style={{ color: "#efe6d2" }}>재물그릇 점수는 65점</b>이다. 특히 <b style={{ color: "#efe6d2" }}>2027년 6월</b>과{" "}
-          <b style={{ color: "#efe6d2" }}>2027년 5월</b>이 가장 기대되는 달이더군. 다만 <b style={{ color: "#efe6d2" }}>2027년 1월</b>은
-          조심해야 할 달이니, 불필요한 지출을 줄이고 신중히 결정해라.
-        </p>
-        <div className="pt-1" style={{ borderTop: "1px dashed rgba(201,162,39,0.2)" }}>
-          <p className="pt-2 font-myeongjo text-[15px] font-bold" style={{ color: GOLD }}>
-            8. 네 물음에 답한다 — &ldquo;올해 이직해도 될까요&rdquo;
-          </p>
-          <p>
-            <b style={{ color: "#efe6d2" }}>이직해도 좋다.</b> 올해는 변화의 때가 다가오고 있다. 이직 시점으로는… <span style={{ color: "#7d8496" }}>(결제 후 계속)</span>
-          </p>
-        </div>
-      </div>
-      <p className="mt-4 text-center text-[13px]" style={{ color: "#7d8496" }}>
-        여기 적힌 달은 예시다. 네 달은 네 사주에서 다시 계산된다.
-      </p>
-    </div>
-  );
-}
-
 // 후기·누적 숫자 — 값은 src/config/social-proof.ts 에서만 들고 온다.
 // 비어 있으면 아무것도 그리지 않는다. 숫자 0이나 빈 카드가 노출되는 게 없느니만 못하다.
 function SocialProofBlock() {
@@ -282,72 +249,6 @@ function SocialProofBlock() {
   );
 }
 
-// 받는 것 — 11챕터 목차 (결과지 outline 과 1:1 — 목차에 있는데 결과지에 없으면 들통)
-function TocCard({ priceLabel }: { priceLabel: string }) {
-  const rows: [string, string][] = [
-    // 수위는 '중간 — 호기심만'(형님 결정). 타이트처럼 성적 표현·열등감 저격까지는 가지 않는다.
-    ["1. 타고난 네 그릇", "남들은 못 보는 네 결 하나"],
-    ["2. 네가 걸어온 길", "지나온 해까지 되짚어 맞춘다"],
-    ["3. 올해 오는 것, 떠나는 것", "올해 네게서 빠져나갈 것 하나"],
-    ["4. 돈이 들어오는 달", "몇 월인지 · 어디로 새는지"],
-    ["5. 인연이 들어오는 달", "네 짝이 지나가는 달"],
-    ["6. 일과 자리의 시기", "지금 움직일 때인지, 엎드릴 때인지"],
-    ["7. 조심할 달", "네가 흔들리는 달 — 미리 알고 넘겨라"],
-    ["8. 인생이 크게 바뀌는 해", "몇 살에 갈리는지, 그때 뭐가 달라지는지"],
-    ["9. 네 물음의 답", "하라 · 말라로 답을 정해서"],
-    ["10. 산군의 처방", "네게 맞는 방향·색·자리까지"],
-    ["11. 마지막 당부", "이번 주에 당장 할 것 셋"],
-  ];
-  return (
-    <div className="rounded-md p-6" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(201,162,39,0.2)" }}>
-      <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-        받는 것 — 11장 · 확답 일곱 이상 · 앞으로 12개월 전부
-      </p>
-      {/* 목차만 13px 로 남긴다. 본문 눈금(15px)에 맞춰 올렸더니 9행 중 4행이 두 줄로 넘어갔다 —
-          제목과 설명이 한 줄에서 좌우로 맞물려야 훑어지는 목록이라, 키우는 쪽이 오히려 나빴다. */}
-      <ul className="space-y-2.5">
-        {rows.map(([t, d]) => (
-          <li key={t} className="flex items-baseline justify-between gap-3 text-[13px]">
-            <span style={{ color: "#cfd0d8" }}>{t}</span>
-            <span className="text-right" style={{ color: "#7d8496" }}>
-              {d}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 text-center text-[13px]" style={{ color: SUB }}>
-        {/* "점심 한 번 값"은 뺐다 — 4050 에게 '싸다'는 '부실하다'로 읽힌다(모의구매 3/3 이 거슬려 함).
-            같은 리포의 재물 랜딩(WealthWebtoon.tsx:269)처럼 철학관 가격으로 상향 앵커를 건다. */}
-        신당에 몸소 들면 복채가 <b style={{ color: GOLD }}>5만에서 20만</b>이다. 나는 서고에서 장부를 읽어 주니{" "}
-        <b style={{ color: GOLD }}>{priceLabel}</b>만 받는다 — 몇 분 안에 도착 · 마이페이지에 계속 보관
-      </p>
-    </div>
-  );
-}
-
-const FAQ: [string, string][] = [
-  [
-    "무서운 말이 나오지는 않나요?",
-    "겁주는 풀이는 하지 않아요. 산군의 말투는 단호하지만, 조심할 달에는 반드시 대처법을 함께 일러주고 마지막은 해줄 일로 맺어요. 이별·사별 같은 단정은 아예 쓰지 않게 설계돼 있어요.",
-  ],
-  [
-    "무료 사주랑 뭐가 다른가요?",
-    "무료 사주는 '올해 좋은 일이 있겠네요'에서 끝나요. 여기서는 연도와 달을 집어서 확답해요. 돈이 들어오는 달, 인연이 들어오는 달, 인생이 크게 바뀌는 해까지 — 그 달들은 사람이 골라주는 게 아니라 만세력 계산에서 나와요.",
-  ],
-  [
-    "왜 반말인가요?",
-    "산군은 산신을 받든 박수예요. 신당에서 듣는 것처럼 단호한 반말로 확답하지만, 무례하게 하대하지는 않아요. 편하게 들으시면 돼요.",
-  ],
-  [
-    "태어난 시각을 몰라요. 음력 생일만 알아요.",
-    "둘 다 괜찮아요. 시각을 모르시면 '시각 몰라요'를 누르시면 태어난 날을 중심으로 풀어드리고, 음력을 고르시면 양력으로 정확히 바꿔서 사주를 세워요.",
-  ],
-  [
-    "결제랑 제 생년월일은 안전한가요?",
-    "토스페이먼츠 안전결제로 진행돼요. 적어주신 생년월일은 사주 계산과 결과지 만드는 데만 쓰고 광고에 쓰지 않아요. 결과지가 제대로 만들어지지 않으면 전액 돌려드리고, 결과지를 열기 전이면 7일 안에 취소돼요.",
-  ],
-];
-
 // ── 비주얼노벨 스토리(타이트 MZ무당 구조 이식) ─────────────────────
 // 선택지는 장식(참여감 전용)이다 — 타이트도 스토리 선택지로는 아무것도 수집하지 않는다
 // ("당황하며 주변을 둘러보기" 같은 반응뿐). 실제 질문은 전부 입력 단계에 몰려 있다.
@@ -357,21 +258,28 @@ const FAQ: [string, string][] = [
 export function SangunStory({
   priceLabel,
   wizard,
+  initialStage,
 }: {
   priceLabel: string;
   wizard: React.ReactNode; // 몰입 위저드(immersive SajuWizard) — 입력 스테이지가 풀스크린으로 소유
+  initialStage?: "main"; // ?view=detail — 광고를 세일즈 페이지로 직접 받을 때(page.tsx 주석 참고)
 }) {
-  const [stage, setStage] = useState<"gate" | "story" | "main" | "input">("gate");
+  const [stage, setStage] = useState<"gate" | "story" | "main" | "input">(initialStage ?? "gate");
   const [scene, setScene] = useState(0);
   const { on, toggle } = useShrineAmbience();
+  const viewed = useRef(false);
 
-  const toMain = () => {
-    // 퍼널 첫 칸 — 게이트를 넘어 상품을 실제로 본 지점. 이게 없으면 "광고 클릭 → 게이트 이탈"과
-    // "상품까지 보고 이탈"을 구분할 수 없다(게이트 이탈률이 이 세션 분석의 최대 미지수였다).
+  // 퍼널 첫 칸 — 게이트를 넘어 상품을 실제로 본 지점. 이게 없으면 "광고 클릭 → 게이트 이탈"과
+  // "상품까지 보고 이탈"을 구분할 수 없다(게이트 이탈률이 이 세션 분석의 최대 미지수였다).
+  // 전에는 세일즈 페이지 진입에서만 쐈다. 그 화면이 동선에서 빠지면서 스토리로 넘어간 손님이
+  // 통째로 집계에서 사라지므로, 게이트를 벗어나는 **모든** 경로에서 한 번만 쏘게 바꿨다.
+  useEffect(() => {
+    if (stage === "gate" || viewed.current) return;
+    viewed.current = true;
     track("product_view", { slug: "sangun-sinjeom" });
-    setStage("main");
-    setTimeout(() => window.scrollTo(0, 0), 0);
-  };
+  }, [stage]);
+
+  // (setStage("main") 로 가는 화면 안 경로는 없다 — 세일즈 페이지 입구는 ?view=detail 하나뿐이다)
   const toInput = () => {
     setStage("input");
     setTimeout(() => window.scrollTo(0, 0), 0);
@@ -513,7 +421,11 @@ export function SangunStory({
         ),
         choices: [
           { label: "생년월일 알려주기", act: toInput, primary: true },
-          { label: "장부에 뭐가 적혔는지 먼저 볼래", act: toMain },
+          // 전에는 여기서 세일즈 페이지로 보냈다. 도착하면 산군이 방금 한 인사("…왔군. 네 장부, 내가
+          // 먼저 봤다")를 같은 그림으로 또 하고 자기소개를 다시 해서, 대화를 마친 손님이 처음 만난
+          // 사람 취급을 받았다(형님 지적). 타이트도 스킵의 도착지는 상품 소개가 아니라 입력이다 —
+          // 스킵해도 입력을 피하는 길이 없다. 가격·목차·예시 결과지는 티저 아래로 옮겨 두었다.
+          { label: "됐고, 바로 펴봐라", act: toInput },
         ],
       },
     ] as { img: string; video: string; line: React.ReactNode; choices: { label: string; act: () => void; primary?: boolean }[] }[];
@@ -531,7 +443,9 @@ export function SangunStory({
             <span className="text-[13px] tracking-[0.22em]" style={{ color: GOLD, opacity: 0.85 }}>
               명운록 · 신당
             </span>
-            <button type="button" onClick={() => toMain()} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
+            {/* 스킵의 도착지도 입력이다(위 선택지 주석 참고). 광고 진입 랜딩으로서의 세일즈 페이지는
+                URL 로 살아 있지만, 스토리를 탄 손님의 동선에서는 빠진다. */}
+            <button type="button" onClick={toInput} className="px-2 py-1 text-[13px]" style={{ color: "#8b91a3" }}>
               건너뛰기 &gt;
             </button>
           </div>
@@ -710,24 +624,7 @@ export function SangunStory({
           </div>
         </Cut>
 
-        {/* FAQ */}
-        <section className="px-5 pb-10 pt-4">
-          <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-            자주 묻는 물음
-          </p>
-          <ul className="divide-y" style={{ borderColor: "rgba(201,162,39,0.15)" }}>
-            {FAQ.map(([q, a]) => (
-              <li key={q} className="py-4" style={{ borderColor: "rgba(201,162,39,0.15)" }}>
-                <p className="mb-1.5 font-myeongjo text-[15px] font-semibold" style={{ color: "#efe6d2" }}>
-                  Q. {q}
-                </p>
-                <p className="text-[15px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
-                  {a}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <SangunFaq className="px-5 pb-10 pt-4" />
 
         <StoryFooter />
       </div>

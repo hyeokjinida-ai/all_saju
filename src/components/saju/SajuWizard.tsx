@@ -13,6 +13,7 @@ import { tag, displayOf, PROFILE_KEYS, PARTNER_OPTIONS, RELATIONSHIP_OPTIONS, JO
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { PillarChart } from "@/components/saju/PillarChart";
+import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
 type Pillar = ResultView["pillars"][number];
@@ -805,6 +806,7 @@ export function SajuWizard({
             cuts={webtoonCuts}
             tokens={tokens}
             productSlug={productSlug}
+            price={price}
           />
         )}
       </div>
@@ -1228,6 +1230,7 @@ function TeaserStep({
   cuts,
   tokens,
   productSlug,
+  price,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -1238,6 +1241,7 @@ function TeaserStep({
   cuts: WebtoonCutData[];
   tokens: Record<string, string>;
   productSlug: string;
+  price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
 }) {
   if (loading) {
     return (
@@ -1722,6 +1726,13 @@ function TeaserStep({
         </>
       )}
     </div>
+
+    {/* 세일즈 꼬리 — 분량·가격 앵커 → 예시 결과지 → FAQ.
+        타이트는 같은 자리(무료 티저 아래)에 가격·목차·예시·후기를 다 쌓아 두고, 그게 유일한
+        세일즈 페이지다. 우리는 그 자료가 별도 화면에 있었는데 스토리 탈출구를 입력 직행으로
+        바꾸면서 손님 동선에서 빠졌다 — 그래서 여기로 옮겼다(2026-08-11).
+        장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
+    {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
     </>
   );
 }

@@ -67,10 +67,10 @@ export default async function ProductDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; view?: string }>;
 }) {
   const { slug } = await params;
-  const { c: concernPreset } = await searchParams;
+  const { c: concernPreset, view } = await searchParams;
 
   let product: Product | null;
   let reviews: Review[] | null = null;
@@ -218,7 +218,13 @@ export default async function ProductDetailPage({
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
       {isSangunStory ? (
         // 산군: 풀스크린 스테이지(게이트→스토리→입력) — 위저드를 스토리가 소유해 위아래 크롬 없이 몰입 유지
+        //
+        // `?view=detail` 은 게이트·스토리를 건너뛰고 세일즈 페이지로 바로 들어간다.
+        // 광고 진입점 (b)안(목차 직행)을 코드 변경 없이 시험하기 위한 문이다 — 무명 브랜드가
+        // 가격도 결과물도 없는 게이트로 광고를 받는 게 위험하다는 판단(광고소재_초안_2026-08.md).
+        // 스토리를 탄 손님의 동선에서는 이 화면이 빠졌으므로, 이제 여기가 유일한 입구다.
         <SangunStory
+          initialStage={view === "detail" ? "main" : undefined}
           priceLabel={formatKRW(product.price)}
           wizard={
             <SajuWizard
