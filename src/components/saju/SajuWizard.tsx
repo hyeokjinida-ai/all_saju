@@ -1679,7 +1679,19 @@ function TeaserStep({
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
           <span className="relative mt-2 inline-block px-6 py-2">
-            <p className="font-serif text-[30px] font-bold leading-none" style={{ color: "#e8695a" }}>
+            {/* 30 → 40px, 명조 → 붓글씨(--font-brush).
+                크기: 티저에서 유일하게 가리지 않고 내주는 확정값인데, 바로 위 나레이션이 19px 라
+                30px 은 1.6배밖에 안 됐다. 40px 은 연출용 눈금에 있는 다음 칸이고 2.1배가 된다.
+                글씨체: font-serif 는 Tailwind 에서 var(--font-myeongjo) 로 걸려 있어 폴백은 아니었지만,
+                본문·대사와 **같은 옷에 크기만 다른** 상태였다. 우리는 이미 글씨체로 역할을 가르고
+                있다(말풍선=명조, 나레이션=송명조). 여기는 붓글씨 — 이 숫자를 감싸는 게 붉은 먹
+                동그라미라 같은 도구(붓)로 쓴 글자여야 "장부에 붓으로 표시한 해"가 된다.
+                거친 붓(East Sea Dokdo)이 대본상 후보였지만 웹툰 컷이 화면에 있을 때만 로드되는
+                글씨체라 웹툰을 내리면 같이 죽는다 — 전역 next/font 인 --font-brush 를 쓴다. */}
+            <p
+              className="text-[40px] font-bold leading-none"
+              style={{ color: "#e8695a", fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive" }}
+            >
               {teaser.turningYear.year}년
             </p>
             {/* 먹으로 친 동그라미 — 선이 아니라 굵기가 변하는 도형이다(ink-circle-path.ts 참고).
