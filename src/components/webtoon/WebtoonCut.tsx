@@ -281,7 +281,11 @@ export function WebtoonCut({
         <div className="pointer-events-none absolute inset-0 z-10">
           {bubbles.map((b, i) => {
             const shape = b.bubble ?? "none";
-            const size = b.size ?? 4.6;
+            // 4.6 → 5.2cqw. 375px 컷에서 15.2 → 17.2px — 티저·스토리의 산군 대사(17px)와 같은 목소리
+            // 크기가 된다(형님 지적: "대사 치는 글자 크기 너무 작다"). 실측해 보니 웹툰 안에서만
+            // 15px 로 작아져, 같은 화면 안에서 캐릭터 목소리가 두 크기로 갈려 있었다.
+            // 컷마다 저장된 size 가 있으면 그것이 우선이라 편집기에서 세운 강약은 안 깨진다.
+            const size = b.size ?? 5.2;
             const align = b.align ?? "center";
 
             const textStyle: React.CSSProperties = {

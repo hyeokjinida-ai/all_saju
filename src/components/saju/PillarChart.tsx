@@ -77,8 +77,11 @@ export function PillarChart({ shown, rows }: { shown: Pillar[]; rows: ChartRow[]
         {cols.map(({ p }, i) => (
           <Glyph key={`j-${i}`} char={p.ji.char} element={p.ji.element} isDay={p.isDay} />
         ))}
+        {/* 한글 읽기(갑술·기사·무오) — 11px bone-faint 는 표 안에서 가장 안 보이는 줄이었다.
+            한자를 못 읽는 사람이 유일하게 붙잡는 줄이라 여기서 흐리면 표 전체가 그림이 된다.
+            12px + 또렷한 색으로. (13 으로 올리면 아래 십성 줄과 위계가 뒤집힌다) */}
         {cols.map(({ p }, i) => (
-          <span key={`r-${i}`} className="font-myeongjo text-[11px] text-bone-faint">
+          <span key={`r-${i}`} className="font-myeongjo text-[12px]" style={{ color: "rgba(215,206,188,0.86)" }}>
             {p.gan.read}
             {p.ji.read}
           </span>
