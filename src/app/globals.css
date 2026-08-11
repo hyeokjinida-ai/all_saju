@@ -476,10 +476,17 @@
     animation: inkDraw 1.1s cubic-bezier(0.5, 0, 0.35, 1) 0.35s forwards;
   }
 
-  /* 형광펜이 좌→우로 칠해지는 결과지 하이라이트 — 같은 원리(붓이 지나간다) */
+  /* 형광펜이 좌→우로 칠해지는 결과지 하이라이트 — 같은 원리(붓이 지나간다).
+     동그라미와 마찬가지로 기본은 **안 칠해진 상태**이고, 손님이 그 문장에 도착하면
+     InkMark 가 `.is-drawn` 을 붙인다. 안 그러면 11장짜리 결과지의 형광펜 열몇 개가
+     페이지 뜨는 순간 한꺼번에 칠해지고 끝난다. */
   @keyframes inkSwipe {
     from { background-size: 0% 100%; }
     to   { background-size: 100% 100%; }
+  }
+  .ink-swipe { background-size: 0% 100%; }
+  .ink-swipe.is-drawn {
+    animation: inkSwipe 0.55s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
   }
 
   /* 모션을 줄이도록 설정한 사용자에겐 결과만 보여준다(그려지는 과정 생략) */
@@ -487,7 +494,9 @@
     /* 그려지는 과정 없이 완성형만. `.ink-circle` 단독에도 걸어야 한다 —
        모션을 줄이는 사용자에게 is-drawn 이 안 붙어 동그라미가 통째로 사라지면 안 된다. */
     .ink-circle, .ink-circle.is-drawn { animation: none; stroke-dashoffset: 0; }
-    mark { animation: none !important; background-size: 100% 100% !important; }
+    /* 동그라미와 같은 이유로 `.ink-swipe` 단독에도 완성형을 건다 —
+       is-drawn 이 안 붙는 경로에서 형광펜이 아예 안 칠해지면 안 된다. */
+    mark, .ink-swipe, .ink-swipe.is-drawn { animation: none !important; background-size: 100% 100% !important; }
   }
 
   /* 결제 전 블러 처리(미리보기) */

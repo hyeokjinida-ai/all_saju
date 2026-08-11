@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { InkMark } from "./InkMark";
 
 // 명운록 결과지 본문 — 마크다운을 증서 느낌의 구획된 섹션으로 렌더.
 // ## = 결과지 대제목(상단 1회), ### = 각 챕터(디바이더 + 아이콘 + 본문).
@@ -22,8 +23,9 @@ const HIGHLIGHT_STYLE: CSSProperties = {
   backgroundColor: "transparent",
   backgroundImage: "linear-gradient(rgba(143,43,30,0.62), rgba(143,43,30,0.62))",
   backgroundRepeat: "no-repeat",
-  backgroundSize: "0% 100%",
-  animation: "inkSwipe 0.55s cubic-bezier(0.4,0,0.2,1) 0.2s forwards",
+  // 칠하는 동작(background-size 0%→100%)은 CSS 클래스 `.ink-swipe`/`.is-drawn` 이 맡는다.
+  // 인라인 animation 으로 두면 요소가 만들어질 때 재생돼, 11장짜리 결과지에서 형광펜 열몇 개가
+  // 페이지 뜨는 순간 한꺼번에 칠해지고 끝난다 — 읽어 내려온 손님은 이미 칠해진 것만 본다.
   color: "#ffe9d8",
   padding: "0.08em 0.25em",
   borderRadius: 2,
@@ -45,9 +47,9 @@ function highlightString(text: string): ReactNode {
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     parts.push(
-      <mark key={m.index} style={HIGHLIGHT_STYLE}>
+      <InkMark key={m.index} style={HIGHLIGHT_STYLE}>
         {m[1]}
-      </mark>,
+      </InkMark>,
     );
     last = m.index + m[0].length;
   }
