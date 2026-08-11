@@ -12,6 +12,7 @@ import { WebtoonPage, type WebtoonCutData } from "@/components/webtoon/WebtoonPa
 import { tag, displayOf, PROFILE_KEYS, PARTNER_OPTIONS, RELATIONSHIP_OPTIONS, JOB_OPTIONS } from "@/lib/saju/profile-tags";
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
+import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 
@@ -1353,6 +1354,10 @@ function TeaserStep({
   productSlug: string;
   price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
 }) {
+  // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
+  // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
+  const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
+
   if (loading) {
     return (
       <div className="py-8 text-center">
@@ -1670,6 +1675,7 @@ function TeaserStep({
           앞뒤로 숨 쉬는 자리를 주고, 카드 안쪽도 넓혀 판으로 서게 한다. 아래 mb-9 는 다음 컷과의 간격. */}
       {teaser?.turningYear && (
         <div
+          ref={inkRef}
           className="mb-9 mt-9 px-4 py-7 text-center"
           style={{ background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }}
         >
@@ -1696,7 +1702,8 @@ function TeaserStep({
             </p>
             {/* 먹으로 친 동그라미 — 선이 아니라 굵기가 변하는 도형이다(ink-circle-path.ts 참고).
                 마스크가 중심선을 따라 훑으며 획을 드러내서 "지금 붓이 지나간다"가 된다.
-                pathLength=1 로 정규화 — 경로를 고쳐도 CSS(dasharray 1)는 그대로 맞는다. */}
+                pathLength=1 로 정규화 — 경로를 고쳐도 CSS(dasharray 1)는 그대로 맞는다.
+                `is-drawn` 이 붙어야 재생된다 — 카드가 화면에 들어온 뒤에 붙는다(useInView). */}
             <svg
               aria-hidden
               viewBox="0 0 120 56"
@@ -1707,7 +1714,7 @@ function TeaserStep({
                 <mask id="ink-reveal" maskUnits="userSpaceOnUse" x="-6" y="-6" width="132" height="68">
                   {/* 폭 12 = 획 최대 폭(약 4.1)보다 넉넉히 — 붓끝이 획보다 살짝 앞서 지나간다 */}
                   <path
-                    className="ink-circle"
+                    className={`ink-circle${inkInView ? " is-drawn" : ""}`}
                     pathLength={1}
                     d={INK_CENTERLINE}
                     fill="none"

@@ -465,9 +465,14 @@
     from { stroke-dashoffset: 1; }
     to   { stroke-dashoffset: 0; }
   }
+  /* 기본은 **안 그려진 상태**로 둔다. 마운트 즉시 재생하면 티저처럼 1만 픽셀이 넘는 페이지에선
+     손님이 스크롤해 도착하기 한참 전에 끝나 버려서, 정작 아무도 붓이 지나가는 걸 못 본다.
+     `.is-drawn` 은 카드가 화면에 들어왔을 때 useInView 가 붙인다. */
   .ink-circle {
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
+  }
+  .ink-circle.is-drawn {
     animation: inkDraw 1.1s cubic-bezier(0.5, 0, 0.35, 1) 0.35s forwards;
   }
 
@@ -479,7 +484,9 @@
 
   /* 모션을 줄이도록 설정한 사용자에겐 결과만 보여준다(그려지는 과정 생략) */
   @media (prefers-reduced-motion: reduce) {
-    .ink-circle { animation: none; stroke-dashoffset: 0; }
+    /* 그려지는 과정 없이 완성형만. `.ink-circle` 단독에도 걸어야 한다 —
+       모션을 줄이는 사용자에게 is-drawn 이 안 붙어 동그라미가 통째로 사라지면 안 된다. */
+    .ink-circle, .ink-circle.is-drawn { animation: none; stroke-dashoffset: 0; }
     mark { animation: none !important; background-size: 100% 100% !important; }
   }
 
