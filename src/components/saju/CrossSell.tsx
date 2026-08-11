@@ -65,18 +65,23 @@ export function CrossSell({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
-  const premium = products.find((p) => p.slug === "premium-saju");
-  if (!premium) return null; // 이미 프리미엄을 봤거나 비활성이면 숨김
+  // 다음에 권할 장부 — 예전엔 premium-saju 를 **하드코딩**해서 찾았다. 2상품 오픈(2026-08-11)으로
+  // 프리미엄을 내리는 순간 이 섹션이 통째로 사라져, 결과지를 다 본 손님에게 다음 상품을 권하는
+  // 장치가 0이 됐다(경쟁사는 전부 결과지 안에서 다음 상품을 판다 — 타이트는 배너·큐레이션·이어보기).
+  // 이제 상품명을 박지 않는다: 호출부가 넘겨주는 목록(이미 활성·비애드온·현재 상품 제외 필터를
+  // 거친 것)의 맨 앞을 권한다. 라인업이 바뀌어도 이 컴포넌트는 안 건드려도 된다.
+  const next = products[0];
+  if (!next) return null; // 권할 게 없으면(상품 1개뿐) 조용히 숨김
 
   async function buy() {
-    if (!premium) return;
+    if (!next) return;
     setBusy(true);
     try {
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: premium.productId,
+          productId: next.productId,
           name: input.name ?? "",
           birthDate: input.birthDate,
           birthTime: input.timeUnknown ? null : input.birthTime?.slice(0, 5) ?? null,
@@ -101,14 +106,16 @@ export function CrossSell({
       <div style={{ textAlign: "center", marginBottom: 14 }}>
         <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 26, color: c.hanja, lineHeight: 1 }}>緣</div>
         <h2 style={{ marginTop: 8, fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 19, color: c.title }}>
-          같은 사주로 이어서 보기
+          {tone === "sangun" ? "장부가 하나 더 있다" : "같은 사주로 이어서 보기"}
         </h2>
         <p style={{ marginTop: 7, fontSize: 12.5, lineHeight: 1.6, color: c.sub }}>
-          정보를 다시 입력할 필요 없이, 한 번의 클릭으로 바로 받아보실 수 있어요.
+          {tone === "sangun"
+            ? "네 여덟 글자는 이미 받아 뒀다. 다시 적을 것 없다."
+            : "정보를 다시 입력할 필요 없이, 한 번의 클릭으로 바로 받아보실 수 있어요."}
         </p>
       </div>
 
-      {/* 인생 프리미엄 풀이 — 추천 카드 */}
+      {/* 다음 장부 추천 카드 — 설명은 상품 DB 의 것을 쓴다(상품이 바뀌어도 카피가 안 어긋나게) */}
       <div
         style={{
           borderRadius: 18,
@@ -119,16 +126,14 @@ export function CrossSell({
         }}
       >
         <span style={{ display: "inline-block", marginBottom: 12, padding: "4px 11px", borderRadius: 999, background: c.badgeBg, color: c.badgeText, fontSize: 11, fontWeight: 800 }}>
-          추천 · 끝판왕 풀이
+          {tone === "sangun" ? "다음 장부" : "추천 · 이어서 볼 풀이"}
         </span>
-        <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{premium.name}</div>
-        <p style={{ marginTop: 9, fontSize: 13, lineHeight: 1.7, color: c.body }}>
-          인생 60년의 큰 흐름과 재물·직업·관계·건강운을 한 번에 통합 분석합니다. 지금 보신 풀이의 큰 그림까지 이어서 봐요.
-        </p>
+        <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 21, color: "#fff" }}>{next.name}</div>
+        <p style={{ marginTop: 9, fontSize: 13, lineHeight: 1.7, color: c.body }}>{next.description}</p>
         <div style={{ marginTop: 16, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
           <div>
             <div style={{ fontSize: 10.5, color: c.small, letterSpacing: ".04em", marginBottom: 3 }}>다시 입력하지 않아도 돼요</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{formatKRW(premium.price)}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{formatKRW(next.price)}</div>
           </div>
           <button
             type="button"
