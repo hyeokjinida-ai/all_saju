@@ -262,7 +262,10 @@ export function SangunStory({
 }: {
   priceLabel: string;
   wizard: React.ReactNode; // 몰입 위저드(immersive SajuWizard) — 입력 스테이지가 풀스크린으로 소유
-  initialStage?: "main"; // ?view=detail — 광고를 세일즈 페이지로 직접 받을 때(page.tsx 주석 참고)
+  // "main"  = ?view=detail — 광고를 세일즈 페이지로 직접 받을 때
+  // "input" = ?demo=…      — 티저 화면만 확인할 때(게이트·스토리를 건너뛴다)
+  // 둘 다 page.tsx 주석 참고.
+  initialStage?: "main" | "input";
 }) {
   const [stage, setStage] = useState<"gate" | "story" | "main" | "input">(initialStage ?? "gate");
   const [scene, setScene] = useState(0);

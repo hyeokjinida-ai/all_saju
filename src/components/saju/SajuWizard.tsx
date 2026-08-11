@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
@@ -58,6 +58,28 @@ type Props = {
   bgImage?: string;
   /** 입력 화면 배경 영상. 없으면 bgImage 로 내려앉는다(파일만 올리면 살아남) */
   bgVideo?: string;
+  /**
+   * `?demo=…` — 입력 10단계를 건너뛰고 **결제 전 티저 화면으로 바로** 들어간다.
+   * 화면을 확인할 때마다 열 칸을 채우는 게 낭비라서 만든 문(형님 요청).
+   *
+   * 파는 것을 건드리지 않는다: 결제·주문·가격 경로는 그대로고, 채워 넣는 건 위저드가
+   * 어차피 받는 값들뿐이다. 손님이 이 주소를 열어도 **무료 티저**만 보인다.
+   * 만세력은 생일 단위로 캐시되므로 같은 데모 생일을 몇 번 열어도 API 콜은 처음 1회뿐이다.
+   */
+  demo?: DemoPreset | null;
+};
+
+/** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
+export type DemoPreset = {
+  birthDate: string; // YYYY-MM-DD
+  gender: "male" | "female";
+  calendar: "solar" | "lunar";
+  timeUnknown: boolean;
+  name?: string;
+  partner?: string;
+  relationship?: string;
+  job?: string;
+  concerns?: string[];
 };
 
 type FormState = {
@@ -200,6 +222,7 @@ export function SajuWizard({
   variant,
   bgImage,
   bgVideo,
+  demo = null,
 }: Props) {
   const imm = variant === "immersive";
   const router = useRouter();
@@ -216,16 +239,18 @@ export function SajuWizard({
   const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
   const [form, setForm] = useState<FormState>({
-    name: "",
-    birthDate: "",
+    // demo 가 있으면 첫 렌더부터 채워 둔다 — setState 로 나중에 넣으면 티저 요청이
+    // 빈 생일로 한 번 먼저 나가서 실패한다.
+    name: demo?.name ?? "",
+    birthDate: demo?.birthDate ?? "",
     birthTime: "",
-    timeUnknown: false,
-    gender: "",
-    calendar: "",
-    partner: "",
-    relationship: "",
-    job: "",
-    concerns: (initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
+    timeUnknown: demo?.timeUnknown ?? false,
+    gender: demo?.gender ?? "",
+    calendar: demo?.calendar ?? "",
+    partner: demo?.partner ?? "",
+    relationship: demo?.relationship ?? "",
+    job: demo?.job ?? "",
+    concerns: (demo?.concerns ?? initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
     concernText: "",
   });
 
@@ -385,6 +410,16 @@ export function SajuWizard({
       return Math.max(0, p);
     });
 
+  // ?demo= 로 들어왔으면 입력을 건너뛰고 티저를 바로 띄운다(형님 화면 확인용).
+  // 마운트 1회만 — loadTeaser 를 의존성에 넣으면 form 이 바뀔 때마다 다시 호출된다.
+  const demoFired = useRef(false);
+  useEffect(() => {
+    if (!demo || demoFired.current) return;
+    demoFired.current = true;
+    void loadTeaser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo]);
+
   // Enter 키로 다음
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -424,10 +459,17 @@ export function SajuWizard({
   const effectivePrice = selected.price;
   // 추천 뱃지 — 이미 받아둔 연애 상태로 가른다(타이트가 솔로에게 '솔탈 패키지'를 붙이는 자리).
   // 혼자·정리 중이면 인연 장부, 그 외(만나는 사람 있음·기혼·무응답)는 재물 장부.
+  //
+  // ⚠ 2상품 오픈(2026-08-11)으로 재물 번들이 내려가 **번들이 하나뿐**이다. 그대로 두면
+  //   "만나는 사람 있음·기혼" 손님은 추천 뱃지가 아예 없는 결제 시트를 본다(뱃지는 선택률을
+  //   끌어올리는 장치인데 절반이 못 본다). 고를 게 하나뿐이면 세그먼트를 따질 이유가 없으므로
+  //   무조건 그것을 추천한다. 기혼에게도 어색하지 않다 — 산군 포괄에 인연 챕터가 이미 있고
+  //   번들 카피가 "장부 한 권 더"라 세그먼트 중립이다.
   const wantsInyeon = form.relationship === "혼자" || form.relationship === "정리 중" || !form.relationship;
-  const recommended = bundles.find((b) =>
-    wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth"),
-  );
+  const recommended =
+    bundles.length === 1
+      ? bundles[0]
+      : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth")));
   const discountPct = (o: BundleOption) =>
     o.compareAtPrice && o.compareAtPrice > o.price
       ? Math.round((1 - o.price / o.compareAtPrice) * 100)

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
-import { SajuWizard, type BundleOption } from "@/components/saju/SajuWizard";
+import { SajuWizard, type BundleOption, type DemoPreset } from "@/components/saju/SajuWizard";
 import { TrustStrip } from "@/components/saju/TrustStrip";
 import { StickyBuyBar } from "@/components/saju/StickyBuyBar";
 import { PRODUCT_PITCH, SAMPLE_TESTIMONIALS } from "@/config/product-pitch";
@@ -62,9 +62,50 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * `?demo=` 값을 티저 미리보기 프리셋으로 바꾼다.
+ *
+ *   1 · on · yes  →  기본 표본
+ *   19940601      →  그 생일, 성별은 기본(여)
+ *   19801103.m    →  그 생일 + 남성(`.f` 는 여성)
+ *
+ * 못 알아먹는 값이면 null — 평소처럼 1단계부터 시작한다(주소 오타로 화면이 깨지면 안 된다).
+ * 기본 표본은 티저 계측(scripts/measure-teaser.ts)이 쓰던 생일과 같은 계열이라
+ * 만세력 캐시에 이미 올라와 있어 반복 열람의 API 콜이 0이다.
+ */
+function parseDemo(v?: string): DemoPreset | null {
+  if (!v) return null;
+  const DEFAULT: DemoPreset = {
+    birthDate: "1994-06-01",
+    gender: "female", // 타깃이 3040 여성이라 기본 표본도 그쪽에 맞춘다
+    calendar: "solar",
+    timeUnknown: true, // 시각 모름이 가장 흔한 경로 — 기둥 3개짜리 조판을 먼저 보게 된다
+    name: "박지수",
+    partner: "남자",
+    relationship: "혼자다",
+    job: "직장에 다닌다",
+  };
+  if (["1", "on", "yes", "true"].includes(v)) return DEFAULT;
+
+  const [digits, sex] = v.split(".");
+  if (!/^\d{8}$/.test(digits)) return null;
+  const y = +digits.slice(0, 4);
+  const m = +digits.slice(4, 6);
+  const d = +digits.slice(6, 8);
+  if (y < 1930 || y > new Date().getFullYear() || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return {
+    ...DEFAULT,
+    birthDate: `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`,
+    gender: sex === "m" ? "male" : "female",
+  };
+}
+
 // 전용 웹툰 랜딩을 가진 상품 — 나머지는 공용 템플릿.
 // 산군은 풀스크린 스테이지 구조(위저드를 스토리 안에서 소유)라 맵이 아닌 전용 분기로 렌더한다.
-const WEBTOON: Record<string, React.ComponentType<{ priceLabel: string; children: React.ReactNode }>> = {
+const WEBTOON: Record<
+  string,
+  React.ComponentType<{ priceLabel: string; compareLabel?: string; children: React.ReactNode }>
+> = {
   "wealth-saju": WealthStory,
   "inyeon-saju": InyeonStory,
 };
@@ -74,10 +115,17 @@ export default async function ProductDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string; view?: string }>;
+  searchParams: Promise<{ c?: string; view?: string; demo?: string }>;
 }) {
   const { slug } = await params;
-  const { c: concernPreset, view } = await searchParams;
+  const { c: concernPreset, view, demo: demoParam } = await searchParams;
+
+  // `?demo=` — 입력 10단계를 건너뛰고 결제 전 티저로 바로 들어간다(화면 확인용).
+  //   ?demo=1              기본 표본(1994-06-01 여, 시각 모름)
+  //   ?demo=19801103.m     생일·성별 지정 — 다른 나이대에서 조판이 어떻게 보이는지 볼 때
+  // 파는 것은 안 건드린다 — 결제·주문·가격 경로는 그대로고, 채워 넣는 건 위저드가 어차피
+  // 받는 값들뿐이라 손님이 이 주소를 열어도 무료 티저까지만 보인다.
+  const demo = parseDemo(demoParam);
 
   let product: Product | null;
   let reviews: Review[] | null = null;
@@ -271,7 +319,8 @@ export default async function ProductDetailPage({
         // 가격도 결과물도 없는 게이트로 광고를 받는 게 위험하다는 판단(광고소재_초안_2026-08.md).
         // 스토리를 탄 손님의 동선에서는 이 화면이 빠졌으므로, 이제 여기가 유일한 입구다.
         <SangunStory
-          initialStage={view === "detail" ? "main" : undefined}
+          // demo 는 게이트·스토리도 건너뛴다 — 티저를 보러 온 것이지 신당에 들어오려는 게 아니다
+          initialStage={demo ? "input" : view === "detail" ? "main" : undefined}
           priceLabel={formatKRW(product.price)}
           wizard={
             <SajuWizard
@@ -286,11 +335,17 @@ export default async function ProductDetailPage({
               webtoonCuts={webtoonCuts}
               variant="immersive"
               bgImage="/products/sangun/face.webp"
+              demo={demo}
             />
           }
         />
       ) : Story ? (
-        <Story priceLabel={formatKRW(product.price)}>{startSection}</Story>
+        <Story
+          priceLabel={formatKRW(product.price)}
+          compareLabel={product.compare_at_price ? formatKRW(product.compare_at_price) : undefined}
+        >
+          {startSection}
+        </Story>
       ) : (
         <>
 
