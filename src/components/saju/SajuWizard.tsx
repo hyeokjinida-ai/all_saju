@@ -1109,8 +1109,11 @@ function InkMask({ text }: { text: string }) {
  */
 function LedgerPanel({ children }: { children: React.ReactNode }) {
   return (
+    // mt-6(24px) → mt-10(40px): 바로 위가 산군이 말을 거는 컷이라, 붙여 두면 대사와 기록이
+    // 한 덩어리로 이어져 읽힌다(형님 지적 — "대사 바로 밑에 저런 글이 있으니 집중이 안 된다").
+    // 말한 사람과 그가 읽어 주는 장부 사이에는 숨 쉬는 자리가 있어야 한다.
     <div
-      className="relative mt-6 py-5 pl-6 pr-5"
+      className="relative mt-10 py-6 pl-7 pr-5"
       style={{
         background:
           "linear-gradient(180deg,rgba(26,20,14,0.92),rgba(14,11,8,0.96)), url(/products/sangun/ganji.webp) center/cover",
@@ -1118,11 +1121,19 @@ function LedgerPanel({ children }: { children: React.ReactNode }) {
         boxShadow: "inset 0 0 40px rgba(0,0,0,0.5)",
       }}
     >
-      {/* 장부 괘선 — 세로 붉은 줄 하나로 "적힌 것"이라는 신호를 준다 */}
+      {/* 장부 괘선 — 세로 붉은 줄로 "적힌 것"이라는 신호를 준다.
+          1px 페이드는 화면에서 거의 안 보였다 → 2px 실선(위아래만 살짝 흐림)으로 세우고,
+          안쪽에 금색 실선을 하나 더 붙여 옛 장부의 이중 괘선을 만든다. 이 줄이 위 대사와
+          아래 기록을 시각적으로 갈라 주는 장치다. */}
       <span
         aria-hidden
-        className="absolute inset-y-4 left-3 w-px"
-        style={{ background: "linear-gradient(180deg,transparent,rgba(143,43,30,0.85),transparent)" }}
+        className="absolute inset-y-3 left-3 w-[2px]"
+        style={{ background: "linear-gradient(180deg,rgba(143,43,30,0.25),rgba(143,43,30,0.95) 12%,rgba(143,43,30,0.95) 88%,rgba(143,43,30,0.25))" }}
+      />
+      <span
+        aria-hidden
+        className="absolute inset-y-3 left-[18px] w-px"
+        style={{ background: "linear-gradient(180deg,transparent,rgba(232,201,106,0.28),transparent)" }}
       />
       {children}
     </div>
@@ -1153,7 +1164,11 @@ function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactN
         >
           산군
         </span>
-        <p className="font-myeongjo text-[15px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
+        {/* 대사 15 → 17px (형님 지적: "대사 치는 글자 크기 너무 작은 것 같다").
+            실측하니 스토리 화면 말풍선은 17px 인데 티저에 들어오면 15px 로 줄어 있었다 —
+            같은 산군이 같은 말투로 말하는데 화면 넘어가면서 목소리가 작아진 셈.
+            15는 본문 크기라 대사가 본문과 같은 무게가 됐다. 눈금 안의 다음 칸이 17. */}
+        <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
       </div>
     </div>
   );
@@ -1411,10 +1426,34 @@ function TeaserStep({
 
       {/* 원국 4기둥 — 콜드리딩보다 먼저. "네 생일로 계산했다"는 증거가 먼저 서야 아래 세 줄이 산다.
           표시 순서는 읽기 쉬운 년→월→일→시(view.pillars 는 시→일→월→년이라 뒤집는다). */}
+      {/* 원국 구역은 **자기 바탕 위에 올린다**(몰입 화면에서만).
+          형님 지적 "배경색 때문인지 글자가 잘 안 보인다"의 실제 원인: 티저 전체가 배경 사진 위
+          rgba(7,6,9,0.86) — 14% 가 비쳐서, 사진의 밝은 부분(촛불·호피)이 지나가는 자리의
+          잔글씨(11px 회색)가 그 위로 뜬다. 대비를 재면 6.49~14.45 로 기준은 통과하지만,
+          "통과"와 "편하게 읽힌다"는 다르다. 여긴 손님이 **증거를 확인하는 화면**이라
+          분위기보다 판독이 우선이다 → 이 블록만 불투명 먹지로 깔고 테두리로 판을 세운다.
+          (배경 사진이 비치는 연출은 컷·대사 쪽에 그대로 남는다) */}
       {shown.length > 0 && (
-        <div className={name ? "mt-3" : ""}>
+        <div
+          className={name ? "mt-3" : ""}
+          style={
+            imm
+              ? {
+                  background: "linear-gradient(180deg,#0b0a0e,#08070a)",
+                  border: "1px solid rgba(232,201,106,0.16)",
+                  borderRadius: 8,
+                  padding: "18px 14px 20px",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
+                }
+              : undefined
+          }
+        >
           {birthDate && (
-            <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.06em]">
+            <p
+              className="font-myeongjo text-center text-[11px] tracking-[0.06em]"
+              // 이 줄은 표의 머리글 역할(어느 날짜에서 나온 글자인지)인데 가장 흐린 색이었다.
+              style={imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
+            >
               {birthDate.replace(/-/g, ".")}
               {/* 시 모름이면 기둥이 셋이라 여섯 글자다. 증거로 내미는 화면에서 숫자가 틀리면 안 된다. */}
               {` — 이 날에서 나온 ${GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`}${imm ? " 글자" : " 글자"}`}
@@ -1456,7 +1495,12 @@ function TeaserStep({
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
           {teaser && teaser.chartRows.length > 0 && (
-            <p className="font-myeongjo mt-2.5 text-center text-[11px] leading-[1.75] text-bone-faint">
+            // 11 → 13px. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야 기능한다 —
+            // 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            <p
+              className="font-myeongjo mt-2.5 text-center text-[13px] leading-[1.75]"
+              style={imm ? { color: "rgba(215,206,188,0.78)" } : undefined}
+            >
               {imm
                 ? "읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고, 아래 말은 전부 여기서 나왔다."
                 : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
@@ -1621,9 +1665,12 @@ function TeaserStep({
       {/* 문구가 "장부에 **붉게** 표시된 해"인데 카드가 금색이었다 — 말과 그림이 어긋난 결함.
           붉은 판으로 바꾸고, 연도 위에 붓 동그라미가 실제로 **그려지게** 한다.
           바로 위 t6 컷(붉은 붓으로 장부에 동그라미 치는 손)이 한 동작을 여기서 이어받는 셈이다. */}
+      {/* mt-4 → mt-9, py-5 → py-7: 위아래가 전부 사진 컷이라 이 카드가 두 사진 사이에 낀
+          얇은 띠처럼 보였다(형님 지적). 카드 자체가 "장부에 붉게 표시된 한 해"라는 단독 장면이니
+          앞뒤로 숨 쉬는 자리를 주고, 카드 안쪽도 넓혀 판으로 서게 한다. 아래 mb-9 는 다음 컷과의 간격. */}
       {teaser?.turningYear && (
         <div
-          className="mt-4 px-4 py-5 text-center"
+          className="mb-9 mt-9 px-4 py-7 text-center"
           style={{ background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }}
         >
           <p className="font-myeongjo text-[11px] tracking-[0.15em]" style={{ color: "rgba(216,140,120,0.85)" }}>

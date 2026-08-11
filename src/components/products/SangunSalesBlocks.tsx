@@ -210,7 +210,8 @@ function TailCut({
           >
             산군
           </span>
-          <p className="font-myeongjo text-[15px] font-semibold leading-[1.75] text-[#241d10]">{say}</p>
+          {/* 티저 본문 CutSay 와 같은 17px — 산군 목소리 크기는 화면이 바뀌어도 같아야 한다 */}
+          <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{say}</p>
         </div>
       </div>
     </div>
