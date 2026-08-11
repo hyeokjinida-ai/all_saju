@@ -1211,11 +1211,17 @@ function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactN
         >
           산군
         </span>
-        {/* 대사 15 → 17px (형님 지적: "대사 치는 글자 크기 너무 작은 것 같다").
-            실측하니 스토리 화면 말풍선은 17px 인데 티저에 들어오면 15px 로 줄어 있었다 —
-            같은 산군이 같은 말투로 말하는데 화면 넘어가면서 목소리가 작아진 셈.
-            15는 본문 크기라 대사가 본문과 같은 무게가 됐다. 눈금 안의 다음 칸이 17. */}
-        <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{children}</p>
+        {/* 대사 크기 = **그림 폭에 비례**(4.9cqw). 375px 컷에서 17.2px 로, 웹툰 말풍선과 같다.
+            처음엔 17px 고정이었는데, 웹툰 말풍선만 cqw 라 PC(820px)에서 25.5 대 17 로 갈렸다
+            — 눈에 같은 부품인데 하나만 커지니 "글씨 크기가 왜 달라졌냐"가 됐다(형님 지적).
+            그림 위에 얹힌 글은 그림을 따라가야 컷 안에서 비율이 안 깨진다. 본문·표는 고정 px 유지.
+            상한 22px: 큰 화면에서 대사가 한 줄을 다 먹어 컷을 가리는 걸 막는다. */}
+        <p
+          className="font-myeongjo font-semibold leading-[1.75] text-[#241d10]"
+          style={{ fontSize: "min(4.9cqw, 28px)" }}
+        >
+          {children}
+        </p>
       </div>
     </div>
   );
@@ -1253,11 +1259,13 @@ function TeaserCut({
   sayAt?: "top" | "bottom";
 }) {
   return (
-    // 컷을 감싼 패딩 두 겹(위저드 px-5=20 + 티저 본문 판 16)을 되물려 컬럼 끝까지 채운다.
-    // 음수 마진 36px = 20+16. 판 패딩을 바꾸면 여기도 같이 바꿔야 한다(안 그러면 여백이 남는다).
+    // 위저드 컨테이너의 px-5(20px)를 되물려 컬럼 끝까지 채운다.
+    // 티저 본문 판의 좌우 패딩을 0으로 걷었으므로 이제 20px 만 되물리면 된다(전엔 -mx-9 = 20+16).
     <div
-      className={`relative -mx-9 mt-6 overflow-hidden ${tall ? "" : CUT_H[size]}`}
-      style={tall ? { aspectRatio: "4 / 5" } : undefined}
+      className={`relative -mx-5 mt-6 overflow-hidden ${tall ? "" : CUT_H[size]}`}
+      // containerType: 대사(CutSay)가 이 컷의 폭을 기준으로 커지게 하는 자다.
+      // 없으면 CutSay 의 cqw 가 위쪽 조상 컨테이너를 잡아 엉뚱한 크기가 된다.
+      style={{ containerType: "inline-size", ...(tall ? { aspectRatio: "4 / 5" } : {}) }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -1316,8 +1324,10 @@ function HanjaHeader({ char }: { char: string }) {
 function DestinyCard({ face }: { face: PartnerFace }) {
   const [imgOk, setImgOk] = useState(true);
   return (
+    // max-w 280 을 걷었다 — 판이 518인데 카드가 280이면 절반만 쓰는 셈이라 "너무 작다"가 된다
+    // (형님 지적). 이 카드는 티저에서 얼굴을 내미는 유일한 자리라 판을 다 써야 증거로 선다.
     <div
-      className="mx-auto mt-4 max-w-[280px] px-5 pb-5 pt-4"
+      className="mt-4 px-5 pb-5 pt-4"
       style={{
         backgroundImage: "url(/products/sangun/ganji.webp)",
         backgroundSize: "cover",
@@ -1326,10 +1336,20 @@ function DestinyCard({ face }: { face: PartnerFace }) {
         border: "1px solid rgba(143,43,30,0.6)",
       }}
     >
-      <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+      <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
         네 운명의 상대
       </p>
-      <div className="relative mx-auto mt-3 h-[150px] w-[118px] overflow-hidden" style={{ background: "#151009" }}>
+      {/* 사진 118×150 → 폭의 62%(4:5 비율) (형님: "카드 너무 작고 사진도 잘 안 보여").
+          280px 카드에서 118px 이면 3분의 1도 못 쓰는 크기라 증거가 아니라 썸네일로 보였다.
+          블러도 10px → 7px 로 낮췄다 — 이 카드가 파는 것은 "얼굴을 봤다"는 사실인데,
+          형체가 안 잡히면 살 이유가 안 생긴다. 결제 후엔 그대로 열리므로 여기서 너무 가리면
+          결제 전후의 낙차만 크고 전환은 안 는다. brightness 0.85 → 0.95 로 어둠도 덜어냈다. */}
+      {/* 카드가 판 폭을 다 쓰게 되면서 62%는 다시 과해졌다 — 사진이 카드를 꽉 채우면
+          "가려 둔 것"이 아니라 그냥 흐린 사진이 된다. 최대 260px 로 묶어 여백을 남긴다. */}
+      <div
+        className="relative mx-auto mt-3.5 w-[62%] max-w-[260px] overflow-hidden"
+        style={{ background: "#151009", aspectRatio: "4 / 5" }}
+      >
         {imgOk ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -1338,7 +1358,7 @@ function DestinyCard({ face }: { face: PartnerFace }) {
             onError={() => setImgOk(false)}
             className="h-full w-full select-none object-cover"
             draggable={false}
-            style={{ filter: "blur(10px) brightness(0.85)" }}
+            style={{ filter: "blur(7px) brightness(0.95)" }}
           />
         ) : (
           /* 사진이 오기 전 실루엣 — 사람 형상만 어렴풋이 */
@@ -1361,14 +1381,15 @@ function DestinyCard({ face }: { face: PartnerFace }) {
             ["장소", <InkMask key="w" text="▓▓▓▓" />],
           ] as const
         ).map(([label, val]) => (
+          // 항목도 11/13 → 13/15. 카드가 커진 만큼 잔글씨만 남으면 오히려 더 비어 보인다.
           <div key={label} className="flex items-center justify-between gap-3">
-            <span className="font-myeongjo shrink-0 text-[11px] text-bone-faint">{label}</span>
-            <span className="font-myeongjo text-[13px] text-bone-soft">{val}</span>
+            <span className="font-myeongjo shrink-0 text-[13px] text-bone-faint">{label}</span>
+            <span className="font-myeongjo text-[15px] text-bone-soft">{val}</span>
           </div>
         ))}
       </div>
       {/* 얼굴을 고른 근거. 가리지 않는 유일한 값이라 "아무 사진이나 띄웠다"는 의심을 여기서 끊는다. */}
-      <p className="font-myeongjo mt-3.5 text-center text-[10px] leading-[1.6] text-bone-faint">
+      <p className="font-myeongjo mt-3.5 text-center text-[11px] leading-[1.6] text-bone-faint">
         네 배우자 자리는 <span style={{ color: "var(--gold-soft)" }}>{face.ohKo}</span>의 결 — 그 결로 얼굴을 골랐다
       </p>
     </div>
@@ -1431,8 +1452,11 @@ function TeaserStep({
 
   // 웹툰이 먼저(A안) — 스크롤로 이탈하기 전에 몰입을 걸고, 그 아래 원국표가 증거로 받친다.
   // 토큰이 비면(만세력 실패) 말풍선이 전부 빠져 그림만 남으므로 아예 안 그린다.
+  // -mx-5: 웹툰도 사진 컷과 같이 컬럼 끝까지 나간다. 전엔 컬럼 안쪽(520)이라 사진 컷(558)보다
+  // 좁았고, 대사 크기가 컷 폭 비례라 **같은 말풍선인데 웹툰 쪽만 작게** 나왔다.
+  // 규칙: 그림(사진 컷·웹툰 컷)은 끝까지, 판·카드는 한 단 안쪽.
   const webtoon = cuts.length > 0 && Object.keys(tokens).length > 0
-    ? <WebtoonPage cuts={cuts} tokens={tokens} className="mb-4 overflow-hidden rounded-[2px]" />
+    ? <WebtoonPage cuts={cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
     : null;
 
   return (
@@ -1447,7 +1471,13 @@ function TeaserStep({
           ? {
               background: "rgba(7,6,9,0.86)",
               border: "1px solid var(--gold-pale)",
-              padding: "18px 16px",
+              // 좌우 패딩 16 → 0. 이 16px 때문에 화면에 좌우 끝이 **세 군데**였다(형님 지적):
+              //   사진 컷 558 / 웹툰 컷 520 / 판·카드 486 (820px 기준)
+              // 판 안쪽이 486으로 눌려 웹툰 컷(520)보다 좁았던 것. 패딩을 걷으면 판이 520이 되어
+              // 웹툰 컷과 좌우 끝이 맞고, 사진 컷만 화면 끝까지(560) 나가는 두 단이 된다.
+              // 그림은 끝까지 · 판은 한 단 안쪽 — 형님 확정.
+              // ⚠ TeaserCut 의 음수 마진도 같이 줄여야 한다(-mx-9 → -mx-5). 안 그러면 32px 더 튀어나간다.
+              padding: "18px 0",
               boxShadow: "0 18px 48px rgba(0,0,0,0.55)",
             }
           : undefined
@@ -1531,12 +1561,16 @@ function TeaserStep({
               <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
               </p>
-              <div className="mt-1.5 flex flex-wrap justify-center gap-2">
+              {/* 배지 13 → 17px (형님: "살 부분이 더 크게 보이면 좋겠어").
+                  이건 손님이 **자기 것으로 가져가는 단어**다 — 도화살·화개살은 검색해 보고
+                  친구에게 옮기는 말이라, 표 안의 잔글씨가 아니라 이름표로 서야 한다.
+                  테두리·여백도 같이 키워야 글자만 커져서 상자를 뚫는 꼴이 안 난다. */}
+              <div className="mt-2.5 flex flex-wrap justify-center gap-2.5">
                 {teaser.sinsal.map((s) => (
                   <span
                     key={s}
-                    className="font-myeongjo px-3 py-1.5 text-[13px]"
-                    style={{ border: "1px solid var(--gold-line)", background: "rgba(232,201,106,0.08)", color: "var(--gold-bright)" }}
+                    className="font-myeongjo rounded-[3px] px-4 py-2 text-[17px] font-bold"
+                    style={{ border: "1px solid var(--gold-line)", background: "rgba(232,201,106,0.10)", color: "var(--gold-bright)" }}
                   >
                     {s}
                   </span>
@@ -1657,12 +1691,19 @@ function TeaserStep({
           달 마스킹이 "몇 월인지 짚는다" 포지션을 목차보다 먼저 스토리로 흘린다. */}
       {imm && teaser && (
         <>
-          {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3). 뜸들이기("…다만")는 결정적인 자리에만. */}
+          {/* 부채를 접는 손 — 공기가 바뀌는 순간(발주 t3). 뜸들이기("…다만")는 결정적인 자리에만.
+              말풍선을 위 → 아래로 내렸다. 바로 앞 전신 컷이 대사를 **아래**에 달고 있어서,
+              이 컷이 위에 달면 [사진][대사][대사][사진] 으로 글 두 덩이가 맞닿는다
+              (형님 지적: "그림 글 글 그림 순서라 몰입감이 깨져").
+              규칙: **연속한 컷은 말풍선 방향을 같게 둔다.** 방향을 번갈아 두면 붙는다.
+              t3-snap 은 상단이 더 어둡지만(2.0 vs 22.9) 말풍선이 불투명 한지 상자라 가독성은
+              배경 밝기에 안 걸린다 — 아래로 내려도 부채는 컷 위쪽 2/3 에 그대로 보인다. */}
           <TeaserCut
             src="/products/sangun/t3-snap.webp"
             alt="부채를 접어 쥔 손"
             tall
-            sayAt="top"
+            pos="center 38%"
+            sayAt="bottom"
             say={<>앞일도 보인다. …다만.<br />듣기 좋은 말만 하지는 않는다.</>}
           />
 

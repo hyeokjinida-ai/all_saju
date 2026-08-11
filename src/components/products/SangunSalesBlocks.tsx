@@ -158,7 +158,9 @@ export function SangunFaq({ className = "" }: { className?: string }) {
 }
 
 // 티저 꼬리 전용 컷 — 글카드 사이에 사진을 끼우는 리듬 부품(형님 원칙: 글·사진 교차).
-// 위저드 컨테이너의 px-5(20px)만 음수 마진으로 뚫는다. 장부 판(패딩 16px) 바깥이라 -mx-9 가 아니다.
+// 위저드 컨테이너의 px-5(20px)를 음수 마진으로 뚫어 컬럼 끝까지 나간다.
+// (장부 판의 좌우 패딩은 2026-08-11 에 0 으로 걷었다 — 판·카드가 그림보다 좁아 좌우 끝이
+//  세 군데였던 문제. 그래서 본문 TeaserCut 도 지금은 같은 -mx-5 다.)
 // 대사 말풍선·스크림은 티저 본문의 CutSay 와 같은 옷 — 화면 안에서 문법이 갈리면 안 된다.
 function TailCut({
   src,
@@ -174,7 +176,11 @@ function TailCut({
   say: React.ReactNode;
 }) {
   return (
-    <div className="relative -mx-5 mt-6 overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+    <div
+      className="relative -mx-5 mt-6 overflow-hidden"
+      // containerType — 아래 대사가 이 컷 폭을 기준으로 커진다(티저 본문 TeaserCut 과 같은 규칙)
+      style={{ containerType: "inline-size", aspectRatio: "4 / 5" }}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
@@ -210,8 +216,13 @@ function TailCut({
           >
             산군
           </span>
-          {/* 티저 본문 CutSay 와 같은 17px — 산군 목소리 크기는 화면이 바뀌어도 같아야 한다 */}
-          <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">{say}</p>
+          {/* 티저 본문 CutSay 와 같은 자(4.9cqw) — 산군 목소리 크기는 화면이 바뀌어도 같아야 한다 */}
+          <p
+            className="font-myeongjo font-semibold leading-[1.75] text-[#241d10]"
+            style={{ fontSize: "min(4.9cqw, 28px)" }}
+          >
+            {say}
+          </p>
         </div>
       </div>
     </div>
