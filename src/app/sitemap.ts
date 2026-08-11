@@ -21,13 +21,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     if (isSupabaseConfigured()) {
       const supabase = createServiceClient();
-      const { data } = await supabase.from("products").select("slug").eq("is_active", true);
+      // is_addon(번들·추가질문권)은 전용 랜딩이 없다 — 색인되면 빈 페이지가 걸린다.
+      const { data } = await supabase.from("products").select("slug").eq("is_active", true).eq("is_addon", false);
       slugs = (data ?? []).map((d) => d.slug);
     } else {
-      slugs = productsSeed.filter((p) => p.is_active).map((p) => p.slug);
+      slugs = productsSeed.filter((p) => p.is_active && !p.is_addon).map((p) => p.slug);
     }
   } catch {
-    slugs = productsSeed.filter((p) => p.is_active).map((p) => p.slug);
+    slugs = productsSeed.filter((p) => p.is_active && !p.is_addon).map((p) => p.slug);
   }
 
   const productRoutes: MetadataRoute.Sitemap = slugs.map((slug) => ({

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
-import { generateResultForOrder, hasRealInterpretation } from "@/lib/saju/generate-result";
+import { EXTRA_QUESTION_SLUG, generateResultForOrder, hasRealInterpretation } from "@/lib/saju/generate-result";
 
 // 결과 미생성 복구 크론 — 결제는 됐는데(paid) 결과지가 없거나 미완성인 주문을 찾아
 // 결과지 생성을 재시도한다. luckyloveme/LLM 의 장애로 confirm·자가복구·웹훅이 모두
@@ -32,12 +32,12 @@ async function run(request: NextRequest) {
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
 
   // 최근 paid 주문 — result_attempts 포함 조회. 컬럼(마이그레이션 0006) 미적용 시 폴백.
-  type OrderRow = { id: string; result_attempts: number };
+  type OrderRow = { id: string; product_id: string; result_attempts: number };
   let orders: OrderRow[] = [];
   let hasAttemptsCol = true;
   const withAttempts = await service
     .from("orders")
-    .select("id, result_attempts")
+    .select("id, product_id, result_attempts")
     .eq("status", "paid")
     .gte("created_at", since)
     .order("created_at", { ascending: true })
@@ -46,29 +46,66 @@ async function run(request: NextRequest) {
     hasAttemptsCol = false;
     const fallback = await service
       .from("orders")
-      .select("id")
+      .select("id, product_id")
       .eq("status", "paid")
       .gte("created_at", since)
       .order("created_at", { ascending: true })
       .limit(200);
-    orders = (fallback.data ?? []).map((o) => ({ id: o.id as string, result_attempts: 0 }));
+    orders = (fallback.data ?? []).map((o) => ({
+      id: o.id as string,
+      product_id: o.product_id as string,
+      result_attempts: 0,
+    }));
   } else {
     orders = (withAttempts.data ?? []).map((o) => ({
       id: o.id as string,
+      product_id: o.product_id as string,
       result_attempts: (o.result_attempts as number) ?? 0,
     }));
   }
 
   const ids = orders.map((o) => o.id);
+
+  // 주문이 결과지를 몇 장 받아야 하는지 — 패키지는 구성품 수만큼이다.
+  // 이걸 안 세면 한쪽만 성공한 패키지가 '완료'로 잡혀 나머지 한 장이 영영 안 만들어진다.
+  const productIds = [...new Set(orders.map((o) => o.product_id))];
+  const { data: products } = productIds.length
+    ? await service.from("products").select("id, slug, bundle_slugs").in("id", productIds)
+    : { data: [] };
+  const productById = new Map((products ?? []).map((p) => [p.id as string, p]));
+  const expectedFor = (o: OrderRow) => {
+    const p = productById.get(o.product_id) as { bundle_slugs?: string[] | null } | undefined;
+    return p?.bundle_slugs?.length ? p.bundle_slugs.length : 1;
+  };
+
   const { data: results } = ids.length
     ? await service.from("saju_results").select("order_id, interpretation_md").in("order_id", ids)
     : { data: [] };
-  const done = new Set(
-    (results ?? []).filter((r) => hasRealInterpretation(r.interpretation_md as string)).map((r) => r.order_id),
+  const realCount = new Map<string, number>();
+  for (const r of results ?? []) {
+    if (!hasRealInterpretation(r.interpretation_md as string)) continue;
+    realCount.set(r.order_id as string, (realCount.get(r.order_id as string) ?? 0) + 1);
+  }
+
+  // 추가질문권 주문은 결과지를 만들지 않는다 — 답변이 붙었는지로 완료를 판정한다.
+  const questionOrderIds = orders
+    .filter((o) => (productById.get(o.product_id) as { slug?: string } | undefined)?.slug === EXTRA_QUESTION_SLUG)
+    .map((o) => o.id);
+  const { data: answered } = questionOrderIds.length
+    ? await service.from("extra_questions").select("order_id, status").in("order_id", questionOrderIds)
+    : { data: [] };
+  const answeredOrders = new Set(
+    (answered ?? []).filter((q) => q.status === "answered").map((q) => q.order_id as string),
   );
 
+  const isDone = (o: OrderRow) => {
+    const p = productById.get(o.product_id) as { slug?: string } | undefined;
+    if (p?.slug === EXTRA_QUESTION_SLUG) return answeredOrders.has(o.id);
+    return (realCount.get(o.id) ?? 0) >= expectedFor(o);
+  };
+
   const todo = orders
-    .filter((o) => !done.has(o.id))
+    .filter((o) => !isDone(o))
     .filter((o) => o.result_attempts < MAX_ATTEMPTS)
     .slice(0, PER_RUN);
 
