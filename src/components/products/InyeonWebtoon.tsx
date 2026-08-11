@@ -192,7 +192,7 @@ function SampleCard() {
 }
 
 // 목차 카드 — 가격 앵커 자리를 대체(받는 것의 양으로 값을 정당화)
-function TocCard({ priceLabel }: { priceLabel: string }) {
+function TocCard({ priceLabel, compareLabel }: { priceLabel: string; compareLabel?: string }) {
   const rows: [string, string][] = [
     ["1. 내 인연 그릇", "점수와 그 점수가 나온 이유"],
     ["2. 내가 놓치는 인연의 패턴", "반복되는 어긋남의 구조"],
@@ -221,7 +221,9 @@ function TocCard({ priceLabel }: { priceLabel: string }) {
           </li>
         ))}
       </ul>
+      {/* 이 카드가 인연 랜딩의 가격 앵커 자리다 — 취소선은 여기서 제일 크게 일한다 */}
       <p className="mt-4 text-center text-[13px]" style={{ color: SUB }}>
+        {compareLabel && <s className="mr-1.5 opacity-70">{compareLabel}</s>}
         <b style={{ color: MOON }}>{priceLabel}</b> — 점심 한 번 값 · 몇 분 안에 도착 · 마이페이지에 계속 보관
       </p>
     </div>
@@ -284,9 +286,13 @@ const FAQ: [string, string][] = [
 
 export function InyeonStory({
   priceLabel,
+  compareLabel,
   children,
 }: {
   priceLabel: string;
+  /** 취소선 정가(2026-08-11 신설). 없으면 예전처럼 판매가만 나온다.
+   *  결제 시트에 카드가 나란히 서는데 인연 단품만 할인 표기가 없으면 그 카드가 손해처럼 보인다. */
+  compareLabel?: string;
   children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
 }) {
   return (
@@ -316,7 +322,9 @@ export function InyeonStory({
           </p>
 
           <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
-            사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이에요 · {priceLabel}
+            사람이 지어낸 말이 아니라, 만세력 계산에서 나온 달이에요 ·{" "}
+            {compareLabel && <s className="mr-1 opacity-70">{compareLabel}</s>}
+            {priceLabel}
           </p>
         </header>
 
@@ -402,7 +410,7 @@ export function InyeonStory({
 
         {/* 목차 카드 — 철학관 가격 앵커 대신 받는 것의 양으로 (페르소나 3/3 거부 반영) */}
         <div className="px-5 py-4">
-          <TocCard priceLabel={priceLabel} />
+          <TocCard priceLabel={priceLabel} compareLabel={compareLabel} />
           <p className="mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "#7d8496" }}>
             이번 달이 당신의 &lsquo;열리는 달&rsquo;일 수도 있어요 — 지나간 달은 다음 계산에서 빠져요.
           </p>
@@ -447,6 +455,7 @@ export function InyeonStory({
             >
               내 인연 들어오는 달 확인하기
               <span className="mt-0.5 block text-[13px] font-normal opacity-80">
+                {compareLabel && <s className="mr-1 opacity-70">{compareLabel}</s>}
                 {priceLabel} · 2분이면 끝 · 태어난 시각·성별·고민까지 반영
               </span>
             </a>

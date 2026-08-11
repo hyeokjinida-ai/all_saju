@@ -17,7 +17,10 @@ export default function NotFound() {
       </p>
       <div className="gold-diamond mx-auto mt-6" />
       <div className="mt-7 flex flex-col items-center gap-3">
-        <Link href="/products/life-saju" className={cn(buttonVariants(), "tracking-[0.08em]")}>
+        {/* 2상품 오픈(2026-08-11): 이 링크가 life-saju 였는데 그 상품을 내리면서 **404가
+            또 404로 보내는** 동선이 됐다. 대표 상품(광고 유입구)인 산군으로 돌린다.
+            ⚠ 라인업을 바꾸면 이 링크도 같이 본다 — 하드코딩이라 is_active 를 안 탄다. */}
+        <Link href="/products/sangun-sinjeom" className={cn(buttonVariants(), "tracking-[0.08em]")}>
           내 사주 풀이 보기
         </Link>
         <Link

@@ -23,8 +23,10 @@ export default function ErrorPage({ error, reset }: { error: Error; reset: () =>
       <div className="gold-diamond mx-auto mt-6" />
       <div className="mt-7 flex flex-col items-center gap-3">
         <Button onClick={reset} className="tracking-[0.08em]">다시 시도</Button>
+        {/* 2상품 오픈(2026-08-11): life-saju 를 내려 죽은 링크가 됐다 → 대표 상품으로.
+            하드코딩이라 is_active 를 안 탄다. 라인업 바꿀 때 같이 확인할 것. */}
         <Link
-          href="/products/life-saju"
+          href="/products/sangun-sinjeom"
           className="text-xs text-bone-soft underline underline-offset-4 hover:text-gold"
         >
           내 사주 풀이 보기
