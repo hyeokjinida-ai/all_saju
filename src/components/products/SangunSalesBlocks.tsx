@@ -81,7 +81,27 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
           </li>
         ))}
       </ul>
+      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
+    </div>
+  );
+}
+
+// 분량 앵커 — 시장 1위(타이트 MZ범산도령)가 티저에서 "5만 자 · 100페이지 · 읽는데 2시간"으로
+// 미는 자리다. 우리는 그 수를 못 이긴다: /dev/sangun-result 실측 한글 9,835자(11장).
+// 그런데 그건 사고가 아니라 설계다 — prompt.ts 의 산군 규격이 "3040 모바일 완독선"을 노리고
+// 타이트 플래그십의 절반으로 일부러 잡았다. 그래서 같은 자리에서 '양'이 아니라 '완독'으로 싸운다.
+//   · A4 환산은 리포 관례(prompt.ts: 1,000자 ≈ A4 1장) → 9,835자 ≈ 열 장
+//   · 읽는 시간은 500자/분 기준 20분. 실측 최저값으로 잡아 낮춰 적는다(약속은 밑으로).
+function LengthAnchorLine() {
+  return (
+    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
+      <p className="text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
+        A4 <b style={{ color: "var(--gold)" }}>열 장 남짓</b> · 다 읽는 데{" "}
+        <b style={{ color: "var(--gold)" }}>스무 분</b>
+        <br />
+        백 장을 던져 주는 자들도 있다만, 나는 네가 끝까지 읽기를 바란다.
+      </p>
     </div>
   );
 }
@@ -107,6 +127,7 @@ export function ValueSpecCard({ priceLabel }: { priceLabel: string }) {
         <br />
         앞으로 12개월 전부
       </p>
+      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
     </div>
   );
