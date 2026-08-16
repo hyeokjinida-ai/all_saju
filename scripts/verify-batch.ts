@@ -148,12 +148,15 @@ async function main() {
     writeFileSync(file, header + text, "utf8");
 
     // ── 린터 규칙 그대로 적용 ──
-    const months = await loadMonthSets(slug, s.gender);
+    // loadMonthSets 는 캐시 '파일명'을 받는다(키가 slug → 생일 기준으로 바뀌었다).
+    // 이 배치는 slug 캐시를 쓰던 옛 경로라 파일명을 그대로 만들어 넘긴다.
+    const months = await loadMonthSets(`analysis-${slug}.json`, s.gender);
     const ctx: Ctx = {
       name: "지영",
       birthYear: Number(y),
       thisYear: new Date().getFullYear(),
       concern: CONCERN,
+      banmal: slug === "sangun-sinjeom",
       tableMonths: months?.table ?? null,
       dataMonths: months?.data ?? null,
     };

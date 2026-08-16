@@ -57,6 +57,30 @@ export function buildMonthPlan(
   // 연 단위는 인연 해 + 재물 해를 한 장에 몰아준다(중복 라벨은 하나로).
   const years = [...new Set([...(inyeon?.topYears.map((r) => r.label) ?? []), ...(wealthYears?.map((r) => r.label) ?? [])])];
 
+  // 후보 달 중 제일 이른 것 — '이번 주에 할 것/당부' 장이 하나만 인용한다.
+  const soonestOf = (labels: string[]) =>
+    labels
+      .map((l) => ({ l, m: l.match(/(20\d{2})년\s*(\d{1,2})월/) }))
+      .filter((x) => x.m)
+      .sort((a, b) => Number(a.m![1]) * 100 + Number(a.m![2]) - (Number(b.m![1]) * 100 + Number(b.m![2])))[0]?.l;
+
+  // ── 인연 단품(10장)은 달을 쓰는 장의 구성이 산군과 다르다 ──
+  // 산군은 돈·인연을 다 다루지만 인연 단품은 전부 연애 축이라 제목이 겹치지 않는다.
+  // 제목으로 판별해 배정표를 통째로 갈아 끼운다 — 아래 산군 로직은 한 줄도 건드리지 않는다.
+  // (매칭이 안 되면 monthPlanLine 이 "달을 언급하지 마세요"를 걸어버리는데, 정작 지시문은
+  //  확정값의 달을 쓰라고 시켜 서로 모순된다 → 실측에서 확인된 환각 유발 경로다. §70 주석 참고)
+  if (chapterTitles.some((t) => /인연이 들어오는 달 세 개/.test(t))) {
+    set(findIdx(chapterTitles, /인연이 들어오는 달 세 개/), iTop.slice(0, 3));
+    set(findIdx(chapterTitles, /흔들리는 달/), iShaky);
+    set(findIdx(chapterTitles, /크게 바뀌는 해/), years, true);
+    // 걸어온 길은 과거 전용(연도 근거는 pastBlock) · 신호/패턴/올 사람 장은 달을 말하지 않는다
+    set(findIdx(chapterTitles, /걸어온 길/), []);
+    // 고민 장은 시기로 답해야 한다 — 달을 금지하면 지어낸다(산군에서 확인된 환각). TOP1 재인용 허용.
+    set(findIdx(chapterTitles, /고민/), [iTop[0]]);
+    set(findIdx(chapterTitles, /이번 주에 할 것/), soonestOf(iTop) ? [soonestOf(iTop)!] : []);
+    return plan;
+  }
+
   set(findIdx(chapterTitles, /돈이 들어오는/), [...wTop.slice(0, 2), wBad[0]]);
   set(findIdx(chapterTitles, /인연이 들어오는/), iTop.slice(0, 2));
   // 이직·계약 시점은 돈 흐름이 근거다. TOP1 하나만 다시 인용하게 허용하고 나머지는 새 달로 채운다.
@@ -71,10 +95,7 @@ export function buildMonthPlan(
   // 돈 TOP2 + 인연 TOP1 재인용을 허용한다. 달도배(3장 이상)는 린터가 계속 지킨다.
   set(findIdx(chapterTitles, /물음/), [wTop[0], wTop[1], iTop[0]]);
   // 당부는 "가장 가까운 좋은 달"과 연결하라고 시키는 장 — 후보 중 제일 이른 달 하나만 허용.
-  const soonest = [...wTop, ...iTop]
-    .map((l) => ({ l, m: l.match(/(20\d{2})년\s*(\d{1,2})월/) }))
-    .filter((x) => x.m)
-    .sort((a, b) => Number(a.m![1]) * 100 + Number(a.m![2]) - (Number(b.m![1]) * 100 + Number(b.m![2])))[0]?.l;
+  const soonest = soonestOf([...wTop, ...iTop]);
   set(findIdx(chapterTitles, /당부/), soonest ? [soonest] : []);
 
   return plan;

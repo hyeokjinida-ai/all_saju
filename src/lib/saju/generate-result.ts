@@ -66,7 +66,11 @@ function buildArcHint(analysis: SajuAnalysisResponse): string {
 }
 
 /** 산군 전용 설계도 + 달 배정표 + 장별 확정값. 실패는 전부 null 로 조용히 내려앉는다. */
-async function buildPlanForSangun(
+// 장부 설계도 + 달 배정표. 확정값(달·해)이 여러 장에 걸치는 상품만 태운다.
+//  · sangun-sinjeom — 재물+인연 전부. 처방 장까지 있다.
+//  · inyeon-saju    — 인연 축만. 10장 개편(2026-08-17)으로 달을 쓰는 장이 4개로 늘어
+//                     배정표 없이는 같은 달이 여러 장에 반복된다. 처방 장은 없다.
+async function buildChapterPlan(
   slug: string,
   rawAnalysis: unknown,
   input: SajuInputRow,
@@ -78,7 +82,8 @@ async function buildPlanForSangun(
   prescriptionBlock: string | null;
 }> {
   const none = { blueprint: null, monthPlan: null, pastBlock: null, prescriptionBlock: null };
-  if (slug !== "sangun-sinjeom" || !rawAnalysis || !keyFacts) return none;
+  const isSangun = slug === "sangun-sinjeom";
+  if ((!isSangun && slug !== "inyeon-saju") || !rawAnalysis || !keyFacts) return none;
   const analysis = rawAnalysis as SajuAnalysisResponse;
   const titles = outlineTitles(slug);
 
@@ -95,7 +100,8 @@ async function buildPlanForSangun(
       computeWealthYears(analysis),
     );
     pastBlock = buildPastBlock(analysis) || null;
-    prescriptionBlock = buildPrescriptionBlock(computePrescription(analysis)) || null;
+    // 처방표는 산군 결과지에만 있는 장이다 — 인연에 주면 쓸 장이 없어 버려진다.
+    prescriptionBlock = isSangun ? buildPrescriptionBlock(computePrescription(analysis)) || null : null;
   } catch {
     /* 확정값이 없어도 결과지는 나가야 한다 — 그 장들은 예전 방식으로 쓴다 */
   }
@@ -317,8 +323,8 @@ async function buildAndSaveOne(args: {
   const keyFacts = keyFactsFor(slug, chart, input);
 
   // 장부 설계도 + 달 배정표 — 챕터들이 병렬이라 서로 못 보는 걸 여기서 조율한다.
-  // 산군만 태운다(재물+인연 확정값이 다 있는 상품). 설계도 실패는 결과지를 막지 않는다.
-  const plan = await buildPlanForSangun(slug, chart.rawAnalysis, input, keyFacts);
+  // 산군·인연만 태운다(확정값이 여러 장에 걸치는 상품). 설계도 실패는 결과지를 막지 않는다.
+  const plan = await buildChapterPlan(slug, chart.rawAnalysis, input, keyFacts);
 
   const { title, chapters } = buildChapterPrompts({
     productSlug: slug,

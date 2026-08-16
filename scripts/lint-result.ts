@@ -36,6 +36,9 @@ export type Ctx = {
   thisYear: number;
   /** 손님이 고른 고민 문구 (헤더 concern=) — 고민이 몇 장을 관통하는지 계측용 */
   concern: string;
+  /** 이 상품의 화자가 반말 하대체인가(산군). false 면 존댓말 상품(인연·직녀)이다.
+   *  화법 규칙은 상품마다 정반대라 이 플래그 없이 재면 정상인 글이 치명 위반으로 잡힌다. */
+  banmal: boolean;
   /** 결과지 표(돈·인연 달력)에 실제로 실리는 달. null = 명식 캐시가 없어 검사 불가 */
   tableMonths: Set<string> | null;
   /** 명식 월운에 존재하는 달 — 근거로는 정당하지만 표에는 없는 달 */
@@ -67,7 +70,8 @@ export const RULES: Rule[] = [
     what: '독자를 "당신"이라 부름',
     why: "산군은 반말 하대체다. 한 번만 섞여도 캐릭터가 무너진다",
     severity: "FAIL",
-    find: (t) => [...t.matchAll(/당신[의은는이을를에]?/g)].map((m) => m[0]),
+    // 반말 상품에만 적용 — 인연·직녀는 "당신"이 정상 화법이다.
+    find: (t, c) => (c.banmal ? [...t.matchAll(/당신[의은는이을를에]?/g)].map((m) => m[0]) : []),
   },
   {
     id: "존대-어미",
@@ -76,9 +80,29 @@ export const RULES: Rule[] = [
     severity: "FAIL",
     // 따옴표 안은 화자가 산군이 아니다 — 독자가 상사에게 할 말("여기까지만 하겠습니다")을
     // 인용하는 건 정당한 장면이라 지우고 잰다(실측 오탐 2건).
-    find: (t) => {
+    find: (t, c) => {
+      if (!c.banmal) return [];
       const noQuote = t.replace(/["“”'][^"“”'\n]{0,80}["“”']/g, "");
       return [...noQuote.matchAll(/(습니다|입니다|해요|하세요|됩니다|드립니다)/g)].map((m) => m[0]);
+    },
+  },
+  {
+    // 존댓말 상품(인연·직녀)의 거울 규칙. 해요체가 무너져 반말이 섞이면 화자가 두 명이 된다.
+    // 산군의 "존대-어미"와 정확히 반대 방향이라 규칙을 따로 둔다.
+    id: "반말혼입",
+    what: "존댓말 상품에 반말 종결이 섞임",
+    why: "먼저 아는 언니의 해요체인데 반말이 섞이면 손님을 내려다보는 말이 된다",
+    severity: "FAIL",
+    find: (t, c) => {
+      if (c.banmal) return [];
+      // 따옴표 안(독자·상대의 대사 인용)과 제목 줄은 정당하다.
+      const body = t
+        .split("\n")
+        .filter((l) => !/^\s{0,3}#{1,3}\s/.test(l))
+        .join("\n")
+        .replace(/["“”'][^"“”'\n]{0,120}["“”']/g, "");
+      // 문장 끝의 반말 종결만 — 명사형(~것이다) 같은 서술은 본문에 정당하게 쓰인다.
+      return [...body.matchAll(/(니?[가-힣]{1,6}(?:해라|하지 마라|봐라|하거라))(?=[\s.…!?]|$)/g)].map((m) => m[0]);
     },
   },
   {
@@ -87,8 +111,9 @@ export const RULES: Rule[] = [
     why: "눈앞의 상대에게 말하는 중인데 이름을 3인칭으로 부르면 남 얘기가 된다 → '네'",
     severity: "FAIL",
     // 제목 줄("## 산군이 읽은 지수님의 운명 장부")은 문서 제목이라 정상 — 본문만 본다.
+    // 반말 상품 전용: 인연·직녀는 "지수님"이라 부르는 게 정상 화법이다.
     find: (t, c) =>
-      c.name
+      c.banmal && c.name
         ? t
             .split("\n")
             .filter((l) => !/^\s{0,3}#{1,3}\s/.test(l))
@@ -261,10 +286,11 @@ export const RULES: Rule[] = [
 /** 명식 캐시에서 **확정값을 다시 계산**해 (표에 실리는 달, 월운에 존재하는 달) 두 집합을 만든다.
  *  저장된 결과지 값을 믿지 않는다 — 계산이 곧 정답지고, 그게 표에 그려지는 값이다. */
 export async function loadMonthSets(
-  slug: string,
+  /** 캐시 파일명(예: analysis-19930515-female-14.json). md 헤더의 cache= 값. */
+  cacheName: string,
   gender: "male" | "female",
 ): Promise<{ table: Set<string>; data: Set<string> } | null> {
-  const cache = resolve(tmpdir(), `analysis-${slug}.json`);
+  const cache = resolve(tmpdir(), cacheName);
   if (!existsSync(cache)) return null;
   try {
     const analysis = JSON.parse(readFileSync(cache, "utf8"));
@@ -307,19 +333,26 @@ async function lint(file: string) {
   const birthYear = Number(header.match(/birth=(\d{4})/)?.[1]) || 1993;
   const gender = header.match(/gender=(male|female)/)?.[1] === "male" ? "male" : "female";
   const concern = header.match(/concern=([^·]*)/)?.[1]?.trim() ?? "";
-  const months = slug ? await loadMonthSets(slug, gender) : null;
+  // 반말 상품은 산군 계열뿐이다. 화법 규칙 3종이 이 값으로 갈린다(반대로 재면 정상 글이 치명이 된다).
+  const banmal = slug === "sangun-sinjeom";
+  // 명식 캐시 — 헤더의 cache= 를 우선한다(키가 slug 에서 생일 기준으로 바뀌었다). 없으면 옛 규칙으로 폴백.
+  const cacheName = header.match(/cache=([\w.-]+\.json)/)?.[1] ?? (slug ? `analysis-${slug}.json` : "");
+  const months = cacheName ? await loadMonthSets(cacheName, gender) : null;
 
   const ctx: Ctx = {
     name,
     birthYear,
     thisYear: new Date().getFullYear(),
     concern,
+    banmal,
     tableMonths: months?.table ?? null,
     dataMonths: months?.data ?? null,
   };
 
-  console.log(`\n══ ${basename(file)}  (${text.length}자 · ${chapters(text).length}챕터 · 이름="${name}" · ${birthYear}년생)`);
-  if (!months) console.log(`   … 명식 캐시(analysis-${slug}.json) 없음 — 달 검사 2종 건너뜀`);
+  console.log(
+    `\n══ ${basename(file)}  (${text.length}자 · ${chapters(text).length}챕터 · 이름="${name}" · ${birthYear}년생 · ${banmal ? "반말" : "존대"})`,
+  );
+  if (!months) console.log(`   … 명식 캐시(${cacheName || "?"}) 없음 — 달 검사 2종 건너뜀`);
   let fails = 0;
   for (const r of RULES) {
     const hits = r.find(text, ctx);

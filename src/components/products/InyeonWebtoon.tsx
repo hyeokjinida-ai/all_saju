@@ -193,15 +193,19 @@ function SampleCard() {
 
 // 목차 카드 — 가격 앵커 자리를 대체(받는 것의 양으로 값을 정당화)
 function TocCard({ priceLabel, compareLabel }: { priceLabel: string; compareLabel?: string }) {
+  // ⚠ 결과지 outline(prompt.ts STYLE_BY_SLUG["inyeon-saju"])과 **1:1**이어야 한다.
+  //    목차에 있는데 결과지에 없으면 그 자리에서 들통난다. 2026-08-17 8장 → 10장.
   const rows: [string, string][] = [
     ["1. 내 인연 그릇", "점수와 그 점수가 나온 이유"],
-    ["2. 내가 놓치는 인연의 패턴", "반복되는 어긋남의 구조"],
-    ["3. 인연이 들어오는 달 세 개", "연도·월까지 콕"],
-    ["4. 내게 올 사람", "나를 대하는 태도·말투·만나는 자리·나이대"],
-    ["5. 마음이 흔들리는 달", "조심할 달엔 피하는 법을 같이"],
-    ["6. 내 고민, 사주는 이렇게 답해요", "고른 고민에 확답부터"],
-    ["7. 인연이 가장 크게 바뀌는 해", "몇 살에 무엇이 달라지는지"],
-    ["8. 이번 주에 할 것 3가지", "오늘 밤부터 되는 것"],
+    ["2. 당신이 걸어온 길", "지나온 해까지 되짚어서"],
+    ["3. 내가 놓치는 인연의 패턴", "반복되는 어긋남의 구조"],
+    ["4. 인연이 들어오는 달 세 개", "연도·월까지 콕"],
+    ["5. 내게 올 사람", "나를 대하는 태도·말투·만나는 자리·나이대"],
+    ["6. 그 사람을 알아보는 신호 셋", "처음 몇 번의 만남에서 확인되는 것"],
+    ["7. 마음이 흔들리는 달", "조심할 달엔 피하는 법을 같이"],
+    ["8. 인연이 가장 크게 바뀌는 해", "몇 살에 무엇이 달라지는지"],
+    ["9. 내 고민, 사주는 이렇게 답해요", "고른 고민에 확답부터"],
+    ["10. 이번 주에 할 것 3가지", "오늘 밤부터 되는 것"],
   ];
   return (
     <div
@@ -209,7 +213,7 @@ function TocCard({ priceLabel, compareLabel }: { priceLabel: string; compareLabe
       style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(217,199,232,0.2)" }}
     >
       <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: "#efe6d2" }}>
-        받는 것 — 8개 챕터 · A4 3장 · 앞으로 12개월 전부
+        받는 것 — 10개 챕터 · 앞으로 12개월 전부
       </p>
       <ul className="space-y-2.5">
         {rows.map(([t, d]) => (
@@ -221,6 +225,14 @@ function TocCard({ priceLabel, compareLabel }: { priceLabel: string; compareLabe
           </li>
         ))}
       </ul>
+      {/* 분량 앵커 — 산군 카드(SangunSalesBlocks.LengthAnchorLine)와 같은 자리, 다른 말.
+          같은 결제 시트에 두 상품이 나란히 서므로 문구가 겹치면 재탕으로 읽힌다.
+          숫자 근거: 10장 개편 후 실측 한글 7,805자(산군 7,905자와 동급) → A4 여덟 장·열다섯 분. */}
+      <p className="mt-4 border-t pt-4 text-center text-[13px] leading-[1.75]" style={{ borderColor: "rgba(217,199,232,0.2)", color: "#cfd0d8" }}>
+        A4 <b style={{ color: MOON }}>여덟 장</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
+        <br />
+        길게 늘리지 않았어요. 끝까지 읽고 달을 챙기시라고 이만큼만 썼어요.
+      </p>
       {/* 이 카드가 인연 랜딩의 가격 앵커 자리다 — 취소선은 여기서 제일 크게 일한다 */}
       <p className="mt-4 text-center text-[13px]" style={{ color: SUB }}>
         {compareLabel && <s className="mr-1.5 opacity-70">{compareLabel}</s>}
@@ -268,7 +280,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "뭘 얼마나 받나요?",
-    "8개 챕터, A4 세 장 분량이에요. 점수 / 반복되는 패턴 / 들어오는 달 세 개 / 내게 올 사람 / 흔들리는 달 / 내 고민 답 / 크게 바뀌는 해 / 이번 주에 할 것 3가지. 위 목차에 그대로 적어뒀어요.",
+    "10개 챕터, A4 여덟 장 분량이에요. 점수 / 걸어온 길 / 반복되는 패턴 / 들어오는 달 세 개 / 내게 올 사람 / 알아보는 신호 셋 / 흔들리는 달 / 크게 바뀌는 해 / 내 고민 답 / 이번 주에 할 것 3가지. 위 목차에 그대로 적어뒀어요.",
   ],
   [
     "태어난 시각을 몰라요. 음력 생일만 알아요.",

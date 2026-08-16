@@ -3,7 +3,7 @@
 //   모델 바꿔서:  LLM_MODEL=gpt-4o npx tsx scripts/sample-results.ts
 // 명식 분석은 캐시(temp)해 luckyloveme 한도를 아끼고, 생성문의 금지어 위반을 자동 채점한다.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, basename } from "node:path";
 import { tmpdir } from "node:os";
 
 function loadEnv() {
@@ -41,10 +41,19 @@ const CASES: Case[] = [
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
   // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
-  // {
-  //   slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [33, 34],
-  //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
-  // },
+  // 2026-08-17 10장 개편 검증으로 활성화. 산군과 같은 생일이라 명식 캐시를 공유한다(API 0콜).
+  {
+    slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [33, 34],
+    birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  },
+  // 두 번째 인연 케이스 — 다른 명식으로 10장이 재현되는지(첫 케이스에만 맞춘 게 아닌지) 본다.
+  // 명식은 verify-batch 가 깔아 둔 캐시(analysis-batch1 = 1990-05-24 17:00 여)를 재사용한다.
+  // 만세력 API 가 죽어 있어도(2026-08-17 새벽 실측: 연결 실패) 샘플을 뽑을 수 있어야 하고,
+  // 한도 6,000 도 아낀다. 생일·시각을 캐시와 **정확히** 맞춰야 나이 검사가 거짓말을 안 한다.
+  {
+    slug: "inyeon-saju", name: "은비", concern: "지금 만나는 사람과 결혼까지 갈 수 있을까요", expectAges: [35, 36],
+    birthInfo: { birthYear: "1990", birthMonth: "5", birthDay: "24", birthHour: "17", birthMinute: "0", calendarType: "양력", gender: "female" },
+  },
   // {
   //   slug: "sangun-sinjeom", name: "김영희", concern: "이직", expectAges: [50, 51, 52],
   //   birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
@@ -93,15 +102,25 @@ async function main() {
 
   for (const c of CASES) {
     // 명식 분석 캐시(모델 바꿔 재실행해도 luckyloveme 재호출 안 함)
-    const cacheFile = resolve(tmpdir(), `analysis-${c.slug}.json`);
+    // ⚠ 키는 slug 가 아니라 **생일+성별**이다. slug 로 잡으면 같은 상품의 케이스를 둘 이상
+    //   넣었을 때 두 번째가 첫 번째의 명식을 그대로 읽어, 다른 사람인 척하는 가짜 샘플이 나온다.
+    //   덤으로 산군·인연이 같은 생일이면 캐시를 공유해 API 호출이 준다(한도 6,000).
+    const bk = `${c.birthInfo.birthYear}${c.birthInfo.birthMonth.padStart(2, "0")}${c.birthInfo.birthDay.padStart(2, "0")}`;
+    const cacheFile = resolve(tmpdir(), `analysis-${bk}-${c.birthInfo.gender}-${c.birthInfo.birthHour ?? "x"}.json`);
     let analysis: Awaited<ReturnType<typeof saju.fetchSajuAnalysis>>;
     if (existsSync(cacheFile)) {
       analysis = JSON.parse(readFileSync(cacheFile, "utf8"));
       console.log(`[${c.slug}] 명식 캐시 사용`);
     } else {
       console.log(`[${c.slug}] ${c.name} 명식 호출…`);
-      analysis = await saju.fetchSajuAnalysis(c.birthInfo, [], { source: "manual" });
-      writeFileSync(cacheFile, JSON.stringify(analysis), "utf8");
+      try {
+        analysis = await saju.fetchSajuAnalysis(c.birthInfo, [], { source: "manual" });
+        writeFileSync(cacheFile, JSON.stringify(analysis), "utf8");
+      } catch (e) {
+        // 한 케이스의 네트워크 실패가 나머지 샘플까지 죽이면 안 된다(무인 실행 대비).
+        console.log(`  명식 호출 실패 — 이 케이스만 건너뛴다: ${e instanceof Error ? e.message : e}`);
+        continue;
+      }
     }
 
     const myeongsik = saju.ganjiToMyeongsik(analysis);
@@ -126,7 +145,10 @@ async function main() {
     // 설계도 + 배정표 + 장별 확정값 — 실제 파이프라인(generate-result.buildPlanForSangun)과 같은 재료.
     // 샘플이 이걸 건너뛰면 개편의 핵심을 안 잰 채 "좋아졌다"고 말하게 된다.
     let blueprint = null, monthPlan = null, pastBlock = null, prescriptionBlock = null;
-    if (c.slug === "sangun-sinjeom") {
+    // 산군·인연 둘 다 태운다 — generate-result.buildChapterPlan 과 같은 게이트여야 한다.
+    // (인연은 2026-08-17 10장 개편으로 달을 쓰는 장이 4개가 되어 배정표가 필요해졌다)
+    if (c.slug === "sangun-sinjeom" || c.slug === "inyeon-saju") {
+      const isSangun = c.slug === "sangun-sinjeom";
       const titles = outlineTitles(c.slug);
       try {
         monthPlan = buildMonthPlan(
@@ -136,7 +158,8 @@ async function main() {
           saju.computeWealthYears(analysis),
         );
         pastBlock = buildPastBlock(analysis) || null;
-        prescriptionBlock = buildPrescriptionBlock(computePrescription(analysis)) || null;
+        // 처방표 장은 산군에만 있다
+        prescriptionBlock = isSangun ? buildPrescriptionBlock(computePrescription(analysis)) || null : null;
       } catch { /* 확정값 실패 시 예전 방식으로 */ }
       const tBp = Date.now();
       blueprint = await generateBlueprint({
@@ -178,8 +201,11 @@ async function main() {
 
     // birth= 는 린터가 현재 나이를 계산하는 근거다(없으면 린터가 생년을 하드코딩하게 된다).
     const birth = `${bi.birthYear}-${bi.birthMonth.padStart(2, "0")}-${bi.birthDay.padStart(2, "0")}`;
-    const header = `<!-- slug=${c.slug} · ${c.name} · birth=${birth} · gender=${bi.gender} · concern=${c.concern ?? ""} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
-    const out = resolve(tmpdir(), `sample-${c.slug}-${tag}.md`);
+    // cache= 는 린터가 달 검사(지어낸달·표밖의달)를 돌릴 때 쓰는 명식 캐시 파일명이다.
+    // 캐시 키가 slug 에서 생일 기준으로 바뀌어 린터가 더는 slug 로 추측할 수 없다.
+    const header = `<!-- slug=${c.slug} · ${c.name} · birth=${birth} · gender=${bi.gender} · cache=${basename(cacheFile)} · concern=${c.concern ?? ""} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
+    // 파일명에 이름을 넣는다 — slug 만 쓰면 같은 상품의 두 번째 케이스가 첫 번째를 덮어쓴다.
+    const out = resolve(tmpdir(), `sample-${c.slug}-${c.name}-${tag}.md`);
     writeFileSync(out, header + text, "utf8");
 
     console.log(

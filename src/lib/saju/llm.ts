@@ -57,6 +57,27 @@ const FAMILY_RETRY_NOTE = `
 // 결정론적 품질 게이트(quality-gate.ts): 가족 단정 문장 검출 → 1회 재생성, 그래도 남으면 문장 제거.
 // (나이 정확도는 프롬프트의 [확정 사실] 주입으로 처리 — 출력 후 "NN세" 자동치환은
 //  '현재 나이 오기'와 '대운 N세 시점 언급'을 구분 못 해 정당한 값을 망가뜨려서 제거함)
+/**
+ * 챕터 안의 소제목이 `###` 로 새어나오는 걸 코드로 막는다.
+ *
+ * 장 제목만 `###` 여야 한다 — 린터·결과지 목차·스크롤 UI 가 전부 `###` 를 '장'으로 센다.
+ * 소제목까지 `###` 로 나오면 10장짜리가 14장으로 잡혀 장 수·달 배정·목차가 통째로 어긋난다.
+ * 프롬프트에는 이미 "소제목은 ### 대신 굵은 글씨"라고 적혀 있지만 모델이 어긴다(실측:
+ * gpt-5.6-luna, 인연 10장 → 14장). 기계적으로 정답이 하나인 건 부탁하지 않고 못 박는다.
+ *
+ * 각 챕터 응답의 **첫 헤딩만** 장 제목으로 남기고 그 뒤 헤딩은 굵은 글씨로 강등한다.
+ */
+function demoteInnerHeadings(text: string): string {
+  let seenFirst = false;
+  return text.replace(/^[ \t]{0,3}#{2,6}[ \t]+(.+?)[ \t]*$/gm, (_m, t: string) => {
+    if (!seenFirst) {
+      seenFirst = true;
+      return `### ${t}`;
+    }
+    return `**${t}**`;
+  });
+}
+
 export async function generateByChapters(
   title: string,
   chapters: { system: string; user: string }[],
@@ -78,7 +99,7 @@ export async function generateByChapters(
           r = { ...r, text: stripFamilyAssertions(r.text) };
         }
       }
-      return { text: r.text, provider: r.provider, model: r.model };
+      return { text: demoteInnerHeadings(r.text), provider: r.provider, model: r.model };
     } catch {
       return { text: "", provider: "", model: "" };
     }
