@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,12 +44,31 @@ function CheckoutSuccessInner() {
     }
   }, []);
 
-  // 결제 완료 전환 추적(결과지 생성 성공 시 1회). 금액·통화만, 개인정보 없음.
-  useEffect(() => {
-    if (!resultId) return;
-    const amount = Number(search.get("amount"));
-    track("purchase", { value: Number.isFinite(amount) && amount > 0 ? amount : undefined, currency: "KRW" });
-  }, [resultId, search]);
+  // 결제 완료 전환 추적. 금액·통화만, 개인정보 없음.
+  //
+  // ⚠️ 예전엔 resultId 가 생겨야만 보냈다. 그런데 결제는 됐는데 결과지가 보류되면
+  //    (selfHeal 64초 실패 → state "ok") resultId 가 끝내 안 잡혀 Purchase 가 **영영 안 나갔다**.
+  //    유입이 100% 메타라 이건 곧 "메타가 구매자를 못 배운다" = 광고비 손실이다.
+  //    → 돈이 잡힌 시점(confirm 200)에 보낸다. 결과지 생성은 전환과 별개 문제다.
+  //
+  // 중복 방지가 두 겹인 이유: confirm 은 멱등이라 비회원이 저장해 둔 이 주소를 나중에
+  // 다시 열면 또 200 이 온다. ref 는 같은 탭만 막으므로 orderId 키로 localStorage 에도 남긴다.
+  const purchaseSent = useRef(false);
+  const sendPurchase = useCallback((orderId: string, amount: number) => {
+    if (purchaseSent.current) return;
+    const key = `mr_purchase_${orderId}`;
+    try {
+      if (localStorage.getItem(key)) {
+        purchaseSent.current = true;
+        return;
+      }
+      localStorage.setItem(key, "1");
+    } catch {
+      // 스토리지 차단(프라이빗·웹뷰) — 아래 ref 로 같은 탭 중복만 막는다
+    }
+    purchaseSent.current = true;
+    track("purchase", { value: amount > 0 ? amount : undefined, currency: "KRW" });
+  }, []);
 
   useEffect(() => {
     const paymentKey = search.get("paymentKey");
@@ -98,6 +117,8 @@ function CheckoutSuccessInner() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");
+        // 여기가 돈이 잡힌 시점 — 결과지 생성 성공 여부와 무관하게 전환 1회 전송.
+        sendPurchase(orderId, amount);
         const guest = json.guest === true;
         if (guest) setIsGuest(true);
         if (json.resultId) {
@@ -120,7 +141,7 @@ function CheckoutSuccessInner() {
         setMessage(err instanceof Error ? err.message : "결제 승인 중 오류가 발생했습니다.");
       }
     })();
-  }, [router, search]);
+  }, [router, search, sendPurchase]);
 
   // ── 대기 화면: 분석 중 — 풀스크린. 산군이면 신당 테마로 세계관을 이어간다 ──
   if (state === "loading") {
