@@ -480,7 +480,7 @@ export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
 const PAY_META: Record<string, { desc: string; badge?: string }> = {
   "life-saju": { desc: "내 사주 핵심 · 올해 흐름 · 고민 답" },
   "wealth-saju": { desc: "내 재물그릇 점수 · 돈 들어오는 달 · 새는 달" },
-  "inyeon-saju": { desc: "인연이 들어오는 달 세 개 · 내게 올 사람 · 나이대", badge: "추천" },
+  "inyeon-saju": { desc: "만나는 달 세 개 · 내게 올 사람 · 나이대", badge: "추천" },
   "sangun-sinjeom": { desc: "총운 전체 + 돈 달 · 인연 달 · 바뀌는 해 확답", badge: "신점" },
   "love-saju": { desc: "부부·연애·자녀, 관계 패턴과 인연" },
   "monthly-luck": { desc: "2026 월별 좋은 달 · 조심할 달" },

@@ -69,9 +69,10 @@ export function buildMonthPlan(
   // 제목으로 판별해 배정표를 통째로 갈아 끼운다 — 아래 산군 로직은 한 줄도 건드리지 않는다.
   // (매칭이 안 되면 monthPlanLine 이 "달을 언급하지 마세요"를 걸어버리는데, 정작 지시문은
   //  확정값의 달을 쓰라고 시켜 서로 모순된다 → 실측에서 확인된 환각 유발 경로다. §70 주석 참고)
-  if (chapterTitles.some((t) => /인연이 들어오는 달 세 개/.test(t))) {
-    set(findIdx(chapterTitles, /인연이 들어오는 달 세 개/), iTop.slice(0, 3));
-    set(findIdx(chapterTitles, /흔들리는 달/), iShaky);
+  if (chapterTitles.some((t) => /만나는 달 세 개/.test(t))) {
+    set(findIdx(chapterTitles, /만나는 달 세 개/), iTop.slice(0, 3));
+    // 인연 7장은 「조심할 달」 — 산군에도 같은 제목의 장이 있지만 이 분기는 위 게이트로 이미 갈렸다.
+    set(findIdx(chapterTitles, /조심할 달/), iShaky);
     set(findIdx(chapterTitles, /크게 바뀌는 해/), years, true);
     // 걸어온 길은 과거 전용(연도 근거는 pastBlock) · 신호/패턴/올 사람 장은 달을 말하지 않는다
     set(findIdx(chapterTitles, /걸어온 길/), []);

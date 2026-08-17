@@ -285,14 +285,14 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
               받는 것 — 10개 챕터 · 앞으로 12개월 전부
             </p>
             {/* ⚠ 아래 제목은 결과지(prompt.ts outline) 실제 챕터명과 1:1 이어야 한다 — 다르면 들통.
-                챕터명 자체의 쉬운 말 개명은 배정표 정규식(blueprint.ts)과 물려 있어 내일 한 커밋으로 동기화한다. */}
+                고칠 땐 prompt.ts outline · blueprint.ts 배정표 정규식과 **같은 커밋**으로 움직인다. */}
             <ul className="space-y-2.5 text-[13px]">
               {[
                 ["1장", "내 인연 그릇"],
-                ["4장", "인연이 들어오는 달 세 개"],
+                ["4장", "만나는 달 세 개"],
                 ["5장", "내게 올 사람"],
                 ["6장", "그 사람을 알아보는 신호 셋"],
-                ["9장", "내 고민, 사주는 이렇게 답해요"],
+                ["9장", "내 고민, 정면으로 답해요"],
               ].map(([n, t]) => (
                 <li key={n} className="flex items-baseline gap-3">
                   <span className="font-myeongjo" style={{ color: MOON }}>
@@ -314,13 +314,13 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
                 {[
                   "1장  내 인연 그릇",
                   "2장  당신이 걸어온 길",
-                  "3장  내가 놓치는 인연의 패턴",
-                  "4장  인연이 들어오는 달 세 개",
+                  "3장  내가 놓치는 패턴",
+                  "4장  만나는 달 세 개",
                   "5장  내게 올 사람",
                   "6장  그 사람을 알아보는 신호 셋",
-                  "7장  마음이 흔들리는 달",
-                  "8장  인연이 가장 크게 바뀌는 해",
-                  "9장  내 고민, 사주는 이렇게 답해요",
+                  "7장  조심할 달",
+                  "8장  크게 바뀌는 해",
+                  "9장  내 고민, 정면으로 답해요",
                   "10장  이번 주에 할 것 3가지",
                 ].map((t) => (
                   <li key={t}>{t}</li>

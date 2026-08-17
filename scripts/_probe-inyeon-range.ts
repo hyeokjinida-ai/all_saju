@@ -59,6 +59,19 @@ async function main() {
   console.log("openCount:", iy.openCount, "| nearest:", JSON.stringify(iy.nearest), "| restOpen:", iy.restOpen);
   console.log("달력:", iy.calendar.map((c) => `${c.month}월${c.grade}${c.revealed ? "*" : ""}`).join(" "));
   console.log("등급수:", JSON.stringify(iy.calendar.reduce((a: any, c) => { a[c.grade] = (a[c.grade] ?? 0) + 1; return a; }, {})));
+
+  // ③ 챕터명 개명이 달 배정표(blueprint 정규식)와 어긋나지 않는지 — LLM 0회로 확인한다.
+  console.log("\n=== 챕터 ↔ 달 배정표 (개명 동기화 검증) ===");
+  const { outlineTitles } = await import("../src/lib/saju/prompt");
+  const { buildMonthPlan } = await import("../src/lib/saju/blueprint");
+  const titles = outlineTitles("inyeon-saju");
+  const plan = buildMonthPlan(titles, null, facts, null);
+  titles.forEach((t, i) => {
+    const p = plan[i];
+    console.log(`${String(i + 1).padStart(2)}. ${t.padEnd(22)} allow=[${p.allow.join(", ")}]${p.ownsYears ? " ownsYears" : ""}`);
+  });
+  const assigned = plan.filter((p) => p.allow.length > 0 || p.ownsYears).length;
+  console.log(`장 수: ${titles.length} · 달/해가 배정된 장: ${assigned}`);
 }
 
 main().catch((e) => { console.error("FAILED:", e?.message ?? e); process.exit(1); });
