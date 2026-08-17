@@ -313,7 +313,7 @@ export function InyeonStory({
         {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
         <header className="px-6 pb-5 pt-8 text-center">
           <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: MOON }}>
-            명운록 · 인연 들어오는 달
+            명운록 · 만나는 달
           </a>
           <h1 className="mt-3 font-myeongjo text-[26px] font-bold leading-[1.75]" style={{ color: "#efe6d2" }}>
             &lsquo;때가 되면 만난다&rsquo;는데
@@ -465,7 +465,7 @@ export function InyeonStory({
                 fontSize: 17,
               }}
             >
-              내 인연 들어오는 달 확인하기
+              내가 만나는 달 확인하기
               <span className="mt-0.5 block text-[13px] font-normal opacity-80">
                 {compareLabel && <s className="mr-1 opacity-70">{compareLabel}</s>}
                 {priceLabel} · 2분이면 끝 · 태어난 시각·성별·고민까지 반영

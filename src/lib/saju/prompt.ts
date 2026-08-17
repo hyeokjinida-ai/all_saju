@@ -197,7 +197,7 @@ const STYLE_BY_SLUG: Record<string, SlugStyle> = {
   // 장을 더 늘리면 물타기가 된다). 글자수는 목표가 아니라 **밀도(근거→장면→행동)의 부산물**이다 —
   // "○○자로 써라"는 채워넣기를 부르고, 이 3박자는 파고들기를 부른다.
   "inyeon-saju": {
-    title: "○○님의 인연 들어오는 달",
+    title: "○○님이 만나는 달",
     length: "약 8,500~10,500자 (챕터당 850~1,050자)",
     voice: INYEON_VOICE,
     outline: [

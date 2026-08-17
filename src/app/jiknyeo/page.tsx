@@ -7,7 +7,7 @@ import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
 // 이렇게 두면 가격·포지션을 본 사이트와 따로 실험할 수 있다(타이트가 재집행 1·4·5위 상품을
 // 사이트맵 밖에서 광고로만 굴리는 것과 같은 구조).
 export const metadata: Metadata = {
-  title: "인연 들어오는 달",
+  title: "만나는 달",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
 };
 
