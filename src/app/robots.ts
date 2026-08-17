@@ -7,7 +7,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/mypage", "/checkout", "/api", "/auth", "/admin"],
+      // /jiknyeo 는 광고 전용 비공개 랜딩(R6)이다 — 색인되면 본 사이트와 가격·포지션이 섞인다.
+      disallow: ["/mypage", "/checkout", "/api", "/auth", "/admin", "/jiknyeo"],
     },
     sitemap: `${siteConfig.url}/sitemap.xml`,
   };
