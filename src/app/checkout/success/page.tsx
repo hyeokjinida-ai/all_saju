@@ -36,9 +36,13 @@ function CheckoutSuccessInner() {
   // 로딩 화면 테마엔 못 쓴다. sessionStorage 읽기가 실패하거나 값이 없으면
   // undefined → 기본(보라) 테마로 내려앉아 흐름은 안 깨진다.
   const [screenTheme, setScreenTheme] = useState<"sangun" | undefined>(undefined);
+  // 직녀는 색은 기본(보라)이고 진행 항목의 말만 연애 축으로 바뀐다 — 방금 산 상품에 '돈'이 나오면 갸웃한다.
+  const [screenProduct, setScreenProduct] = useState<"inyeon" | undefined>(undefined);
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(LAST_ORDER_SLUG_KEY) === "sangun-sinjeom") setScreenTheme("sangun");
+      const slug = sessionStorage.getItem(LAST_ORDER_SLUG_KEY);
+      if (slug === "sangun-sinjeom") setScreenTheme("sangun");
+      else if (slug === "inyeon-saju") setScreenProduct("inyeon");
     } catch {
       // 접근 불가 환경 — 기본 테마
     }
@@ -145,7 +149,7 @@ function CheckoutSuccessInner() {
 
   // ── 대기 화면: 분석 중 — 풀스크린. 산군이면 신당 테마로 세계관을 이어간다 ──
   if (state === "loading") {
-    return <AnalyzingScreen variant="paid" theme={screenTheme} />;
+    return <AnalyzingScreen variant="paid" theme={screenTheme} product={screenProduct} />;
   }
 
   // ── 생성 완료 ──

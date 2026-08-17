@@ -14,6 +14,11 @@ const WORKING_STEPS: { at: number; label: string }[] = [
   { at: 78, label: "적어주신 물음에 답을 적는 중" },
 ];
 
+/** 방금 산 상품과 다른 말이 나오면 반 박자 갸웃한다 — 연애 상품에는 '돈'을 꺼내지 않는다. */
+const INYEON_STEP_LABEL: Record<string, string> = {
+  "돈과 인연이 들어오는 달을 셈하는 중": "만나는 달을 달력에서 셈하는 중",
+};
+
 // 산군 금색 — 위저드의 gold-bright(#e8c96a) 계열. 결제 직전 화면과 같은 색이어야 세계관이 이어진다.
 const SANGUN_GOLD = "#e8c96a";
 
@@ -21,6 +26,7 @@ export function AnalyzingScreen({
   name,
   variant = "paid",
   theme,
+  product,
   onBack,
 }: {
   name?: string | null;
@@ -28,6 +34,8 @@ export function AnalyzingScreen({
   // "sangun": 박수무당 사주 전용 — 결제 직전까지 검정+금+반말(신당 세계관)인데 대기 화면만
   // 보라 나경반+존댓말이면 세계관이 끊긴다(타이트는 결제 후 로딩에도 같은 캐릭터가 말을 건다).
   theme?: "sangun";
+  /** "inyeon": 직녀 연애사주 — 색은 기본(보라)이되 진행 항목의 말만 연애 축으로 바꾼다 */
+  product?: "inyeon";
   onBack?: () => void;
 }) {
   const [pct, setPct] = useState(8);
@@ -151,7 +159,13 @@ export function AnalyzingScreen({
               const done = pct >= s.at;
               // 산군 테마: 구조는 그대로, 칠만 보라→금. "적어주신"만은 존댓말이라 반말로 바꾼다
               // (한 단어라도 존댓말이 섞이면 세계관이 깨진다).
-              const label = sangun && s.label === "적어주신 물음에 답을 적는 중" ? "네 물음에 답을 적는 중" : s.label;
+              const label = sangun
+                ? s.label === "적어주신 물음에 답을 적는 중"
+                  ? "네 물음에 답을 적는 중"
+                  : s.label
+                : product === "inyeon"
+                  ? INYEON_STEP_LABEL[s.label] ?? s.label
+                  : s.label;
               return (
                 <div
                   key={i}

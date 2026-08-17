@@ -8,6 +8,7 @@
 // - 대운 곡선: raw_analysis.daeun 있을 때만. 격국 용신/희신 대비 유불리로 높낮이.
 import type { Myeongsik, Pillar } from "@/lib/saju/manseryeok";
 import type { SajuAnalysisResponse } from "@/lib/saju/saju-api";
+import { PROFILE_PREFIX } from "@/lib/saju/profile-tags";
 
 export type ElementKey = "wood" | "fire" | "earth" | "metal" | "water";
 export type CategoryKey = "wealth" | "career" | "love" | "health";
@@ -247,11 +248,17 @@ export function buildResultView(args: {
 
   // 영역별 점수 — 데이터(raw)가 있고 showScores일 때만
   const concerns = args.concerns ?? [];
+  // 「[프로필] …」 태그는 손님이 적은 고민이 아니라 위저드가 붙인 상황 정보다.
+  // 이걸 안 걸러내면 「[프로필] 직업: 직장인」의 '직업' 두 글자가 아래 career 줄을 먼저 물어서,
+  // 직업을 묻는 상품(산군·종합·재물)은 손님이 무엇을 골랐든 강조 영역이 career 로 굳는다.
+  const realConcerns = concerns.filter((c) => !c.startsWith(PROFILE_PREFIX));
   const primaryKey: CategoryKey | null = (() => {
-    const c = concerns.join(" ");
+    const c = realConcerns.join(" ");
     if (/돈|재물|재정|money/i.test(c)) return "wealth";
-    if (/일|직업|진로|이직|커리어/i.test(c)) return "career";
-    if (/연애|결혼|사랑|관계|이성|배우/i.test(c)) return "love";
+    // career 는 '일' 한 글자로 잡지 않는다 — 「일하느라 연애가 밀렸어」(연애 고민)가 career 로 갔다.
+    // 순서를 바꿔 love 를 위로 올리면 반대로 「직장 내 관계」가 love 로 새므로 키워드만 좁힌다.
+    if (/일자리|직장|직업|취업|진로|이직|커리어|사업/i.test(c)) return "career";
+    if (/연애|결혼|사랑|관계|이성|배우|인연|썸|짝사랑|헤어/i.test(c)) return "love";
     if (/건강|몸|병/i.test(c)) return "health";
     return null;
   })();
@@ -259,8 +266,10 @@ export function buildResultView(args: {
 
   const daeun = args.showDaeun && raw ? deriveDaeun(raw) : undefined;
 
-  const advice = concerns.length
-    ? { quote: concerns[0].slice(0, 120), body: "적어주신 고민은 아래 상세 풀이에서 가장 먼저, 가장 깊게 짚었어요. 사주의 큰 흐름과 함께 읽어보세요." }
+  // 손님에게 되보여주는 인용이라 **손님이 적은 것**만 쓴다. concerns[0] 을 그대로 쓰면
+  // 위저드가 맨 앞에 붙인 「[프로필] 인연 방향: 남자」가 그 자리에 그대로 노출된다.
+  const advice = realConcerns.length
+    ? { quote: realConcerns[0].slice(0, 120), body: "적어주신 고민은 아래 상세 풀이에서 가장 먼저, 가장 깊게 짚었어요. 사주의 큰 흐름과 함께 읽어보세요." }
     : undefined;
 
   return {

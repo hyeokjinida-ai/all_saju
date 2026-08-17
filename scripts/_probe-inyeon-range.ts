@@ -72,6 +72,28 @@ async function main() {
   });
   const assigned = plan.filter((p) => p.allow.length > 0 || p.ownsYears).length;
   console.log(`장 수: ${titles.length} · 달/해가 배정된 장: ${assigned}`);
+
+  // ④ result-view 의 강조 영역·인용 — [프로필] 태그가 새지 않는지, 인연 칩이 love 로 가는지
+  console.log("\n=== result-view primaryKey / advice.quote ===");
+  const { buildResultView } = await import("../src/lib/saju/result-view");
+  const { ganjiToMyeongsik } = api;
+  const ms = ganjiToMyeongsik(analysis)!;
+  const CASES: string[][] = [
+    ["[프로필] 인연 방향: 남자", "[프로필] 연애 상태: 혼자", "일하느라 연애가 밀렸어"],
+    ["[프로필] 인연 방향: 남자", "결혼 시기가 궁금해"],
+    ["[프로필] 직업: 직장인", "돈은 언제 풀리나"],
+    ["[프로필] 직업: 직장인", "내년에 이직해도 되나"],
+    ["[프로필] 인연 방향: 남자"], // 손님이 적은 고민 없음 → advice 없어야 한다
+  ];
+  for (const concerns of CASES) {
+    const v = buildResultView({
+      myeongsik: ms, rawAnalysis: analysis, name: "지수", birthDate: "1993-05-15",
+      birthTime: "14:30", timeUnknown: false, gender: "female", calendar: "solar",
+      concerns, showScores: true, showDaeun: false,
+    });
+    const hi = v.categories.find((c) => c.primary)?.label ?? "(없음)";
+    console.log(`concerns=${JSON.stringify(concerns)}\n  강조=${hi} · 첫칸=${v.categories[0]?.label} · quote=${v.advice ? JSON.stringify(v.advice.quote) : "(없음)"}`);
+  }
 }
 
 main().catch((e) => { console.error("FAILED:", e?.message ?? e); process.exit(1); });

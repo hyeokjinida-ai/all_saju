@@ -330,7 +330,7 @@ export function InyeonStory({
             </span>
           </h1>
           <p className="mt-3 text-[15px]" style={{ color: "#a89f8d" }}>
-            &lsquo;곧 온다&rsquo;는 말은 그만 — 인연이 들어오는 달을 콕 집어드려요
+            &lsquo;곧 온다&rsquo;는 말은 그만 — 만나는 달을 콕 집어드려요
           </p>
 
           <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
