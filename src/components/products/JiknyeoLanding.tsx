@@ -134,7 +134,7 @@ function SilverThread() {
   );
 }
 
-function Cta({ label = "무료로 천 펴보기" }: { label?: string }) {
+function Cta({ label = "무료로 먼저 보기" }: { label?: string }) {
   return (
     <div className="px-5">
       <Link
@@ -145,7 +145,7 @@ function Cta({ label = "무료로 천 펴보기" }: { label?: string }) {
         {label}
       </Link>
       <p className="mt-2.5 text-center text-[12px]" style={{ color: SUB }}>
-        토스페이먼츠 안전결제 · 천이 제대로 짜이지 않으면 실값은 돌려드려요
+        토스페이먼츠 안전결제 · 결과지가 제대로 안 나오면 전액 돌려드려요
       </p>
     </div>
   );
@@ -157,7 +157,9 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
   return (
     <div style={{ background: INK }}>
       <div className="mx-auto w-full max-w-[520px] pb-28">
-        {/* L1 게이트 히어로 — 첫 3초에 '무늬(=결과)'를 예고한다 */}
+        {/* L1 히어로 — 가장 깊은 불안("있긴 한가")에 먼저 답하고, 상품("몇 월")으로 꺾는다.
+            카피 원칙(2026-08-17 형님 확정): 이야기는 은유를 써도 되지만, 상품을 말하는 순간부터는
+            직설만 쓴다 — 다시 읽게 만드는 문장 금지. 날실·씨실·무늬·천 어휘는 전면 폐기했다. */}
         <Cut id="j3" assets={assets} minH={520} priority>
           <div className="absolute inset-x-0 top-7 text-center">
             <p className="font-brush text-[15px] tracking-[0.34em]" style={{ color: SILVER, opacity: 0.9 }}>
@@ -165,9 +167,9 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
             </p>
           </div>
           <Say>
-            천을 폈어요.
+            만날 사람, 있어요.
             <br />
-            <b style={{ color: MOON }}>무늬가 도는 달</b>이… 보이네요.
+            <b style={{ color: MOON }}>몇 월인지</b>가 문제죠.
           </Say>
         </Cut>
 
@@ -177,88 +179,100 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
 
         <SilverThread />
 
-        {/* L2 핵심 원리 — 매개가 상품을 설명한다(원국=날실 / 대운=씨실) */}
+        {/* L2 핵심 원리 — 전부 즉답형 문장. "세다"는 서비스 동사로 쓰지 않는다(찾아드리다). */}
         <Narration>
-          날실은 태어날 때 이미 다 걸려 있어요.
+          만날 사람은 만나요.
           <br />
-          그건 못 바꿔요.
+          다만 아무 때나 만나지지는 않아요.
+          <br />
+          <b style={{ color: MOON }}>만나는 달이, 따로 있어요.</b>
           <br />
           <br />
-          제가 세는 건 <b style={{ color: MOON }}>씨실이 언제 지나가느냐</b>예요.
-          <br />
-          씨실이 지나가야 무늬가 생기거든요.
+          저는 그 달을 찾아드리는 사람이에요.
         </Narration>
 
-        {/* L5 대구 페어 — 죄책감 해제의 ①② 를 그림으로 먼저 깐다 */}
+        {/* L5 대구 페어 — "다리 없는 밤 / 다리가 놓이는 밤" 두 장. 죄책감 해제의 밑돌 */}
         <div className="grid grid-cols-2 gap-2 px-3">
           <div>
             <Cut id="t2" assets={assets} minH={220} />
             <p className="mt-2 text-center text-[13px] leading-relaxed" style={{ color: SUB }}>
-              이건 못 바꿔요
+              아무 다리도 없는 밤
               <br />
-              <span style={{ color: BONE }}>태어날 때 걸린 날실</span>
+              <span style={{ color: BONE }}>이런 달이 대부분이에요</span>
             </p>
           </div>
           <div>
             <Cut id="t3" assets={assets} minH={220} />
             <p className="mt-2 text-center text-[13px] leading-relaxed" style={{ color: SUB }}>
-              이건 지나가요
+              다리가 놓이는 밤
               <br />
-              <span style={{ color: BONE }}>올해도 몇 번, 당신 천을</span>
+              <span style={{ color: BONE }}>올해도 몇 번, 있어요</span>
             </p>
           </div>
         </div>
 
         <SilverThread />
 
-        {/* L3 직녀 소개 — 실적 숫자 0 (R2) */}
+        {/* L3 직녀 소개 — 실적 숫자 0 (R2). 산군 언급 없음(독립 캐릭터, 형님 확정) */}
         <Cut id="j1" assets={assets} minH={480}>
           <Say>어서 와요. 앉으세요.</Say>
         </Cut>
         <div className="px-8 py-8 text-center">
           <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "#cfd0d8" }}>
-            일 년에 하루를 만나도,
+            일 년에 하루만 만날 수 있었지만,
             <br />
-            만날 사람은 만난다는 걸 아는 이.
-            <br />
-            <br />
-            산군의 장부에서 <b style={{ color: MOON }}>인연 면(緣面)</b>만 받아 읽는 눈.
+            그 하루를 놓친 적이 없는 사람.
             <br />
             <br />
-            날실은 세어 주어도,
+            <b style={{ color: MOON }}>만나는 날을 알고 있었으니까요.</b>
             <br />
-            남의 씨실을 대신 던져 주지는 않는다.
+            <br />
+            당신 달을 찾아드릴 수는 있어도,
+            <br />
+            대신 만나 드리지는 않아요.
           </p>
         </div>
 
         <SilverThread />
 
-        {/* L4 웹툰 7컷 — 산군에서 직녀로 넘어오는 서사(자극 교체: 공포 → 온기) */}
+        {/* L4 웹툰 7컷 — 견우직녀 설화(전 국민이 아는 이야기 = 설명 0초) → 능력 → 당신에게로 전이.
+            "세다"는 기다림(설화)에서만 허용, 약속(상품)은 알려드릴게요/콕 집어드릴게요. */}
         <Cut id="w1" assets={assets}>
-          <Say>
-            여기까지가 내 눈이 닿는 곳이다.
-            <br />
-            <b style={{ color: MOON }}>천의 일은 직녀가 읽는다.</b>
-          </Say>
+          <Say>일 년에 하루만, 만날 수 있었던 여자가 있어요.</Say>
         </Cut>
         <Cut id="w2" assets={assets}>
-          <Say>문틈으로, 달빛이 샜어요.</Say>
+          <Say>
+            날을 세며, 기다렸거든요.
+            <br />
+            그래서 한 번도 놓치지 않았어요.
+          </Say>
         </Cut>
         <Cut id="w3" assets={assets}>
-          <Say>당신 천은 여기 걸려 있었어요. 반쯤 짜인 채로.</Say>
+          <Say>
+            <b style={{ color: MOON }}>만나는 날을 알고 있었어요.</b>
+          </Say>
         </Cut>
         <Cut id="w4" assets={assets}>
-          <Say>여기… 날실과 은사가 만난 자리. 이게 무늬예요.</Say>
+          <Say>
+            까치가 다리를 놓는 날 —
+            <br />일 년에 단 하루.
+          </Say>
         </Cut>
         <Cut id="w5" assets={assets}>
-          <Say>까치가 오면, 다리가 놓여요.</Say>
+          <Say>
+            당신에게도 그런 날이 와요.
+            <br />
+            올해도, 몇 번.
+          </Say>
         </Cut>
         <Cut id="w6" assets={assets}>
-          <Say>달이 오면, 북을 던져요.</Say>
+          <Say>몰라서 지나갔을 뿐이에요.</Say>
         </Cut>
         <Cut id="w7" assets={assets}>
           <Say>
-            <b style={{ color: MOON }}>당신 천은 지금 어디까지 짜였을까요.</b>
+            이번엔 알고 만나요.
+            <br />
+            <b style={{ color: MOON }}>몇 월인지, 알려드릴게요.</b>
           </Say>
         </Cut>
 
@@ -270,13 +284,15 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
             <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: BONE }}>
               받는 것 — 10개 챕터 · 앞으로 12개월 전부
             </p>
+            {/* ⚠ 아래 제목은 결과지(prompt.ts outline) 실제 챕터명과 1:1 이어야 한다 — 다르면 들통.
+                챕터명 자체의 쉬운 말 개명은 배정표 정규식(blueprint.ts)과 물려 있어 내일 한 커밋으로 동기화한다. */}
             <ul className="space-y-2.5 text-[13px]">
               {[
-                ["1장", "네 날실 — 타고난 그릇"],
-                ["3장", "인연 달력 — 열두 달 전부"],
-                ["4장", "내게 올 사람"],
-                ["6장", "무늬인 척 섞인 잡실"],
-                ["9장", "네 물음의 답"],
+                ["1장", "내 인연 그릇"],
+                ["4장", "인연이 들어오는 달 세 개"],
+                ["5장", "내게 올 사람"],
+                ["6장", "그 사람을 알아보는 신호 셋"],
+                ["9장", "내 고민, 사주는 이렇게 답해요"],
               ].map(([n, t]) => (
                 <li key={n} className="flex items-baseline gap-3">
                   <span className="font-myeongjo" style={{ color: MOON }}>
@@ -296,16 +312,16 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
               </summary>
               <ul className="mt-4 space-y-2 text-[13px]" style={{ color: "#cfd0d8" }}>
                 {[
-                  "1장  네 날실 — 타고난 그릇",
-                  "2장  지나온 자리 — 걸어온 길",
-                  "3장  인연 달력 — 열두 달 전부",
-                  "4장  무늬가 도는 달 셋",
+                  "1장  내 인연 그릇",
+                  "2장  당신이 걸어온 길",
+                  "3장  내가 놓치는 인연의 패턴",
+                  "4장  인연이 들어오는 달 세 개",
                   "5장  내게 올 사람",
-                  "6장  알아보는 신호 셋 + 하지 말 것",
-                  "7장  결이 엉키는 달",
-                  "8장  무늬가 가장 크게 바뀌는 해",
-                  "9장  네 물음의 답",
-                  "10장  이번 주에 할 것 셋",
+                  "6장  그 사람을 알아보는 신호 셋",
+                  "7장  마음이 흔들리는 달",
+                  "8장  인연이 가장 크게 바뀌는 해",
+                  "9장  내 고민, 사주는 이렇게 답해요",
+                  "10장  이번 주에 할 것 3가지",
                 ].map((t) => (
                   <li key={t}>{t}</li>
                 ))}
@@ -326,7 +342,7 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
               <p className="text-center text-[13px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
                 A4 <b style={{ color: MOON }}>여덟 장</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
                 <br />
-                끝까지 읽히려고 이만큼만 짰어요.
+                끝까지 읽으시라고 이만큼만 썼어요.
               </p>
               <p className="mt-3 text-center text-[13px]" style={{ color: SUB }}>
                 <s className="mr-1.5 opacity-70">24,900원</s>
@@ -375,10 +391,10 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
               ],
               [
                 "다른 사주 사이트랑 뭐가 다른가요?",
-                "대부분 “올해 연애운이 좋다”까지만 말해요. 저는 열두 달을 등급으로 전부 펴고, 그중 어느 달인지를 못 박아요. 거를 사람까지 같이 드려요.",
+                "대부분 “올해 연애운이 좋다”까지만 말해요. 저는 열두 달 전부에 좋고 나쁨을 매기고, 몇 월인지 콕 집어요. 거를 사람까지 같이 알려드려요.",
               ],
               [
-                "실값을 치르면 언제, 어떻게 받나요?",
+                "결제하면 언제, 어떻게 받나요?",
                 "바로 이 화면에서 열려요. 링크는 카카오톡으로도 보내드려요.",
               ],
             ].map(([q, a]) => (
@@ -397,14 +413,14 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
         {/* L10 반론 처리 */}
         <Cut id="j2" assets={assets} minH={460}>
           <Say>
-            실값이 아깝죠. 저도 알아요.
+            돈 쓰기 아깝죠. 저도 알아요.
             <br />
             그런데 <b style={{ color: MOON }}>달을 모르고 보내는 한 달</b>은… 공짜가 아니에요.
           </Say>
         </Cut>
 
         <div className="pt-8">
-          <Cta label="내 천 보러 가기" />
+          <Cta label="내 달 보러 가기" />
         </div>
       </div>
     </div>
