@@ -1684,6 +1684,22 @@ function TeaserStep({
             ) : (
               <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
             ))}
+
+          {/* 직녀(인연) 전용 — 죄책감 해제 → 다리문장. polite 경로는 존댓말 상품 4종과 공유라 slug 가드 필수 */}
+          {productSlug === "inyeon-saju" && (
+            <div className="mt-4">
+              <p className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone)" }}>
+                인연이 없는 게 아니에요. 날을 모르고 지나쳤을 뿐이에요.
+                <br />
+                자책은 여기서 끝내셔도 돼요.
+              </p>
+              {teaser.hasPastCheck && (
+                <p className="font-myeongjo mt-3 text-[15px] leading-[1.75]" style={{ color: "var(--gold-bright)", fontWeight: 600 }}>
+                  그때가 맞았다면 — 아래 달력도 같은 사주에서 나온 거예요.
+                </p>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -1983,9 +1999,17 @@ function TeaserStep({
             </div>
           )}
 
-          <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.06em]">
-            {teaser.note}
-          </p>
+          {/* 결제 직전 마지막 줄. 인연은 「계산은 다 끝났고 이름만 잠겼다」로 직설 —
+              "여기까지 무료"는 위저드 헤더 help 가 이미 말한다(중복 제거). */}
+          {productSlug === "inyeon-saju" ? (
+            <p className="font-myeongjo mt-3.5 text-center text-[13px] tracking-[0.06em]" style={{ color: "var(--bone)" }}>
+              달력은 다 폈어요. 달 이름만, 아직이에요.
+            </p>
+          ) : (
+            <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.06em]">
+              {teaser.note}
+            </p>
+          )}
         </>
       )}
     </div>
