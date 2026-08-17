@@ -365,9 +365,11 @@ export function InyeonStory({
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             {[
-              ["아직 없어요", "아직 만나는 사람이 없어요"],
-              ["만나는 사람이 있어요", "사귀는 사람이 있어요"],
-              ["최근에 끝났어요", "최근에 헤어졌어요"],
+              // 배지도 손님이 고르는 말 → 반말. 오른쪽 값은 위저드 CONCERN_BY_SLUG["inyeon-saju"] 의
+              // 칩 문자열과 **글자까지 같아야** 프리셀렉트가 걸린다(다르면 조용히 버려진다).
+              ["아직 없어", "아직 만나는 사람이 없어"],
+              ["만나는 사람이 있어", "사귀는 사람이 있어"],
+              ["최근에 끝났어", "최근에 헤어졌어"],
             ].map(([label, c]) => (
               <a
                 key={label}

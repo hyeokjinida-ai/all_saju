@@ -10,7 +10,16 @@ import type { SajuTeaser } from "@/lib/saju/teaser";
 import type { PartnerFace } from "@/lib/saju/partner-face";
 import type { ResultView } from "@/lib/saju/result-view";
 import { WebtoonPage, type WebtoonCutData } from "@/components/webtoon/WebtoonPage";
-import { tag, displayOf, PROFILE_KEYS, PARTNER_OPTIONS, RELATIONSHIP_OPTIONS, JOB_OPTIONS } from "@/lib/saju/profile-tags";
+import {
+  tag,
+  displayOf,
+  PROFILE_KEYS,
+  PARTNER_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  JOB_OPTIONS,
+  type ProfileOption,
+  type OptionTone,
+} from "@/lib/saju/profile-tags";
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
@@ -103,13 +112,16 @@ const CONCERN_OPTIONS = ["재물", "부부·연애", "자녀", "직장·사업",
 
 // 상품별 고민 선택지 — 상품이 파는 질문과 위저드가 묻는 질문을 일치시킨다.
 const CONCERN_BY_SLUG: Record<string, string[]> = {
+  // 직녀 — 칩도 손님이 고르는 말이라 반말이다(직녀만 해요체로 묻는다).
+  // ⚠ 이 문자열이 그대로 저장값이 된다. 고칠 때 InyeonWebtoon 의 상태 배지 `?c=` 값도 같이 고쳐야
+  //   프리셀렉트가 살아 있다 — 불일치하면 SajuWizard 의 initialConcerns 필터가 조용히 버린다.
   "inyeon-saju": [
-    "아직 만나는 사람이 없어요",
-    "썸·짝사랑 중이에요",
-    "사귀는 사람이 있어요",
-    "결혼 시기가 궁금해요",
-    "최근에 헤어졌어요",
-    "일하느라 연애가 밀려요",
+    "아직 만나는 사람이 없어",
+    "썸·짝사랑 중이야",
+    "사귀는 사람이 있어",
+    "결혼 시기가 궁금해",
+    "최근에 헤어졌어",
+    "일하느라 연애가 밀렸어",
   ],
   // 산군(신점) — 반말 톤 유지
   "sangun-sinjeom": [
@@ -167,14 +179,17 @@ const STEPS_SANGUN: typeof STEPS = [
 // 어휘 금지: 천·날실·씨실·무늬·베틀. 세계관은 견우직녀 설화 하나 — 달력과 달로만 말한다.
 // 「만나는 달」은 상품명이라 아껴 쓴다: 마지막 확인 화면에서 한 번만 꺼내 기대를 세운다.
 const STEPS_JIKNYEO: typeof STEPS = [
-  { hanja: "名", q: "먼저 이름부터요", help: "달력에 이 이름으로 적어 둘게요", optional: true },
+  { hanja: "名", q: "먼저 이름부터요", help: "결과지에 이 이름으로 적어 둘게요", optional: true },
   { hanja: "生", q: "언제 태어나셨어요?", help: "양력인지 음력인지도 같이 골라주세요" },
-  { hanja: "時", q: "태어난 시각도 아세요?", help: "알면 더 촘촘히 봐요 — 몰라도 괜찮아요" },
+  // help 에서 "몰라도 괜찮아요"를 뺐다 — 바로 아래 버튼과 보조문이 이미 두 번 말한다.
+  { hanja: "時", q: "태어난 시각도 아세요?", help: "알면 더 촘촘히 봐요" },
   { hanja: "性", q: "성별을 알려주세요", help: "운의 흐름을 읽는 방향이 달라서요" },
   { hanja: "緣", q: "마음이 가는 쪽은 남자인가요, 여자인가요?", help: "짝을 보는 자리가 이 답으로 달라져요" },
-  { hanja: "伴", q: "지금은 어떤 자리에 계세요?", help: "지금 상황에 맞춰 풀어드릴게요", optional: true },
+  // 질문은 선택지의 꼴을 따라간다 — 선택지가 상태("혼자야")인데 "어떤 자리"를 물으면 한 박자 되짚는다.
+  { hanja: "伴", q: "지금 곁에 사람이 있어요?", help: "지금 상황에 맞춰 풀어드릴게요", optional: true },
   { hanja: "業", q: "무슨 일을 하고 계세요?", help: "만나는 자리를 더 좁혀 볼 수 있어요", optional: true },
-  { hanja: "惑", q: "따로 물어보고 싶은 게 있어요?", help: "그 물음부터 정면으로 답할게요" },
+  // 화면에 상황 칩이 먼저 뜨므로 "물어보고 싶은 것"이 아니라 마음 쓰이는 것을 묻는다.
+  { hanja: "惑", q: "요즘 제일 마음 쓰이는 게 뭐예요?", help: "그 물음부터 정면으로 답할게요" },
   { hanja: "覽", q: "이대로 달력을 펴 볼게요", help: "" },
   // 兆 는 공용과 같은 말을 쓴다 — 아래 마지막 줄이 「달력은 다 폈어요」라서,
   // 여기서도 달력을 꺼내면 한 화면에서 같은 말을 두 번 읽힌다.
@@ -247,6 +262,10 @@ export function SajuWizard({
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
+  /** 선택지 버튼은 **손님이 말하는 자리**라 상품별 말투가 다르다.
+   *  산군=반말 하대(ban) · 직녀=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다. */
+  const optTone: OptionTone = imm ? "ban" : isInyeon ? "jik" : "label";
+  const optLabel = (o: ProfileOption) => displayOf([o], o.value, optTone);
   const router = useRouter();
   // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
   const [selectedId, setSelectedId] = useState(productId);
@@ -745,7 +764,8 @@ export function SajuWizard({
               <span className="w-4 h-4 border border-current inline-flex items-center justify-center text-[11px]">
                 {form.timeUnknown ? "✓" : ""}
               </span>
-              태어난 시각을 몰라요
+              {/* 이 버튼도 손님 대사다 — 직녀에서만 반말(입력대본 §3/9 원문) */}
+              {isInyeon ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
             </button>
             <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.06em] leading-[1.75]">
               시각을 몰라도 괜찮아요. 시(時) 기둥만 빼고 나머지 흐름을 봐드립니다.
@@ -800,7 +820,7 @@ export function SajuWizard({
                     className={`px-2 py-6 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                   >
                     <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
-                      {imm ? o.ban : o.label}
+                      {optLabel(o)}
                     </span>
                   </button>
                 );
@@ -826,7 +846,7 @@ export function SajuWizard({
                   className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                 >
                   <span className={`font-myeongjo text-[13px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
-                    {imm ? o.ban : o.label}
+                    {optLabel(o)}
                   </span>
                 </button>
               );
@@ -847,7 +867,7 @@ export function SajuWizard({
                   className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
                 >
                   <span className={`font-myeongjo text-[13px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
-                    {imm ? o.ban : o.label}
+                    {optLabel(o)}
                   </span>
                 </button>
               );
@@ -931,7 +951,7 @@ export function SajuWizard({
               <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
                 지금 화면에서 바로 열려요.
                 <br />
-                이 주소로도 한 벌 보내 둘게요.
+                이 주소로도 한 부 보내 둘게요.
               </p>
               <input
                 autoFocus
@@ -972,7 +992,15 @@ export function SajuWizard({
               </button>
             </div>
           ) : (
-            <ConfirmStep form={form} onEdit={setStep} productName={productName} price={price} imm={imm} skipped={skipped} />
+            <ConfirmStep
+              form={form}
+              onEdit={setStep}
+              productName={productName}
+              price={price}
+              imm={imm}
+              optTone={optTone}
+              skipped={skipped}
+            />
           ))}
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
@@ -1896,7 +1924,9 @@ function TeaserStep({
             className="font-myeongjo text-[11px] tracking-[0.15em]"
             style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
           >
-            {isInyeon ? "달력에 하나, 크게 표시된 해" : "장부에 붉게 표시된 해"}
+            {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
+                손님이 되짚으면 어긋난다. 결과지 8장 제목과 같은 말로 둬 티저→결과지가 호응한다. */}
+            {isInyeon ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
           </p>
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
@@ -2167,8 +2197,8 @@ function TeaserStep({
         바꾸면서 손님 동선에서 빠졌다 — 그래서 여기로 옮겼다(2026-08-11).
         장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
-    {/* B12 — 하단 고정 타이머. 결제 버튼이 화면 밖으로 나가도 마감이 따라다닌다(청월당 실측 패턴). */}
-    {isInyeon && teaser && <TeaserTimerBar />}
+    {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
+    {isInyeon && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
     </>
   );
 }
@@ -2193,7 +2223,7 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
       {/* B2 — 기회 카운트. 숫자 다음 줄에서 바로 달을 못 박는다(숫자만 쓰면 경쟁사와 같은 말이 된다). */}
       <div className="text-center">
         <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
-          앞으로 열두 달, 문이 열리는 달
+          앞으로 열두 달, 인연이 열리는 달
         </p>
         <p
           className="mt-1.5 text-[40px] font-bold leading-none"
@@ -2241,7 +2271,7 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
       <p className="font-myeongjo mt-3 text-center text-[11px] leading-[1.9]" style={{ color: "var(--bone-faint)" }}>
         <span style={{ color: "var(--gold-bright)" }}>●</span> 만나는 달 &nbsp;
         <span style={{ color: "var(--gold-soft)" }}>◎</span> 자리가 생기는 달 &nbsp;
-        <span>○</span> 평 &nbsp;
+        <span>○</span> 보통 &nbsp;
         <span style={{ color: "rgba(154,140,208,0.55)" }}>△</span> 조심할 달
       </p>
 
@@ -2303,43 +2333,43 @@ function LoadingChecklist() {
   );
 }
 
-/** B12 — 30분 고정 타이머. 1/100초까지 굴러야 "지금 흐르고 있다"가 된다. */
-const TIMER_TOTAL_MS = 30 * 60 * 1000;
-
-function TeaserTimerBar() {
-  // 서버 렌더에는 시간이 없다(하이드레이션 불일치 방지) — 마운트 후에만 숫자가 생긴다.
-  const [left, setLeft] = useState<number | null>(null);
-  useEffect(() => {
-    const end = Date.now() + TIMER_TOTAL_MS;
-    // 남은 시간은 매 틱 Date.now() 로 다시 잰다 — 틱을 세지 않으므로 브라우저가 탭을 쉬게 해도
-    // (백그라운드 throttling) 돌아왔을 때 값이 밀리지 않는다.
-    // rAF 로 굴리면 화면이 가려진 동안 아예 멈춰서 첫 값조차 안 잡힌다(실측) — setInterval 로 둔다.
-    setLeft(Math.max(0, end - Date.now())); // 첫 프레임을 기다리지 않고 바로 세운다
-    const id = setInterval(() => setLeft(Math.max(0, end - Date.now())), 30);
-    return () => clearInterval(id);
-  }, []);
-  if (left == null) return null;
-  const mm = String(Math.floor(left / 60000)).padStart(2, "0");
-  const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
-  const cs = String(Math.floor((left % 1000) / 10)).padStart(2, "0");
+/**
+ * B12 — 하단 고정 마감바.
+ *
+ * 30분 카운트다운을 걷어냈다. 이유 셋:
+ *  ① 직녀 보이스 1번 규칙이 "재촉하지 않는다, 대신 달을 못 박는다"인데 카운트다운은 그 자체가 재촉이다.
+ *  ② 30분이 지나도 화면은 안 닫힌다 — 「틀렸으면 여기서 닫으셔도 돼요」로 쌓은 신뢰를 결제 직전에 깎는다.
+ *  ③ 우리에겐 **진짜 마감**이 이미 있다. 만세력 월운 창이 매달 미끄러져서 지나간 달은 다음 계산에서
+ *     실제로 빠진다(상세페이지에 이미 박아 둔 확정 카피와 같은 말). 사실이고 그 손님 달력에서 나온 값이다.
+ */
+function NearestMonthBar({ nearest }: { nearest: { year: number; month: number } }) {
+  // createPortal 은 SSR 에 document 가 없다 — 마운트 후에만 그린다.
+  const [mounted, setMounted] = useState(false);
+  // 바닥 여백은 **재서** 맞춘다. 375px 에서 이 문장은 두 줄로 감겨 69px 가 되는데 고정값 46px 을
+  // 두면 마지막 줄(환불 안내)이 가려진다 — 카피를 고칠 때마다 숫자를 다시 재게 만들지 않는다.
+  const [barH, setBarH] = useState(46);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
   // ⚠ body 로 빼는 이유: 위저드를 감싼 `.svc-fade` 가 스크롤 연출용 transform 을 갖고 있어서
   //   그 안에서는 position:fixed 의 기준이 뷰포트가 아니라 그 박스가 된다(실측: 화면 밖 top 2657px).
   //   연출은 공용이라 못 건드리므로 바만 포털로 꺼낸다.
   return (
     <>
     {/* 고정바가 마지막 줄(환불 안내)을 덮지 않게 그만큼 바닥을 띄운다 */}
-    <div aria-hidden style={{ height: 46 }} />
+    <div aria-hidden style={{ height: barH }} />
     {createPortal(
     <div
+      ref={(el) => { if (el) setBarH(el.offsetHeight); }}
       className="fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
       style={{ background: "rgba(7,6,9,0.92)", borderTop: "1px solid var(--gold-pale)" }}
     >
+      {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
       <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>
-        이 화면은{" "}
-        <span className="font-mono tracking-[0.1em]" style={{ color: "var(--gold-bright)" }}>
-          {mm}:{ss}:{cs}
+        가장 가까운 열리는 달,{" "}
+        <span className="font-bold" style={{ color: "var(--gold-bright)" }}>
+          {nearest.month}월
         </span>{" "}
-        후에 닫혀요
+        — 지나가면 다음 계산에서 빠져요
       </span>
     </div>,
     document.body,
@@ -2354,13 +2384,15 @@ function ConfirmStep({
   productName,
   price,
   imm,
+  optTone,
   skipped,
 }: {
   form: FormState;
   onEdit: (s: number) => void;
   productName: string;
   price: number;
-  imm: boolean; // 산군(반말)이면 선택지 문장도 반말로 되보여준다
+  imm: boolean; // 몰입 상품(산군)은 여기서 가격을 꺼내지 않는다
+  optTone: OptionTone; // 손님이 고른 문장을 **고를 때와 같은 말투로** 되보여준다
   skipped: Set<number>; // 이 상품이 안 묻는 질문 — 확인 화면에서도 뺀다
 }) {
   const concernAll = [...form.concerns, ...(form.concernText.trim() ? [form.concernText.trim()] : [])];
@@ -2372,9 +2404,9 @@ function ConfirmStep({
     // 달력은 생년월일 화면이 흡수했으므로 '수정'도 그 화면(1)으로 보낸다
     ["달력", form.calendar === "solar" ? "양력" : form.calendar === "lunar" ? "음력" : "—", 1],
     // 저장값이 아니라 손님이 고른 문장을 그대로 되보여준다
-    ["인연 방향", form.partner ? displayOf(PARTNER_OPTIONS, form.partner, imm) : "—", PARTNER_STEP],
-    ["연애 상태", form.relationship ? displayOf(RELATIONSHIP_OPTIONS, form.relationship, imm) : "—", RELATIONSHIP_STEP],
-    ["직업", form.job ? displayOf(JOB_OPTIONS, form.job, imm) : "—", JOB_STEP],
+    ["인연 방향", form.partner ? displayOf(PARTNER_OPTIONS, form.partner, optTone) : "—", PARTNER_STEP],
+    ["연애 상태", form.relationship ? displayOf(RELATIONSHIP_OPTIONS, form.relationship, optTone) : "—", RELATIONSHIP_STEP],
+    ["직업", form.job ? displayOf(JOB_OPTIONS, form.job, optTone) : "—", JOB_STEP],
     ["고민", concernAll.length ? concernAll.join(" · ") : "—", CONCERN_STEP],
   ].filter(([, , s]) => !skipped.has(s as number)) as [string, string, number][]; // 안 물은 질문은 확인 화면에서도 뺀다
 

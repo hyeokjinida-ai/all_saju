@@ -26,24 +26,32 @@ export type ProfileAnswers = {
 export const tag = (key: string, value: string) => `${PROFILE_PREFIX} ${key}: ${value}`;
 
 /**
- * 선택지 — **저장값(value)과 화면 표시(label/ban)를 분리한다.**
- * 산군은 반말, 나머지 상품은 해요체라 같은 문자열을 쓰면 한쪽이 반드시 어긋난다.
+ * 선택지 — **저장값(value)과 화면 표시(label/ban/jik)를 분리한다.**
+ * 산군은 반말 하대, 나머지 상품은 해요체라 같은 문자열을 쓰면 한쪽이 반드시 어긋난다.
  * 저장은 항상 value 로 해야 말투를 바꿔도 예전 주문의 파싱이 안 깨진다.
+ *
+ * `jik` = 직녀(인연) 상품의 **손님 대사**. 직녀는 해요체로 묻지만 버튼은 손님이 말하는 자리라
+ * 반말이다 — 양쪽 다 존대면 위계가 0이라 손님이 을이 된다(입력대본 §1 보이스 규칙).
+ * 없으면 label 로 떨어진다.
  */
-export type ProfileOption = { value: string; label: string; ban: string };
+export type ProfileOption = { value: string; label: string; ban: string; jik?: string };
+
+/** 화면에 쓸 말투 — label(해요체) / ban(산군 반말) / jik(직녀 손님 반말) */
+export type OptionTone = "label" | "ban" | "jik";
 
 /** 인연 방향 — value 는 상대의 성별을 정하는 키다 */
 export const PARTNER_OPTIONS: (ProfileOption & { sex?: "male" | "female" })[] = [
   { value: "남자", label: "남자", ban: "남자", sex: "male" },
   { value: "여자", label: "여자", ban: "여자", sex: "female" },
-  { value: "모름", label: "아직 모르겠어요", ban: "아직 모르겠다" }, // sex 없음 → 이성 인연으로 계산
+  // sex 없음 → 이성 인연으로 계산
+  { value: "모름", label: "아직 모르겠어요", ban: "아직 모르겠다", jik: "아직 모르겠어" },
 ];
 
 export const RELATIONSHIP_OPTIONS: ProfileOption[] = [
-  { value: "혼자", label: "혼자예요", ban: "혼자다" },
-  { value: "만나는 사람 있음", label: "만나는 사람이 있어요", ban: "만나는 사람이 있다" },
-  { value: "기혼", label: "결혼했어요", ban: "혼인했다" },
-  { value: "정리 중", label: "정리하는 중이에요", ban: "정리하는 중이다" },
+  { value: "혼자", label: "혼자예요", ban: "혼자다", jik: "혼자야" },
+  { value: "만나는 사람 있음", label: "만나는 사람이 있어요", ban: "만나는 사람이 있다", jik: "만나는 사람이 있어" },
+  { value: "기혼", label: "결혼했어요", ban: "혼인했다", jik: "결혼했어" },
+  { value: "정리 중", label: "정리하는 중이에요", ban: "정리하는 중이다", jik: "정리하는 중이야" },
 ];
 
 export const JOB_OPTIONS: ProfileOption[] = [
@@ -55,9 +63,13 @@ export const JOB_OPTIONS: ProfileOption[] = [
   { value: "학생·준비", label: "공부하거나 준비 중이에요", ban: "공부하거나 준비 중이다" },
 ];
 
-/** 저장값 → 화면에 보여줄 문장. 확인 화면이 "혼자" 대신 손님이 고른 문장을 그대로 보여주게 한다. */
-export const displayOf = (opts: ProfileOption[], value: string, ban: boolean) =>
-  opts.find((o) => o.value === value)?.[ban ? "ban" : "label"] ?? value;
+/** 저장값 → 화면에 보여줄 문장. 확인 화면이 "혼자" 대신 손님이 고른 문장을 그대로 보여주게 한다.
+ *  jik 이 비어 있으면 label 로 떨어진다(남자·여자처럼 말투가 같은 선택지). */
+export const displayOf = (opts: ProfileOption[], value: string, tone: OptionTone) => {
+  const o = opts.find((x) => x.value === value);
+  if (!o) return value;
+  return (tone === "jik" ? o.jik : tone === "ban" ? o.ban : o.label) ?? o.label;
+};
 
 /** concerns 에서 프로필 답만 골라 읽는다. 없으면 빈 객체 — 호출부는 예전처럼 동작하면 된다. */
 export function parseProfileTags(concerns: string[] | null | undefined): ProfileAnswers {
