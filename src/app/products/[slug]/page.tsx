@@ -255,6 +255,9 @@ export default async function ProductDetailPage({
         webtoonCuts={webtoonCuts}
         variant={isSangun ? "immersive" : undefined}
         bgImage={isSangun ? "/products/sangun/face.webp" : undefined}
+        // ?demo= 는 산군 분기에만 연결돼 있어서 정작 티저를 자주 봐야 하는 직녀에서 안 먹었다.
+        // 입력 열 단계를 건너뛰고 티저로 직행 — 화면 확인용.
+        demo={demo}
       />
 
       {/* 안심 — 리스크 역전. 웹툰에선 먹빛 카드, 템플릿에선 기존 앰버 박스 */}
