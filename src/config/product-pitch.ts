@@ -66,7 +66,7 @@ export const PRODUCT_PITCH: Record<string, ProductPitch> = {
   },
   // 30대 여성 메인 — 전용 웹툰 랜딩이 본체. 이 항목은 목록·크로스셀 표면용.
   "inyeon-saju": {
-    eyebrow: "緣 · 만나는 달",
+    eyebrow: "緣 · 직녀 연애사주",
     headline: ["'때가 되면 만난다'는데", "그 때가 대체 언제인가요"],
     pains: [
       "'좋은 인연 올 거예요'… 그 말만 벌써 몇 번째인가요?",

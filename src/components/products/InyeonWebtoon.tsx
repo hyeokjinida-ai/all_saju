@@ -313,7 +313,7 @@ export function InyeonStory({
         {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
         <header className="px-6 pb-5 pt-8 text-center">
           <a href="/" className="inline-block text-[13px] tracking-[0.22em]" style={{ color: MOON }}>
-            명운록 · 만나는 달
+            명운록 · 직녀 연애사주
           </a>
           <h1 className="mt-3 font-myeongjo text-[26px] font-bold leading-[1.75]" style={{ color: "#efe6d2" }}>
             &lsquo;때가 되면 만난다&rsquo;는데
