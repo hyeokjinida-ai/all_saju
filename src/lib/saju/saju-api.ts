@@ -528,6 +528,9 @@ export type InyeonFacts = {
   top3: InyeonRow[];
   shaky: InyeonRow[];
   topYears: InyeonRow[];
+  /** 앞으로 열두 달 전부(시간순) — 티저 12칸 달력이 등급을 전부 펴려면 TOP3 밖의 달도 필요하다.
+   *  top3·shaky 와 **같은 rowOf 계산**에서 나온 같은 점수다(따로 계산하면 달력과 본문이 어긋난다). */
+  months: InyeonRow[];
 };
 
 export function computeInyeonFacts(
@@ -711,6 +714,7 @@ export function computeInyeonFacts(
     top3,
     shaky,
     topYears,
+    months: monthRows,
   };
 }
 

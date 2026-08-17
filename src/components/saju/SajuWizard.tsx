@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
@@ -225,6 +226,8 @@ export function SajuWizard({
   demo = null,
 }: Props) {
   const imm = variant === "immersive";
+  // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
+  const isInyeon = productSlug === "inyeon-saju";
   const router = useRouter();
   // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
   const [selectedId, setSelectedId] = useState(productId);
@@ -1002,10 +1005,15 @@ export function SajuWizard({
                           </span>
                         </span>
                       </div>
+                      {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
                       {pct != null && (
-                        <p className="mt-1 text-[11px]" style={{ color: pct >= 40 ? "#d8563f" : "var(--bone-faint)" }}>
+                        <p
+                          className="mt-1 text-[11px]"
+                          style={{ color: pct >= 40 && !isInyeon ? "#d8563f" : "var(--bone-faint)" }}
+                        >
                           {pct}% 할인
-                          {o.includes.length > 1 && ` · ${formatKRW(o.price - price)} 더 내고 장부 한 권 더`}
+                          {o.includes.length > 1 &&
+                            ` · ${formatKRW(o.price - price)} 더 내고 ${isInyeon ? "결과지 하나 더" : "장부 한 권 더"}`}
                         </p>
                       )}
                     </button>
@@ -1424,6 +1432,8 @@ function TeaserStep({
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
+  // 직녀(인연)판인가 — polite 렌더 경로는 존댓말 상품 4종과 공유라 slug 로만 갈라야 한다.
+  const isInyeon = productSlug === "inyeon-saju";
 
   if (loading) {
     return (
@@ -1700,6 +1710,12 @@ function TeaserStep({
               )}
             </div>
           )}
+
+          {/* B2·B5 — 다리문장이 "아래 달력"이라고 가리킨 그 달력. 바로 뒤에 와야 문장이 성립한다.
+              숫자는 전부 computeInyeonFacts 에서 세어 온 값이다(지어내기 금지). */}
+          {productSlug === "inyeon-saju" && teaser.inyeon && (
+            <InyeonCalendar data={teaser.inyeon} />
+          )}
         </>
       )}
 
@@ -1780,10 +1796,18 @@ function TeaserStep({
         <div
           ref={inkRef}
           className="mb-9 mt-9 px-4 py-7 text-center"
-          style={{ background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }}
+          style={
+            isInyeon
+              ? { background: "rgba(120,104,168,0.10)", border: "1px solid var(--gold-pale)" }
+              : { background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }
+          }
         >
-          <p className="font-myeongjo text-[11px] tracking-[0.15em]" style={{ color: "rgba(216,140,120,0.85)" }}>
-            장부에 붉게 표시된 해
+          {/* 직녀 화면엔 산군의 장부도, 빨강도 없다(형님 확정 금기). 같은 연출을 은사 색으로만 옮긴다. */}
+          <p
+            className="font-myeongjo text-[11px] tracking-[0.15em]"
+            style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
+          >
+            {isInyeon ? "달력에 하나, 크게 표시된 해" : "장부에 붉게 표시된 해"}
           </p>
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
@@ -1799,7 +1823,10 @@ function TeaserStep({
                 글씨체라 웹툰을 내리면 같이 죽는다 — 전역 next/font 인 --font-brush 를 쓴다. */}
             <p
               className="text-[40px] font-bold leading-none"
-              style={{ color: "#e8695a", fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive" }}
+              style={{
+                color: isInyeon ? "var(--gold-bright)" : "#e8695a",
+                fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive",
+              }}
             >
               {teaser.turningYear.year}년
             </p>
@@ -1826,17 +1853,17 @@ function TeaserStep({
                     strokeLinecap="round"
                   />
                 </mask>
-                {/* 먹의 농담 — 붓을 댄 쪽이 짙고, 들어올리는 끝이 옅다 */}
+                {/* 먹의 농담 — 붓을 댄 쪽이 짙고, 들어올리는 끝이 옅다 (직녀는 은사 농담) */}
                 <linearGradient id="ink-tone" x1="1" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#b0301d" />
-                  <stop offset="42%" stopColor="#d24430" />
-                  <stop offset="100%" stopColor="#8f2b1e" />
+                  <stop offset="0%" stopColor={isInyeon ? "#6f61a8" : "#b0301d"} />
+                  <stop offset="42%" stopColor={isInyeon ? "#a596e0" : "#d24430"} />
+                  <stop offset="100%" stopColor={isInyeon ? "#5b4f8c" : "#8f2b1e"} />
                 </linearGradient>
               </defs>
               {/* 번짐 — 종이에 먹이 스민 자국. 본획보다 먼저 깔린다 */}
               <path
                 d={INK_STROKE}
-                fill="#8f2b1e"
+                fill={isInyeon ? "#5b4f8c" : "#8f2b1e"}
                 opacity={0.45}
                 mask="url(#ink-reveal)"
                 style={{ filter: "blur(1.1px)" }}
@@ -1958,9 +1985,9 @@ function TeaserStep({
               </div>
             </div>
           ) : (
-            /* 존댓말 상품은 기존 잠긴 줄 유지 */
+            /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다 */
             <div className="mt-4">
-              {teaser.locked.map((row, i) => (
+              {(isInyeon && teaser.inyeon ? teaser.inyeon.locked : teaser.locked).map((row, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
                   <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
                   <span className="font-mono text-[13px] tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
@@ -1999,6 +2026,37 @@ function TeaserStep({
             </div>
           )}
 
+          {/* B8 하지 말 것 — 잠금 줄 바로 위. 두 개는 지금 쓸 수 있게 주고 세 번째만 잠근다. */}
+          {isInyeon && teaser.inyeon && (
+            <div className="mt-6 px-4 py-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--gold-pale)" }}>
+              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+                지금 이것만은 하지 마세요
+              </p>
+              <ol className="mt-4 space-y-3.5">
+                {teaser.inyeon.donts.map((d, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <span className="font-mono text-[13px] leading-[1.75]" style={{ color: "var(--gold-soft)" }}>
+                      {i + 1}.
+                    </span>
+                    {d.locked ? (
+                      <span className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone-faint)" }}>
+                        <span className="font-mono tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
+                          ████████████████
+                        </span>
+                        <br />
+                        이건 결과지에서 말씀드릴게요.
+                      </span>
+                    ) : (
+                      <span className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone)" }}>
+                        {d.text}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
           {/* 결제 직전 마지막 줄. 인연은 「계산은 다 끝났고 이름만 잠겼다」로 직설 —
               "여기까지 무료"는 위저드 헤더 help 가 이미 말한다(중복 제거). */}
           {productSlug === "inyeon-saju" ? (
@@ -2020,6 +2078,138 @@ function TeaserStep({
         바꾸면서 손님 동선에서 빠졌다 — 그래서 여기로 옮겼다(2026-08-11).
         장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
+    {/* B12 — 하단 고정 타이머. 결제 버튼이 화면 밖으로 나가도 마감이 따라다닌다(청월당 실측 패턴). */}
+    {isInyeon && teaser && <TeaserTimerBar />}
+    </>
+  );
+}
+
+/**
+ * B5 열두 달 달력 + B2 기회 카운트.
+ *
+ * 「계산은 다 보여드려요. 이름만 아직이에요」를 화면으로 만든 자리다 —
+ * 등급(●◎○△)은 열두 칸 전부 열고, 달 이름은 가장 가까운 한 달만 준다.
+ * 값은 전부 teaser.inyeon(=computeInyeonFacts) 에서 온다. 여기서 새로 계산하지 않는다.
+ */
+function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const GRADE_COLOR: Record<string, string> = {
+    "●": "var(--gold-bright)",
+    "◎": "var(--gold-soft)",
+    "○": "var(--bone-faint)",
+    "△": "rgba(154,140,208,0.55)",
+  };
+  return (
+    <div ref={ref} className="mt-6">
+      {/* B2 — 기회 카운트. 숫자 다음 줄에서 바로 달을 못 박는다(숫자만 쓰면 경쟁사와 같은 말이 된다). */}
+      <div className="text-center">
+        <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
+          앞으로 열두 달, 문이 열리는 달
+        </p>
+        <p
+          className="mt-1.5 text-[40px] font-bold leading-none"
+          style={{
+            color: "var(--gold-bright)",
+            fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive",
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(6px)",
+            transition: "opacity .5s ease, transform .5s ease",
+          }}
+        >
+          {data.openCount}번
+        </p>
+        {data.nearest && (
+          <p className="font-myeongjo mt-3 text-[17px] leading-[1.75]" style={{ color: "var(--bone)" }}>
+            가장 가까운 건 {data.nearest.year}년 {data.nearest.month}월이에요.
+          </p>
+        )}
+      </div>
+
+      {/* B5 — 열두 칸. 이름을 가린 자리에도 등급은 그대로 서 있다. */}
+      <div className="mt-5 grid grid-cols-4 gap-1.5">
+        {data.calendar.map((c, i) => (
+          <div
+            key={i}
+            className="flex flex-col items-center justify-center py-2.5"
+            style={{
+              border: "1px solid var(--gold-pale)",
+              background: c.revealed ? "rgba(154,140,208,0.14)" : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <span
+              className="font-myeongjo text-[13px] tracking-[0.06em]"
+              style={{ color: c.revealed ? "var(--bone)" : "var(--bone-faint)" }}
+            >
+              {c.revealed ? `${c.month}월` : <span className="font-mono">██월</span>}
+            </span>
+            <span className="mt-1 text-[13px] leading-none" style={{ color: GRADE_COLOR[c.grade] }}>
+              {c.grade}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <p className="font-myeongjo mt-3 text-center text-[11px] leading-[1.9]" style={{ color: "var(--bone-faint)" }}>
+        <span style={{ color: "var(--gold-bright)" }}>●</span> 만나는 달 &nbsp;
+        <span style={{ color: "var(--gold-soft)" }}>◎</span> 자리가 생기는 달 &nbsp;
+        <span>○</span> 평 &nbsp;
+        <span style={{ color: "rgba(154,140,208,0.55)" }}>△</span> 조심할 달
+      </p>
+
+      {data.restOpen > 0 && (
+        <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
+          남은 만나는 달 {data.restOpen === 1 ? "하나" : "두 개"} —{" "}
+          {/* 잠긴 자리는 실제 개수만큼 찍는다 — 개수가 정보다 */}
+          <span className="font-mono tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
+            {Array.from({ length: data.restOpen }, () => "████년 ██월").join(" · ")}
+          </span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** B12 — 30분 고정 타이머. 1/100초까지 굴러야 "지금 흐르고 있다"가 된다. */
+const TIMER_TOTAL_MS = 30 * 60 * 1000;
+
+function TeaserTimerBar() {
+  // 서버 렌더에는 시간이 없다(하이드레이션 불일치 방지) — 마운트 후에만 숫자가 생긴다.
+  const [left, setLeft] = useState<number | null>(null);
+  useEffect(() => {
+    const end = Date.now() + TIMER_TOTAL_MS;
+    // 남은 시간은 매 틱 Date.now() 로 다시 잰다 — 틱을 세지 않으므로 브라우저가 탭을 쉬게 해도
+    // (백그라운드 throttling) 돌아왔을 때 값이 밀리지 않는다.
+    // rAF 로 굴리면 화면이 가려진 동안 아예 멈춰서 첫 값조차 안 잡힌다(실측) — setInterval 로 둔다.
+    setLeft(Math.max(0, end - Date.now())); // 첫 프레임을 기다리지 않고 바로 세운다
+    const id = setInterval(() => setLeft(Math.max(0, end - Date.now())), 30);
+    return () => clearInterval(id);
+  }, []);
+  if (left == null) return null;
+  const mm = String(Math.floor(left / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
+  const cs = String(Math.floor((left % 1000) / 10)).padStart(2, "0");
+  // ⚠ body 로 빼는 이유: 위저드를 감싼 `.svc-fade` 가 스크롤 연출용 transform 을 갖고 있어서
+  //   그 안에서는 position:fixed 의 기준이 뷰포트가 아니라 그 박스가 된다(실측: 화면 밖 top 2657px).
+  //   연출은 공용이라 못 건드리므로 바만 포털로 꺼낸다.
+  return (
+    <>
+    {/* 고정바가 마지막 줄(환불 안내)을 덮지 않게 그만큼 바닥을 띄운다 */}
+    <div aria-hidden style={{ height: 46 }} />
+    {createPortal(
+    <div
+      className="fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
+      style={{ background: "rgba(7,6,9,0.92)", borderTop: "1px solid var(--gold-pale)" }}
+    >
+      <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>
+        이 화면은{" "}
+        <span className="font-mono tracking-[0.1em]" style={{ color: "var(--gold-bright)" }}>
+          {mm}:{ss}:{cs}
+        </span>{" "}
+        후에 닫혀요
+      </span>
+    </div>,
+    document.body,
+    )}
     </>
   );
 }

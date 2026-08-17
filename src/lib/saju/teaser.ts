@@ -35,7 +35,36 @@ export type SajuTeaser = {
   locked: { label: string; mask: string }[];
   /** 받을 장부의 목차. 손님이 "돈 내면 뭘 받는지"를 보는 유일한 자리다. */
   chapters: TeaserChapter[];
+  /** 직녀(인연) 티저 전용 구조물 — 열두 달 달력·기회 카운트·하지 말 것. 다른 상품은 안 읽는다. */
+  inyeon: InyeonTeaser | null;
   note: string;
+};
+
+/**
+ * 직녀 티저의 「계산은 다 보여드려요, 이름만 아직이에요」를 성립시키는 값들.
+ *
+ * 등급은 **새로 만든 기준이 아니다** — 유료 결과지가 쓰는 분류를 그대로 옮긴 것이다.
+ * 티저가 ●라고 한 달을 결과지가 안 짚으면 그 자리에서 신뢰가 끝나므로 매핑을 여기 한 곳에만 둔다.
+ *   ● 만나는 달   = top3 (결과지 '만나는 달 세 개'와 같은 세 달)
+ *   △ 조심할 달   = shaky, 또는 만세력 종합판정이 대흉인 달
+ *   ◎ 자리가 생기는 달 = 위 둘이 아니면서 짝·합·도화·귀인 신호가 붙은 달
+ *   ○ 평          = 나머지
+ */
+export type InyeonTeaser = {
+  /** 앞으로 열두 달(시간순). 만세력 월운 창이 정확히 12개다 — 3년치가 아니다. */
+  calendar: { year: number; month: number; grade: "●" | "◎" | "○" | "△"; revealed: boolean }[];
+  /** 문이 열리는 달 수 = ● + ◎. 지어내지 않고 위 등급에서 센다. */
+  openCount: number;
+  /** 공짜로 하나 준다 — ● 중 가장 가까운 달. 나머지 두 달은 결과지에서 열린다. */
+  nearest: { year: number; month: number } | null;
+  /** 남은 ● 개수(= 잠긴 만나는 달). 「나머지 두 달」처럼 수를 말할 때 쓴다. */
+  restOpen: number;
+  /** 하지 말 것 — 마지막 하나는 잠근다 */
+  donts: { text: string; locked: boolean }[];
+  /** 잠긴 줄 — 공용 polite 목록 대신 이걸 쓴다.
+   *  공용 목록은 연애 상품에 「돈이 들어오는 달」이 섞여 있고, 「인연이 들어오는 달」은
+   *  바로 위 열두 달 달력과 같은 말이라 두 번 읽힌다. 달력이 못 하는 것만 남긴다. */
+  locked: { label: string; mask: string }[];
 };
 
 /**
@@ -374,6 +403,54 @@ export function buildTeaser(
         }
       : null;
 
+  // ⑤ 직녀 전용 — 열두 달 달력. 등급은 결과지가 쓰는 분류를 그대로 옮긴다(위 InyeonTeaser 주석 참고).
+  const inyeon: InyeonTeaser | null = (() => {
+    if (facts.months.length === 0) return null;
+    const topKeys = new Set(facts.top3.map((r) => `${r.year}-${r.month}`));
+    const shakyKeys = new Set(facts.shaky.map((r) => `${r.year}-${r.month}`));
+    // 긍정 인연 신호만 센다. jijiRel 의 부정 태그(배우자 자리 흔들림·마음이 어긋나기 쉬움·긁히기 쉬움)는
+    // 여기 안 걸리게 둔다 — 걸리면 조심할 달이 자리 생기는 달로 둔갑한다.
+    const SIGNAL = /짝|끌림|합|같은 결|도화|매력|귀인/;
+    // ● 중 가장 가까운 달 하나만 이름을 준다 — 미끼 하나가 열려 있어야 나머지 잠금이 미끼로 읽힌다.
+    const opens = facts.months.filter((r) => topKeys.has(`${r.year}-${r.month}`));
+    const nearest = opens[0] ? { year: opens[0].year, month: opens[0].month } : null;
+    const calendar = facts.months.map((r) => {
+      const key = `${r.year}-${r.month}`;
+      const grade: "●" | "◎" | "○" | "△" = topKeys.has(key)
+        ? "●"
+        : shakyKeys.has(key) || r.verdict === "대흉"
+          ? "△"
+          : r.tags.some((t) => SIGNAL.test(t))
+            ? "◎"
+            : "○";
+      return {
+        year: r.year,
+        month: r.month,
+        grade,
+        revealed: !!nearest && r.year === nearest.year && r.month === nearest.month,
+      };
+    });
+    return {
+      calendar,
+      openCount: calendar.filter((c) => c.grade === "●" || c.grade === "◎").length,
+      nearest,
+      restOpen: Math.max(0, opens.length - 1),
+      // 두 개는 열어두고 세 번째만 잠근다. 전부 잠그면 "안 주는 게 많다"로 읽힌다.
+      donts: [
+        { text: "닫힌 달에 확답을 받아내려 하지 마세요. 그 달에 받은 대답은, 그 달의 대답일 뿐이에요.", locked: false },
+        { text: "미안한 마음에 그동안 줄인 연락을 한꺼번에 몰아 보내지 마세요. 닫힌 달에는 그게 제일 크게 어긋나요.", locked: false },
+        { text: "", locked: true },
+      ],
+      locked: [
+        { label: "내게 올 사람 — 태도·말투·나이대", mask: "▓▓▓▓▓▓▓▓" },
+        { label: "그 사람을 알아보는 신호 셋", mask: "▓▓▓▓▓▓" },
+        { label: "그 사람을 처음 마주치는 자리", mask: "▓▓▓▓" },
+        { label: "크게 바뀌는 그해에 달라지는 것", mask: "▓▓▓▓▓▓▓▓▓▓" },
+        { label: "적어주신 물음에 대한 답", mask: "▓▓▓▓▓▓▓▓" },
+      ],
+    };
+  })();
+
   const locked =
     voice === "sangun"
       ? [
@@ -465,6 +542,7 @@ export function buildTeaser(
     turningYear,
     partnerFace: buildPartnerFace(facts),
     locked,
+    inyeon,
     note:
       voice === "sangun"
         ? "여기까지는 공짜다. 나머지는 장부를 열어야 나온다."
