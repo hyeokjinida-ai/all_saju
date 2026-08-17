@@ -163,8 +163,27 @@ const STEPS_SANGUN: typeof STEPS = [
   { hanja: "兆", q: "네 장부, 다 읽고 왔다", help: "먼저 몇 줄, 공짜로 펴 주마" },
 ];
 
+// 직녀(인연) 전용 — 문항·인덱스는 공용과 똑같고 말만 갈아끼운다(엔진을 포크하지 않는다).
+// 어휘 금지: 천·날실·씨실·무늬·베틀. 세계관은 견우직녀 설화 하나 — 달력과 달로만 말한다.
+// 「만나는 달」은 상품명이라 아껴 쓴다: 마지막 확인 화면에서 한 번만 꺼내 기대를 세운다.
+const STEPS_JIKNYEO: typeof STEPS = [
+  { hanja: "名", q: "먼저 이름부터요", help: "달력에 이 이름으로 적어 둘게요", optional: true },
+  { hanja: "生", q: "언제 태어나셨어요?", help: "양력인지 음력인지도 같이 골라주세요" },
+  { hanja: "時", q: "태어난 시각도 아세요?", help: "알면 더 촘촘히 봐요 — 몰라도 괜찮아요" },
+  { hanja: "性", q: "성별을 알려주세요", help: "운의 흐름을 읽는 방향이 달라서요" },
+  { hanja: "緣", q: "마음이 가는 쪽은 남자인가요, 여자인가요?", help: "짝을 보는 자리가 이 답으로 달라져요" },
+  { hanja: "伴", q: "지금은 어떤 자리에 계세요?", help: "지금 상황에 맞춰 풀어드릴게요", optional: true },
+  { hanja: "業", q: "무슨 일을 하고 계세요?", help: "만나는 자리를 더 좁혀 볼 수 있어요", optional: true },
+  { hanja: "惑", q: "따로 물어보고 싶은 게 있어요?", help: "그 물음부터 정면으로 답할게요" },
+  { hanja: "覽", q: "이대로 달력을 펴 볼게요", help: "" },
+  // 兆 는 공용과 같은 말을 쓴다 — 아래 마지막 줄이 「달력은 다 폈어요」라서,
+  // 여기서도 달력을 꺼내면 한 화면에서 같은 말을 두 번 읽힌다.
+  { hanja: "兆", q: "사주를 먼저 읽어봤어요", help: "여기까지는 무료예요" },
+];
+
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
   "sangun-sinjeom": STEPS_SANGUN,
+  "inyeon-saju": STEPS_JIKNYEO,
 };
 
 const TOTAL = STEPS.length;
@@ -241,6 +260,10 @@ export function SajuWizard({
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
   const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
+  // 직녀 전용 이메일 화면(확인 → 이메일 → 티저). 단계 인덱스를 늘리지 않는다 —
+  // STEPS 배열을 건드리면 산군·존댓말 4종의 건너뛰기 계산이 통째로 밀린다.
+  const [emailGate, setEmailGate] = useState(false);
+  const [emailSkipped, setEmailSkipped] = useState(false);
   const [form, setForm] = useState<FormState>({
     // demo 가 있으면 첫 렌더부터 채워 둔다 — setState 로 나중에 넣으면 티저 요청이
     // 빈 생일로 한 번 먼저 나가서 실패한다.
@@ -397,6 +420,13 @@ export function SajuWizard({
 
   const next = useCallback(() => {
     if (step === CONFIRM_STEP) {
+      // 직녀만 — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
+      // 결제까지 안 가는 손님도 여기서 남는다. 막지는 않는다 — 건너뛰면 그대로 티저로 간다.
+      if (isInyeon && !emailGate && !emailSkipped) {
+        setEmailGate(true);
+        return;
+      }
+      setEmailGate(false);
       void loadTeaser();
       return;
     }
@@ -405,7 +435,7 @@ export function SajuWizard({
       while (n < TOTAL - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
       return Math.min(n, TOTAL - 1);
     });
-  }, [step, loadTeaser, skipped]);
+  }, [step, loadTeaser, skipped, isInyeon, emailGate, emailSkipped]);
   const prev = () =>
     setStep((s) => {
       let p = s - 1;
@@ -601,9 +631,17 @@ export function SajuWizard({
             </span>
           )}
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-[1.4]">
-            {step === TEASER_STEP && teaserLoading ? (imm ? "네 장부를 찾는 중이다" : "명식을 계산하고 있어요") : cur.q}
+            {step === TEASER_STEP && teaserLoading
+              ? imm
+                ? "네 장부를 찾는 중이다"
+                : isInyeon
+                  ? "만나는 달을 찾는 중이에요"
+                  : "명식을 계산하고 있어요"
+              : emailGate
+                ? "마지막으로 하나만요"
+                : cur.q}
           </p>
-          {cur.help && !(step === TEASER_STEP && teaserLoading) && (
+          {cur.help && !(step === TEASER_STEP && teaserLoading) && !emailGate && (
             <p className="font-myeongjo mt-3 text-[13px] text-bone-soft tracking-[0.06em]">{cur.help}</p>
           )}
         </div>
@@ -883,10 +921,59 @@ export function SajuWizard({
           </div>
         )}
 
-        {/* STEP 8 — 확인 */}
-        {step === CONFIRM_STEP && (
-          <ConfirmStep form={form} onEdit={setStep} productName={productName} price={price} imm={imm} skipped={skipped} />
-        )}
+        {/* STEP 8 — 확인 · 직녀는 그 뒤에 이메일 한 화면을 더 둔다 */}
+        {step === CONFIRM_STEP &&
+          (emailGate ? (
+            <div>
+              <p className="font-myeongjo text-center text-[17px] leading-[1.8]" style={{ color: "var(--bone)" }}>
+                다 되면, 어디로 보내 드릴까요?
+              </p>
+              <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
+                지금 화면에서 바로 열려요.
+                <br />
+                이 주소로도 한 벌 보내 둘게요.
+              </p>
+              <input
+                autoFocus
+                className="ap-input mt-6 text-center"
+                type="email"
+                inputMode="email"
+                placeholder="example@gmail.com"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                style={{ fontSize: 15 }}
+              />
+              <button
+                type="button"
+                onClick={next}
+                disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)}
+                className="mt-5 w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
+                style={{
+                  fontFamily: "var(--font-serif-kr), serif",
+                  background: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)
+                    ? "linear-gradient(180deg,#ffffff,#f1eaff)"
+                    : "rgba(150,90,255,0.15)",
+                  color: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? "var(--wine-deep)" : "rgba(241,238,249,0.35)",
+                }}
+              >
+                여기로 보내줘
+              </button>
+              {/* 막지 않는다 — 여기서 세우면 무료 티저를 보러 온 손님이 그대로 나간다 */}
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailSkipped(true);
+                  setEmailGate(false);
+                  void loadTeaser();
+                }}
+                className="w-full mt-2.5 font-myeongjo text-[13px] text-bone-faint tracking-[0.15em] py-2"
+              >
+                그냥 볼게
+              </button>
+            </div>
+          ) : (
+            <ConfirmStep form={form} onEdit={setStep} productName={productName} price={price} imm={imm} skipped={skipped} />
+          ))}
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
         {step === TEASER_STEP && (
@@ -910,7 +997,7 @@ export function SajuWizard({
           우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
           "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
       <div className="relative z-[2] w-full max-w-[560px] mx-auto px-5 pb-7">
-        {teaserLoading ? null : step < TOTAL - 1 ? (
+        {teaserLoading || emailGate ? null : step < TOTAL - 1 ? (
           <>
             <button
               type="button"
@@ -1442,6 +1529,8 @@ function TeaserStep({
         <p className="font-myeongjo mt-5 text-[13px] text-bone-soft tracking-[0.06em]">
           {imm ? "만세력에서 네 여덟 글자를 꺼내는 중이다…" : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
         </p>
+        {/* 대기를 「기다림」이 아니라 「계산이 도는 증거」로 바꾼다 — 항목은 실제로 도는 계산들이다 */}
+        {isInyeon && <LoadingChecklist />}
       </div>
     );
   }
@@ -2166,6 +2255,51 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * 로딩 체크리스트 — 항목은 **실제로 도는 계산**만 적는다(안 하는 걸 적으면 그게 거짓말이 된다).
+ * 대운 시작 나이는 우리가 상용 서비스와 대조해 검증한 항목이라 티저 Q&A 의 검증 영상과 이어진다.
+ */
+const LOADING_STEPS = [
+  "사주 원국 여덟 글자 세우기",
+  "천간·지지의 충·합·형 보기",
+  "대운 시작 나이 계산 (절입일 기준)",
+  "앞으로 열두 달 월운 펴기",
+  "배우자 자리 판정",
+];
+
+function LoadingChecklist() {
+  const [done, setDone] = useState(0);
+  useEffect(() => {
+    // 최소 노출 시간(MIN_TEASER_LOADING_MS) 안에 다 켜지도록 나눈다 — 로딩이 먼저 끝나도 어색하지 않다.
+    const every = Math.floor(MIN_TEASER_LOADING_MS / (LOADING_STEPS.length + 1));
+    const id = setInterval(() => setDone((n) => (n >= LOADING_STEPS.length ? n : n + 1)), every);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <ul className="mx-auto mt-6 max-w-[280px] space-y-2 text-left">
+      {LOADING_STEPS.map((s, i) => {
+        const on = i < done;
+        return (
+          <li key={s} className="flex items-baseline gap-2.5">
+            <span
+              className="font-mono text-[13px] leading-none"
+              style={{ color: on ? "var(--gold-bright)" : "var(--bone-faint)" }}
+            >
+              {on ? "✓" : "⋯"}
+            </span>
+            <span
+              className="font-myeongjo text-[13px] leading-[1.6]"
+              style={{ color: on ? "var(--bone)" : "var(--bone-faint)", transition: "color .4s ease" }}
+            >
+              {s}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
