@@ -1,7 +1,13 @@
-// 직녀 그림채 시안 매트릭스 생성 — 스타일 6종 × 컷 2종
+// 직녀 그림채 프롬프트 생성기 — 스타일 6종 × 컷 2종
 //
-// 형님 지시(2026-08-17): "이왕 하는 김에 좀 더 많은 샘플".
-// 아침에 형님이 375px 축소본을 보고 **스타일 하나**를 찍으면, 그게 직녀 본편 전체의 그림채가 된다.
+// ⚠⚠ **이 스크립트는 이미지를 생성하지 않는다. 프롬프트만 파일로 뽑는다.**
+//    2026-08-17 형님 지시: 「api는 퀄이 매우 안좋아 / gpt api로 이미지 뽑지마」
+//    OpenAI 이미지 API(gpt-image-1) 결과물이 ChatGPT 웹보다 눈에 띄게 나쁘다 — 형님이 실물로 판정했다.
+//    비용이 아니라 **품질** 문제고, 낮은 품질 시안은 스타일 판정 자체를 왜곡한다.
+//    → 여기서는 프롬프트만 만들고, 생성은 **ChatGPT 웹**(산군 자산 전부가 나온 경로)에서 한다.
+//    (기존 산군 일러·운명의 상대 10장도 전부 ChatGPT 웹으로 나왔다)
+//
+// 형님이 375px 축소본을 보고 **스타일 하나**를 찍으면, 그게 직녀 본편 전체의 그림채가 된다.
 // 그 선택 전까지는 마스터 컷·웹툰 컷을 뽑지 않는다(스타일이 바뀌면 전부 버려진다).
 //
 // 공통 불변(LOCK v3): 30대 초반 한국 여성 · 낮게 땋은 머리 · 아이보리 저고리+남색 치마 ·
@@ -9,17 +15,11 @@
 // 스타일만 바꾸고 인물·의상·소품·색은 고정해야 비교가 성립한다.
 //
 // 실행: npx tsx scripts/jiknyeo-style-samples.ts [--cut close|loom|both]
-// 산출: 직녀/시안_그림채_스프레드/<style>-<cut>.png
-import { writeFileSync, mkdirSync, existsSync } from "node:fs";
+// 산출: 직녀/시안_그림채_스프레드/_프롬프트_<cut>.md  (붙여넣기용)
+import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-for (const f of [".env.local", ".env"]) {
-  try { process.loadEnvFile(f); } catch { /* 없으면 다음 것 */ }
-}
-
 const OUT = resolve("직녀/시안_그림채_스프레드");
-const KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.IMAGE_MODEL ?? "gpt-image-1";
 
 const SUBJECT = `A Korean woman in her early 30s — serene, dignified, quietly warm.
 Face clearly visible: soft oval face, calm dark-brown eyes (both eyes the same color), a subtle gentle smile,
@@ -71,55 +71,35 @@ and hair. Refined, antique, museum-quality. NOT photorealistic, NOT 3D.` },
 shading, bright and smooth. Modern webtoon app look. NOT photorealistic, NOT 3D.` },
 ];
 
-async function gen(prompt: string, file: string): Promise<boolean> {
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
-    body: JSON.stringify({ model: MODEL, prompt, size: "1024x1536", n: 1 }),
-  });
-  if (!res.ok) {
-    console.log(`   ✗ ${res.status} ${(await res.text()).slice(0, 220)}`);
-    return false;
-  }
-  const j = (await res.json()) as { data?: { b64_json?: string; url?: string }[] };
-  const d = j.data?.[0];
-  if (d?.b64_json) {
-    writeFileSync(file, Buffer.from(d.b64_json, "base64"));
-  } else if (d?.url) {
-    const img = await fetch(d.url);
-    writeFileSync(file, Buffer.from(await img.arrayBuffer()));
-  } else {
-    console.log("   ✗ 응답에 이미지가 없음");
-    return false;
-  }
-  return true;
+function buildPrompt(styleId: string, cut: string): string {
+  const s = STYLES.find((x) => x.id === styleId)!;
+  return `${s.style}\n\nSUBJECT: ${SUBJECT}\n\nCOMPOSITION: ${CUTS[cut]}\n\n${PALETTE}`;
 }
 
-async function main() {
-  if (!KEY) { console.log("OPENAI_API_KEY 없음 — 프롬프트만 비교시트에 싣는다."); return; }
+function main() {
   mkdirSync(OUT, { recursive: true });
   const arg = process.argv.find((a) => a.startsWith("--cut="))?.split("=")[1] ?? "both";
-  // 우선순위: 6스타일 × 클로즈업(최소 판정선)을 먼저 다 뽑고, 그다음 베틀 컷.
   const cuts = arg === "both" ? ["close", "loom"] : [arg];
 
-  let ok = 0, fail = 0;
   for (const cut of cuts) {
+    const label = cut === "close" ? "얼굴 클로즈업 (폰에서 3초 판정용)" : "베틀 반신 (세계관 판정용)";
+    const lines: string[] = [
+      `# 직녀 그림채 프롬프트 — ${label}`,
+      "",
+      "> **ChatGPT 웹에 하나씩 붙여넣으세요.** (GPT 이미지 API 금지 — 퀄리티 문제, 2026-08-17 형님 지시)",
+      "> 세로 비율(2:3, 예: 1024×1536)로 요청하시면 됩니다.",
+      "> 인물·의상·소품·색은 6개가 전부 같습니다 — **스타일만 달라야 비교가 성립합니다.**",
+      "",
+    ];
     for (const s of STYLES) {
-      const file = resolve(OUT, `${s.id}-${cut}.png`);
-      if (existsSync(file)) { console.log(`· ${s.id}-${cut} 있음 — 건너뜀`); ok++; continue; }
-      const prompt = `${s.style}\n\nSUBJECT: ${SUBJECT}\n\nCOMPOSITION: ${CUTS[cut]}\n\n${PALETTE}`;
-      process.stdout.write(`· ${s.id}-${cut} …`);
-      const t0 = Date.now();
-      try {
-        if (await gen(prompt, file)) { console.log(` OK ${Math.round((Date.now() - t0) / 1000)}s`); ok++; }
-        else fail++;
-      } catch (e) {
-        console.log(`   ✗ ${e instanceof Error ? e.message : e}`);
-        fail++;
-      }
+      lines.push(`## ${s.id} — ${s.label}`, "", "```", buildPrompt(s.id, cut), "```", "");
     }
+    const file = resolve(OUT, `_프롬프트_${cut}.md`);
+    writeFileSync(file, lines.join("\n"), "utf8");
+    console.log(`· ${file}  (${STYLES.length}개 프롬프트)`);
   }
-  console.log(`\n완료 — 성공 ${ok} · 실패 ${fail}\n→ ${OUT}`);
+  console.log("\n생성은 ChatGPT 웹에서. 받은 이미지는 이 폴더에 <스타일>-<컷>.png 로 두면");
+  console.log("scripts 없이도 비교판을 다시 만들 수 있습니다.");
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main();
