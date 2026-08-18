@@ -30,6 +30,8 @@ import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, Com
 import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
+import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
+import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -1087,7 +1089,7 @@ export function SajuWizard({
           타이트 실측: 로딩 화면에 결제 요소가 하나도 없고, 티저를 다 보여준 뒤에 값이 처음 나온다.
           우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
           "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
-      <div className="relative z-[2] w-full max-w-[560px] mx-auto px-5 pb-7">
+      <div id="pay" className="relative z-[2] w-full max-w-[560px] mx-auto scroll-mt-6 px-5 pb-7">
         {teaserLoading || emailGate ? null : step < TOTAL - 1 ? (
           <>
             <button
@@ -2259,8 +2261,52 @@ function TeaserStep({
 
           {/* 목차 — 청월당 POINT 4 구간. 원본은 장마다 풀이 줄을 펴서 약 30줄을 **전량 공개**한다.
               다 보여줘야 분량이 믿기고, 잠글 것은 값이지 목차가 아니다. */}
+          {/* 가격 1타 — 원본은 티저 **중반**에서 한 번 치고 맨 끝에서 또 친다.
+              우리는 마지막 한 번뿐이었다. 분량을 먼저 세우고(리본) 값을 말하는 순서까지 원본 그대로. */}
+          {isJiknyeoWorld && (
+            <JiknyeoBuyCard
+              title={productSlug === "marriage-saju" ? "정통 결혼운 사주풀이" : "정통 연애운 사주풀이"}
+              volume="A4 여덟 장 분량! + 내 고민 맞춤 답변"
+              bullets={
+                productSlug === "marriage-saju"
+                  ? [
+                      "내가 결혼하는 해 — 몇 년도인지",
+                      "그 해 안에서 서두를 달",
+                      "함께할 사람의 태도·말투·나이대",
+                      "결혼이 늦어지던 진짜 이유",
+                      "피해야 할 시기",
+                      "결혼 전에 정리할 것",
+                      "그 사람을 알아보는 신호 셋",
+                      "적어주신 물음에 대한 답",
+                    ]
+                  : [
+                      "열두 달 중 인연이 열리는 달",
+                      "그 달에 어디서 만나게 되나",
+                      "내게 올 사람의 태도·말투·나이대",
+                      "인연이 와도 내가 밀어내는 순간",
+                      "조심할 달 — 시작하면 안 되는 시기",
+                      "크게 바뀌는 해",
+                      "그 사람을 알아보는 신호 셋",
+                      "적어주신 물음에 대한 답",
+                    ]
+              }
+              priceLabel={formatKRW(price)}
+              compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
+              discountPct={
+                compareAtPrice && compareAtPrice > price
+                  ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+                  : undefined
+              }
+              discountLabel="첫 손님 할인"
+              ctaText={productSlug === "marriage-saju" ? "할인받고 결혼운 보러가기" : "할인받고 연애운 보러가기"}
+              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            />
+          )}
+
           {isJiknyeoWorld && (
             <>
+              {/* 차별점 POINT 1~3 — 원본 순서: 가격카드 → POINT → 목차(4) → 가격 VS(5) */}
+              <JiknyeoTeaserPoints isMarriage={productSlug === "marriage-saju"} />
               <JiknyeoTeaserToc slug={productSlug} comments={teaser.coldRead ?? []} assets={jiknyeoAssets} />
               {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
               <JiknyeoTeaserPrice
@@ -2303,7 +2349,9 @@ function TeaserStep({
           {isInyeon && teaser.inyeon && (
             <div
               className="mt-6 rounded-md px-4 py-5"
-              style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--gold-line)" }}
+              // 검은 판을 하드코딩해 뒀더니 밝은 티저 안에서 이 판만 딴 페이지가 됐다(실측 1건).
+              // 토큰으로 그려 어두운 무대·밝은 티저 양쪽에서 같은 역할을 하게 한다.
+              style={{ background: "var(--gold-pale)", border: "1px solid var(--gold-line)" }}
             >
               <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 지금 이것만은 하지 마세요
@@ -2567,8 +2615,10 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
       ref={(el) => { if (el) setBarH(el.offsetHeight); }}
       // ⚠ world-jiknyeo 를 여기 **다시** 붙인다 — 포털이 body 로 빠져나가서
       //   위저드를 감싼 세계관 래퍼의 토큰을 못 물려받는다(안 붙이면 공용 보라로 나온다).
-      className="world-jiknyeo fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
-      style={{ background: "rgba(11,15,26,0.94)", borderTop: "1px solid var(--gold-line)" }}
+      // 티저가 밝아졌으니 고정바도 같이 밝다 — 어두운 바가 흰 판 위에 떠 있으면 그 줄만 딴 페이지가 된다.
+      // teaser-light 를 같이 붙여 토큰(값=먹색·강조=핑크)이 안에서 그대로 먹게 한다.
+      className="world-jiknyeo teaser-light fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
+      style={{ background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }}
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
       <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>
