@@ -25,6 +25,8 @@ import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
+import { SlotCut } from "@/components/products/jiknyeo-ui";
+import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
 type Pillar = ResultView["pillars"][number];
@@ -77,6 +79,8 @@ type Props = {
    * 만세력은 생일 단위로 캐시되므로 같은 데모 생일을 몇 번 열어도 API 콜은 처음 1회뿐이다.
    */
   demo?: DemoPreset | null;
+  /** 직녀 에셋 슬롯 — 서버(page.tsx)가 디스크를 훑어 내려보낸다. 없으면 라벨 패널로 선다. */
+  jiknyeoAssets?: AssetMap;
 };
 
 /** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
@@ -258,6 +262,7 @@ export function SajuWizard({
   bgImage,
   bgVideo,
   demo = null,
+  jiknyeoAssets,
 }: Props) {
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
@@ -1053,6 +1058,7 @@ export function SajuWizard({
             tokens={tokens}
             productSlug={productSlug}
             price={price}
+            jiknyeoAssets={jiknyeoAssets}
           />
         )}
       </div>
@@ -1555,6 +1561,7 @@ function TeaserStep({
   tokens,
   productSlug,
   price,
+  jiknyeoAssets,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -1566,6 +1573,7 @@ function TeaserStep({
   tokens: Record<string, string>;
   productSlug: string;
   price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
+  jiknyeoAssets?: AssetMap;
 }) {
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
@@ -1654,8 +1662,8 @@ function TeaserStep({
           누가 읽었는지부터 세운다(그림 → 글 교차의 시작점). */}
       {isInyeon && (
         <InyeonCut
-          src="/products/inyeon/i1.webp"
-          alt="달빛 아래에서 달력을 짚는 직녀"
+          id="j1"
+          assets={jiknyeoAssets}
           say={
             <ComicSay>
               {name ? `${name}님 사주, 방금 다 읽었어요.` : "사주, 방금 다 읽었어요."}
@@ -1895,11 +1903,7 @@ function TeaserStep({
           {/* 판정을 넘기는 순간 — 회색 잔글씨로 흘리면 승부가 안 걸린다.
               산군이 전신 컷으로 하는 그 자리를 인연은 정면 컷 + 말풍선으로 받는다. */}
           {isInyeon && teaser.judgeInvite && (
-            <InyeonCut
-              src="/products/inyeon/i2.webp"
-              alt="정면을 바라보는 직녀"
-              say={<ComicSay>{teaser.judgeInvite}</ComicSay>}
-            />
+            <InyeonCut id="w3" assets={jiknyeoAssets} say={<ComicSay>{teaser.judgeInvite}</ComicSay>} />
           )}
 
           {/* 직녀(인연) 전용 — 죄책감 해제 → 다리문장. polite 경로는 존댓말 상품 4종과 공유라 slug 가드 필수.
@@ -2211,8 +2215,8 @@ function TeaserStep({
                     style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.22)" }}
                   >
                     <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
-                    <span className="shrink-0 text-[15px]">
-                      <MaskBar mask={row.mask} />
+                    <span className="shrink-0">
+                      <NeonMask text={"○".repeat(Math.min(6, Math.max(3, [...row.mask].filter((c) => /[▓█]/.test(c)).length || 4)))} scribble={false} />
                     </span>
                   </div>
                 ) : (
@@ -2273,9 +2277,8 @@ function TeaserStep({
                     {d.locked ? (
                       <span className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone-faint)" }}>
                         {/* 두 줄 분량이 가려져 있다는 걸 길이로 보여준다 */}
-                        <span className="flex flex-col gap-1.5 py-1">
-                          <MaskBar mask={"█".repeat(18)} />
-                          <MaskBar mask={"█".repeat(11)} />
+                        <span className="block py-1">
+                          <NeonMask text="○○○○○○○○" />
                         </span>
                         이건 결과지에서 말씀드릴게요.
                       </span>
@@ -2295,8 +2298,8 @@ function TeaserStep({
           {isInyeon ? (
             <>
               <InyeonCut
-                src="/products/inyeon/i3.webp"
-                alt="달력을 짚어 보이는 직녀"
+                id="w7"
+                assets={jiknyeoAssets}
                 say={
                   <ComicSay>
                     {name ? `${name}님 달력, 여기까지 폈어요.` : "달력, 여기까지 폈어요."}
@@ -2305,15 +2308,26 @@ function TeaserStep({
                   </ComicSay>
                 }
               />
-              <div className="mt-6 text-center">
-                <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
-                  계산은 끝났어요
-                </p>
-                <p className="font-myeongjo mt-3 text-[24px] font-bold leading-[1.5]" style={{ color: "var(--bone)" }}>
-                  달 이름만,
-                  <br />
-                  <Hi>아직이에요</Hi>
-                </p>
+              <div className="mt-7 text-center">
+                <GlowBand>
+                  <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
+                    계산은 끝났어요
+                  </p>
+                  <p
+                    className="font-gothic text-moonlit mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
+                    style={{ fontWeight: 900 }}
+                  >
+                    달 이름만,
+                  </p>
+                  <p className="mt-2">
+                    <span
+                      className="font-gothic inline-block rounded-[6px] px-3 py-1 text-[30px] leading-[1.25] tracking-[-0.02em]"
+                      style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
+                    >
+                      아직이에요
+                    </span>
+                  </p>
+                </GlowBand>
               </div>
             </>
           ) : (
@@ -2334,6 +2348,68 @@ function TeaserStep({
     {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
     {isInyeon && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
     </>
+  );
+}
+
+/** 발광 띠 — 청월당은 헤드 뒤에 포인트색 radial 을 깔아 검정과 대비를 만든다.
+ *  flat 검정 위 글자만 얹으면 같은 크기여도 약해 보인다(1:1 대조에서 나온 밤티 원인 3). */
+function GlowBand({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[190%] w-[150%] -translate-x-1/2 -translate-y-1/2"
+        style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(217,199,232,0.30) 0%, transparent 70%)" }}
+      />
+      <div className="relative z-[1]">{children}</div>
+    </div>
+  );
+}
+
+/** 형광펜 밑줄 낙서 — 청월당이 가림 박스 아래에 긋는 그 거친 스트로크(손맛 요소). */
+function ScribbleLine({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 200 10" preserveAspectRatio="none" className={`block h-2 w-full ${className}`}>
+      <path d="M3 6 C 40 2, 70 8, 104 4 C 138 1, 168 7, 197 3" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M10 8 C 46 5, 78 9, 112 6 C 146 4, 172 8, 192 6" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.3" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** 한붓 별 낙서 — 숫자 옆에 하나만. 있으면 화면이 '만든 것'처럼 보이고 없으면 밋밋하다. */
+function ScribbleStar({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className={`inline-block h-4 w-4 ${className}`}>
+      <path d="M12 2 L15 9 L22 9.5 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9.5 L9 9 Z" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.75" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * 네온 가림 — 청월당의 모자이크는 '처리'가 아니라 **오브젝트**다.
+ * 발광 라운드 박스 + 흐린 더미 글자 + 아래 형광펜 낙서. 가려 놓은 자리가 오히려 눈에 띈다.
+ * ⚠ 안에 실값을 넣지 않는다 — 흐리게만 하면 소스에서 그대로 읽힌다(청월당도 더미를 깐다).
+ */
+function NeonMask({ text = "○○○○○○", scribble = true }: { text?: string; scribble?: boolean }) {
+  return (
+    <span className="inline-block align-middle">
+      <span
+        className="inline-flex items-center justify-center rounded-[10px] px-3.5 py-1.5"
+        style={{
+          border: "1.5px solid var(--gold-bright)",
+          boxShadow: "0 0 10px rgba(217,199,232,0.55), 0 0 26px rgba(217,199,232,0.28), inset 0 0 14px rgba(217,199,232,0.22)",
+          background: "rgba(217,199,232,0.08)",
+        }}
+      >
+        <span
+          className="font-myeongjo text-[15px] font-bold"
+          style={{ color: "var(--bone)", filter: "blur(5px)", userSelect: "none" }}
+        >
+          {text}
+        </span>
+      </span>
+      {scribble && <ScribbleLine className="-mt-0.5" />}
+    </span>
   );
 }
 
@@ -2382,21 +2458,15 @@ function Hi({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * 직녀 일러 컷 — 컬럼 끝까지 나가는 그림(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
- * 말풍선은 컷 **아래**에 겹쳐 둔다 — 청월당은 얼굴을 가리지 않고 아래에서 말을 건다.
+ * 직녀 컷 — 그림 자리는 **슬롯**이다. 파일이 없으면 라벨 붙은 달빛 패널로 서고,
+ * 폴더에 파일을 넣는 순간 그 자리가 그림(영상 있으면 영상)으로 켜진다.
+ * 컬럼 끝까지 나간다(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
  */
-function InyeonCut({ src, alt, say }: { src: string; alt: string; say?: React.ReactNode }) {
+function InyeonCut({ id, assets, say }: { id: SlotId; assets?: AssetMap; say?: React.ReactNode }) {
   return (
-    <figure className="-mx-5 mt-6">
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
-        <img src={src} alt={alt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "center 18%" }} />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 42%, rgba(11,15,26,0.72) 78%, rgba(11,15,26,0.96) 100%)" }}
-        />
-        {say && <div className="absolute inset-x-5 bottom-4">{say}</div>}
-      </div>
-    </figure>
+    <div className="-mx-5 mt-6">
+      <SlotCut id={id} assets={assets} overlay={say} />
+    </div>
   );
 }
 
@@ -2449,27 +2519,35 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
           ⚠ 진입 감지(ref)는 **이 작은 블록**에 붙인다. 판 전체에 붙였더니 판이 커져서
           화면에 들어와도 임계(35%)를 못 넘겨 숫자가 영원히 안 나타났다(실측). */}
       <div ref={ref} className="text-center">
-        {/* 리드는 얇게, 숫자만 형광박스로 — 청월당이 문장 안에서 시선을 강제하는 그 구조 */}
-        <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
-          앞으로 열두 달
-        </p>
-        <p
-          className="font-myeongjo mt-2 text-[19px] font-bold leading-[1.5]"
-          style={{
-            color: "var(--bone)",
-            opacity: inView ? 1 : 0,
-            transform: inView ? "translateY(0)" : "translateY(6px)",
-            transition: "opacity .5s ease, transform .5s ease",
-          }}
-        >
-          인연이 열리는 달{" "}
-          <span
-            className="ml-1 inline-block rounded-[4px] px-2.5 py-0.5 align-middle text-[30px] font-bold leading-none"
-            style={{ background: "var(--gold-bright)", color: "#1a1330", fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive" }}
+        {/* 리드는 얇고 넓게, 헤드는 두껍고 좁게 — 청월당 헤드 문법(대비 3배 이상).
+            명조 + 넓은 자간으로 두면 같은 크기여도 약해 보인다(밤티 원인 1). */}
+        <GlowBand>
+          <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
+            앞으로 열두 달
+          </p>
+          <p
+            className="font-gothic mt-2.5 text-[26px] leading-[1.3] tracking-[-0.02em]"
+            style={{
+              color: "var(--bone)",
+              fontWeight: 900,
+              opacity: inView ? 1 : 0,
+              transform: inView ? "translateY(0)" : "translateY(6px)",
+              transition: "opacity .5s ease, transform .5s ease",
+            }}
           >
-            {data.openCount}번
-          </span>
-        </p>
+            인연이 열리는 달
+            <br />
+            <span className="mt-1.5 inline-flex items-center gap-1">
+              <span
+                className="inline-block rounded-[6px] px-3 py-0.5 text-[38px] leading-[1.2]"
+                style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
+              >
+                {data.openCount}번
+              </span>
+              <ScribbleStar className="mb-3" />
+            </span>
+          </p>
+        </GlowBand>
         {data.nearest && (
           <p className="font-myeongjo mt-3 text-[17px] leading-[1.75]" style={{ color: "var(--bone)" }}>
             가장 가까운 건 {data.nearest.year}년 {data.nearest.month}월이에요.
@@ -2546,11 +2624,9 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
               aria-label="잠긴 달"
               style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.18)" }}
             >
-              <span
-                className="font-myeongjo text-[15px]"
-                style={{ color: "var(--bone-soft)", filter: "blur(4.5px)", userSelect: "none" }}
-              >
-                ○○○○년 ○월 — 이 달의 이름은 결과지에서 열려요
+              <NeonMask text="○○○○년 ○월" />
+              <span className="font-myeongjo ml-2 align-middle text-[13px]" style={{ color: "var(--bone-faint)" }}>
+                결과지에서 열려요
               </span>
             </div>
           ))}

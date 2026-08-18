@@ -12,6 +12,8 @@ import { SHOW_SOCIAL_PROOF } from "@/config/site";
 import { WealthStory } from "@/components/products/WealthWebtoon";
 import { InyeonStory } from "@/components/products/InyeonWebtoon";
 import { SangunStory } from "@/components/products/SangunWebtoon";
+import { JiknyeoStory } from "@/components/products/JiknyeoStory";
+import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -227,6 +229,11 @@ export default async function ProductDetailPage({
   // 웹툰(Story) 페이지에선 보라 템플릿 토큰 대신 먹빛 스킨(상품별 포인트색)으로 톤을 통일한다.
   const storyAccent = Story ? (product.slug === "inyeon-saju" ? "#d9c7e8" : "#e8c96a") : null;
   const isSangun = product.slug === "sangun-sinjeom";
+  // 직녀 몰입 랜딩(게이트→스토리→입력). `?view=doc` 이면 기존 문서형(InyeonWebtoon)으로 되돌린다 —
+  // 새 구조가 안 맞을 때 배포를 되돌리지 않고 주소 하나로 비교할 수 있는 문이다.
+  const isJiknyeoStory = product.slug === "inyeon-saju" && view !== "doc";
+  // 그림 슬롯은 매 요청마다 디스크를 본다 — 파일을 넣고 새로고침하면 그 자리가 켜진다(서버 전용).
+  const jiknyeoAssets = product.slug === "inyeon-saju" ? readJiknyeoAssets() : undefined;
   const startSection = (
     <section id="start" className="scroll-mt-4">
       <h2
@@ -258,6 +265,7 @@ export default async function ProductDetailPage({
         // ?demo= 는 산군 분기에만 연결돼 있어서 정작 티저를 자주 봐야 하는 직녀에서 안 먹었다.
         // 입력 열 단계를 건너뛰고 티저로 직행 — 화면 확인용.
         demo={demo}
+        jiknyeoAssets={jiknyeoAssets}
       />
 
       {/* 안심 — 리스크 역전. 웹툰에선 먹빛 카드, 템플릿에선 기존 앰버 박스 */}
@@ -314,7 +322,29 @@ export default async function ProductDetailPage({
       />
 
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
-      {isSangunStory ? (
+      {isJiknyeoStory ? (
+        // 직녀: 산군과 같은 풀스크린 스테이지. 랜딩은 웹툰 한 편이고 오퍼는 뒤로 뺀다
+        // (청월당 캐릭터 랜딩 두 편 판독의 결론). 그림은 전부 슬롯이라 0장이어도 성립한다.
+        <JiknyeoStory
+          initialStage={demo ? "input" : undefined}
+          assets={jiknyeoAssets}
+          wizard={
+            <SajuWizard
+              productId={product.id}
+              productSlug={product.slug}
+              productName={product.name}
+              price={product.price}
+              compareAtPrice={product.compare_at_price ?? null}
+              bundles={bundles}
+              isLoggedIn={!!user}
+              initialConcerns={concernPreset ? [concernPreset] : undefined}
+              webtoonCuts={webtoonCuts}
+              demo={demo}
+              jiknyeoAssets={jiknyeoAssets}
+            />
+          }
+        />
+      ) : isSangunStory ? (
         // 산군: 풀스크린 스테이지(게이트→스토리→입력) — 위저드를 스토리가 소유해 위아래 크롬 없이 몰입 유지
         //
         // `?view=detail` 은 게이트·스토리를 건너뛰고 세일즈 페이지로 바로 들어간다.

@@ -8,7 +8,7 @@
 //
 // 여기 없는 글씨체(웹툰 말풍선용 12종·송명조)는 일부러 뺐다 — WebtoonCut 이 쓰는 것만
 // 그 자리에서 부른다. 전 방문자에게 12개 패밀리를 미리 안겨줄 이유가 없다.
-import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, JetBrains_Mono, Ma_Shan_Zheng } from "next/font/google";
+import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_Sans_KR, JetBrains_Mono, Ma_Shan_Zheng } from "next/font/google";
 
 // 제목·대사·본문의 축. 이 프로젝트에서 제일 많이 쓰는 글씨체다.
 export const gowunBatang = Gowun_Batang({
@@ -46,6 +46,18 @@ export const notoSerifKr = Noto_Serif_KR({
   preload: false,
 });
 
+// 직녀 헤드라인 전용 극볼드 고딕.
+// 경쟁사(청월당) 1:1 대조에서 나온 것: 걔넨 헤드가 **두꺼운 고딕 + 좁은 자간**인데
+// 우리는 명조 + 넓은 자간이라 같은 크기에서도 약해 보였다(형님 「밤티」 판정의 원인 1).
+// 본문·대사는 그대로 명조를 쓰고, **헤드라인에서만** 이 글씨체로 무게를 세운다.
+export const notoSansKr = Noto_Sans_KR({
+  weight: ["700", "900"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-gothic",
+  preload: false,
+});
+
 // 진행 표시(10/10)·생년월일 입력처럼 자릿수가 흔들리면 안 되는 곳
 export const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
@@ -70,6 +82,7 @@ export const fontVariables = [
   nanumBrush.variable,
   nanumMyeongjo.variable,
   notoSerifKr.variable,
+  notoSansKr.variable,
   jetbrainsMono.variable,
   maShanZheng.variable,
 ].join(" ");

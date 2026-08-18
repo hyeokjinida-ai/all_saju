@@ -156,6 +156,16 @@ const config: Config = {
           "Noto Serif KR",
           "serif",
         ],
+        // 직녀 헤드라인 = 극볼드 고딕. 경쟁사(청월당) 헤드가 전부 이 계열이다 —
+        // 상품마다 포인트색만 바뀌고(핑크/형광연두/달빛) 두꺼운 고딕 + 좁은 자간은 공통이다.
+        gothic: [
+          "var(--font-gothic)",
+          "Pretendard Variable",
+          "Pretendard",
+          "Noto Sans KR",
+          "Apple SD Gothic Neo",
+          "sans-serif",
+        ],
         // 감성 헤드라인·워드마크 = 붓글씨
         brush: [
           "var(--font-brush)",
