@@ -184,14 +184,15 @@ export function HanjiCard({ children }: { children: React.ReactNode }) {
 /** 장 제목 + 풀이 줄들 — 목차 카드 안에 반복해서 쌓는다. */
 export function TocChapter({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="mt-6 first:mt-0">
-      <p className="flex items-center gap-2 text-[16px]" style={{ color: INK, fontWeight: 700 }}>
-        <span className="inline-block h-[14px] w-[3px]" style={{ background: PINK }} />
+    // 장과 장 사이는 크게 벌린다 — 원본 대조에서 우리 쪽이 붙어 보였다(풀이 마지막 줄과 다음 장 제목이 붙음).
+    <div className="mt-10 first:mt-0">
+      <p className="flex items-center gap-2.5 text-[17px]" style={{ color: INK, fontWeight: 700 }}>
+        <span className="inline-block h-[16px] w-[3px]" style={{ background: PINK }} />
         {title}
       </p>
       <ul className="mt-2">
         {items.map((it, i) => (
-          <li key={it} className="py-2 text-[15px] leading-[22px]" style={{ color: BODY, borderBottom: `1px solid ${LINE}` }}>
+          <li key={it} className="py-3 text-[15px] leading-[22px]" style={{ color: BODY, borderBottom: `1px solid ${LINE}` }}>
             <span style={{ fontWeight: 700 }}>풀이 {i + 1}.</span> {it}
           </li>
         ))}

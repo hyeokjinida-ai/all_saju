@@ -53,18 +53,17 @@ export function SlotCut({
           style={{ objectPosition: pos }}
         />
       ) : (
+        // 그림이 아직 없는 자리. 배경을 하드코딩하면 **밝은 티저 안에서 검은 구멍**이 된다(실측) —
+        // 토큰(--gold-pale/--gold-line/--bone-*)으로 그려서 어두운 무대·밝은 티저 양쪽에 앉게 한다.
         <div
           className="absolute inset-0 flex items-center justify-center"
-          style={{
-            background:
-              "radial-gradient(ellipse 90% 60% at 50% 24%, #241d3f 0%, transparent 70%), radial-gradient(circle 130px at 50% 22%, rgba(207,214,230,0.20) 0%, transparent 100%), linear-gradient(180deg,#141026,#0b0f1a)",
-          }}
+          style={{ background: "var(--gold-pale)", border: "1px dashed var(--gold-line)" }}
         >
           <div className="px-6 text-center">
-            <p className="font-myeongjo text-[13px] tracking-[0.14em]" style={{ color: SILVER, opacity: 0.85 }}>
+            <p className="font-myeongjo text-[13px] tracking-[0.14em]" style={{ color: "var(--bone-faint)" }}>
               {meta?.label ?? id}
             </p>
-            <p className="mt-1.5 text-[11px] leading-relaxed" style={{ color: "#98a0b4" }}>
+            <p className="mt-1.5 text-[11px] leading-relaxed" style={{ color: "var(--bone-faint)", opacity: 0.75 }}>
               {meta?.note ?? ""}
             </p>
           </div>

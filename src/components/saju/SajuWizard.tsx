@@ -28,6 +28,8 @@ import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
 import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
+import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -1075,6 +1077,7 @@ export function SajuWizard({
             tokens={tokens}
             productSlug={productSlug}
             price={price}
+            compareAtPrice={compareAtPrice}
             jiknyeoAssets={jiknyeoAssets}
           />
         )}
@@ -1578,6 +1581,7 @@ function TeaserStep({
   tokens,
   productSlug,
   price,
+  compareAtPrice,
   jiknyeoAssets,
 }: {
   teaser: SajuTeaser | null;
@@ -1590,6 +1594,7 @@ function TeaserStep({
   tokens: Record<string, string>;
   productSlug: string;
   price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
+  compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
   jiknyeoAssets?: AssetMap;
 }) {
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
@@ -2237,16 +2242,9 @@ function TeaserStep({
                   : teaser.locked
               ).map((row, i) =>
                 isJiknyeoWorld ? (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between gap-3 rounded-[4px] px-3.5 py-3"
-                    style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.22)" }}
-                  >
-                    <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
-                    <span className="shrink-0">
-                      <NeonMask text={"○".repeat(Math.min(6, Math.max(3, [...row.mask].filter((c) => /[▓█]/.test(c)).length || 4)))} scribble={false} />
-                    </span>
-                  </div>
+                  // 밝은 티저의 잠금 — 원본은 어두운 네온 박스가 아니라 **얇은 줄 + ████** 이다.
+                  // 행간을 24 가 아니라 16 으로 조이는 것까지 실측값이다.
+                  <LockRow key={i} label={row.label} />
                 ) : (
                   <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
                     <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
@@ -2257,6 +2255,20 @@ function TeaserStep({
                 ),
               )}
             </div>
+          )}
+
+          {/* 목차 — 청월당 POINT 4 구간. 원본은 장마다 풀이 줄을 펴서 약 30줄을 **전량 공개**한다.
+              다 보여줘야 분량이 믿기고, 잠글 것은 값이지 목차가 아니다. */}
+          {isJiknyeoWorld && (
+            <>
+              <JiknyeoTeaserToc slug={productSlug} comments={teaser.coldRead ?? []} assets={jiknyeoAssets} />
+              {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
+              <JiknyeoTeaserPrice
+                priceLabel={formatKRW(price)}
+                compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
+                isMarriage={productSlug === "marriage-saju"}
+              />
+            </>
           )}
 
           {/* 결제 직전 마지막 한 마디.
