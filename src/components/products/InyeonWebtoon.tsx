@@ -308,7 +308,10 @@ export function InyeonStory({
   children: React.ReactNode; // 입력 위저드(#start)·안심·신뢰 스트립 — 페이지에서 주입
 }) {
   return (
-    <div className="story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
+    // world-jiknyeo: 여기 주입되는 위저드·티저·결제 시트가 공용 보라 토큰을 쓰는데,
+    // 그 값이 스토리(먹남색+달빛)와 따로 놀아 스크롤 중간에 세계가 바뀌었다.
+    // 세계관 루트에서 토큰을 덮는다 — 산군이 .world-sangun 으로 하는 것과 같은 장치.
+    <div className="world-jiknyeo story-immersive min-h-screen w-full" style={{ background: INK_BG }}>
       <div className="mx-auto w-full max-w-[480px]">
         {/* 헤드 — 크롬 없는 몰입형이라 브랜드 줄이 홈 링크를 겸한다 */}
         <header className="px-6 pb-5 pt-8 text-center">

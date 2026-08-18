@@ -262,6 +262,15 @@ export function SajuWizard({
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
+  // 주요 버튼(CTA) 칠 — 세 벌이 같은 자리에 반복되므로 한 곳에서 만든다.
+  //   산군=금, 직녀=달빛, 그 외=기존 보라. 값은 각 세계관 랜딩의 CTA 와 같은 계열이다.
+  const ctaFill = imm
+    ? { on: "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)", off: "rgba(232,201,106,0.12)", ink: "#241a08", glow: "0 8px 26px rgba(201,162,39,0.35)" }
+    : isInyeon
+      ? { on: "linear-gradient(180deg,#efeaf6,#d9c7e8)", off: "rgba(207,214,230,0.15)", ink: "var(--wine-deep)", glow: "0 8px 26px rgba(217,199,232,0.3)" }
+      : { on: "linear-gradient(180deg,#ffffff,#f1eaff)", off: "rgba(150,90,255,0.15)", ink: "var(--wine-deep)", glow: "0 0 24px rgba(150,90,255,0.28)" };
+  // 결제 시트 카드의 강조색(선택 테두리·가격·배지)
+  const sheetAccent = imm ? "#e8c96a" : isInyeon ? "#d9c7e8" : "#c9a8ff";
   /** 선택지 버튼은 **손님이 말하는 자리**라 상품별 말투가 다르다.
    *  산군=반말 하대(ban) · 직녀=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다. */
   const optTone: OptionTone = imm ? "ban" : isInyeon ? "jik" : "label";
@@ -596,6 +605,32 @@ export function SajuWizard({
             }}
           />
         </>
+      ) : isInyeon ? (
+        <>
+          {/* 시장 1위 실측(#44·#46) — 캐릭터를 배경에 블러로 세워 두고 한 항목씩 묻는다.
+              폼 화면으로 넘어가지 않아 이탈이 줄고, **자유 고민 화면에서만 블러가 풀린다**
+              (「이제 진짜 듣는다」 연출). 산군은 같은 일을 BgMedia(영상)로 하는데 그 경로는 안 건드린다. */}
+          <img
+            src="/products/inyeon/i1.webp"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            style={{
+              objectPosition: "center 16%",
+              filter: step === CONCERN_STEP ? "blur(0px)" : "blur(8px)",
+              opacity: step === CONCERN_STEP ? 0.6 : 0.34,
+              transition: "filter .6s ease-out, opacity .6s ease-out",
+            }}
+          />
+          {/* 글자가 앉는 자리를 눌러 준다 — 위아래를 진하게, 가운데(얼굴)는 살려서 인물이 남게 */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(11,15,26,0.74) 0%, rgba(11,15,26,0.5) 32%, rgba(11,15,26,0.88) 72%, rgba(11,15,26,0.97) 100%)",
+            }}
+          />
+        </>
       ) : (
         <div className="starfield opacity-30" />
       )}
@@ -626,8 +661,11 @@ export function SajuWizard({
                         ? "var(--gold-bright)"
                         : imm
                           ? "rgba(232,201,106,0.18)"
-                          : "rgba(150,90,255,0.2)",
-                  boxShadow: i === step ? "0 0 8px rgba(232,200,120,0.6)" : "none",
+                          : isInyeon
+                            ? "rgba(207,214,230,0.2)"
+                            : "rgba(150,90,255,0.2)",
+                  // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
+                  boxShadow: i === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isInyeon ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
                 }}
               />
             ))}
@@ -970,10 +1008,9 @@ export function SajuWizard({
                 className="mt-5 w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
                 style={{
                   fontFamily: "var(--font-serif-kr), serif",
-                  background: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)
-                    ? "linear-gradient(180deg,#ffffff,#f1eaff)"
-                    : "rgba(150,90,255,0.15)",
-                  color: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? "var(--wine-deep)" : "rgba(241,238,249,0.35)",
+                  background: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.on : ctaFill.off,
+                  color: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.ink : "var(--bone-faint)",
+                  boxShadow: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.glow : "none",
                 }}
               >
                 여기로 보내줘
@@ -1034,19 +1071,9 @@ export function SajuWizard({
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
-                background: canNext()
-                  ? imm
-                    ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
-                    : "linear-gradient(180deg,#ffffff,#f1eaff)"
-                  : imm
-                    ? "rgba(232,201,106,0.12)"
-                    : "rgba(150,90,255,0.15)",
-                color: canNext() ? (imm ? "#241a08" : "var(--wine-deep)") : "var(--bone-faint)",
-                boxShadow: canNext()
-                  ? imm
-                    ? "0 8px 26px rgba(201,162,39,0.35)"
-                    : "0 0 24px rgba(150,90,255,0.28)"
-                  : "none",
+                background: canNext() ? ctaFill.on : ctaFill.off,
+                color: canNext() ? ctaFill.ink : "var(--bone-faint)",
+                boxShadow: canNext() ? ctaFill.glow : "none",
               }}
             >
               {/* '무료'는 반드시 남긴다 — 값이 붙어 있던 시절 모의구매 2인이
@@ -1084,17 +1111,17 @@ export function SajuWizard({
                       className="relative w-full border px-4 py-3 text-left"
                       style={{
                         borderColor: on
-                          ? imm ? "#e8c96a" : "#c9a8ff"
-                          : imm ? "rgba(232,201,106,0.22)" : "rgba(150,90,255,0.28)",
+                          ? sheetAccent
+                          : imm ? "rgba(232,201,106,0.22)" : isInyeon ? "rgba(207,214,230,0.28)" : "rgba(150,90,255,0.28)",
                         background: on
-                          ? imm ? "rgba(232,201,106,0.10)" : "rgba(150,90,255,0.14)"
+                          ? imm ? "rgba(232,201,106,0.10)" : isInyeon ? "rgba(217,199,232,0.14)" : "rgba(150,90,255,0.14)"
                           : "transparent",
                       }}
                     >
                       {isRec && (
                         <span
                           className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
-                          style={{ background: imm ? "#e8c96a" : "#c9a8ff", color: imm ? "#241a08" : "#1b1230" }}
+                          style={{ background: sheetAccent, color: imm ? "#241a08" : isInyeon ? "#1a1330" : "#1b1230" }}
                         >
                           추천
                         </span>
@@ -1102,7 +1129,7 @@ export function SajuWizard({
                       <div className="flex items-baseline justify-between gap-2">
                         <span
                           className="font-myeongjo text-[14px] font-bold leading-[1.4]"
-                          style={{ color: on ? (imm ? "#efe6d2" : "#efe6ff") : "var(--bone-soft)" }}
+                          style={{ color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)" }}
                         >
                           {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
                         </span>
@@ -1114,7 +1141,7 @@ export function SajuWizard({
                           )}
                           <span
                             className="font-myeongjo text-[15px] font-bold"
-                            style={{ color: imm ? "#e8c96a" : "#c9a8ff" }}
+                            style={{ color: sheetAccent }}
                           >
                             {formatKRW(o.price)}
                           </span>
@@ -1151,11 +1178,9 @@ export function SajuWizard({
             className="w-full min-h-[58px] border-none font-bold text-[17px] tracking-[0.15em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
               fontFamily: "var(--font-serif-kr), serif",
-              background: imm
-                ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
-                : "linear-gradient(180deg,#ffffff,#f1eaff)",
-              color: imm ? "#241a08" : "var(--wine-deep)",
-              boxShadow: imm ? "0 8px 26px rgba(201,162,39,0.35)" : "0 0 24px rgba(150,90,255,0.3)",
+              background: ctaFill.on,
+              color: ctaFill.ink,
+              boxShadow: ctaFill.glow,
             }}
           >
             {submitting
@@ -1163,7 +1188,7 @@ export function SajuWizard({
               : imm
                 ? `${formatKRW(Math.max(0, effectivePrice - 1900))} 내고 장부 전체 열기`
                 : `${formatKRW(Math.max(0, effectivePrice - 1900))} 결제하러 가기 (회원 할인 적용)`}
-            {!submitting && <span className="font-brush text-[19px]" style={{ color: imm ? "#241a08" : "var(--wine-deep)" }}>受</span>}
+            {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
           </button>
             ) : (
           <div className="space-y-2.5">
@@ -1184,11 +1209,9 @@ export function SajuWizard({
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
-                background: imm
-                  ? "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)"
-                  : "linear-gradient(180deg,#ffffff,#f1eaff)",
-                color: imm ? "#241a08" : "var(--wine-deep)",
-                boxShadow: imm ? "0 8px 26px rgba(201,162,39,0.35)" : "0 0 24px rgba(150,90,255,0.28)",
+                background: ctaFill.on,
+                color: ctaFill.ink,
+                boxShadow: ctaFill.glow,
               }}
             >
               {/* '복채'는 뺐다 — 모의구매 5/6이 "돈 내는 게 아니라 갖다 바치는 걸로 들린다"고 했다.
@@ -1627,6 +1650,22 @@ function TeaserStep({
         </>
       )}
 
+      {/* 오프닝 — 청월당은 티저 첫 화면부터 캐릭터가 말을 건다. 우리도 계산을 보여주기 전에
+          누가 읽었는지부터 세운다(그림 → 글 교차의 시작점). */}
+      {isInyeon && (
+        <InyeonCut
+          src="/products/inyeon/i1.webp"
+          alt="달빛 아래에서 달력을 짚는 직녀"
+          say={
+            <ComicSay>
+              {name ? `${name}님 사주, 방금 다 읽었어요.` : "사주, 방금 다 읽었어요."}
+              <br />
+              여기까지는 그냥 보여드릴게요.
+            </ComicSay>
+          }
+        />
+      )}
+
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
         <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.15em]${imm ? " mt-4" : ""}`}>{name}</p>
@@ -1675,11 +1714,14 @@ function TeaserStep({
           <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
-          <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
-            {imm
-              ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
-              : "아래는 이름도, 적어주신 물음도 쓰지 않았어요. 이 글자에서만 나왔고요."}
-          </p>
+          {/* 인연은 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
+          {!isInyeon && (
+            <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
+              {imm
+                ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
+                : "아래는 이름도, 적어주신 물음도 쓰지 않았어요. 이 글자에서만 나왔고요."}
+            </p>
+          )}
 
           {/* 신살 — 11px 배지는 원국 판 옆에서 읽히지도 않고 뭔지도 몰랐다.
               13px 로 키우고, 무엇의 목록인지 한 줄 얹는다(타이트는 이걸 표 맨 아랫줄에 넣는다). */}
@@ -1697,7 +1739,12 @@ function TeaserStep({
                   <span
                     key={s}
                     className="font-myeongjo rounded-[3px] px-4 py-2 text-[17px] font-bold"
-                    style={{ border: "1px solid var(--gold-line)", background: "rgba(232,201,106,0.10)", color: "var(--gold-bright)" }}
+                    style={{
+                      border: "1px solid var(--gold-line)",
+                      // 직녀는 세계관 토큰에 맡긴다(은사). 산군은 기존 금색 값을 그대로 둔다.
+                      background: isInyeon ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
+                      color: "var(--gold-bright)",
+                    }}
                   >
                     {s}
                   </span>
@@ -1780,6 +1827,33 @@ function TeaserStep({
                 );
               })}
             </LedgerPanel>
+          ) : isInyeon ? (
+            /* 「방금 계산 발췌」 — 청월당은 결과지 일부를 크림 카드로 떠서 실물을 보여준다.
+               걔넨 예시 발췌지만 우리는 **이 손님 계산**이라 같은 카드가 더 세게 먹는다.
+               밤 무대 위 밝은 종이 한 장이라 시선이 여기서 멈춘다. */
+            <div className="mt-5">
+              <div
+                className="rounded-md px-5 py-5"
+                style={{ background: "linear-gradient(180deg,#f3ead6,#e9dec2)", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
+              >
+                {teaser.coldRead.map((line, i) => (
+                  <p
+                    key={i}
+                    className={`font-myeongjo text-[15px] leading-[1.8] ${i > 0 ? "mt-3" : ""}`}
+                    style={
+                      teaser.hasPastCheck && i === 1
+                        ? { color: "#5b4f8c", fontWeight: 700 }
+                        : { color: "#241d10" }
+                    }
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-2.5 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+                * 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 {name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.
+              </p>
+            </div>
           ) : (
             <div className={`${name || pillars ? "mt-4" : ""} space-y-2.5 border-y border-gold-pale py-4`}>
               {teaser.coldRead.map((line, i) => (
@@ -1813,22 +1887,39 @@ function TeaserStep({
                 say={teaser.judgeInvite}
               />
             ) : (
-              <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
+              !isInyeon && (
+                <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
+              )
             ))}
 
-          {/* 직녀(인연) 전용 — 죄책감 해제 → 다리문장. polite 경로는 존댓말 상품 4종과 공유라 slug 가드 필수 */}
+          {/* 판정을 넘기는 순간 — 회색 잔글씨로 흘리면 승부가 안 걸린다.
+              산군이 전신 컷으로 하는 그 자리를 인연은 정면 컷 + 말풍선으로 받는다. */}
+          {isInyeon && teaser.judgeInvite && (
+            <InyeonCut
+              src="/products/inyeon/i2.webp"
+              alt="정면을 바라보는 직녀"
+              say={<ComicSay>{teaser.judgeInvite}</ComicSay>}
+            />
+          )}
+
+          {/* 직녀(인연) 전용 — 죄책감 해제 → 다리문장. polite 경로는 존댓말 상품 4종과 공유라 slug 가드 필수.
+              맨몸 <p> 두 개였는데 그러면 그냥 글이 이어진다 — 산군이 컷 위 말풍선으로 캐릭터를 세우는
+              그 자리라, 에셋이 없는 동안은 **말풍선 판**만이라도 세워 누가 말하는지 보이게 한다.
+              대사는 본문(15)보다 큰 17px — 조판 위계(본문15 < 대사17 < 나레이션19). */}
           {productSlug === "inyeon-saju" && (
-            <div className="mt-4">
-              <p className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone)" }}>
+            <div className="mt-6">
+              <ComicSay tail="down">
                 인연이 없는 게 아니에요. 날을 모르고 지나쳤을 뿐이에요.
                 <br />
                 자책은 여기서 끝내셔도 돼요.
-              </p>
-              {teaser.hasPastCheck && (
-                <p className="font-myeongjo mt-3 text-[15px] leading-[1.75]" style={{ color: "var(--gold-bright)", fontWeight: 600 }}>
-                  그때가 맞았다면 — 아래 달력도 같은 사주에서 나온 거예요.
-                </p>
-              )}
+                {teaser.hasPastCheck && (
+                  <>
+                    <br />
+                    <br />
+                    그때가 맞았다면 — <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  </>
+                )}
+              </ComicSay>
             </div>
           )}
 
@@ -1919,7 +2010,7 @@ function TeaserStep({
           className="mb-9 mt-9 px-4 py-7 text-center"
           style={
             isInyeon
-              ? { background: "rgba(120,104,168,0.10)", border: "1px solid var(--gold-pale)" }
+              ? { background: "rgba(217,199,232,0.08)", border: "1px solid var(--gold-line)", borderRadius: 6 }
               : { background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }
           }
         >
@@ -2108,16 +2199,31 @@ function TeaserStep({
               </div>
             </div>
           ) : (
-            /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다 */
-            <div className="mt-4">
-              {(isInyeon && teaser.inyeon ? teaser.inyeon.locked : teaser.locked).map((row, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
-                  <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
-                  <span className="font-mono text-[13px] tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
-                    {row.mask}
-                  </span>
-                </div>
-              ))}
+            /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다.
+               인연은 밑줄 리스트가 아니라 **줄마다 판**이다: 얇은 줄 다섯 개를 쌓으면
+               다섯 개 전부 가벼워 보인다(형님 「밤티」 지적의 그 병). 값은 대사 크기(17)로 세운다. */
+            <div className={isInyeon ? "mt-4 space-y-2" : "mt-4"}>
+              {(isInyeon && teaser.inyeon ? teaser.inyeon.locked : teaser.locked).map((row, i) =>
+                isInyeon ? (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-3 rounded-[4px] px-3.5 py-3"
+                    style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.22)" }}
+                  >
+                    <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
+                    <span className="shrink-0 text-[15px]">
+                      <MaskBar mask={row.mask} />
+                    </span>
+                  </div>
+                ) : (
+                  <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
+                    <span className="font-myeongjo text-[13px] text-bone-soft tracking-[0.06em]">{row.label}</span>
+                    <span className="font-mono text-[13px] tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
+                      {row.mask}
+                    </span>
+                  </div>
+                ),
+              )}
             </div>
           )}
 
@@ -2151,7 +2257,10 @@ function TeaserStep({
 
           {/* B8 하지 말 것 — 잠금 줄 바로 위. 두 개는 지금 쓸 수 있게 주고 세 번째만 잠근다. */}
           {isInyeon && teaser.inyeon && (
-            <div className="mt-6 px-4 py-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--gold-pale)" }}>
+            <div
+              className="mt-6 rounded-md px-4 py-5"
+              style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--gold-line)" }}
+            >
               <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 지금 이것만은 하지 마세요
               </p>
@@ -2163,10 +2272,11 @@ function TeaserStep({
                     </span>
                     {d.locked ? (
                       <span className="font-myeongjo text-[15px] leading-[1.75]" style={{ color: "var(--bone-faint)" }}>
-                        <span className="font-mono tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
-                          ████████████████
+                        {/* 두 줄 분량이 가려져 있다는 걸 길이로 보여준다 */}
+                        <span className="flex flex-col gap-1.5 py-1">
+                          <MaskBar mask={"█".repeat(18)} />
+                          <MaskBar mask={"█".repeat(11)} />
                         </span>
-                        <br />
                         이건 결과지에서 말씀드릴게요.
                       </span>
                     ) : (
@@ -2180,12 +2290,32 @@ function TeaserStep({
             </div>
           )}
 
-          {/* 결제 직전 마지막 줄. 인연은 「계산은 다 끝났고 이름만 잠겼다」로 직설 —
-              "여기까지 무료"는 위저드 헤더 help 가 이미 말한다(중복 제거). */}
-          {productSlug === "inyeon-saju" ? (
-            <p className="font-myeongjo mt-3.5 text-center text-[13px] tracking-[0.06em]" style={{ color: "var(--bone)" }}>
-              달력은 다 폈어요. 달 이름만, 아직이에요.
-            </p>
+          {/* 결제 직전 마지막 줄. 인연은 잔글씨 한 줄로 흘리지 않고 **컷 + 말풍선 + 펀치**로 닫는다 —
+              청월당도 마지막은 캐릭터가 손을 내밀며 끝낸다(가격은 여기서 말하지 않는다). */}
+          {isInyeon ? (
+            <>
+              <InyeonCut
+                src="/products/inyeon/i3.webp"
+                alt="달력을 짚어 보이는 직녀"
+                say={
+                  <ComicSay>
+                    {name ? `${name}님 달력, 여기까지 폈어요.` : "달력, 여기까지 폈어요."}
+                    <br />
+                    나머지는 열어서 보세요.
+                  </ComicSay>
+                }
+              />
+              <div className="mt-6 text-center">
+                <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
+                  계산은 끝났어요
+                </p>
+                <p className="font-myeongjo mt-3 text-[24px] font-bold leading-[1.5]" style={{ color: "var(--bone)" }}>
+                  달 이름만,
+                  <br />
+                  <Hi>아직이에요</Hi>
+                </p>
+              </div>
+            </>
           ) : (
             <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.06em]">
               {teaser.note}
@@ -2208,6 +2338,92 @@ function TeaserStep({
 }
 
 /**
+ * 직녀 만화 말풍선 — 청월당 실측 문법(흰 박스 + 꼬리 + 검정 글씨).
+ *
+ * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
+ * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
+ */
+function ComicSay({ children, tail = "none" }: { children: React.ReactNode; tail?: "down" | "none" }) {
+  return (
+    <div className="relative">
+      <div
+        className="relative rounded-[18px] px-5 py-4"
+        style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
+      >
+        <span
+          className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
+          style={{ background: "var(--gold-bright)", color: "#1a1330" }}
+        >
+          직녀
+        </span>
+        <div className="font-myeongjo text-[17px] font-bold leading-[1.75]" style={{ color: "#1a1330" }}>
+          {children}
+        </div>
+      </div>
+      {/* 꼬리 — 아래 컷을 가리킬 때만. CSS 삼각형이라 에셋이 필요 없다 */}
+      {tail === "down" && (
+        <span
+          aria-hidden
+          className="absolute left-9 block h-0 w-0"
+          style={{ borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: "12px solid #ffffff" }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** 핵심 구절만 배경칠 — 청월당이 문장 안에서 시선을 강제하는 그 장치(형광박스) */
+function Hi({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#1a1330" }}>
+      {children}
+    </span>
+  );
+}
+
+/**
+ * 직녀 일러 컷 — 컬럼 끝까지 나가는 그림(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
+ * 말풍선은 컷 **아래**에 겹쳐 둔다 — 청월당은 얼굴을 가리지 않고 아래에서 말을 건다.
+ */
+function InyeonCut({ src, alt, say }: { src: string; alt: string; say?: React.ReactNode }) {
+  return (
+    <figure className="-mx-5 mt-6">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+        <img src={src} alt={alt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "center 18%" }} />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 42%, rgba(11,15,26,0.72) 78%, rgba(11,15,26,0.96) 100%)" }}
+        />
+        {say && <div className="absolute inset-x-5 bottom-4">{say}</div>}
+      </div>
+    </figure>
+  );
+}
+
+/**
+ * 가려진 값 한 칸 — ▓/█ 글리프 대신 **길이를 보존한 은사 바**로 그린다.
+ *
+ * 블록문자를 그대로 찍으면 폰트에 따라 회색 막대가 우둘투둘 이어져 자리표시자 티가 난다(실측).
+ * 바로 그리면 "값이 여기 이만큼 있다"는 정보(길이)는 그대로 남고 화면은 깔끔해진다.
+ * 길이는 마스크 문자열의 글자 수를 그대로 쓴다 — 개수가 정보다.
+ */
+function MaskBar({ mask }: { mask: string }) {
+  const n = Math.max(2, [...mask].filter((ch) => /[▓█]/.test(ch)).length || mask.length);
+  return (
+    <span
+      aria-label="잠긴 값"
+      className="inline-block align-middle"
+      style={{
+        width: `${(n * 0.56).toFixed(2)}em`,
+        height: "0.9em",
+        borderRadius: 2,
+        background: "linear-gradient(90deg, rgba(207,214,230,0.16), rgba(207,214,230,0.30))",
+      }}
+    />
+  );
+}
+
+/**
  * B5 열두 달 달력 + B2 기회 카운트.
  *
  * 「계산은 다 보여드려요. 이름만 아직이에요」를 화면으로 만든 자리다 —
@@ -2216,30 +2432,43 @@ function TeaserStep({
  */
 function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
   const { ref, inView } = useInView<HTMLDivElement>();
+  // 조심할 달은 차가운 회청 — 달빛 계열에서 빼야 「좋은 달」과 한눈에 갈린다(빨강은 금기).
   const GRADE_COLOR: Record<string, string> = {
     "●": "var(--gold-bright)",
     "◎": "var(--gold-soft)",
     "○": "var(--bone-faint)",
-    "△": "rgba(154,140,208,0.55)",
+    "△": "rgba(152,160,180,0.6)",
   };
   return (
-    <div ref={ref} className="mt-6">
-      {/* B2 — 기회 카운트. 숫자 다음 줄에서 바로 달을 못 박는다(숫자만 쓰면 경쟁사와 같은 말이 된다). */}
-      <div className="text-center">
+    // 맨바닥에 얇은 줄을 쌓으면 전부 가벼워 보인다 — 달력 한 벌을 판 하나에 앉힌다.
+    <div
+      className="mt-6 rounded-md px-4 py-5"
+      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--gold-line)" }}
+    >
+      {/* B2 — 기회 카운트. 숫자 다음 줄에서 바로 달을 못 박는다(숫자만 쓰면 경쟁사와 같은 말이 된다).
+          ⚠ 진입 감지(ref)는 **이 작은 블록**에 붙인다. 판 전체에 붙였더니 판이 커져서
+          화면에 들어와도 임계(35%)를 못 넘겨 숫자가 영원히 안 나타났다(실측). */}
+      <div ref={ref} className="text-center">
+        {/* 리드는 얇게, 숫자만 형광박스로 — 청월당이 문장 안에서 시선을 강제하는 그 구조 */}
         <p className="font-myeongjo text-[13px] tracking-[0.15em]" style={{ color: "var(--bone-faint)" }}>
-          앞으로 열두 달, 인연이 열리는 달
+          앞으로 열두 달
         </p>
         <p
-          className="mt-1.5 text-[40px] font-bold leading-none"
+          className="font-myeongjo mt-2 text-[19px] font-bold leading-[1.5]"
           style={{
-            color: "var(--gold-bright)",
-            fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive",
+            color: "var(--bone)",
             opacity: inView ? 1 : 0,
             transform: inView ? "translateY(0)" : "translateY(6px)",
             transition: "opacity .5s ease, transform .5s ease",
           }}
         >
-          {data.openCount}번
+          인연이 열리는 달{" "}
+          <span
+            className="ml-1 inline-block rounded-[4px] px-2.5 py-0.5 align-middle text-[30px] font-bold leading-none"
+            style={{ background: "var(--gold-bright)", color: "#1a1330", fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive" }}
+          >
+            {data.openCount}번
+          </span>
         </p>
         {data.nearest && (
           <p className="font-myeongjo mt-3 text-[17px] leading-[1.75]" style={{ color: "var(--bone)" }}>
@@ -2248,24 +2477,35 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         )}
       </div>
 
-      {/* B5 — 열두 칸. 이름을 가린 자리에도 등급은 그대로 서 있다. */}
+      {/* B5 — 열두 칸. 이름을 가린 자리에도 등급은 그대로 서 있다.
+          ⚠ 375px 에서 「██월」이 칸 안에서 두 줄로 감겼다(실측) — 가림은 ██ 두 글자로 줄이고
+          nowrap 을 걸어 한 줄로 고정한다. 공개된 한 달만 달빛으로 띄운다. */}
       <div className="mt-5 grid grid-cols-4 gap-1.5">
         {data.calendar.map((c, i) => (
           <div
             key={i}
-            className="flex flex-col items-center justify-center py-2.5"
+            className="flex flex-col items-center justify-center rounded-[3px] py-3"
             style={{
-              border: "1px solid var(--gold-pale)",
-              background: c.revealed ? "rgba(154,140,208,0.14)" : "rgba(255,255,255,0.02)",
+              border: `1px solid ${c.revealed ? "var(--gold-line)" : "var(--gold-pale)"}`,
+              background: c.revealed ? "rgba(217,199,232,0.14)" : "rgba(0,0,0,0.25)",
+              boxShadow: c.revealed ? "0 0 18px rgba(217,199,232,0.25)" : undefined,
             }}
           >
+            {/* 가림은 블록문자(██) 대신 **블러**다 — 칸이 72px 밖에 안 돼서 ██ 는 회색 막대처럼
+                무겁게 찍혔다(실측). 블러는 글자 자리와 길이는 남기고 값만 흐린다(청월당 방식). */}
             <span
-              className="font-myeongjo text-[13px] tracking-[0.06em]"
-              style={{ color: c.revealed ? "var(--bone)" : "var(--bone-faint)" }}
+              className="font-myeongjo whitespace-nowrap text-[13px]"
+              aria-label={c.revealed ? undefined : "가려진 달"}
+              style={{
+                color: c.revealed ? "var(--bone)" : "var(--bone-soft)",
+                fontWeight: c.revealed ? 700 : 400,
+                filter: c.revealed ? undefined : "blur(4px)",
+                userSelect: c.revealed ? undefined : "none",
+              }}
             >
-              {c.revealed ? `${c.month}월` : <span className="font-mono">██월</span>}
+              {c.month}월
             </span>
-            <span className="mt-1 text-[13px] leading-none" style={{ color: GRADE_COLOR[c.grade] }}>
+            <span className="mt-1.5 text-[13px] leading-none" style={{ color: GRADE_COLOR[c.grade] }}>
               {c.grade}
             </span>
           </div>
@@ -2276,17 +2516,45 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         <span style={{ color: "var(--gold-bright)" }}>●</span> 만나는 달 &nbsp;
         <span style={{ color: "var(--gold-soft)" }}>◎</span> 자리가 생기는 달 &nbsp;
         <span>○</span> 보통 &nbsp;
-        <span style={{ color: "rgba(154,140,208,0.55)" }}>△</span> 조심할 달
+        <span style={{ color: "rgba(152,160,180,0.6)" }}>△</span> 조심할 달
       </p>
 
-      {data.restOpen > 0 && (
-        <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-          남은 만나는 달 {data.restOpen === 1 ? "하나" : "두 개"} —{" "}
-          {/* 잠긴 자리는 실제 개수만큼 찍는다 — 개수가 정보다 */}
-          <span className="font-mono tracking-[0.15em]" style={{ color: "rgba(232,201,106,0.42)" }}>
-            {Array.from({ length: data.restOpen }, () => "████년 ██월").join(" · ")}
-          </span>
-        </p>
+      {/* 만나는 달 목록 — 청월당 미끼 구조(연월 + 그 달 인연의 성격). 가장 가까운 하나만 열고
+          나머지는 잠근다. ⚠ 잠긴 줄에는 **실값을 넣지 않는다** — 흐리게만 하면 소스에서 그대로 읽힌다.
+          그래서 가림줄은 더미 문장이고, 데이터도 openList 에 공개분만 담아 보낸다. */}
+      {(data.openList.length > 0 || data.restOpen > 0) && (
+        <div className="mt-5 space-y-2">
+          {data.openList.map((m, i) => (
+            <div
+              key={i}
+              className="rounded-[4px] px-3.5 py-3"
+              style={{ background: "rgba(217,199,232,0.12)", border: "1px solid var(--gold-line)" }}
+            >
+              <span className="font-myeongjo text-[15px] font-bold" style={{ color: "var(--gold-bright)" }}>
+                {m.year}년 {m.month}월
+              </span>
+              <span className="font-myeongjo text-[13px]" style={{ color: "var(--bone-soft)" }}>
+                {" "}
+                — {m.desc}
+              </span>
+            </div>
+          ))}
+          {Array.from({ length: data.restOpen }, (_, i) => (
+            <div
+              key={`lock-${i}`}
+              className="rounded-[4px] px-3.5 py-3"
+              aria-label="잠긴 달"
+              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.18)" }}
+            >
+              <span
+                className="font-myeongjo text-[15px]"
+                style={{ color: "var(--bone-soft)", filter: "blur(4.5px)", userSelect: "none" }}
+              >
+                ○○○○년 ○월 — 이 달의 이름은 결과지에서 열려요
+              </span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -2364,8 +2632,10 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
     {createPortal(
     <div
       ref={(el) => { if (el) setBarH(el.offsetHeight); }}
-      className="fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
-      style={{ background: "rgba(7,6,9,0.92)", borderTop: "1px solid var(--gold-pale)" }}
+      // ⚠ world-jiknyeo 를 여기 **다시** 붙인다 — 포털이 body 로 빠져나가서
+      //   위저드를 감싼 세계관 래퍼의 토큰을 못 물려받는다(안 붙이면 공용 보라로 나온다).
+      className="world-jiknyeo fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
+      style={{ background: "rgba(11,15,26,0.94)", borderTop: "1px solid var(--gold-line)" }}
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
       <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>

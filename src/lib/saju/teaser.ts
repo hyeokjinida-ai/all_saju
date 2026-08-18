@@ -59,6 +59,10 @@ export type InyeonTeaser = {
   nearest: { year: number; month: number } | null;
   /** 남은 ● 개수(= 잠긴 만나는 달). 「나머지 두 달」처럼 수를 말할 때 쓴다. */
   restOpen: number;
+  /** 만나는 달 목록 — 「연월 + 인연의 성격」 한 줄씩. 가장 가까운 하나만 공개한다.
+   *  desc 는 rowOf 가 붙인 태그를 그대로 쓴다 — 이미 사람 말이고 결과지와 같은 근거다(LLM 0).
+   *  ⚠ 잠긴 달은 **여기 담지 않는다** — 화면에 안 쓸 값을 실어 보내면 소스에서 그대로 읽힌다. */
+  openList: { year: number; month: number; desc: string }[];
   /** 하지 말 것 — 마지막 하나는 잠근다 */
   donts: { text: string; locked: boolean }[];
   /** 잠긴 줄 — 공용 polite 목록 대신 이걸 쓴다.
@@ -430,8 +434,14 @@ export function buildTeaser(
         revealed: !!nearest && r.year === nearest.year && r.month === nearest.month,
       };
     });
+    // 공개하는 한 달만 서술을 싣는다(청월당 「연월 + 인연 성격」 목록의 우리 판).
+    const openList = opens
+      .filter((r) => !!nearest && r.year === nearest.year && r.month === nearest.month)
+      .map((r) => ({ year: r.year, month: r.month, desc: r.tags[0] ?? `전체 흐름이 ${r.verdict}` }));
+
     return {
       calendar,
+      openList,
       openCount: calendar.filter((c) => c.grade === "●" || c.grade === "◎").length,
       nearest,
       restOpen: Math.max(0, opens.length - 1),

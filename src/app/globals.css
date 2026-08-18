@@ -120,6 +120,28 @@
     --violet-pale: rgba(143, 43, 30, 0.14);
     --violet-text: #e8c96a;
   }
+
+  /* 직녀 세계관 — 먹남색 밤하늘 + 달빛(MOON #d9c7e8)·은사(SILVER #cfd6e6).
+     산군이 금색을 쓰는 자리에 은사를 넣는다. 값은 JiknyeoLanding.tsx 팔레트와 같은 계열이라
+     스토리(위)와 위저드·티저(아래)가 한 세계로 읽힌다.
+     빨강은 이 스코프 어디에도 없다 — 직녀 확정 금기(NO RED). */
+  .world-jiknyeo {
+    --bone:       #e8e6ef;
+    --bone-soft:  #cfd0d8;
+    --bone-faint: #98a0b4;
+
+    --gold:        #cfd6e6;
+    --gold-bright: #d9c7e8;
+    --gold-soft:   #b9a6cf;
+    --gold-pale:  rgba(207, 214, 230, 0.13);
+    --gold-line:  rgba(207, 214, 230, 0.28);
+
+    /* 선택 상태 배경 — 달빛 */
+    --violet-pale: rgba(217, 199, 232, 0.14);
+    --violet-text: #d9c7e8;
+    /* 달빛 버튼 위에 얹는 글자색 — JiknyeoLanding CTA 와 같은 값 */
+    --wine-deep: #1a1330;
+  }
 }
 
 @layer base {
@@ -589,6 +611,21 @@
 .wizard-immersive select.ap-input option {
   background: #14120f;
   color: #f1eef9;
+}
+
+/* 직녀 위저드 — 위 세 규칙의 먹남색·은사판. 입력창까지 갈아야 한 세계로 읽힌다 */
+.world-jiknyeo .ap-input {
+  background: rgba(11, 15, 26, 0.72);
+  border: 1px solid rgba(207, 214, 230, 0.34);
+  color: #e8e6ef;
+}
+.world-jiknyeo .ap-input:focus {
+  border-color: #d9c7e8;
+  box-shadow: 0 0 0 3px rgba(217, 199, 232, 0.15);
+}
+.world-jiknyeo select.ap-input option {
+  background: #10101f;
+  color: #e8e6ef;
 }
 
 /* 몰입 위저드 범위 토큰 교정 — 사이트 공용 'gold'는 실제로 라벤더(#c9a8ff)라, 신당 안에서만 진짜 금으로 */
