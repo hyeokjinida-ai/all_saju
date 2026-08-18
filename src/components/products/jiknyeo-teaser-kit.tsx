@@ -38,7 +38,9 @@ export function BrushHead({
     // theme.fontFamily 에 키를 넣어도 dev 가 유틸리티를 새로 안 만드는 경우가 있었다(실측).
     <p
       className="text-center text-[24px] leading-[1.5]"
-      style={{ fontFamily: "var(--font-head-brush), serif", fontWeight: 600, color: INK }}
+      // 원본 헤드는 600 인데 가평한석봉은 400/700 두 벌뿐이다 — 없는 굵기를 쓰면 브라우저가
+      // 가짜로 굵혀(합성 볼드) 획이 뭉갠다. 서예체는 특히 티가 나므로 실제로 있는 700 을 쓴다.
+      style={{ fontFamily: "var(--font-head-brush), serif", fontWeight: 700, color: INK }}
     >
       {lines.map((t, i) =>
         t ? (

@@ -115,6 +115,8 @@ function SiteFooter() {
         </div>
         <p className="text-mute leading-relaxed">{businessLine}</p>
         <p className="text-mute leading-relaxed">{contactLine}</p>
+        {/* 서체 출처 — 가평한석봉은 가평군 공공서체다. 무료 사용이지만 출처 표기를 요청하고 있다. */}
+        <p className="text-mute">서체: 가평한석봉(가평군) · Pretendard</p>
         <p className="text-mute">© {new Date().getFullYear()} {siteConfig.name}</p>
       </div>
     </footer>
