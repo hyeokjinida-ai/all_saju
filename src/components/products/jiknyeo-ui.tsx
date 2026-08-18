@@ -109,3 +109,123 @@ export function SilverThread() {
     </div>
   );
 }
+
+/** 발광 띠 — 청월당은 헤드 뒤에 포인트색 radial 을 깔아 검정과 대비를 만든다.
+ *  flat 검정 위 글자만 얹으면 같은 크기여도 약해 보인다(1:1 대조에서 나온 밤티 원인 3). */
+export function GlowBand({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[190%] w-[150%] -translate-x-1/2 -translate-y-1/2"
+        style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(217,199,232,0.30) 0%, transparent 70%)" }}
+      />
+      <div className="relative z-[1]">{children}</div>
+    </div>
+  );
+}
+
+/** 형광펜 밑줄 낙서 — 청월당이 가림 박스 아래에 긋는 그 거친 스트로크(손맛 요소). */
+export function ScribbleLine({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 200 10" preserveAspectRatio="none" className={`block h-2 w-full ${className}`}>
+      <path d="M3 6 C 40 2, 70 8, 104 4 C 138 1, 168 7, 197 3" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M10 8 C 46 5, 78 9, 112 6 C 146 4, 172 8, 192 6" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.3" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** 한붓 별 낙서 — 숫자 옆에 하나만. 있으면 화면이 '만든 것'처럼 보이고 없으면 밋밋하다. */
+export function ScribbleStar({ className = "" }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className={`inline-block h-4 w-4 ${className}`}>
+      <path d="M12 2 L15 9 L22 9.5 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9.5 L9 9 Z" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.75" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * 네온 가림 — 청월당의 모자이크는 '처리'가 아니라 **오브젝트**다.
+ * 발광 라운드 박스 + 흐린 더미 글자 + 아래 형광펜 낙서. 가려 놓은 자리가 오히려 눈에 띈다.
+ * ⚠ 안에 실값을 넣지 않는다 — 흐리게만 하면 소스에서 그대로 읽힌다(청월당도 더미를 깐다).
+ */
+export function NeonMask({ text = "○○○○○○", scribble = true }: { text?: string; scribble?: boolean }) {
+  return (
+    <span className="inline-block align-middle">
+      <span
+        className="inline-flex items-center justify-center rounded-[10px] px-3.5 py-1.5"
+        style={{
+          border: "1.5px solid var(--gold-bright)",
+          boxShadow: "0 0 10px rgba(217,199,232,0.55), 0 0 26px rgba(217,199,232,0.28), inset 0 0 14px rgba(217,199,232,0.22)",
+          background: "rgba(217,199,232,0.08)",
+        }}
+      >
+        <span
+          className="font-myeongjo text-[15px] font-bold"
+          style={{ color: "var(--bone)", filter: "blur(5px)", userSelect: "none" }}
+        >
+          {text}
+        </span>
+      </span>
+      {scribble && <ScribbleLine className="-mt-0.5" />}
+    </span>
+  );
+}
+
+/**
+ * 직녀 만화 말풍선 — 청월당 실측 문법(흰 박스 + 꼬리 + 검정 글씨).
+ *
+ * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
+ * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
+ */
+export function ComicSay({ children, tail = "none" }: { children: React.ReactNode; tail?: "down" | "none" }) {
+  return (
+    <div className="relative">
+      <div
+        className="relative rounded-[18px] px-5 py-4"
+        style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
+      >
+        <span
+          className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
+          style={{ background: "var(--gold-bright)", color: "#1a1330" }}
+        >
+          직녀
+        </span>
+        <div className="font-myeongjo text-[17px] font-bold leading-[1.75]" style={{ color: "#1a1330" }}>
+          {children}
+        </div>
+      </div>
+      {/* 꼬리 — 아래 컷을 가리킬 때만. CSS 삼각형이라 에셋이 필요 없다 */}
+      {tail === "down" && (
+        <span
+          aria-hidden
+          className="absolute left-9 block h-0 w-0"
+          style={{ borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: "12px solid #ffffff" }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** 핵심 구절만 배경칠 — 청월당이 문장 안에서 시선을 강제하는 그 장치(형광박스) */
+export function Hi({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#1a1330" }}>
+      {children}
+    </span>
+  );
+}
+
+/**
+ * 직녀 컷 — 그림 자리는 **슬롯**이다. 파일이 없으면 라벨 붙은 달빛 패널로 서고,
+ * 폴더에 파일을 넣는 순간 그 자리가 그림(영상 있으면 영상)으로 켜진다.
+ * 컬럼 끝까지 나간다(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
+ */
+export function InyeonCut({ id, assets, say }: { id: SlotId; assets?: AssetMap; say?: React.ReactNode }) {
+  return (
+    <div className="-mx-5 mt-6">
+      <SlotCut id={id} assets={assets} overlay={say} />
+    </div>
+  );
+}
+

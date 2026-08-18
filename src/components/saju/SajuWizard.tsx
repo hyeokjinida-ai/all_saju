@@ -25,7 +25,7 @@ import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
-import { SlotCut } from "@/components/products/jiknyeo-ui";
+import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -127,6 +127,15 @@ const CONCERN_BY_SLUG: Record<string, string[]> = {
     "최근에 헤어졌어",
     "일하느라 연애가 밀렸어",
   ],
+  // 결혼 축 — 인연과 질문을 가른다(인연=만날 사람이 언제 오나 / 결혼=그게 언제 결혼으로 가나)
+  "marriage-saju": [
+    "올해 안에 결혼하고 싶어",
+    "지금 만나는 사람과 결혼하게 될까",
+    "결혼이 자꾸 늦어져",
+    "언제쯤 하게 될까 궁금해",
+    "결혼 생각에 확신이 안 서",
+    "준비를 언제 시작할지 궁금해",
+  ],
   // 산군(신점) — 반말 톤 유지
   "sangun-sinjeom": [
     "돈이 궁금하다",
@@ -202,7 +211,9 @@ const STEPS_JIKNYEO: typeof STEPS = [
 
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
   "sangun-sinjeom": STEPS_SANGUN,
+  // 인연·결혼은 같은 캐릭터(직녀)라 입력 대사를 공유한다 — 달력 세계관이 같다.
   "inyeon-saju": STEPS_JIKNYEO,
+  "marriage-saju": STEPS_JIKNYEO,
 };
 
 const TOTAL = STEPS.length;
@@ -217,6 +228,7 @@ const PROFILE_ASK_BY_SLUG: Record<string, number[]> = {
   "sangun-sinjeom": PROFILE_STEPS,                      // 포괄 메인 — 전부
   "premium-saju": PROFILE_STEPS,                        // 종합 풀이 — 전부
   "inyeon-saju": [PARTNER_STEP, RELATIONSHIP_STEP],     // 인연 상품
+  "marriage-saju": [PARTNER_STEP, RELATIONSHIP_STEP],   // 결혼 — 배우자성 계산이 같다
   "love-saju": [PARTNER_STEP, RELATIONSHIP_STEP],       // 부부·자녀
   "wealth-saju": [JOB_STEP],                            // 돈 상품은 하는 일만
   "monthly-luck": [JOB_STEP],
@@ -267,18 +279,21 @@ export function SajuWizard({
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
+  const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // 직녀 세계관 전체 — 인연·결혼 두 상품이 같은 캐릭터·같은 옷을 쓴다(청월당 백월아씨 방식).
+  // **껍데기(색·대사·입력)는 여기로, 알맹이(티저 달력·인연 카피)는 isInyeon 으로** 가른다.
   // 주요 버튼(CTA) 칠 — 세 벌이 같은 자리에 반복되므로 한 곳에서 만든다.
   //   산군=금, 직녀=달빛, 그 외=기존 보라. 값은 각 세계관 랜딩의 CTA 와 같은 계열이다.
   const ctaFill = imm
     ? { on: "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)", off: "rgba(232,201,106,0.12)", ink: "#241a08", glow: "0 8px 26px rgba(201,162,39,0.35)" }
-    : isInyeon
+    : isJiknyeoWorld
       ? { on: "linear-gradient(180deg,#efeaf6,#d9c7e8)", off: "rgba(207,214,230,0.15)", ink: "var(--wine-deep)", glow: "0 8px 26px rgba(217,199,232,0.3)" }
       : { on: "linear-gradient(180deg,#ffffff,#f1eaff)", off: "rgba(150,90,255,0.15)", ink: "var(--wine-deep)", glow: "0 0 24px rgba(150,90,255,0.28)" };
   // 결제 시트 카드의 강조색(선택 테두리·가격·배지)
-  const sheetAccent = imm ? "#e8c96a" : isInyeon ? "#d9c7e8" : "#c9a8ff";
+  const sheetAccent = imm ? "#e8c96a" : isJiknyeoWorld ? "#d9c7e8" : "#c9a8ff";
   /** 선택지 버튼은 **손님이 말하는 자리**라 상품별 말투가 다르다.
    *  산군=반말 하대(ban) · 직녀=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다. */
-  const optTone: OptionTone = imm ? "ban" : isInyeon ? "jik" : "label";
+  const optTone: OptionTone = imm ? "ban" : isJiknyeoWorld ? "jik" : "label";
   const optLabel = (o: ProfileOption) => displayOf([o], o.value, optTone);
   const router = useRouter();
   // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
@@ -455,7 +470,7 @@ export function SajuWizard({
     if (step === CONFIRM_STEP) {
       // 직녀만 — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
       // 결제까지 안 가는 손님도 여기서 남는다. 막지는 않는다 — 건너뛰면 그대로 티저로 간다.
-      if (isInyeon && !emailGate && !emailSkipped) {
+      if (isJiknyeoWorld && !emailGate && !emailSkipped) {
         setEmailGate(true);
         return;
       }
@@ -468,7 +483,7 @@ export function SajuWizard({
       while (n < TOTAL - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
       return Math.min(n, TOTAL - 1);
     });
-  }, [step, loadTeaser, skipped, isInyeon, emailGate, emailSkipped]);
+  }, [step, loadTeaser, skipped, isJiknyeoWorld, emailGate, emailSkipped]);
   const prev = () =>
     setStep((s) => {
       let p = s - 1;
@@ -610,7 +625,7 @@ export function SajuWizard({
             }}
           />
         </>
-      ) : isInyeon ? (
+      ) : isJiknyeoWorld ? (
         <>
           {/* 시장 1위 실측(#44·#46) — 캐릭터를 배경에 블러로 세워 두고 한 항목씩 묻는다.
               폼 화면으로 넘어가지 않아 이탈이 줄고, **자유 고민 화면에서만 블러가 풀린다**
@@ -666,11 +681,11 @@ export function SajuWizard({
                         ? "var(--gold-bright)"
                         : imm
                           ? "rgba(232,201,106,0.18)"
-                          : isInyeon
+                          : isJiknyeoWorld
                             ? "rgba(207,214,230,0.2)"
                             : "rgba(150,90,255,0.2)",
                   // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
-                  boxShadow: i === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isInyeon ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
+                  boxShadow: i === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isJiknyeoWorld ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
                 }}
               />
             ))}
@@ -696,7 +711,7 @@ export function SajuWizard({
             {step === TEASER_STEP && teaserLoading
               ? imm
                 ? "네 장부를 찾는 중이다"
-                : isInyeon
+                : isJiknyeoWorld
                   ? "만나는 달을 찾는 중이에요"
                   : "명식을 계산하고 있어요"
               : emailGate
@@ -808,7 +823,7 @@ export function SajuWizard({
                 {form.timeUnknown ? "✓" : ""}
               </span>
               {/* 이 버튼도 손님 대사다 — 직녀에서만 반말(입력대본 §3/9 원문) */}
-              {isInyeon ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
+              {isJiknyeoWorld ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
             </button>
             <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.06em] leading-[1.75]">
               시각을 몰라도 괜찮아요. 시(時) 기둥만 빼고 나머지 흐름을 봐드립니다.
@@ -1580,6 +1595,8 @@ function TeaserStep({
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
   // 직녀(인연)판인가 — polite 렌더 경로는 존댓말 상품 4종과 공유라 slug 로만 갈라야 한다.
   const isInyeon = productSlug === "inyeon-saju";
+  // 인연·결혼이 같이 쓰는 껍데기(판·컷·로딩 체크리스트)는 이 가드로 연다.
+  const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
 
   if (loading) {
     return (
@@ -1589,7 +1606,7 @@ function TeaserStep({
           {imm ? "만세력에서 네 여덟 글자를 꺼내는 중이다…" : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
         </p>
         {/* 대기를 「기다림」이 아니라 「계산이 도는 증거」로 바꾼다 — 항목은 실제로 도는 계산들이다 */}
-        {isInyeon && <LoadingChecklist />}
+        {isJiknyeoWorld && <LoadingChecklist />}
       </div>
     );
   }
@@ -1723,7 +1740,7 @@ function TeaserStep({
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
           {/* 인연은 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
-          {!isInyeon && (
+          {!isJiknyeoWorld && (
             <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
               {imm
                 ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
@@ -1750,7 +1767,7 @@ function TeaserStep({
                     style={{
                       border: "1px solid var(--gold-line)",
                       // 직녀는 세계관 토큰에 맡긴다(은사). 산군은 기존 금색 값을 그대로 둔다.
-                      background: isInyeon ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
+                      background: isJiknyeoWorld ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
                       color: "var(--gold-bright)",
                     }}
                   >
@@ -1772,7 +1789,7 @@ function TeaserStep({
                   하필 이 줄이 아래 콜드리딩 전체의 근거 선언이라 여기가 흔들리면 신뢰가 흔들린다. */}
               {imm
                 ? "읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고, 아래 말은 전부 여기서 나왔다."
-                : isInyeon
+                : isJiknyeoWorld
                   ? "읽을 줄 모르셔도 돼요. 이게 사주의 원본이고, 아래 말은 전부 여기서 나왔어요."
                   : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
             </p>
@@ -2206,9 +2223,14 @@ function TeaserStep({
             /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다.
                인연은 밑줄 리스트가 아니라 **줄마다 판**이다: 얇은 줄 다섯 개를 쌓으면
                다섯 개 전부 가벼워 보인다(형님 「밤티」 지적의 그 병). 값은 대사 크기(17)로 세운다. */
-            <div className={isInyeon ? "mt-4 space-y-2" : "mt-4"}>
-              {(isInyeon && teaser.inyeon ? teaser.inyeon.locked : teaser.locked).map((row, i) =>
-                isInyeon ? (
+            <div className={isJiknyeoWorld ? "mt-4 space-y-2" : "mt-4"}>
+              {(productSlug === "marriage-saju"
+                ? MARRIAGE_LOCKED
+                : isInyeon && teaser.inyeon
+                  ? teaser.inyeon.locked
+                  : teaser.locked
+              ).map((row, i) =>
+                isJiknyeoWorld ? (
                   <div
                     key={i}
                     className="flex items-center justify-between gap-3 rounded-[4px] px-3.5 py-3"
@@ -2346,129 +2368,20 @@ function TeaserStep({
         장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
     {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
-    {isInyeon && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
+    {isJiknyeoWorld && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
     </>
   );
 }
 
-/** 발광 띠 — 청월당은 헤드 뒤에 포인트색 radial 을 깔아 검정과 대비를 만든다.
- *  flat 검정 위 글자만 얹으면 같은 크기여도 약해 보인다(1:1 대조에서 나온 밤티 원인 3). */
-function GlowBand({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[190%] w-[150%] -translate-x-1/2 -translate-y-1/2"
-        style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(217,199,232,0.30) 0%, transparent 70%)" }}
-      />
-      <div className="relative z-[1]">{children}</div>
-    </div>
-  );
-}
-
-/** 형광펜 밑줄 낙서 — 청월당이 가림 박스 아래에 긋는 그 거친 스트로크(손맛 요소). */
-function ScribbleLine({ className = "" }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 200 10" preserveAspectRatio="none" className={`block h-2 w-full ${className}`}>
-      <path d="M3 6 C 40 2, 70 8, 104 4 C 138 1, 168 7, 197 3" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M10 8 C 46 5, 78 9, 112 6 C 146 4, 172 8, 192 6" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.3" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** 한붓 별 낙서 — 숫자 옆에 하나만. 있으면 화면이 '만든 것'처럼 보이고 없으면 밋밋하다. */
-function ScribbleStar({ className = "" }: { className?: string }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" className={`inline-block h-4 w-4 ${className}`}>
-      <path d="M12 2 L15 9 L22 9.5 L16.5 14 L18.5 21 L12 17 L5.5 21 L7.5 14 L2 9.5 L9 9 Z" fill="none" stroke="var(--gold-bright)" strokeOpacity="0.75" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-/**
- * 네온 가림 — 청월당의 모자이크는 '처리'가 아니라 **오브젝트**다.
- * 발광 라운드 박스 + 흐린 더미 글자 + 아래 형광펜 낙서. 가려 놓은 자리가 오히려 눈에 띈다.
- * ⚠ 안에 실값을 넣지 않는다 — 흐리게만 하면 소스에서 그대로 읽힌다(청월당도 더미를 깐다).
- */
-function NeonMask({ text = "○○○○○○", scribble = true }: { text?: string; scribble?: boolean }) {
-  return (
-    <span className="inline-block align-middle">
-      <span
-        className="inline-flex items-center justify-center rounded-[10px] px-3.5 py-1.5"
-        style={{
-          border: "1.5px solid var(--gold-bright)",
-          boxShadow: "0 0 10px rgba(217,199,232,0.55), 0 0 26px rgba(217,199,232,0.28), inset 0 0 14px rgba(217,199,232,0.22)",
-          background: "rgba(217,199,232,0.08)",
-        }}
-      >
-        <span
-          className="font-myeongjo text-[15px] font-bold"
-          style={{ color: "var(--bone)", filter: "blur(5px)", userSelect: "none" }}
-        >
-          {text}
-        </span>
-      </span>
-      {scribble && <ScribbleLine className="-mt-0.5" />}
-    </span>
-  );
-}
-
-/**
- * 직녀 만화 말풍선 — 청월당 실측 문법(흰 박스 + 꼬리 + 검정 글씨).
- *
- * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
- * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
- */
-function ComicSay({ children, tail = "none" }: { children: React.ReactNode; tail?: "down" | "none" }) {
-  return (
-    <div className="relative">
-      <div
-        className="relative rounded-[18px] px-5 py-4"
-        style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
-      >
-        <span
-          className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
-          style={{ background: "var(--gold-bright)", color: "#1a1330" }}
-        >
-          직녀
-        </span>
-        <div className="font-myeongjo text-[17px] font-bold leading-[1.75]" style={{ color: "#1a1330" }}>
-          {children}
-        </div>
-      </div>
-      {/* 꼬리 — 아래 컷을 가리킬 때만. CSS 삼각형이라 에셋이 필요 없다 */}
-      {tail === "down" && (
-        <span
-          aria-hidden
-          className="absolute left-9 block h-0 w-0"
-          style={{ borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: "12px solid #ffffff" }}
-        />
-      )}
-    </div>
-  );
-}
-
-/** 핵심 구절만 배경칠 — 청월당이 문장 안에서 시선을 강제하는 그 장치(형광박스) */
-function Hi({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#1a1330" }}>
-      {children}
-    </span>
-  );
-}
-
-/**
- * 직녀 컷 — 그림 자리는 **슬롯**이다. 파일이 없으면 라벨 붙은 달빛 패널로 서고,
- * 폴더에 파일을 넣는 순간 그 자리가 그림(영상 있으면 영상)으로 켜진다.
- * 컬럼 끝까지 나간다(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
- */
-function InyeonCut({ id, assets, say }: { id: SlotId; assets?: AssetMap; say?: React.ReactNode }) {
-  return (
-    <div className="-mx-5 mt-6">
-      <SlotCut id={id} assets={assets} overlay={say} />
-    </div>
-  );
-}
+/** 결혼 상품 잠긴 줄 — 공용 polite 목록엔 「돈이 들어오는 달」·「인연이 들어오는 달」이 섞여 있어
+ *  결혼 화면에 그대로 쓰면 다른 상품 말이 된다. 결과지 목차(prompt.ts)와 1:1 로 맞춘다. */
+const MARRIAGE_LOCKED: { label: string; mask: string }[] = [
+  { label: "결혼하는 해에 달라지는 것", mask: "▓▓▓▓▓▓▓▓▓▓" },
+  { label: "서두르면 좋은 달", mask: "▓▓▓▓▓▓" },
+  { label: "피해야 할 시기", mask: "▓▓▓▓▓▓" },
+  { label: "함께할 사람 — 태도·말투·나이대", mask: "▓▓▓▓▓▓▓▓" },
+  { label: "적어주신 물음에 대한 답", mask: "▓▓▓▓▓▓▓▓" },
+];
 
 /**
  * 가려진 값 한 칸 — ▓/█ 글리프 대신 **길이를 보존한 은사 바**로 그린다.

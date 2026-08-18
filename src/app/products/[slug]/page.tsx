@@ -13,6 +13,7 @@ import { WealthStory } from "@/components/products/WealthWebtoon";
 import { InyeonStory } from "@/components/products/InyeonWebtoon";
 import { SangunStory } from "@/components/products/SangunWebtoon";
 import { JiknyeoStory } from "@/components/products/JiknyeoStory";
+import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
 import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -217,7 +218,11 @@ export default async function ProductDetailPage({
   // 전용 웹툰 랜딩 상품(돈/인연/산군)은 템플릿 대신 스토리 컴포넌트로 렌더
   const Story = WEBTOON[product.slug];
   const isSangunStory = product.slug === "sangun-sinjeom";
-  const isWealth = !!Story || isSangunStory;
+  // 직녀 2번째 상품(결혼) — 랜딩은 청월당 시공법 클론. 위저드를 이 페이지가 소유한다.
+  const isMarriage = product.slug === "marriage-saju";
+  // 풀스크린 랜딩(웹툰·몰입·클론)은 공용 컨테이너(좌우 여백 + max-w-2xl)를 쓰지 않는다 —
+  // 감싸면 풀블리드 섹션이 안쪽으로 밀려 카드 여백 규격이 통째로 어긋난다(실측: 20px 설계가 44px).
+  const isWealth = !!Story || isSangunStory || isMarriage;
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -233,7 +238,8 @@ export default async function ProductDetailPage({
   // 새 구조가 안 맞을 때 배포를 되돌리지 않고 주소 하나로 비교할 수 있는 문이다.
   const isJiknyeoStory = product.slug === "inyeon-saju" && view !== "doc";
   // 그림 슬롯은 매 요청마다 디스크를 본다 — 파일을 넣고 새로고침하면 그 자리가 켜진다(서버 전용).
-  const jiknyeoAssets = product.slug === "inyeon-saju" ? readJiknyeoAssets() : undefined;
+  const jiknyeoAssets =
+    product.slug === "inyeon-saju" || product.slug === "marriage-saju" ? readJiknyeoAssets() : undefined;
   const startSection = (
     <section id="start" className="scroll-mt-4">
       <h2
@@ -322,7 +328,29 @@ export default async function ProductDetailPage({
       />
 
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
-      {isJiknyeoStory ? (
+      {isMarriage ? (
+        // 결혼: 청월당 상세페이지 시공법(타입 대비·글로우·네온 가림·크림 밴드)을 그대로 옮긴 랜딩.
+        // 위저드는 이 페이지 하단(#start)에 있고 CTA 가 거기로 내린다.
+        <JiknyeoDetail
+          assets={jiknyeoAssets}
+          priceLabel={formatKRW(product.price)}
+          compareLabel={product.compare_at_price ? formatKRW(product.compare_at_price) : undefined}
+        >
+          <SajuWizard
+            productId={product.id}
+            productSlug={product.slug}
+            productName={product.name}
+            price={product.price}
+            compareAtPrice={product.compare_at_price ?? null}
+            bundles={bundles}
+            isLoggedIn={!!user}
+            initialConcerns={concernPreset ? [concernPreset] : undefined}
+            webtoonCuts={webtoonCuts}
+            demo={demo}
+            jiknyeoAssets={jiknyeoAssets}
+          />
+        </JiknyeoDetail>
+      ) : isJiknyeoStory ? (
         // 직녀: 산군과 같은 풀스크린 스테이지. 랜딩은 웹툰 한 편이고 오퍼는 뒤로 뺀다
         // (청월당 캐릭터 랜딩 두 편 판독의 결론). 그림은 전부 슬롯이라 0장이어도 성립한다.
         <JiknyeoStory

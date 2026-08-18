@@ -69,6 +69,21 @@ export function buildMonthPlan(
   // 제목으로 판별해 배정표를 통째로 갈아 끼운다 — 아래 산군 로직은 한 줄도 건드리지 않는다.
   // (매칭이 안 되면 monthPlanLine 이 "달을 언급하지 마세요"를 걸어버리는데, 정작 지시문은
   //  확정값의 달을 쓰라고 시켜 서로 모순된다 → 실측에서 확인된 환각 유발 경로다. §70 주석 참고)
+  // ── 결혼(10장) — 인연과 축이 다르다: '해'가 주인공이고 달은 그 해 안의 순서다 ──
+  // ⚠ 이 게이트가 없으면 아래 산군 로직으로 빠져 배정이 전부 빈 배열이 된다.
+  //    그러면 "달을 언급하지 마세요"와 "확정값의 달을 쓰라"가 서로 모순돼 환각이 난다(실측 경로).
+  if (chapterTitles.some((t) => /결혼하는 해/.test(t))) {
+    // 4장이 해와 달을 함께 든다 — 제목이 「결혼하는 해 — 그리고 그 해의 달」이라 한 장에서 같이 쓴다.
+    set(findIdx(chapterTitles, /결혼하는 해/), iTop.slice(0, 3), true);
+    set(findIdx(chapterTitles, /피해야 할 시기/), iShaky);
+    // 고민 장은 시기로 답해야 한다 — 달을 금지하면 지어낸다(산군에서 확인된 환각). TOP1 재인용 허용.
+    set(findIdx(chapterTitles, /고민/), [iTop[0]]);
+    set(findIdx(chapterTitles, /이번 주에 할 것/), soonestOf(iTop) ? [soonestOf(iTop)!] : []);
+    // 걸어온 길·늦어지는 이유·함께할 사람·신호·정리할 것은 달을 말하지 않는다
+    set(findIdx(chapterTitles, /걸어온 길/), []);
+    return plan;
+  }
+
   if (chapterTitles.some((t) => /만나는 달 세 개/.test(t))) {
     set(findIdx(chapterTitles, /만나는 달 세 개/), iTop.slice(0, 3));
     // 인연 7장은 「조심할 달」 — 산군에도 같은 제목의 장이 있지만 이 분기는 위 게이트로 이미 갈렸다.

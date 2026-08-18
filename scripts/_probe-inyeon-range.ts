@@ -64,14 +64,18 @@ async function main() {
   console.log("\n=== 챕터 ↔ 달 배정표 (개명 동기화 검증) ===");
   const { outlineTitles } = await import("../src/lib/saju/prompt");
   const { buildMonthPlan } = await import("../src/lib/saju/blueprint");
-  const titles = outlineTitles("inyeon-saju");
-  const plan = buildMonthPlan(titles, null, facts, null);
-  titles.forEach((t, i) => {
-    const p = plan[i];
-    console.log(`${String(i + 1).padStart(2)}. ${t.padEnd(22)} allow=[${p.allow.join(", ")}]${p.ownsYears ? " ownsYears" : ""}`);
-  });
-  const assigned = plan.filter((p) => p.allow.length > 0 || p.ownsYears).length;
-  console.log(`장 수: ${titles.length} · 달/해가 배정된 장: ${assigned}`);
+  for (const slug of ["inyeon-saju", "marriage-saju"]) {
+    const titles = outlineTitles(slug);
+    const plan = buildMonthPlan(titles, null, facts, null);
+    console.log(`--- ${slug} ---`);
+    titles.forEach((t, i) => {
+      const p = plan[i];
+      console.log(`${String(i + 1).padStart(2)}. ${t.padEnd(24)} allow=[${p.allow.join(", ")}]${p.ownsYears ? " ownsYears" : ""}`);
+    });
+    const assigned = plan.filter((p) => p.allow.length > 0 || p.ownsYears).length;
+    console.log(`장 수: ${titles.length} · 달/해가 배정된 장: ${assigned}
+`);
+  }
 
   // ④ result-view 의 강조 영역·인용 — [프로필] 태그가 새지 않는지, 인연 칩이 love 로 가는지
   console.log("\n=== result-view primaryKey / advice.quote ===");
