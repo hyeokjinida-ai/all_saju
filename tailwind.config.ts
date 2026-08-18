@@ -158,6 +158,12 @@ const config: Config = {
         ],
         // 직녀 헤드라인 = 극볼드 고딕. 경쟁사(청월당) 헤드가 전부 이 계열이다 —
         // 상품마다 포인트색만 바뀌고(핑크/형광연두/달빛) 두꺼운 고딕 + 좁은 자간은 공통이다.
+        // 밝은 티저의 섹션 헤드 — 서예체. 본문(고딕)과 갈라야 「한 벌로 끝까지 간」 티가 안 난다.
+        "head-brush": [
+          "var(--font-head-brush)",
+          "var(--font-myeongjo)",
+          "serif",
+        ],
         gothic: [
           "var(--font-gothic)",
           "Pretendard Variable",

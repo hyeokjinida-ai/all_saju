@@ -8,7 +8,7 @@
 //
 // 여기 없는 글씨체(웹툰 말풍선용 12종·송명조)는 일부러 뺐다 — WebtoonCut 이 쓰는 것만
 // 그 자리에서 부른다. 전 방문자에게 12개 패밀리를 미리 안겨줄 이유가 없다.
-import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_Sans_KR, JetBrains_Mono, Ma_Shan_Zheng } from "next/font/google";
+import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_Sans_KR, JetBrains_Mono, Ma_Shan_Zheng, Song_Myung } from "next/font/google";
 
 // 제목·대사·본문의 축. 이 프로젝트에서 제일 많이 쓰는 글씨체다.
 export const gowunBatang = Gowun_Batang({
@@ -58,6 +58,17 @@ export const notoSansKr = Noto_Sans_KR({
   preload: false,
 });
 
+// 밝은 티저의 섹션 헤드 — **서예체**.
+// 청월당 실측에서 나온 것: 걔넨 본문만 고딕이고 **헤드는 서예체(가평한석봉)**,
+// 매력 유형명은 손글씨체로 또 갈아끼운다. 한 벌로 끝까지 가지 않는 게 「AI 티」를 지우는 축이다.
+// 가평한석봉은 배포 미러가 전부 404 라 같은 역할(전통 디스플레이)의 송명조로 대체했다.
+// 헤드는 24px 로 작게 쓰고 위계는 굵기·색으로 만든다 — 크기로 밀면 그게 밤티가 된다.
+export const songMyung = Song_Myung({
+  weight: "400",
+  display: "swap",
+  variable: "--font-head-brush",
+});
+
 // 진행 표시(10/10)·생년월일 입력처럼 자릿수가 흔들리면 안 되는 곳
 export const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
@@ -83,6 +94,7 @@ export const fontVariables = [
   nanumMyeongjo.variable,
   notoSerifKr.variable,
   notoSansKr.variable,
+  songMyung.variable,
   jetbrainsMono.variable,
   maShanZheng.variable,
 ].join(" ");

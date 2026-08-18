@@ -26,6 +26,8 @@ import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
+// 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
+import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -1641,8 +1643,12 @@ function TeaserStep({
         글자만 얹으면 얼굴·촛불 무늬가 표와 문장 사이로 비쳐 읽기가 힘들어진다.
         사진은 판 바깥으로만 보이게 두면 몰입은 유지되면서 본문은 종이처럼 읽힌다. */}
     <div
+      // 밝은 티저 — 청월당은 **게이트만 검정이고 결제 직전 티저는 밝다**(라이브 실측).
+      // 우리는 티저까지 먹빛으로 끌고 갔고 그게 원본과 정반대였다. 형님 「전부 원본 그대로」 확정(2026-08-18).
+      // 스킨은 여기 한 겹만 얹는다 — 게이트·스토리는 어두운 채로 남는다(원본과 같게).
+      className={isJiknyeoWorld ? "teaser-light -mx-5 px-5 py-10" : undefined}
       style={
-        imm
+        imm && !isJiknyeoWorld
           ? {
               background: "rgba(7,6,9,0.86)",
               border: "1px solid var(--gold-pale)",
@@ -2414,136 +2420,62 @@ function MaskBar({ mask }: { mask: string }) {
  * 값은 전부 teaser.inyeon(=computeInyeonFacts) 에서 온다. 여기서 새로 계산하지 않는다.
  */
 function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
+  // 2026-08-18 전면 개작 — 청월당 「연애비책」 티저 실측 조판으로 갈아끼웠다.
+  //
+  // 전에는 12칸 격자였다. 그건 우리가 발명한 것이고 원본에 없다. 원본은 **연월 리스트**다:
+  //   「앞으로 3년,」(16/400) → 서예체 헤드(24) → 「나의 연애 기회: 9회」(숫자만 30/800/핑크)
+  //   → 연월 줄(16/500) + 성격 설명(16/400) → 잠긴 줄은 ████
+  // 격자를 버린 이유는 취향이 아니다 — 형님이 「전부 원본 그대로」로 확정했고(2026-08-18),
+  // 격자는 375px 에서 칸이 72px 밖에 안 나와 달 이름이 감기는 문제도 계속 안고 있었다.
+  //
+  // ★ 숫자가 튀는 건 크기 때문이 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다(실측 판독).
+  //   그래서 이 블록에서 핑크는 숫자 하나뿐이다. 여기저기 칠하면 그 효과가 사라진다.
   const { ref, inView } = useInView<HTMLDivElement>();
-  // 조심할 달은 차가운 회청 — 달빛 계열에서 빼야 「좋은 달」과 한눈에 갈린다(빨강은 금기).
-  const GRADE_COLOR: Record<string, string> = {
-    "●": "var(--gold-bright)",
-    "◎": "var(--gold-soft)",
-    "○": "var(--bone-faint)",
-    "△": "rgba(152,160,180,0.6)",
-  };
   return (
-    // 맨바닥에 얇은 줄을 쌓으면 전부 가벼워 보인다 — 달력 한 벌을 판 하나에 앉힌다.
-    <div
-      className="mt-6 rounded-md px-4 py-5"
-      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--gold-line)" }}
-    >
-      {/* B2 — 기회 카운트. 숫자 다음 줄에서 바로 달을 못 박는다(숫자만 쓰면 경쟁사와 같은 말이 된다).
-          ⚠ 진입 감지(ref)는 **이 작은 블록**에 붙인다. 판 전체에 붙였더니 판이 커져서
-          화면에 들어와도 임계(35%)를 못 넘겨 숫자가 영원히 안 나타났다(실측). */}
+    <div className="mt-8">
       <div ref={ref} className="text-center">
-        {/* 리드는 얇고 넓게, 헤드는 두껍고 좁게 — 청월당 헤드 문법(대비 3배 이상).
-            명조 + 넓은 자간으로 두면 같은 크기여도 약해 보인다(밤티 원인 1). */}
-        <GlowBand>
-          <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
-            앞으로 열두 달
-          </p>
-          <p
-            className="font-gothic mt-2.5 text-[26px] leading-[1.3] tracking-[-0.02em]"
-            style={{
-              color: "var(--bone)",
-              fontWeight: 900,
-              opacity: inView ? 1 : 0,
-              transform: inView ? "translateY(0)" : "translateY(6px)",
-              transition: "opacity .5s ease, transform .5s ease",
-            }}
-          >
-            인연이 열리는 달
-            <br />
-            <span className="mt-1.5 inline-flex items-center gap-1">
-              <span
-                className="inline-block rounded-[6px] px-3 py-0.5 text-[38px] leading-[1.2]"
-                style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
-              >
-                {data.openCount}번
-              </span>
-              <ScribbleStar className="mb-3" />
-            </span>
-          </p>
-        </GlowBand>
-        {data.nearest && (
-          <p className="font-myeongjo mt-3 text-[17px] leading-[1.75]" style={{ color: "var(--bone)" }}>
-            가장 가까운 건 {data.nearest.year}년 {data.nearest.month}월이에요.
-          </p>
-        )}
+        <T>앞으로 열두 달,</T>
+        <div
+          className="mt-1"
+          style={{
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(6px)",
+            transition: "opacity .5s ease, transform .5s ease",
+          }}
+        >
+          <BrushHead lines={["이 달들을 놓치지 마세요!"]} />
+        </div>
+        <p className="mt-5 flex items-center justify-center gap-1.5">
+          <span className="text-[18px] leading-[27px]" style={{ color: BODY, fontWeight: 500 }}>
+            나의 인연 기회:
+          </span>
+          <BigNum value={data.openCount} unit="회" />
+        </p>
       </div>
 
-      {/* B5 — 열두 칸. 이름을 가린 자리에도 등급은 그대로 서 있다.
-          ⚠ 375px 에서 「██월」이 칸 안에서 두 줄로 감겼다(실측) — 가림은 ██ 두 글자로 줄이고
-          nowrap 을 걸어 한 줄로 고정한다. 공개된 한 달만 달빛으로 띄운다. */}
-      <div className="mt-5 grid grid-cols-4 gap-1.5">
-        {data.calendar.map((c, i) => (
-          <div
-            key={i}
-            className="flex flex-col items-center justify-center rounded-[3px] py-3"
-            style={{
-              border: `1px solid ${c.revealed ? "var(--gold-line)" : "var(--gold-pale)"}`,
-              background: c.revealed ? "rgba(217,199,232,0.14)" : "rgba(0,0,0,0.25)",
-              boxShadow: c.revealed ? "0 0 18px rgba(217,199,232,0.25)" : undefined,
-            }}
-          >
-            {/* 가림은 블록문자(██) 대신 **블러**다 — 칸이 72px 밖에 안 돼서 ██ 는 회색 막대처럼
-                무겁게 찍혔다(실측). 블러는 글자 자리와 길이는 남기고 값만 흐린다(청월당 방식). */}
-            <span
-              className="font-myeongjo whitespace-nowrap text-[13px]"
-              aria-label={c.revealed ? undefined : "가려진 달"}
-              style={{
-                color: c.revealed ? "var(--bone)" : "var(--bone-soft)",
-                fontWeight: c.revealed ? 700 : 400,
-                filter: c.revealed ? undefined : "blur(4px)",
-                userSelect: c.revealed ? undefined : "none",
-              }}
-            >
-              {c.month}월
-            </span>
-            <span className="mt-1.5 text-[13px] leading-none" style={{ color: GRADE_COLOR[c.grade] }}>
-              {c.grade}
-            </span>
+      {/* 연월 목록 — 가장 가까운 하나만 열고 나머지는 잠근다.
+          ⚠ 잠긴 줄에 실값을 넣지 않는다. 흐리게만 하면 소스에서 그대로 읽힌다 —
+          openList 에 애초에 공개분만 담겨 온다. */}
+      <div className="mt-6">
+        {data.openList.map((m, i) => (
+          <div key={i} className="py-3" style={{ borderBottom: `1px solid ${LINE}` }}>
+            <Val>
+              {m.year}년 {m.month}월
+            </Val>
+            <p className="mt-1 text-[16px] leading-[24px]" style={{ color: BODY }}>
+              {m.desc}
+            </p>
           </div>
+        ))}
+        {Array.from({ length: data.restOpen }, (_, i) => (
+          <LockRow key={`lock-${i}`} label="○○○○년 ○월" mask="████████" />
         ))}
       </div>
 
-      <p className="font-myeongjo mt-3 text-center text-[11px] leading-[1.9]" style={{ color: "var(--bone-faint)" }}>
-        <span style={{ color: "var(--gold-bright)" }}>●</span> 만나는 달 &nbsp;
-        <span style={{ color: "var(--gold-soft)" }}>◎</span> 자리가 생기는 달 &nbsp;
-        <span>○</span> 보통 &nbsp;
-        <span style={{ color: "rgba(152,160,180,0.6)" }}>△</span> 조심할 달
-      </p>
-
-      {/* 만나는 달 목록 — 청월당 미끼 구조(연월 + 그 달 인연의 성격). 가장 가까운 하나만 열고
-          나머지는 잠근다. ⚠ 잠긴 줄에는 **실값을 넣지 않는다** — 흐리게만 하면 소스에서 그대로 읽힌다.
-          그래서 가림줄은 더미 문장이고, 데이터도 openList 에 공개분만 담아 보낸다. */}
-      {(data.openList.length > 0 || data.restOpen > 0) && (
-        <div className="mt-5 space-y-2">
-          {data.openList.map((m, i) => (
-            <div
-              key={i}
-              className="rounded-[4px] px-3.5 py-3"
-              style={{ background: "rgba(217,199,232,0.12)", border: "1px solid var(--gold-line)" }}
-            >
-              <span className="font-myeongjo text-[15px] font-bold" style={{ color: "var(--gold-bright)" }}>
-                {m.year}년 {m.month}월
-              </span>
-              <span className="font-myeongjo text-[13px]" style={{ color: "var(--bone-soft)" }}>
-                {" "}
-                — {m.desc}
-              </span>
-            </div>
-          ))}
-          {Array.from({ length: data.restOpen }, (_, i) => (
-            <div
-              key={`lock-${i}`}
-              className="rounded-[4px] px-3.5 py-3"
-              aria-label="잠긴 달"
-              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(217,199,232,0.18)" }}
-            >
-              <NeonMask text="○○○○년 ○월" />
-              <span className="font-myeongjo ml-2 align-middle text-[13px]" style={{ color: "var(--bone-faint)" }}>
-                결과지에서 열려요
-              </span>
-            </div>
-          ))}
-        </div>
+      {data.restOpen > 0 && (
+        <p className="mt-4 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
+          + 이런 풀이를 더 해드려요!
+        </p>
       )}
     </div>
   );
