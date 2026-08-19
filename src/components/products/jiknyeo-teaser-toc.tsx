@@ -55,8 +55,28 @@ const TOC_MARRIAGE: { title: string; items: string[] }[] = [
 
 /** 장 사이 캐릭터 코멘트 — 원본은 좌우를 번갈아 앉힌다.
  *  ⚠ 문장은 **손님 사주에서 나온 것만** 쓴다(coldRead). 지어낸 칭찬을 넣으면 그 줄만 가짜가 된다. */
-function SdSay({ text, side }: { text: string; side: "left" | "right" }) {
-  const face = (
+function SdSay({
+  text,
+  side,
+  assets,
+  variant,
+}: {
+  text: string;
+  side: "left" | "right";
+  assets?: AssetMap;
+  variant: "sdSmile" | "sdThink";
+}) {
+  // 2등신 캐릭터 그림이 들어오면 그걸 쓰고, 아직 없으면 글자 배지로 자리를 지킨다.
+  // 원본은 장마다 SD 캐릭터가 말을 거는데, 그게 목차를 「상품 설명」에서 「내 얘기」로 바꾼다.
+  const a = assets?.[variant];
+  const face = a?.img ? (
+    <img
+      src={a.img}
+      alt=""
+      className="h-12 w-12 shrink-0 rounded-full object-cover"
+      style={{ border: `1px solid ${PINK}33` }}
+    />
+  ) : (
     <span
       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[11px]"
       style={{ background: "#fdeef2", border: `1px solid ${PINK}44`, color: PINK, letterSpacing: "normal" }}
@@ -125,7 +145,14 @@ export function JiknyeoTeaserToc({
               {/* 장 사이 개인화 코멘트 — 좌우 번갈아. 손님 문장이 있는 만큼만 */}
               {/* 원본은 장이 끝날 때마다 캐릭터가 한 마디씩 얹고 좌우를 번갈아 앉힌다.
                   우리는 손님 문장(coldRead)이 있는 만큼만 — 없는 자리를 지어내면 그 줄이 가짜가 된다. */}
-              {comments[i] && <SdSay text={comments[i]} side={i % 2 === 0 ? "left" : "right"} />}
+              {comments[i] && (
+                <SdSay
+                  text={comments[i]}
+                  side={i % 2 === 0 ? "left" : "right"}
+                  assets={assets}
+                  variant={i % 2 === 0 ? "sdSmile" : "sdThink"}
+                />
+              )}
             </div>
           ))}
         </HanjiCard>

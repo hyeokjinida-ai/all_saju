@@ -15,7 +15,9 @@ export type SlotId =
   // 그 62%는 코드가 만들고, 그림이 필요한 자리만 슬롯으로 남긴다.
   // 발주 시트: 직녀/티저_웹툰컷_발주시트_연애비책판.md
   | "t01" | "t03" | "t04" | "t06" | "t07"
-  | "t09" | "t11" | "t12" | "t14" | "t15";
+  | "t09" | "t11" | "t12" | "t14" | "t15"
+  // 연출 에셋 — 목차 사이 코멘트를 하는 2등신 캐릭터(원본이 쓰는 장치).
+  | "sdSmile" | "sdThink";
 
 // 2026-08-17 스토리 개편(형님 확정): 산군 분리 + 날실·씨실·베틀 용어 폐기 →
 // 견우직녀 설화(전 국민이 아는 이야기)로 전면 교체. 베틀은 '직녀의 소품'으로만 남는다
@@ -45,6 +47,8 @@ export const SLOTS: { id: SlotId; label: string; note: string; video?: boolean }
   { id: "t11", label: "컷11 · 하지 말 것", note: "손바닥 들어 멈추라는 몸짓, 정면" },
   { id: "t12", label: "컷12 · 잠금", note: "은사 매듭으로 묶여 안 펼쳐지는 달력" },
   { id: "t15", label: "컷15 · 배웅", note: "은하수 쪽으로 걸어가며 어깨 너머로 돌아봄" },
+  { id: "sdSmile", label: "SD · 미소", note: "2등신 직녀, 손 흔들며 — 목차 코멘트용" },
+  { id: "sdThink", label: "SD · 설명", note: "2등신 직녀, 손가락 들고 — 목차 코멘트용" },
 ];
 
 export type Asset = { img?: string; video?: string };

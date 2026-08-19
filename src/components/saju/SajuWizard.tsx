@@ -32,6 +32,7 @@ import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
 import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
+import { InkFade } from "@/components/products/jiknyeo-comic-kit";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -1933,7 +1934,14 @@ function TeaserStep({
           {/* 판정을 넘기는 순간 — 회색 잔글씨로 흘리면 승부가 안 걸린다.
               산군이 전신 컷으로 하는 그 자리를 인연은 정면 컷 + 말풍선으로 받는다. */}
           {isInyeon && teaser.judgeInvite && (
-            <InyeonCut id="w3" assets={jiknyeoAssets} say={<ComicSay>{teaser.judgeInvite}</ComicSay>} />
+            <InyeonCut
+              id="w3"
+              assets={jiknyeoAssets}
+              say={<ComicSay>{teaser.judgeInvite}</ComicSay>}
+              // 손글씨 효과음 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(고칠 수 있어야 하니까).
+              sfx="…딱"
+              tilt={-2}
+            />
           )}
 
           {/* 직녀(인연) 전용 — 죄책감 해제 → 다리문장. polite 경로는 존댓말 상품 4종과 공유라 slug 가드 필수.
@@ -2314,6 +2322,11 @@ function TeaserStep({
                 compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
                 isMarriage={productSlug === "marriage-saju"}
               />
+              {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
+                  원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
+              <div className="mt-14">
+                <InkFade from="#f3f2ef" to="#0b0f1a" height={110} />
+              </div>
             </>
           )}
 

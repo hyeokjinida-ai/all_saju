@@ -7,6 +7,7 @@
 // 슬롯 규칙은 여기 한 곳에만 둔다.
 import { BgMedia } from "@/components/products/BgMedia";
 import { SLOTS, type Asset, type AssetMap, type SlotId } from "@/lib/jiknyeo-slots";
+import { Sfx, TiltCut } from "@/components/products/jiknyeo-comic-kit";
 
 /** 달빛 팔레트 — JiknyeoLanding 과 같은 값(세계관 한 벌) */
 export const MOON = "#d9c7e8";
@@ -220,11 +221,36 @@ export function Hi({ children }: { children: React.ReactNode }) {
  * 폴더에 파일을 넣는 순간 그 자리가 그림(영상 있으면 영상)으로 켜진다.
  * 컬럼 끝까지 나간다(규칙: 그림은 끝까지, 판·카드는 한 단 안쪽).
  */
-export function InyeonCut({ id, assets, say }: { id: SlotId; assets?: AssetMap; say?: React.ReactNode }) {
-  return (
-    <div className="-mx-5 mt-6">
+export function InyeonCut({
+  id,
+  assets,
+  say,
+  sfx,
+  sfxAt = "right",
+  tilt,
+}: {
+  id: SlotId;
+  assets?: AssetMap;
+  say?: React.ReactNode;
+  /** 손글씨 효과음 — 「멈칫」「갸웃」. 원본은 그림에 구워 넣는데 우리는 코드로 얹는다. */
+  sfx?: string;
+  sfxAt?: "left" | "right";
+  /** 한두 컷만 기울여 끼운다 — 전부 반듯하면 「카드 목록」으로 보인다(원본 01번이 사다리꼴). */
+  tilt?: number;
+}) {
+  const cut = (
+    <div className="relative">
       <SlotCut id={id} assets={assets} overlay={say} />
+      {sfx && (
+        <span
+          className="absolute top-[14%]"
+          style={sfxAt === "right" ? { right: "9%" } : { left: "9%" }}
+        >
+          <Sfx rotate={sfxAt === "right" ? 9 : -9}>{sfx}</Sfx>
+        </span>
+      )}
     </div>
   );
+  return <div className="-mx-5 mt-6">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
 }
 

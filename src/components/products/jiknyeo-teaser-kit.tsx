@@ -16,6 +16,8 @@
 // 위계를 **크기가 아니라 굵기(400·500·600·700·800)와 색**으로 만든다.
 // 숫자 「9」가 튀는 이유도 30px 이라서가 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다.
 
+import { HANJI_BG } from "@/components/products/jiknyeo-comic-kit";
+
 export const PINK = "#eb4465";
 export const INK = "#111111";
 export const BODY = "#242424";
@@ -168,7 +170,9 @@ export function Chip({ children }: { children: React.ReactNode }) {
  *  원본은 장(章)마다 풀이 줄을 4~6개씩 펼쳐 **약 30줄**을 보여준다(우리 기존 5줄의 6배). */
 export function HanjiCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="p-1.5" style={{ border: `1px solid ${PINK}55`, background: "#faf7f0" }}>
+    // 종이 질감을 깐다 — 단색이면 「div 카드」로 읽히고, 얼룩이 있으면 한지로 읽힌다.
+    // 텍스처 이미지가 오면 HANJI_BG 한 곳만 갈아끼우면 전 카드에 반영된다.
+    <div className="p-1.5" style={{ border: `1px solid ${PINK}55`, ...HANJI_BG }}>
       <div className="relative px-4 py-6" style={{ border: `1px solid ${PINK}33` }}>
         {(["left-1 top-1", "right-1 top-1", "left-1 bottom-1", "right-1 bottom-1"] as const).map((pos) => (
           <span

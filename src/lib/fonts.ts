@@ -79,6 +79,22 @@ export const gapyeongHanseokbong = localFont({
   preload: false,
 });
 
+// 웹툰 효과음 전용 — **손글씨체**(김중철손글씨).
+//
+// 청월당 웹툰 컷을 열어 보면 「멈칫」「갸웃」「어라?」 같은 의성어가 **그림 안에 손으로 쓰여** 있다.
+// 그게 웹툰 질감의 절반이다. 우리는 그림에 글자를 굽지 않으므로(손님마다 값이 다르다)
+// 같은 손글씨체를 얹어 코드로 흉내낸다 — 걔네가 실제로 쓰는 폰트가 이거다(실측).
+// 라이선스: 정림건축 배포 · 상업 이용 및 웹폰트 임베딩 허용 · 폰트 자체 판매만 금지.
+export const kimjungchul = localFont({
+  src: [
+    { path: "../app/fonts/KimjungchulScript-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../app/fonts/KimjungchulScript-Bold.woff2", weight: "700", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-hand",
+  preload: false,
+});
+
 // 진행 표시(10/10)·생년월일 입력처럼 자릿수가 흔들리면 안 되는 곳
 export const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
@@ -105,6 +121,7 @@ export const fontVariables = [
   notoSerifKr.variable,
   notoSansKr.variable,
   gapyeongHanseokbong.variable,
+  kimjungchul.variable,
   jetbrainsMono.variable,
   maShanZheng.variable,
 ].join(" ");
