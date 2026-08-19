@@ -129,7 +129,7 @@ export function JiknyeoTeaserToc({
         <HanjiCard>
           {/* 두루마리 오브젝트 — 원본도 카드 안에 소품 일러를 하나 놓는다 */}
           <div className="mx-auto mb-5 max-w-[180px]">
-            <SlotCut id="t12" assets={assets} ratio="1 / 1" />
+            <SlotCut id="w6" assets={assets} ratio="1 / 1" pos="center 45%" />
           </div>
 
           <div

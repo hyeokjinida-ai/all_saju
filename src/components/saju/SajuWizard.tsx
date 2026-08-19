@@ -2313,15 +2313,30 @@ function TeaserStep({
 
           {isJiknyeoWorld && (
             <>
+              {/* 세계관 한 컷 — 조판이 길게 이어지는 구간이라 그림으로 한 번 끊는다(글·사진 교차). */}
+              <div className="mt-14">
+                <InyeonCut id="t06" assets={jiknyeoAssets} />
+              </div>
+
               {/* 차별점 POINT 1~3 — 원본 순서: 가격카드 → POINT → 목차(4) → 가격 VS(5) */}
               <JiknyeoTeaserPoints isMarriage={productSlug === "marriage-saju"} />
               <JiknyeoTeaserToc slug={productSlug} comments={teaser.coldRead ?? []} assets={jiknyeoAssets} />
+              {/* 손 내밀기 — 값을 말하기 직전에 캐릭터가 한 번 더 선다(청월당·타이트 둘 다 마지막이 펼친 손). */}
+              <InyeonCut
+                id="t14"
+                assets={jiknyeoAssets}
+                say={<ComicSay>{productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}</ComicSay>}
+              />
+
               {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
               <JiknyeoTeaserPrice
                 priceLabel={formatKRW(price)}
                 compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
                 isMarriage={productSlug === "marriage-saju"}
               />
+              {/* 배웅 — 값을 다 말한 뒤 마지막 한 컷. 원본도 맨 끝을 캐릭터로 닫는다. */}
+              <InyeonCut id="t15" assets={jiknyeoAssets} sfx="…또 봬요" sfxAt="left" />
+
               {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
                   원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
               <div className="mt-14">
