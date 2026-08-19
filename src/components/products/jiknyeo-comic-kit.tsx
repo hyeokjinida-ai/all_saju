@@ -136,13 +136,11 @@ export function ThoughtBubble({ children }: { children: React.ReactNode }) {
 /** 한지 질감 — 목차 카드 바탕.
  *  텍스처 이미지가 오면 backgroundImage 한 줄만 갈아끼우면 된다(발주 시트 §연출 에셋).
  *  그전까지는 미세한 얼룩을 CSS 로 깔아 종이처럼 보이게 한다. */
+// 2026-08-19: 진짜 한지 스캔 텍스처가 들어와 CSS 얼룩을 대체했다(섬유 결이 CSS 로는 안 나온다).
+// 파일이 없으면 backgroundColor 만 남아 카드가 그냥 아이보리 판이 된다 — 페이지는 깨지지 않는다.
 export const HANJI_BG: React.CSSProperties = {
   backgroundColor: "#faf7f0",
-  backgroundImage: [
-    "radial-gradient(circle at 18% 22%, rgba(160,140,100,0.055) 0 1.5px, transparent 2px)",
-    "radial-gradient(circle at 72% 61%, rgba(160,140,100,0.045) 0 1.5px, transparent 2px)",
-    "radial-gradient(circle at 44% 84%, rgba(160,140,100,0.05) 0 1px, transparent 2px)",
-    "linear-gradient(115deg, rgba(190,170,130,0.07) 0%, transparent 38%, rgba(190,170,130,0.05) 72%, transparent 100%)",
-  ].join(", "),
-  backgroundSize: "120px 120px, 90px 90px, 150px 150px, 100% 100%",
+  backgroundImage: "url(/products/jiknyeo/hanji.png)",
+  backgroundSize: "360px 360px",
+  backgroundRepeat: "repeat",
 };

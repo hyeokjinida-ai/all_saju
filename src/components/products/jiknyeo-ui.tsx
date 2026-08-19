@@ -49,7 +49,10 @@ export function SlotCut({
         <img
           src={a.img}
           alt={meta?.label ?? ""}
-          loading={priority ? "eager" : "lazy"}
+          // 컷은 **즉시** 받는다. lazy 로 뒀더니 화면 안에 들어와도 로딩이 발화하지 않아
+          // 그림이 영영 안 뜨는 판이 나왔다(실측: currentSrc 가 빈 채로 남음).
+          // 티저 컷은 몇 장뿐이고 전부 스토리의 일부라 지연시킬 이유도 없다.
+          loading="eager"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ objectPosition: pos }}
         />
