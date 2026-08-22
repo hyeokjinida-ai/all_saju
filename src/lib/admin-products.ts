@@ -46,7 +46,8 @@ export const productFormSchema = z.object({
   card_title: z.string().max(12).nullable().optional(),
   tagline: z.string().max(30).nullable().optional(),
   hero_rank: z.coerce.number().int().min(1).max(9).nullable().optional(),
-  art: z.object({ hero: artSlot, big: artSlot, row: artSlot }).default({}),
+  // lettering = 표면까지 입힌 제목 그림(ChatGPT 웹 산출물). 있으면 히어로가 글자 대신 이걸 쓴다.
+  art: z.object({ hero: artSlot, big: artSlot, row: artSlot, lettering: artSlot }).default({}),
 
   // ③ 랜딩 카피 — 상품 상세가 그대로 찍는다
   pitch: z

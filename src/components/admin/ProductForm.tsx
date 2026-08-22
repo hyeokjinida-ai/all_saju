@@ -17,7 +17,7 @@ import { CATEGORIES, LENGTHS, emptyForm, priceIssue, type ProductForm as FormVal
 import { ProductCard } from "@/components/home/ProductCard";
 import { HeroLettering, RankRibbon } from "@/components/home/HeroLettering";
 import type { HomeProduct } from "@/lib/home-data";
-import { homeArt, shortDesc } from "@/config/home";
+import { homeArt, shortDesc, LETTERING } from "@/config/home";
 
 type Slot = "hero" | "big" | "row";
 
@@ -58,6 +58,7 @@ export function ProductForm({
         hero: f.art?.hero?.url || undefined,
         big: f.art?.big?.url || undefined,
         row: f.art?.row?.url || undefined,
+        lettering: f.art?.lettering?.url || undefined,
       },
     }),
     [f, id],
@@ -316,6 +317,7 @@ export function ProductForm({
                 character={preview.characterName ?? ""}
                 title={preview.cardTitle || preview.name}
                 tagline={preview.tagline || shortDesc(preview.description)}
+                lettering={preview.art?.lettering ?? LETTERING[preview.slug]}
               />
               {f.hero_rank ? <RankRibbon rank={f.hero_rank} /> : null}
             </div>

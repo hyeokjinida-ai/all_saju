@@ -10,11 +10,26 @@ export type RowKey = "love" | "sinjeom" | "wealth" | "life" | "family" | "career
 export const homeArt = (slug: string, slot: "hero" | "big" | "row") =>
   `/home/${slug}-${slot}.webp`;
 
+/**
+ * 히어로 제목 레터링 그림 — public/home/lettering/<slug>.png
+ *
+ * ChatGPT 웹에서 표면을 입혀 온 PNG 를 이 경로에 두면 히어로가 글자 대신 그 그림을 쓴다.
+ * 파일이 없으면 폴백(Black Han Sans 로 그린 글자)이 그대로 선다 — 그래서 한 상품씩 갈아끼울 수 있다.
+ * ⚠ 있는 것만 여기 등록한다. 없는 경로를 넘기면 카드에 깨진 그림 자리가 생긴다.
+ */
+export const LETTERING: Record<string, string> = {
+  // "sangun-sinjeom": "/home/lettering/sangun-sinjeom.png",
+};
+
 /** 히어로 순서(TOP 1·2·3) + 레터링에 얹을 글자. 없는 상품은 그냥 빠진다. */
 export const HOME_HERO: Record<string, { character: string; title: string; tagline: string }> = {
+  // ⚠ 카드 제목은 **4글자**로 맞춘다. 청월당 카드 제목이 전부 4글자인 게 우연이 아니다
+  //    (정통사주·재회비책·연애비책·신점사주) — 4글자여야 카드 폭 안에서 글자가 커질 수 있고,
+  //    커져야 그 줄이 카드의 정점이 된다. 상품 전체 이름(박수무당 사주)은 캐릭터 줄과
+  //    아래 부제, 그리고 상세 페이지가 이미 말하고 있다.
   "sangun-sinjeom": {
     character: "얼굴 없는 박수 · 산군",
-    title: "박수무당 사주",
+    title: "박수무당",
     tagline: "돌려 말하지 않고 고한다",
   },
   "inyeon-saju": {

@@ -26,7 +26,7 @@ export type HomeProduct = {
   characterName: string | null;
   cardTitle: string | null;
   tagline: string | null;
-  art: { hero?: string; big?: string; row?: string } | null;
+  art: { hero?: string; big?: string; row?: string; lettering?: string } | null;
 };
 
 export type HomeReview = {

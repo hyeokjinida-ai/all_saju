@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HeroLettering, RankRibbon } from "./HeroLettering";
-import { homeArt } from "@/config/home";
+import { homeArt, LETTERING } from "@/config/home";
 import type { HomeProduct } from "@/lib/home-data";
 
 export type HeroSlide = {
@@ -122,7 +122,12 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
                 loading={i === 0 ? "eager" : "lazy"}
                 className="h-full w-full object-cover"
               />
-              <HeroLettering character={s.character} title={s.title} tagline={s.tagline} />
+              <HeroLettering
+                character={s.character}
+                title={s.title}
+                tagline={s.tagline}
+                lettering={s.product.art?.lettering ?? LETTERING[s.product.slug]}
+              />
               <RankRibbon rank={i + 1} />
             </Link>
           </div>

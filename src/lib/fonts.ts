@@ -8,7 +8,7 @@
 //
 // 여기 없는 글씨체(웹툰 말풍선용 12종·송명조)는 일부러 뺐다 — WebtoonCut 이 쓰는 것만
 // 그 자리에서 부른다. 전 방문자에게 12개 패밀리를 미리 안겨줄 이유가 없다.
-import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_Sans_KR, JetBrains_Mono, Ma_Shan_Zheng } from "next/font/google";
+import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_Sans_KR, Black_Han_Sans, JetBrains_Mono, Ma_Shan_Zheng } from "next/font/google";
 import localFont from "next/font/local";
 
 // 제목·대사·본문의 축. 이 프로젝트에서 제일 많이 쓰는 글씨체다.
@@ -56,6 +56,24 @@ export const notoSansKr = Noto_Sans_KR({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-gothic",
+  preload: false,
+});
+
+// 상품 카드 레터링 전용 — **Black Han Sans**.
+//
+// 왜 따로 두나: 카드 제목은 그 카드의 정점 한 줄이라 **글자 자체가 그림**이어야 한다.
+// 처음엔 Noto Sans KR 900 을 `textLength` 로 가로 압축해 썼는데(원본 청월당 서체가 압축체라),
+// 정체 폰트를 눌러 만든 가짜 압축은 「늘린 폰트」 티가 난다 — 형님 「밤티」 판정(2026-08-23).
+// Black Han Sans 는 **처음부터 각지고 꽉 찬 전각 디스플레이체**라 누르지 않아도 그 비례가 나온다.
+// 직녀 「연애예보」 레터링 원본을 만든 글자체와 같다(직녀/가격카드/연애예보_레터링원본.png).
+//
+// ⚠ 최종형은 이 글자체가 아니라 **이 글자체로 뽑은 원본을 ChatGPT 웹에 올려 표면을 입힌 PNG** 다.
+//    PNG 가 들어오면 코드가 자동으로 그걸 쓴다(HeroLettering). 이건 그 전까지의 모습이자 폴백.
+export const blackHanSans = Black_Han_Sans({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-lettering",
   preload: false,
 });
 
@@ -120,6 +138,7 @@ export const fontVariables = [
   nanumMyeongjo.variable,
   notoSerifKr.variable,
   notoSansKr.variable,
+  blackHanSans.variable,
   gapyeongHanseokbong.variable,
   kimjungchul.variable,
   jetbrainsMono.variable,
