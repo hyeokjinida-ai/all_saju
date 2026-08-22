@@ -34,16 +34,19 @@ type Case = {
   concern?: string;
 };
 
+// ⚠ expectAges 는 **세는나이** 기준이다(2026-08-21 정정).
+// 공급사 current_age 가 세는나이라, 결과지도 세는나이로 쓴다 — 여기 기대값도 같은 자로 잰다.
+// 예: 1993-05-15 생 → 2026년 34세 · 2027년 35세.
 const CASES: Case[] = [
   // "박수무당 사주"(포괄 확장) 검증 — 인연 검증과 같은 명식(캐시 재사용). 예상: 인연 68점·TOP3 2026-12/2027-05/2027-06 인용 일치 + 재물 점수·달 인용 일치
   {
-    slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [33, 34, 40, 45],
+    slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [34, 35, 40, 45],
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
   // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
   // 2026-08-17 10장 개편 검증으로 활성화. 산군과 같은 생일이라 명식 캐시를 공유한다(API 0콜).
   {
-    slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [33, 34],
+    slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [34, 35],
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
   // 두 번째 인연 케이스 — 다른 명식으로 10장이 재현되는지(첫 케이스에만 맞춘 게 아닌지) 본다.
@@ -51,7 +54,7 @@ const CASES: Case[] = [
   // 만세력 API 가 죽어 있어도(2026-08-17 새벽 실측: 연결 실패) 샘플을 뽑을 수 있어야 하고,
   // 한도 6,000 도 아낀다. 생일·시각을 캐시와 **정확히** 맞춰야 나이 검사가 거짓말을 안 한다.
   {
-    slug: "inyeon-saju", name: "은비", concern: "지금 만나는 사람과 결혼까지 갈 수 있을까요", expectAges: [35, 36],
+    slug: "inyeon-saju", name: "은비", concern: "지금 만나는 사람과 결혼까지 갈 수 있을까요", expectAges: [37, 38],
     birthInfo: { birthYear: "1990", birthMonth: "5", birthDay: "24", birthHour: "17", birthMinute: "0", calendarType: "양력", gender: "female" },
   },
   // {
@@ -79,7 +82,11 @@ const FAMILY = /자녀|아들|딸|배우자|남편|아내|결혼|미혼|이혼|�
 
 function measure(text: string, expectAges: number[]) {
   const hedges = text.match(HEDGE) ?? [];
-  const ages = [...text.matchAll(/(\d{2})\s*세/g)].map((m) => Number(m[1]));
+  // ⚠ 대운 구간(「27~36세」「37세부터」)과 과거 연도(「2019년(27세)」)는 **정상 표기**다.
+  //   그것까지 세면 오탐이 쏟아져 진짜 오류가 묻힌다(실측: 오탐 9건 속에 진짜 1건).
+  //   그래서 **범위 표기(N~M세)를 먼저 지우고** 나머지 나이만 검사한다.
+  const scrubbed = text.replace(/\d{1,2}\s*~\s*\d{1,2}\s*세/g, "").replace(/\d{4}년\s*\(\s*\d{1,2}\s*세\s*\)/g, "");
+  const ages = [...scrubbed.matchAll(/(\d{2})\s*세/g)].map((m) => Number(m[1]));
   const badAges = ages.filter((a) => a >= 30 && a <= 99 && !expectAges.includes(a));
   const family = text.match(FAMILY) ?? [];
   // 시기 도배 측정: 6월/10월이 몇 챕터(###)에 등장하나

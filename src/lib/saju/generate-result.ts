@@ -56,7 +56,9 @@ function buildArcHint(analysis: SajuAnalysisResponse): string {
   if (!daeun) return "";
   const all = daeun.all_daeun as Array<Record<string, unknown>> | undefined;
   const lines: string[] = [];
-  if (daeun.current_age != null) lines.push(`- 현재 나이: ${daeun.current_age}`);
+  // ⚠ current_age 는 **세는나이**다(실측: 1993-05-15 생 → 34, 같은 날 만나이 33).
+  // 라벨 없이 숫자만 주면 모델이 만나이로 읽어 한 살 많게 적는다 — 반드시 라벨을 붙인다.
+  if (daeun.current_age != null) lines.push(`- 현재 나이: ${daeun.current_age}세(세는나이)`);
   if (Array.isArray(all)) {
     lines.push(
       ...all.map((d) => `- ${d.age_start}~${d.age_end}세 ${d.ganji ?? ""} 대운${d.start_date ? ` (${String(d.start_date).slice(0, 4)}년 시작)` : ""}`),
