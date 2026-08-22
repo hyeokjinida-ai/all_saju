@@ -731,6 +731,13 @@ export function buildInyeonFactsBlock(
   analysis: SajuAnalysisResponse,
   gender: "male" | "female",
   partnerSex?: "male" | "female",
+  /**
+   * 점수 줄의 이름. 결혼사주는 같은 계산을 쓰되 본문에서 「결혼 그릇 점수」라고 부른다.
+   * ⚠ 이 이름이 챕터 지시문과 **글자까지 같아야** 한다 — 「결혼 그릇 점수를 쓰라」고 시켰는데
+   *    블록엔 「인연 그릇 점수」만 있으면 모델은 값이 없다고 판단하고 본문 대신
+   *    「점수를 보내주세요」라는 안내문을 뱉는다(2026-08-21 실측: 결혼 1장이 매번 이렇게 날아갔다).
+   */
+  scoreLabel: string = "인연 그릇 점수",
 ): string {
   const f = computeInyeonFacts(analysis, gender, partnerSex);
   const face = buildPartnerFace(f);
@@ -738,7 +745,7 @@ export function buildInyeonFactsBlock(
   // ⑨ 출력
   const fmt = (r: InyeonRow) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
   const lines = [
-    `- 인연 그릇 점수: ${f.score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
+    `- ${scoreLabel}: ${f.score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
     `- 계산 근거: 짝을 뜻하는 자리 ${f.spouseCount}개 · 눈에 띄는 신호 ${f.dohwaCount ? "도화 있음" : "도화 없음"}${f.hongyeomCount ? "·홍염 있음" : ""} · 배우자 자리 활력 ${f.iljiLevel}/12${iljuHurtNote(f.iljiHurt)}`,
     `- 타고난 끌림 신호: ${[f.dohwaCount ? `도화 ${f.dohwaCount}개` : "", f.hongyeomCount ? `홍염 ${f.hongyeomCount}개` : "", f.hasCheoneul ? "천을귀인" : "", f.hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
     `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}(${f.iljiLevel}/12)` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,

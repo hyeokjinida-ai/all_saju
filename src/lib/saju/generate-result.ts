@@ -85,7 +85,11 @@ async function buildChapterPlan(
 }> {
   const none = { blueprint: null, monthPlan: null, pastBlock: null, prescriptionBlock: null };
   const isSangun = slug === "sangun-sinjeom";
-  if ((!isSangun && slug !== "inyeon-saju") || !rawAnalysis || !keyFacts) return none;
+  // ⚠ 결혼사주도 태운다 — 인연과 **같은 계산**을 쓰는 상품이라 설계도·달 배정표가 똑같이 필요하다.
+  //    여기서 빠뜨렸더니 결과지 1·2·4장이 통째로 사라지고, 모델이 「확정값을 보내주세요」라는
+  //    안내문을 본문에 뱉었다(2026-08-21 실측). 4장이 「결혼하는 해」 — 이 상품의 핵심 장이다.
+  const usesPlan = isSangun || slug === "inyeon-saju" || slug === "marriage-saju";
+  if (!usesPlan || !rawAnalysis || !keyFacts) return none;
   const analysis = rawAnalysis as SajuAnalysisResponse;
   const titles = outlineTitles(slug);
 
@@ -138,6 +142,23 @@ function toBirthInfo(input: SajuInputRow): BirthInfo {
 
 // 결과지 본문이 '실제로 채워졌는지' 판정.
 // generateByChapters 는 전 챕터 실패 시 "## 제목\n\n" 만 반환 → 미완성으로 본다.
+/**
+ * 모델이 본문 대신 **자료를 달라고 되묻는** 장을 골라낸다.
+ *
+ * 챕터 호출은 성공(200)으로 떨어지므로 완성도 카운터는 이걸 성공으로 센다 — 그래서
+ * 「### 4. 결혼하는 해」 자리에 "아래 세 가지만 보내주세요"가 박힌 결과지가 80% 게이트를
+ * 통과해 손님에게 나갈 수 있다(2026-08-21 실측: 결혼사주 1·4장에서 재현).
+ * 값이 실제로 프롬프트에 있어도 모델이 못 찾았다고 판단하면 이 문장이 나오므로,
+ * 프롬프트를 고치는 것과 별개로 **출고 직전에 한 번 더 막는다.**
+ */
+/** 챕터 경계(### 앞 줄바꿈) — 정규식 리터럴을 인라인으로 쓰면 편집 중 깨져서 상수로 뽑았다. */
+const SECTION_SPLIT = new RegExp(String.fromCharCode(10) + "(?=###\s)");
+
+export function looksLikeDataRequest(md: string | null | undefined): boolean {
+  if (!md) return false;
+  return /(보내\s?주세요|보내주시면|값이 오면|자료만 보내|작성할 수 없)/.test(md);
+}
+
 export function hasRealInterpretation(md: string | null | undefined): boolean {
   if (!md) return false;
   const body = md.replace(/^#{1,3}\s.*$/gm, "").trim(); // 헤딩 줄 제거 후 본문만
@@ -200,7 +221,15 @@ function keyFactsFor(slug: string, chart: Chart, input: SajuInputRow): string | 
   // "돈 들어오는 달": 점수·좋은/나쁜 달을 확정값으로 주입(챕터 간 모순 방지)
   if (slug === "wealth-saju") extra.push(buildWealthFactsBlock(analysis));
   // "인연 들어오는 달": 점수·달·해·나이대 확정값 주입
-  if (slug === "inyeon-saju") extra.push(buildInyeonFactsBlock(analysis, input.gender, partnerSex));
+  // ⚠ 결혼사주도 **같은 계산**을 쓴다(크게 바뀌는 해=결혼하는 해, TOP3=서두를 달, shaky=피해야 할 시기).
+  //    여기서 빠뜨렸더니 1장·4장이 통째로 사라지고, 모델이 「확정값을 보내주세요」라는
+  //    안내문을 본문에 그대로 뱉었다(2026-08-21 샘플 실측). 상품의 핵심 장이 날아가는 자리다.
+  if (slug === "inyeon-saju" || slug === "marriage-saju") {
+    // 점수 줄 이름을 상품 화법에 맞춘다 — 지시문과 블록의 **글자가 같아야** 모델이 값을 찾는다.
+    extra.push(
+      buildInyeonFactsBlock(analysis, input.gender, partnerSex, slug === "marriage-saju" ? "결혼 그릇 점수" : "인연 그릇 점수"),
+    );
+  }
   // "박수무당 사주"(포괄 확장): 재물+인연 확정값을 함께 — 총운인데 달·해까지 확언하는 차별화
   if (slug === "sangun-sinjeom") {
     extra.push(buildWealthFactsBlock(analysis), buildInyeonFactsBlock(analysis, input.gender, partnerSex));
@@ -361,8 +390,12 @@ async function buildAndSaveOne(args: {
   const total = llm.totalCount ?? 1;
   const success = llm.successCount ?? (llm.provider ? 1 : 0);
   const minOk = args.allowPartial ? 1 : Math.ceil(total * 0.8);
-  if (!llm.provider || !hasRealInterpretation(llm.text) || success < minOk) {
-    return { ok: false, reason: "llm", detail: `완성도 ${success}/${total}` };
+  // 「자료를 보내주세요」로 끝난 장은 200 으로 떨어져 성공에 섞인다 — 여기서 걷어낸다.
+  const asked = llm.text.split(SECTION_SPLIT).filter((c) => looksLikeDataRequest(c)).length;
+  const realSuccess = Math.max(0, success - asked);
+  if (asked) console.warn(`[generate] 되묻는 장 ${asked}개 발견(${slug}) — 성공에서 제외`);
+  if (!llm.provider || !hasRealInterpretation(llm.text) || realSuccess < minOk) {
+    return { ok: false, reason: "llm", detail: `완성도 ${realSuccess}/${total}${asked ? ` (되묻는 장 ${asked})` : ""}` };
   }
 
   // 저장(멱등 upsert — 미완성 행이 있었다면 덮어쓴다).
