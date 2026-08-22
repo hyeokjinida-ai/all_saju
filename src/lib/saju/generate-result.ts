@@ -12,7 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
-import { buildChapterPrompts, buildExtraQuestionPrompt, outlineTitles } from "@/lib/saju/prompt";
+import { buildChapterPrompts, buildExtraQuestionPrompt, outlineTitles, registerDbStyle } from "@/lib/saju/prompt";
 import {
   buildMonthPlan,
   generateBlueprint,
@@ -299,8 +299,27 @@ export async function generateResultForOrder(
   if ("error" in chart) return { ok: false, reason: "manseryeok", detail: chart.error };
 
   // 구성품 이름(프롬프트 제목용) — 번들 상품 이름이 아니라 각 구성품 이름을 쓴다.
-  const { data: targetProducts } = await service.from("products").select("slug, name").in("slug", targets);
+  const { data: targetProducts } = await service.from("products").select("id, slug, name").in("slug", targets);
   const nameBySlug = new Map((targetProducts ?? []).map((p) => [p.slug, p.name]));
+
+  // 상품 빌더(0011)로 만든 상품은 목차·말투가 DB 에 있다. 만들기 직전에 얹는다 —
+  // 없으면(마이그레이션 전이거나 코드로 만든 상품이면) 조용히 기존 코드 표를 쓴다.
+  try {
+    const ids = (targetProducts ?? []).map((p) => p.id as string);
+    if (ids.length) {
+      const { data: styles } = await service
+        .from("product_styles")
+        .select("product_id, style")
+        .in("product_id", ids);
+      const slugById = new Map((targetProducts ?? []).map((p) => [p.id as string, p.slug as string]));
+      for (const row of styles ?? []) {
+        const slug = slugById.get(row.product_id as string);
+        if (slug) registerDbStyle(slug, row.style);
+      }
+    }
+  } catch {
+    /* product_styles 가 아직 없다 — 코드 표로 간다 */
+  }
 
   // 4. 구성품별 생성 — **병렬**. 순차로 돌리면 결제 후 폴링 창(64초)을 뚫는다(생성 평균 26초).
   const outcomes = await Promise.all(

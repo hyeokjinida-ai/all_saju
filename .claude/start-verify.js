@@ -6,6 +6,11 @@
 //
 // 쓰는 법: `NEXT_DIST_DIR=.next-verify pnpm build` 로 먼저 굽고, 이 파일을 실행.
 const { spawn } = require("node:child_process");
+
+// 검증 전용 값(어드민 비밀번호 등)은 .env.verify.local 에서만 읽는다 — 이 파일은
+// gitignore 대상이고, 진짜 .env.local 을 건드리지 않으므로 같은 폴더의 다른 dev 서버와
+// 섞이지 않는다. 없으면 그냥 넘어간다.
+try { process.loadEnvFile(require("node:path").join(__dirname, "..", ".env.verify.local")); } catch {}
 const path = require("node:path");
 
 const next = path.join(__dirname, "..", "node_modules", "next", "dist", "bin", "next");

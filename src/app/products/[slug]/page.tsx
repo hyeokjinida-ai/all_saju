@@ -135,6 +135,7 @@ export default async function ProductDetailPage({
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let webtoonCuts: WebtoonCutData[] = [];
   let bundles: BundleOption[] = [];
+  let dbPitch: unknown = null;
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
@@ -156,6 +157,14 @@ export default async function ProductDetailPage({
         .select("compare_at_price, is_addon")
         .eq("id", product.id)
         .maybeSingle();
+      // 상품 빌더(0011)로 채운 랜딩 카피 — 없으면(마이그레이션 전이거나 코드 상품이면)
+      // 조용히 null 이 되고 아래에서 PRODUCT_PITCH 코드 표로 내려앉는다.
+      const { data: builder } = await supabase
+        .from("products")
+        .select("pitch")
+        .eq("id", product.id)
+        .maybeSingle();
+      dbPitch = (builder as { pitch?: unknown } | null)?.pitch ?? null;
       // 번들·추가질문권엔 상세 랜딩이 없다 → 없는 페이지로 돌린다.
       if ((upsell as { is_addon?: boolean } | null)?.is_addon) notFound();
       product.compare_at_price = (upsell as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
@@ -212,7 +221,8 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const pitch = PRODUCT_PITCH[product.slug];
+  // 어드민에서 채운 카피가 있으면 그것, 없으면 코드 표(config/product-pitch.ts)
+  const pitch = (dbPitch as typeof PRODUCT_PITCH[string] | null) ?? PRODUCT_PITCH[product.slug];
   const eyebrow = pitch?.eyebrow ?? `命 · ${product.name}`;
   const headline = pitch?.headline ?? [product.name];
   // 전용 웹툰 랜딩 상품(돈/인연/산군)은 템플릿 대신 스토리 컴포넌트로 렌더

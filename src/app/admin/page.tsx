@@ -46,6 +46,15 @@ export default async function AdminHome() {
         </li>
         <li>
           <Link
+            href="/admin/products"
+            className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
+          >
+            <span>상품 관리 <span className="text-mute text-xs">· 추가·가격·홈 카드·결과지 목차</span></span>
+            <span className="text-mute">→</span>
+          </Link>
+        </li>
+        <li>
+          <Link
             href="/admin/webtoon"
             className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
           >

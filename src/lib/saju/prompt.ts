@@ -127,7 +127,36 @@ const INYEON_VOICE = `[인연 결과지 전용 — 아래가 기본 지시의 '4
 // - outline: AI가 따라야 할 섹션 목차(### 소제목). 이게 상품 차별화의 핵심.
 // banmal: 이 상품의 화자가 반말 하대체인가. 추가질문 답변처럼 outline 밖에서 생성되는 글이
 //   말투를 따라가야 할 때 쓴다(voice 문자열을 정규식으로 뒤지는 것보다 안전하다).
-type SlugStyle = { title: string; length: string; outline: string[]; voice?: string; banmal?: boolean };
+export type SlugStyle = { title: string; length: string; outline: string[]; voice?: string; banmal?: boolean };
+
+/**
+ * 상품 빌더(0011)가 DB(product_styles)에 넣어 둔 설계를 이 모듈에 얹는 자리.
+ *
+ * 왜 전역 맵인가: buildChapterPrompts 는 이미 여러 곳에서 slug 하나만 들고 불린다.
+ * 인자를 통째로 바꾸면 호출부를 전부 손봐야 하고, 그러다 한 군데를 놓치면 **그 상품만
+ * 조용히 기본 목차로 나온다**(제일 늦게 발견되는 종류의 사고다). 결과지를 만들기 직전에
+ * 한 번 등록하고, 없으면 예전 그대로 코드 표를 쓴다.
+ */
+const dbStyles = new Map<string, SlugStyle>();
+
+/** 결과지 생성 직전에 호출 — DB 에 설계가 있으면 이 요청 동안 그것을 쓴다. */
+export function registerDbStyle(slug: string, style: unknown) {
+  if (!style || typeof style !== "object") return;
+  const s = style as Partial<SlugStyle>;
+  if (!s.title || !Array.isArray(s.outline) || s.outline.length === 0) return;
+  dbStyles.set(slug, {
+    title: s.title,
+    length: s.length ?? "보통(각 장 500자 내외)",
+    outline: s.outline,
+    voice: s.voice,
+    banmal: s.banmal,
+  });
+}
+
+/** 이 상품의 설계 — DB 것이 있으면 그것, 없으면 코드 표, 그것도 없으면 기본 풀이 */
+function resolveStyle(slug: string): SlugStyle {
+  return dbStyles.get(slug) ?? STYLE_BY_SLUG[slug] ?? STYLE_BY_SLUG["basic-saju"];
+}
 
 const STYLE_BY_SLUG: Record<string, SlugStyle> = {
   // 오늘의 운세 ₩4,900 — 가볍게 매일
@@ -385,7 +414,7 @@ function stripTimingSections(saju: string): string {
 /** 상품의 챕터 짧은 제목 목록 — 설계도(blueprint)와 달 배정표가 장을 찾을 때 쓴다.
  *  buildChapterPrompts 의 heading 과 같은 규칙(★ 제거 + " — " 앞부분)으로 만든다. */
 export function outlineTitles(productSlug: string): string[] {
-  const style = STYLE_BY_SLUG[productSlug] ?? STYLE_BY_SLUG["basic-saju"];
+  const style = resolveStyle(productSlug);
   return style.outline.map((s) => s.replace(/^★\s*/, "").split(" — ")[0]);
 }
 
@@ -393,7 +422,7 @@ export function buildChapterPrompts(input: PromptInput): {
   title: string;
   chapters: ChapterPrompt[];
 } {
-  const style = STYLE_BY_SLUG[input.productSlug] ?? STYLE_BY_SLUG["basic-saju"];
+  const style = resolveStyle(input.productSlug);
   const m = input.myeongsik;
   const pillar = (p: { cheongan: string; jiji: string } | null) =>
     p ? `${p.cheongan}${p.jiji}` : "(시 미상)";
@@ -555,7 +584,8 @@ export function buildExtraQuestionPrompt(input: {
   gender: "male" | "female";
   keyFacts?: string | null;
 }): { system: string; user: string } {
-  const style = STYLE_BY_SLUG[input.parentSlug] ?? STYLE_BY_SLUG["basic-saju"];
+  // 추가질문 답변도 부모 결과지와 같은 목소리여야 한다 — DB 설계를 쓴 상품이면 그 말투로.
+  const style = resolveStyle(input.parentSlug);
   const m = input.myeongsik;
   const pillar = (p: { cheongan: string; jiji: string } | null) => (p ? `${p.cheongan}${p.jiji}` : "(시 미상)");
 

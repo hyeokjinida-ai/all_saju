@@ -35,6 +35,22 @@ type ProductRow = {
   compare_at_price: number | null;
   bundle_slugs: string[] | null;
   is_addon: boolean;
+  // 0011 상품 빌더 — 홈 카드·랜딩 카피를 어드민에서 채운다. 비면 코드 폴백이 답한다.
+  category: string | null;
+  character_name: string | null;
+  card_title: string | null;
+  tagline: string | null;
+  hero_rank: number | null;
+  art: Json;
+  pitch: Json | null;
+  updated_at: string;
+};
+
+/** 결과지 설계(목차·말투) — products 가 아니라 별도 테이블. public read 를 피하려고 갈랐다. */
+type ProductStyleRow = {
+  product_id: string;
+  style: Json;
+  updated_at: string;
 };
 
 // 웹툰 페이지 — 상품별 컷 구성(그림 경로 + 말풍선). 어드민에서 저장하고 렌더러가 읽는다.
@@ -179,8 +195,22 @@ export type Database = {
           compare_at_price?: number | null;
           bundle_slugs?: string[] | null;
           is_addon?: boolean;
+          category?: string | null;
+          character_name?: string | null;
+          card_title?: string | null;
+          tagline?: string | null;
+          hero_rank?: number | null;
+          art?: Json;
+          pitch?: Json | null;
+          updated_at?: string;
         };
         Update: Partial<ProductRow>;
+        Relationships: [];
+      };
+      product_styles: {
+        Row: ProductStyleRow;
+        Insert: { product_id: string; style: Json; updated_at?: string };
+        Update: Partial<ProductStyleRow>;
         Relationships: [];
       };
       orders: {
