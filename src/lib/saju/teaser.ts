@@ -7,7 +7,7 @@
 //    값 자체가 그 사람 명식에서 나온 거라 "맞혔다" 효과는 그대로 난다.
 //  - 크게 바뀌는 해 = 유료 결과지가 쓰는 computeInyeonFacts 와 **같은 계산**을 인용한다.
 //    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
-import { computeInyeonFacts, computeDaeunTimeline, type SajuAnalysisResponse } from "./saju-api";
+import { computeInyeonFacts, computeDaeunTimeline, type SajuAnalysisResponse, type InyeonFacts } from "./saju-api";
 import { buildPartnerFace, type PartnerFace } from "./partner-face";
 
 export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
@@ -50,6 +50,37 @@ export type SajuTeaser = {
  *   ◎ 자리가 생기는 달 = 위 둘이 아니면서 짝·합·도화·귀인 신호가 붙은 달
  *   ○ 평          = 나머지
  */
+/**
+ * 열두 달 등급 — **티저와 결과지가 같은 자를 쓰게 하는 유일한 지점.**
+ *
+ * 여기가 갈리면 티저가 ● 라고 한 달을 결과지가 안 짚는 사고가 난다. 그 순간 신뢰가 끝나므로
+ * 등급 판정은 이 함수 밖에서 다시 쓰지 않는다(2026-08-22 결과지 신설하며 인라인에서 추출).
+ *   ● 만나는 달        = top3 (결과지 '만나는 달 세 개'와 같은 세 달)
+ *   △ 조심할 달        = shaky, 또는 만세력 종합판정이 대흉인 달
+ *   ◎ 자리가 생기는 달 = 위 둘이 아니면서 짝·합·도화·귀인 신호가 붙은 달
+ *   ○ 평               = 나머지
+ */
+export function gradeMonths(
+  facts: InyeonFacts,
+): { year: number; month: number; grade: "●" | "◎" | "○" | "△" }[] {
+  const topKeys = new Set(facts.top3.map((r) => `${r.year}-${r.month}`));
+  const shakyKeys = new Set(facts.shaky.map((r) => `${r.year}-${r.month}`));
+  // 긍정 인연 신호만 센다. jijiRel 의 부정 태그(배우자 자리 흔들림·마음이 어긋나기 쉬움·긁히기 쉬움)는
+  // 여기 안 걸리게 둔다 — 걸리면 조심할 달이 자리 생기는 달로 둔갑한다.
+  const SIGNAL = /짝|끌림|합|같은 결|도화|매력|귀인/;
+  return facts.months.map((r) => {
+    const key = `${r.year}-${r.month}`;
+    const grade: "●" | "◎" | "○" | "△" = topKeys.has(key)
+      ? "●"
+      : shakyKeys.has(key) || r.verdict === "대흉"
+        ? "△"
+        : r.tags.some((t) => SIGNAL.test(t))
+          ? "◎"
+          : "○";
+    return { year: r.year, month: r.month, grade };
+  });
+}
+
 export type InyeonTeaser = {
   /** 앞으로 열두 달(시간순). 만세력 월운 창이 정확히 12개다 — 3년치가 아니다. */
   calendar: { year: number; month: number; grade: "●" | "◎" | "○" | "△"; revealed: boolean }[];
@@ -407,33 +438,17 @@ export function buildTeaser(
         }
       : null;
 
-  // ⑤ 직녀 전용 — 열두 달 달력. 등급은 결과지가 쓰는 분류를 그대로 옮긴다(위 InyeonTeaser 주석 참고).
+  // ⑤ 직녀 전용 — 열두 달 달력. 등급은 gradeMonths 한 곳에서만 나온다(티저·결과지 공용).
   const inyeon: InyeonTeaser | null = (() => {
     if (facts.months.length === 0) return null;
     const topKeys = new Set(facts.top3.map((r) => `${r.year}-${r.month}`));
-    const shakyKeys = new Set(facts.shaky.map((r) => `${r.year}-${r.month}`));
-    // 긍정 인연 신호만 센다. jijiRel 의 부정 태그(배우자 자리 흔들림·마음이 어긋나기 쉬움·긁히기 쉬움)는
-    // 여기 안 걸리게 둔다 — 걸리면 조심할 달이 자리 생기는 달로 둔갑한다.
-    const SIGNAL = /짝|끌림|합|같은 결|도화|매력|귀인/;
     // ● 중 가장 가까운 달 하나만 이름을 준다 — 미끼 하나가 열려 있어야 나머지 잠금이 미끼로 읽힌다.
     const opens = facts.months.filter((r) => topKeys.has(`${r.year}-${r.month}`));
     const nearest = opens[0] ? { year: opens[0].year, month: opens[0].month } : null;
-    const calendar = facts.months.map((r) => {
-      const key = `${r.year}-${r.month}`;
-      const grade: "●" | "◎" | "○" | "△" = topKeys.has(key)
-        ? "●"
-        : shakyKeys.has(key) || r.verdict === "대흉"
-          ? "△"
-          : r.tags.some((t) => SIGNAL.test(t))
-            ? "◎"
-            : "○";
-      return {
-        year: r.year,
-        month: r.month,
-        grade,
-        revealed: !!nearest && r.year === nearest.year && r.month === nearest.month,
-      };
-    });
+    const calendar = gradeMonths(facts).map((g) => ({
+      ...g,
+      revealed: !!nearest && g.year === nearest.year && g.month === nearest.month,
+    }));
     // 공개하는 한 달만 서술을 싣는다(청월당 「연월 + 인연 성격」 목록의 우리 판).
     const openList = opens
       .filter((r) => !!nearest && r.year === nearest.year && r.month === nearest.month)

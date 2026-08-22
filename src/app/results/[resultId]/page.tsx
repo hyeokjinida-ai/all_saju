@@ -6,6 +6,7 @@ import { EXTRA_QUESTION_SLUG } from "@/lib/saju/generate-result";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
 import { SangunResult } from "@/components/saju/SangunResult";
+import { JiknyeoResult } from "@/components/saju/JiknyeoResult";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildResultView } from "@/lib/saju/result-view";
@@ -151,6 +152,10 @@ export default async function ResultPage({
   // 산군은 페이지 바탕까지 검정이어야 한다 — 결과지 판(#0a0908)만 검게 하고 페이지가 보라면
   // 검은 판이 보라 위에 떠 있는 이물감이 남는다. 위쪽 촛불빛만 살짝 남긴 어둠으로 깐다.
   const isSangun = slug === "sangun-sinjeom";
+  // 직녀(연애예보·결혼예보) — 산군처럼 **전용 결과지**로 간다.
+  // 공용 템플릿은 보라 세계관에 재물·직업·건강까지 실어서, 밤하늘 티저에서 넘어온 손님에게
+  // 다른 상품처럼 보였다(안 판 것을 보여주면 상품이 흐려진다).
+  const isJiknyeo = slug === "inyeon-saju" || slug === "marriage-saju";
 
   return (
     <div
@@ -160,7 +165,10 @@ export default async function ResultPage({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        background: isSangun
+        background: isJiknyeo
+          ? "radial-gradient(ellipse 120% 50% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%)," +
+            "linear-gradient(180deg,#0D0B1C 0%,#12112A 46%,#0B0F1A 100%)"
+          : isSangun
           ? "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)"
           : "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
         padding: "30px 12px 64px",
@@ -187,8 +195,10 @@ export default async function ResultPage({
                       : isSangun
                         ? "rgba(232,201,106,0.22)"
                         : "rgba(150,90,255,0.28)",
-                    color: active ? (isSangun ? "var(--gold-bright, #e8c96a)" : "#c9a8ff") : isSangun ? "rgba(232,201,106,0.55)" : "#9a8cd0",
-                    background: active ? (isSangun ? "rgba(232,201,106,0.08)" : "rgba(150,90,255,0.12)") : "transparent",
+                    color: active
+                      ? isSangun ? "var(--gold-bright, #e8c96a)" : isJiknyeo ? "#d9c7e8" : "#c9a8ff"
+                      : isSangun ? "rgba(232,201,106,0.55)" : isJiknyeo ? "rgba(217,199,232,0.55)" : "#9a8cd0",
+                    background: active ? (isSangun ? "rgba(232,201,106,0.08)" : isJiknyeo ? "rgba(199,176,236,0.12)" : "rgba(150,90,255,0.12)") : "transparent",
                   }}
                 >
                   {nameBySlug.get(s.product_slug) ?? "풀이"}
@@ -198,7 +208,26 @@ export default async function ResultPage({
           </nav>
         )}
 
-        {isSangun ? (
+        {isJiknyeo ? (
+          /* 직녀 전용 조판 — 티저에서 잠근 12칸 달력을 여기서 전부 연다.
+             등급은 gradeMonths 한 곳에서만 나와 티저와 절대 어긋나지 않는다. */
+          <JiknyeoResult
+            view={view}
+            markdown={result.interpretation_md}
+            name={savedInput?.name ?? null}
+            chartRows={rawAnalysis ? buildChartRows(rawAnalysis) : []}
+            inyeon={
+              rawAnalysis
+                ? computeInyeonFacts(
+                    rawAnalysis,
+                    (savedInput?.gender as "male" | "female" | null) ?? "female",
+                    parseProfileTags(savedInput?.concerns ?? []).partnerSex,
+                  )
+                : null
+            }
+            isMarriage={slug === "marriage-saju"}
+          />
+        ) : isSangun ? (
           /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
              달력 표의 값은 프롬프트에 들어간 확정값과 같은 계산에서 온다(본문과 표가 어긋나면 끝). */
           <SangunResult
@@ -235,7 +264,7 @@ export default async function ResultPage({
           </>
         )}
 
-        <p className="mt-5 text-center" style={{ fontSize: 11, color: isSangun ? "rgba(232,201,106,0.42)" : "#9a8cd0" }}>
+        <p className="mt-5 text-center" style={{ fontSize: 11, color: isSangun ? "rgba(232,201,106,0.42)" : isJiknyeo ? "rgba(217,199,232,0.45)" : "#9a8cd0" }}>
           적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
         </p>
 
