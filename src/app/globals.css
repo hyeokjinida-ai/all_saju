@@ -133,6 +133,10 @@
     --gold-pale:  rgba(232, 201, 106, 0.13);
     --gold-line:  rgba(232, 201, 106, 0.30);
 
+    /* 이 세계관의 밤 — 스크림·먹번짐이 문다. 값 출처: SangunWebtoon INK_BG(#0a0b0f→#171017) */
+    --night-edge: #070609;  /* 컷 스크림 (SangunWebtoon 오버레이 실측 rgba(7,6,9)) */
+    --night:      #0a0b0f;
+
     /* 선택 상태 배경 — 보라 대신 주사 */
     --violet-pale: rgba(143, 43, 30, 0.14);
     --violet-text: #e8c96a;
@@ -152,6 +156,10 @@
     --gold-soft:   #b9a6cf;
     --gold-pale:  rgba(207, 214, 230, 0.13);
     --gold-line:  rgba(207, 214, 230, 0.28);
+
+    /* 이 세계관의 밤 — 값 출처: jiknyeo-ui INK(#0b0f1a→#141026) */
+    --night-edge: #0b0f1a;
+    --night:      #141026;
 
     /* 선택 상태 배경 — 달빛 */
     --violet-pale: rgba(217, 199, 232, 0.14);
@@ -174,6 +182,10 @@
     --gold-soft:   #c9a227;
     --gold-pale:  rgba(232, 201, 106, 0.13);
     --gold-line:  rgba(201, 162, 39, 0.28);
+
+    /* 이 세계관의 밤 — 값 출처: WealthWebtoon INK_BG(#0b0f1a→#121a2c) */
+    --night-edge: #0b0f1a;
+    --night:      #121a2c;
 
     /* 선택 상태 배경 — 주홍 */
     --violet-pale: rgba(164, 85, 44, 0.14);
@@ -331,6 +343,10 @@
     writing-mode: vertical-rl;
     text-orientation: upright;
   }
+
+  /* 가로 스크롤러의 스크롤바 감추기 (홈 카드 행·히어로) */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
 
 /* ── 명운록 컴포넌트 ──────────────────────────────────────── */
