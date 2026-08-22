@@ -33,26 +33,45 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
     if (!track) return;
     const child = track.children[i] as HTMLElement | undefined;
     if (!child) return;
-    track.scrollTo({ left: child.offsetLeft - track.offsetLeft, behavior: "smooth" });
+    // 슬라이드를 **가운데** 맞추는 값(snap-center 가 결국 앉는 자리와 같다).
+    // 그냥 offsetLeft 만 쓰면 좌우 여백(px-2)만큼 어긋난다.
+    const to = child.offsetLeft - track.offsetLeft - (track.clientWidth - child.offsetWidth) / 2;
+
+    const from = track.scrollLeft;
+    track.scrollTo({ left: to, behavior: "smooth" });
+
+    // ⚠ behavior:"smooth" 는 합성기(compositor)가 굴린다 — 탭이 뒤에 있거나 화면을 안 그리는
+    //    상황에서는 **한 픽셀도 안 움직인다**(실측 2026-08-23: 1.1초 뒤 scrollLeft 0 그대로,
+    //    snap 을 꺼도·scrollIntoView 로 바꿔도 같았다). 그대로 두면 점을 눌러도, 자동 넘김이
+    //    와도 첫 장에 갇힌다. 그래서 확인하고, 안 갔으면 그냥 옮긴다.
+    //    ⚠ 부드럽게 가고 있는 중이면 끊지 않는다 — 움직임이 시작됐는지로 가른다.
+    window.setTimeout(() => {
+      const t = trackRef.current;
+      if (!t || Math.abs(t.scrollLeft - to) <= 4) return;
+      if (Math.abs(t.scrollLeft - from) < 2) {
+        t.scrollLeft = to; // 시작도 안 했다 = smooth 가 안 도는 환경
+        return;
+      }
+      window.setTimeout(() => {
+        const t2 = trackRef.current;
+        if (t2 && Math.abs(t2.scrollLeft - to) > 4) t2.scrollLeft = to;
+      }, 400);
+    }, 420);
   }, []);
 
-  // 어느 장이 보이는지 — 스크롤 위치에서 직접 계산(IntersectionObserver 보다 스냅과 잘 맞는다)
+  // 어느 장이 보이는지 — 스크롤 위치에서 직접 계산(IntersectionObserver 보다 스냅과 잘 맞는다).
+  // ⚠ 여기서 requestAnimationFrame 으로 미루면 안 된다: 탭이 뒤에 있으면 rAF 가 멈춰
+  //    점 표시가 영영 첫 장에 붙어 있는다(실측 2026-08-23, 배경 탭에서 재현).
+  //    나눗셈 한 번이라 스크롤 이벤트에서 바로 계산해도 싸다.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    let raf = 0;
     const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const w = (track.children[0] as HTMLElement | undefined)?.offsetWidth ?? 1;
-        setActive(Math.round(track.scrollLeft / w));
-      });
+      const w = (track.children[0] as HTMLElement | undefined)?.offsetWidth ?? 1;
+      setActive(Math.round(track.scrollLeft / w));
     };
     track.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      track.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-    };
+    return () => track.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -118,6 +137,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
               type="button"
               onClick={() => {
                 paused.current = true;
+                setActive(i); // 스크롤이 끝나기 전에 점부터 반응하게
                 goTo(i);
               }}
               aria-label={`${i + 1}번째 소개로`}
