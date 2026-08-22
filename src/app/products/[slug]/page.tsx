@@ -118,10 +118,10 @@ export default async function ProductDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string; view?: string; demo?: string }>;
+  searchParams: Promise<{ c?: string; view?: string; demo?: string; from?: string }>;
 }) {
   const { slug } = await params;
-  const { c: concernPreset, view, demo: demoParam } = await searchParams;
+  const { c: concernPreset, view, demo: demoParam, from } = await searchParams;
 
   // `?demo=` — 입력 10단계를 건너뛰고 결제 전 티저로 바로 들어간다(화면 확인용).
   //   ?demo=1              기본 표본(1994-06-01 여, 시각 모름)
@@ -354,7 +354,9 @@ export default async function ProductDetailPage({
         // 직녀: 산군과 같은 풀스크린 스테이지. 랜딩은 웹툰 한 편이고 오퍼는 뒤로 뺀다
         // (청월당 캐릭터 랜딩 두 편 판독의 결론). 그림은 전부 슬롯이라 0장이어도 성립한다.
         <JiknyeoStory
-          initialStage={demo ? "input" : undefined}
+          // `?from=jiknyeo` — 스크롤 랜딩에서 설화를 이미 본 손님이다.
+          // 게이트·스토리를 다시 태우면 j3·w1·w2·w4·w7 을 두 번 보여주는 꼴이라 곧장 입력으로 보낸다.
+          initialStage={demo || from === "jiknyeo" ? "input" : undefined}
           assets={jiknyeoAssets}
           wizard={
             <SajuWizard

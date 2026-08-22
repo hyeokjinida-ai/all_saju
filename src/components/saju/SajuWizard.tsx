@@ -29,6 +29,7 @@ import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, Com
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
 import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
+import { MoonGrid, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
 import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
@@ -2529,6 +2530,16 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
   const { ref, inView } = useInView<HTMLDivElement>();
   return (
     <div className="mt-8">
+      {/* 12칸 예보 격자 — 열두 달 등급을 **하나도 가리지 않고** 편다.
+          2026-08-18 에 격자를 버렸다가 2026-08-22 되살린 자리다(이유는 MoonGrid 주석 참조).
+          아래 연월 리스트와 겹치지 않는다 — 격자는 "계산을 다 보여줬다"는 증거고,
+          리스트는 "그중 하나만 열어준다"는 잠금이다. 둘이 붙어야 「다 보여줬는데 못 읽는」이 된다. */}
+      <div className="mb-8">
+        <MoonGrid
+          months={data.calendar.map((c) => ({ m: `${c.month}월`, p: GRADE_TO_PHASE[c.grade] ?? "cres" }))}
+        />
+      </div>
+
       <div ref={ref} className="text-center">
         <T>앞으로 열두 달,</T>
         <div

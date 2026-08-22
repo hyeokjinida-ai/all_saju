@@ -4,7 +4,14 @@ import type { AssetMap, SlotId } from "@/lib/jiknyeo-assets";
 import { SLOTS } from "@/lib/jiknyeo-assets";
 import { ForecastBoard, ChartEvidence } from "@/components/products/JiknyeoForecast";
 
-// 직녀 광고 전용 랜딩 (/jiknyeo · noindex · 사이트맵 제외 · 어디에도 링크하지 않는다).
+// 직녀 스크롤 랜딩 (/jiknyeo · noindex · 사이트맵 제외 · 어디에도 링크하지 않는다).
+//
+// ⚠ 2026-08-22 역할 변경: **콜드 광고 착지는 여기가 아니다.**
+//   착지는 몰입형 `/products/inyeon-saju`(게이트→설화→입력, 산군과 같은 구조)로 확정했다.
+//   착지 페이지의 일은 파는 게 아니라 **입력 시작까지 가장 적게 잃고 데려가는 것**인데,
+//   이 페이지는 7,700px 스크롤에 페이지 전환이 한 번 더 있어 입력이 가장 멀다.
+//   → 이 페이지는 **리타겟 전용**(한 번 튕긴 손님에겐 길게 파는 게 맞다).
+//   CTA 의 `?from=jiknyeo` 는 몰입형에서 게이트·설화를 건너뛰게 한다 — 같은 컷을 두 번 보여주지 않으려고.
 //
 // 카피는 `직녀/티저_12블록_전문.md` 를 그대로 화면으로 옮긴 것이다. 문구를 여기서 새로 짓지 않는다 —
 // 고칠 일이 생기면 그 문서를 먼저 고치고 옮겨 온다(두 곳이 갈리면 나중에 뭐가 맞는지 아무도 모른다).

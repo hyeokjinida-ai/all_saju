@@ -114,6 +114,45 @@ const SAMPLE: { m: string; p: Phase }[] = [
   { m: "5월", p: "half" }, { m: "6월", p: "cloud" }, { m: "7월", p: "cres" }, { m: "8월", p: "full" },
 ];
 
+/** 만세력 등급(●◎○△) → 달 위상. 등급 기준은 teaser.ts 한 곳에만 있고 여기선 표시만 옮긴다. */
+export const GRADE_TO_PHASE: Record<string, Phase> = { "●": "full", "◎": "half", "○": "cres", "△": "cloud" };
+
+/**
+ * 12칸 예보 격자 — 판 없이 쓴다(티저처럼 이미 달빛 판 안인 자리용).
+ *
+ * ⚠ 2026-08-18 에 격자를 한 번 버렸던 이력이 있다. 이유는 두 개였는데 지금은 둘 다 해소됐다:
+ *   ① 「전부 원본(청월당) 그대로」 확정 → 2026-08-22 「따라한 티 지우기」로 형님이 방향을 바꿈
+ *   ② 375px 에서 칸이 좁아 달 이름이 감김 → **칸에서 등급 글자를 빼고 아이콘만** 두어 해결.
+ *      등급 이름은 아래 범례가 한 번만 설명한다(칸마다 반복하면 좁아지고 시끄럽다).
+ */
+export function MoonGrid({ months }: { months: { m: string; p: Phase }[] }) {
+  return (
+    <>
+      <div className="grid grid-cols-4 gap-1.5">
+        {months.map(({ m, p }) => {
+          const big = p === "full";
+          return (
+            <div key={m} className="rounded-[9px] py-2 text-center"
+              style={{ background: "var(--gold-pale)", border: `1px solid ${big ? "var(--gold-bright)" : "var(--gold-line)"}`,
+                       boxShadow: big ? "0 0 0 2px rgba(107,76,154,.14)" : undefined }}>
+              <p className="text-[12px] font-bold" style={{ color: big ? "var(--gold-bright)" : "var(--bone-faint)" }}>{m}</p>
+              <div className="mt-1 flex justify-center"><Moon phase={p} size={30} /></div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5">
+        {([["full","크게 열리는 달"],["half","자리가 생기는 달"],["cres","평"],["cloud","결이 엉키는 달"]] as const).map(([p,label]) => (
+          <div key={p} className="flex items-center gap-1.5">
+            <Moon phase={p} size={18} />
+            <span className="text-[11px]" style={{ color: "var(--bone-soft)" }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Phase }[] }) {
   return (
     <div className="px-4 py-6">
@@ -288,3 +327,4 @@ export function ChartEvidence() {
 }
 
 export { SILVER, MOON, BONE };
+export type { Phase };
