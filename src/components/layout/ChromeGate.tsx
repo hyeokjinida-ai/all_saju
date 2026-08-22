@@ -7,6 +7,9 @@ import type { ReactNode } from "react";
 
 const isBare = (p: string) =>
   p === "/" ||
+  // 전체 풀이 목록 — 홈과 같은 검정 앱셸(HomeShell)을 자체적으로 쓴다.
+  // ⚠ `/products/<slug>` 상세는 여기 해당 없음(아래 개별 규칙 유지).
+  p === "/products" ||
   p.startsWith("/funnel") ||
   p.startsWith("/start") ||
   p.startsWith("/results") ||
