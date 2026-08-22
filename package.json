@@ -13,7 +13,8 @@
     "measure:teaser": "tsx scripts/measure-teaser.ts",
     "compare:models": "tsx scripts/compare-models.ts",
     "art:home": "tsx scripts/make-home-art.ts",
-    "art:lettering": "tsx scripts/make-lettering.ts"
+    "art:lettering": "tsx scripts/make-lettering.ts",
+    "art:cutout": "tsx scripts/cutout-lettering.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",

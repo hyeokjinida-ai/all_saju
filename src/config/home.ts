@@ -11,14 +11,16 @@ export const homeArt = (slug: string, slot: "hero" | "big" | "row") =>
   `/home/${slug}-${slot}.webp`;
 
 /**
- * 히어로 제목 레터링 그림 — public/home/lettering/<slug>.png
+ * 히어로 제목 레터링 그림 — public/home/lettering/<slug>.webp
  *
  * ChatGPT 웹에서 표면을 입혀 온 PNG 를 이 경로에 두면 히어로가 글자 대신 그 그림을 쓴다.
  * 파일이 없으면 폴백(Black Han Sans 로 그린 글자)이 그대로 선다 — 그래서 한 상품씩 갈아끼울 수 있다.
  * ⚠ 있는 것만 여기 등록한다. 없는 경로를 넘기면 카드에 깨진 그림 자리가 생긴다.
  */
 export const LETTERING: Record<string, string> = {
-  // "sangun-sinjeom": "/home/lettering/sangun-sinjeom.png",
+  "sangun-sinjeom": "/home/lettering/sangun-sinjeom.webp",
+  "inyeon-saju": "/home/lettering/inyeon-saju.webp",
+  // "marriage-saju": 아직 — 뽑으면 여기 한 줄 추가하면 카드가 바로 쓴다
 };
 
 /** 히어로 순서(TOP 1·2·3) + 레터링에 얹을 글자. 없는 상품은 그냥 빠진다. */
