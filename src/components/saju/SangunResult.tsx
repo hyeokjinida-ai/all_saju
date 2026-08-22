@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import { markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
 import { ResultCrossSell } from "./ResultCrossSell";
+import { ResultReviewCTA } from "./ResultReviewCTA";
 import { PillarChart } from "./PillarChart";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
@@ -344,6 +345,7 @@ export function SangunResult({
   wealthYears,
   daeunTimeline,
   prescription,
+  reviewOrderId = null,
 }: {
   view: ResultView;
   markdown: string;
@@ -358,6 +360,8 @@ export function SangunResult({
   daeunTimeline?: DaeunRow[] | null;
   /** 용신 처방 — '산군의 처방' 장 머리(computePrescription) */
   prescription?: Prescription | null;
+  /** 후기 자격이 있을 때만(로그인 회원 주문). 게스트는 null */
+  reviewOrderId?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
@@ -520,6 +524,9 @@ export function SangunResult({
           say="여기까지가 네 장부다. 적어 준 달이 오거든 다시 열어봐라."
           pos="center 45%"
         />
+
+        {/* 예고해 둔 자리 — 맺음 컷 바로 아래. 낙관을 찍고 나서 묻는 게 순서다 */}
+        {reviewOrderId && <ResultReviewCTA orderId={reviewOrderId} tone="ink" />}
       </div>
     </div>
   );

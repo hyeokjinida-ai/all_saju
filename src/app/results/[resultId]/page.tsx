@@ -226,6 +226,7 @@ export default async function ResultPage({
                 : null
             }
             isMarriage={slug === "marriage-saju"}
+            reviewOrderId={ownerId ? result.order_id : null}
           />
         ) : isSangun ? (
           /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
@@ -248,6 +249,7 @@ export default async function ResultPage({
             wealthYears={rawAnalysis ? computeWealthYears(rawAnalysis) : null}
             daeunTimeline={rawAnalysis ? computeDaeunTimeline(rawAnalysis) : null}
             prescription={rawAnalysis ? computePrescription(rawAnalysis) : null}
+            reviewOrderId={ownerId ? result.order_id : null}
           />
         ) : (
           <>

@@ -82,6 +82,8 @@ export default async function DevSangunResultPage() {
           wealthYears={computeWealthYears(analysis)}
           daeunTimeline={computeDaeunTimeline(analysis)}
           prescription={computePrescription(analysis)}
+          // dev 확인용 더미 — 운영은 ownerId 있을 때만 값이 온다
+          reviewOrderId="00000000-0000-0000-0000-000000000000"
         />
       </div>
     </div>

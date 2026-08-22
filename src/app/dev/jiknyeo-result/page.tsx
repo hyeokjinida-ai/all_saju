@@ -101,6 +101,8 @@ export default async function DevJiknyeoResultPage({
           inyeon={computeInyeonFacts(analysis, "female", "male")}
           chartRows={buildChartRows(analysis)}
           isMarriage={marriage === "1"}
+          // dev 확인용 더미 — 운영은 ownerId 있을 때만 값이 온다
+          reviewOrderId="00000000-0000-0000-0000-000000000000"
         />
       </div>
     </div>
