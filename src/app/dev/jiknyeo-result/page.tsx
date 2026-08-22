@@ -34,10 +34,22 @@ export default async function DevJiknyeoResultPage({
   if (process.env.NODE_ENV !== "development") notFound();
   const { marriage } = await searchParams;
 
-  // 산군 샘플과 같은 명식 캐시를 쓴다 — 조판 확인용이라 어느 명식이든 되지만
-  // 이미 있는 파일을 쓰면 형님이 스크립트를 또 돌릴 필요가 없다.
-  const anPath = path.join(os.tmpdir(), "analysis-sangun-sinjeom.json");
-  const mdPath = path.join(os.tmpdir(), "sample-inyeon-saju-gpt4omini.md");
+  // sample-results.ts 가 tmp 에 남긴 것을 **파일명 규칙으로 찾는다**.
+  // 규칙: 명식 `analysis-<생일>-<성별>-<시>.json` · 본문 `sample-<slug>-<이름>-<모델태그>.md`
+  // 모델 태그가 바뀔 때마다 파일명이 달라지므로 하드코딩하지 않고 최신 것을 집는다.
+  const tmp = os.tmpdir();
+  const anPath = path.join(tmp, "analysis-19930515-female-14.json"); // 지수 · 1993-05-15 14:30 여
+  const pick = (prefix: string) => {
+    const hits = fs
+      .readdirSync(tmp)
+      .filter((f) => f.startsWith(prefix) && f.endsWith(".md"))
+      .map((f) => ({ f, t: fs.statSync(path.join(tmp, f)).mtimeMs }))
+      .sort((a, b) => b.t - a.t);
+    return hits[0] ? path.join(tmp, hits[0].f) : null;
+  };
+  const slug = marriage === "1" ? "marriage-saju" : "inyeon-saju";
+  const found = pick(`sample-${slug}-`);
+  const mdPath = found ?? "";
   if (!fs.existsSync(anPath)) {
     return (
       <p style={{ padding: 40, color: "#fff" }}>
@@ -50,7 +62,7 @@ export default async function DevJiknyeoResultPage({
   const myeongsik = ganjiToMyeongsik(analysis);
   if (!myeongsik) notFound();
 
-  const markdown = fs.existsSync(mdPath)
+  const markdown = mdPath && fs.existsSync(mdPath)
     ? fs.readFileSync(mdPath, "utf8").replace(/^<!--[\s\S]*?-->\s*/, "")
     : FALLBACK_MD;
 
