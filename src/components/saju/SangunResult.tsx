@@ -14,6 +14,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
+import { ResultCrossSell } from "./ResultCrossSell";
 import { PillarChart } from "./PillarChart";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
@@ -499,6 +500,11 @@ export function SangunResult({
                   </div>
                 );
               })}
+              {/* 크로스셀 — 인연 章이 끝나는 자리. 청월당 유료 결과지 실측(2026-08-22)에서
+                  배너가 전부 46~88% 구간에 있었다(끝에 두면 이미 스크롤을 놓은 뒤다).
+                  三 章 직후는 **방금 PartnerCard 로 짝의 얼굴을 본 직후**라,
+                  "그래서 몇 월에 만나나"가 손님 머릿속에 이미 떠 있는 유일한 지점이다. */}
+              {j.no === "三" && <ResultCrossSell to="inyeon" />}
             </div>
           ))
         ) : (

@@ -15,8 +15,10 @@
 // ⚠ 등급은 여기서 계산하지 않는다. `gradeMonths(facts)` 한 곳에서만 나온다 —
 //    티저가 ● 라고 한 달을 결과지가 안 짚으면 그 자리에서 신뢰가 끝난다.
 // ⚠ 재물·직업·건강 영역은 싣지 않는다. 안 판 것을 보여주면 상품이 흐려진다(공용 템플릿의 문제).
+import { Fragment } from "react";
 import { splitChapters } from "./ResultChapters";
 import { ResultBody } from "./ResultBody";
+import { ResultCrossSell } from "./ResultCrossSell";
 import { gradeMonths } from "@/lib/saju/teaser";
 import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
@@ -95,6 +97,52 @@ function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string
       </div>
       {sub ? <p className="mt-1.5 text-center text-[12px]" style={{ color: "#6C6483" }}>{sub}</p> : null}
     </>
+  );
+}
+
+/* ── 章 간지 — 청월당 유료 결과지 실측(2026-08-22)에서 가져온 장치.
+   저쪽은 장마다 750×8,000px 짜리 PNG 앞머리에 「제 N 장」 + 매듭 + 제목을 굽고
+   아래를 본문 배경색으로 페이드시켜 이음매를 지운다. 우리는 이미지를 굽지 않는다 —
+   같은 그림을 DOM 으로 세우면 장 제목이 바뀌어도 다시 만들 필요가 없다.
+   핵심은 두 가지: **번호와 제목 사이의 매듭 구분선**, 그리고 **아래쪽 페이드**. ── */
+function ChapterGate({ no, title }: { no: number; title: string }) {
+  // LLM 이 제목에 "9. " 처럼 번호를 붙여 온다. 간지가 이미 「제 9 장」을 세우므로
+  // 그대로 두면 번호가 두 번 나온다 — 여기서 한 번만 남긴다.
+  const clean = title.replace(/^\s*\d+\s*[.·)]\s*/, "");
+  return (
+    <div
+      style={{
+        position: "relative",
+        margin: "34px 0 0",
+        padding: "32px 20px 30px",
+        borderRadius: "16px 16px 0 0",
+        border: "1px solid rgba(199,176,236,.20)",
+        borderBottom: "none",
+        textAlign: "center",
+        // 끝 색을 본문 카드(rgba(19,20,38,.72))와 같게 둬야 경계선이 사라진다.
+        // 청월당은 이걸 PNG 안에서 페이드로 처리한다 — 우리는 색을 맞춘다.
+        background:
+          "radial-gradient(ellipse 90% 70% at 50% 0%, rgba(120,92,190,.30) 0%, rgba(120,92,190,0) 70%)," +
+          "linear-gradient(180deg, #1B1839 0%, #17142E 58%, rgba(19,20,38,.72) 100%)",
+      }}
+    >
+      <div style={{ fontSize: 12.5, letterSpacing: "0.34em", color: "#A98BD9", fontWeight: 600 }}>
+        제 {no} 장
+      </div>
+
+      {/* 매듭 + 좌우 선 */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, margin: "13px 0 14px" }}>
+        <i style={{ display: "block", width: 46, height: 1, background: "linear-gradient(90deg, rgba(169,139,217,0), rgba(169,139,217,.55))" }} />
+        <svg width="21" height="21" viewBox="0 0 74 74" aria-hidden>
+          <path d="M37 6l7.4 22.6L67 36l-22.6 7.4L37 66l-7.4-22.6L7 36l22.6-7.4z" fill="#A98BD9" opacity=".75" />
+        </svg>
+        <i style={{ display: "block", width: 46, height: 1, background: "linear-gradient(90deg, rgba(169,139,217,.55), rgba(169,139,217,0))" }} />
+      </div>
+
+      <div className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#EFE7FA", lineHeight: 1.4 }}>
+        {clean}
+      </div>
+    </div>
   );
 }
 
@@ -339,14 +387,24 @@ export function JiknyeoResult({
           <ResultBody markdown={intro} />
         </div>
       )}
-      {chapters.map((c, i) => (
-        <div key={i} id={`ch-${i}`} style={nightCard}>
-          <h2 className="mb-3 font-myeongjo text-[17px] font-bold" style={{ color: "#EFE7FA" }}>
-            {c.title}
-          </h2>
-          <ResultBody markdown={c.body} />
-        </div>
-      ))}
+      {chapters.map((c, i) => {
+        // 크로스셀은 **읽는 도중 한 번만.** 청월당 실측 위치가 46·57·75·79·88% (평균 69%)였다.
+        // 끝(100%)에 두면 이미 스크롤을 놓은 뒤다. 장 인덱스 0.62 → 실측 스크롤 70%대에 앉는다
+        // (뒷장이 길어서 인덱스 비율보다 픽셀 비율이 뒤로 밀린다). 장이 3개도 안 되면 넣지 않는다.
+        const crossAt = chapters.length >= 3 ? Math.floor(chapters.length * 0.62) : -1;
+        return (
+          <Fragment key={i}>
+            <ChapterGate no={i + 1} title={c.title} />
+            <div
+              id={`ch-${i}`}
+              style={{ ...nightCard, marginTop: 0, borderTop: "none", borderRadius: "0 0 16px 16px" }}
+            >
+              <ResultBody markdown={c.body} />
+            </div>
+            {i === crossAt && <ResultCrossSell to="sangun" />}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
