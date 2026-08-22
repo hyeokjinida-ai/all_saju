@@ -20,7 +20,7 @@ export const homeArt = (slug: string, slot: "hero" | "big" | "row") =>
 export const LETTERING: Record<string, string> = {
   "sangun-sinjeom": "/home/lettering/sangun-sinjeom.webp",
   "inyeon-saju": "/home/lettering/inyeon-saju.webp",
-  // "marriage-saju": 아직 — 뽑으면 여기 한 줄 추가하면 카드가 바로 쓴다
+  "marriage-saju": "/home/lettering/marriage-saju.webp",
 };
 
 /** 히어로 순서(TOP 1·2·3) + 레터링에 얹을 글자. 없는 상품은 그냥 빠진다. */
