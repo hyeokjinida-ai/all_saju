@@ -18,13 +18,18 @@
 
 import { HANJI_BG } from "@/components/products/jiknyeo-comic-kit";
 
-export const PINK = "#eb4465";
-export const INK = "#111111";
-export const BODY = "#242424";
-export const MUTE = "#757575";
-export const LINE = "#e5e7eb";
-export const PAPER = "#f3f2ef";
-export const CHIP = "#f5cbd4";
+// ⚠ 2026-08-22 — 색을 하드코딩에서 **CSS 변수 참조**로 바꿨다.
+// 티저 스킨(.teaser-light 달빛 / .teaser-pink 옛 분홍)이 한 곳에서 갈리게 하려면
+// 부품이 값을 직접 들고 있으면 안 된다. 값 자체는 globals.css 의 스킨 블록에 있다.
+// 이름은 유지한다(PINK 등) — 참조하는 파일이 많아 이름을 바꾸면 diff 만 커진다.
+export const PINK = "var(--gold-bright)";
+export const INK = "var(--bone)";
+export const BODY = "var(--bone-soft)";
+export const MUTE = "var(--bone-faint)";
+export const LINE = "var(--gold-line)";
+export const PAPER = "var(--gold-pale)";
+export const CHIP = "var(--chip-bg)";
+export const CHIP_TEXT = "var(--chip-text)";
 
 /** 섹션 헤드 — 서예체 24px. 두 줄 중 **한 줄만** 색을 준다(둘 다 칠하면 위계가 죽는다). */
 export function BrushHead({
@@ -159,7 +164,7 @@ export function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-block rounded-full px-2.5 py-1 text-[12px]"
-      style={{ background: CHIP, color: "#8a2540", letterSpacing: "normal" }}
+      style={{ background: CHIP, color: CHIP_TEXT, letterSpacing: "normal" }}
     >
       {children}
     </span>

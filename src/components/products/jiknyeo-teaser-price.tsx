@@ -49,7 +49,7 @@ export function JiknyeoTeaserPrice({
 
       <div className="mt-6 text-center">
         <p className="text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 500 }}>
-          {isMarriage ? "직녀 결혼사주" : "직녀 연애사주"}
+          {isMarriage ? "직녀의 결혼예보" : "직녀의 연애예보"}
         </p>
         <p className="mt-2">
           {compareLabel && (

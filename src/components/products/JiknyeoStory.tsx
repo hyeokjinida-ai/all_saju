@@ -200,7 +200,7 @@ export function JiknyeoStory({
     <div className="world-jiknyeo story-immersive relative w-full" style={{ background: "#0b0f1a" }}>
       <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-center px-5 pt-4">
         <a href="/" className="font-myeongjo text-[13px] tracking-[0.22em]" style={{ color: "var(--gold-bright)" }}>
-          명운록 · 직녀 연애사주
+          명운록 · 직녀의 연애예보
         </a>
       </div>
       {/* Fragment 로 감싸 키를 준다 — 위저드 엘리먼트는 page.tsx 에서 만들어져 내려오는데,

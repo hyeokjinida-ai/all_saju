@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BgMedia } from "@/components/products/BgMedia";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-assets";
 import { SLOTS } from "@/lib/jiknyeo-assets";
+import { ForecastBoard, ChartEvidence } from "@/components/products/JiknyeoForecast";
 
 // 직녀 광고 전용 랜딩 (/jiknyeo · noindex · 사이트맵 제외 · 어디에도 링크하지 않는다).
 //
@@ -190,6 +191,14 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
           <br />
           저는 그 달을 찾아드리는 사람이에요.
         </Narration>
+
+        {/* L2-B 예보판 — 열두 달을 달 위상으로 편다. 계산은 전부 공개하고 이름만 잠근다.
+            L2 의 주장("만나는 달이 따로 있어요") 바로 뒤라야 실물로 받아친 게 된다. */}
+        <ForecastBoard />
+
+        {/* L2-C 원국 증거 — 위 예보가 어디서 나왔는지 명식 실물로 보인다.
+            경쟁사는 "명리이론 폭넓게 적용"이라고 주장만 하는데 우리는 실제로 계산하므로 보여줄 수 있다. */}
+        <ChartEvidence />
 
         {/* L5 대구 페어 — "다리 없는 밤 / 다리가 놓이는 밤" 두 장. 죄책감 해제의 밑돌 */}
         <div className="grid grid-cols-2 gap-2 px-3">

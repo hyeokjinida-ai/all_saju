@@ -287,6 +287,8 @@ export function SajuWizard({
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
+  const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
   // 직녀 세계관 전체 — 인연·결혼 두 상품이 같은 캐릭터·같은 옷을 쓴다(청월당 백월아씨 방식).
   // **껍데기(색·대사·입력)는 여기로, 알맹이(티저 달력·인연 카피)는 isInyeon 으로** 가른다.
   // 주요 버튼(CTA) 칠 — 세 벌이 같은 자리에 반복되므로 한 곳에서 만든다.
@@ -1607,6 +1609,8 @@ function TeaserStep({
   const isInyeon = productSlug === "inyeon-saju";
   // 인연·결혼이 같이 쓰는 껍데기(판·컷·로딩 체크리스트)는 이 가드로 연다.
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
+  const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
 
   if (loading) {
     return (
@@ -1651,10 +1655,14 @@ function TeaserStep({
         글자만 얹으면 얼굴·촛불 무늬가 표와 문장 사이로 비쳐 읽기가 힘들어진다.
         사진은 판 바깥으로만 보이게 두면 몰입은 유지되면서 본문은 종이처럼 읽힌다. */}
     <div
-      // 밝은 티저 — 청월당은 **게이트만 검정이고 결제 직전 티저는 밝다**(라이브 실측).
-      // 우리는 티저까지 먹빛으로 끌고 갔고 그게 원본과 정반대였다. 형님 「전부 원본 그대로」 확정(2026-08-18).
-      // 스킨은 여기 한 겹만 얹는다 — 게이트·스토리는 어두운 채로 남는다(원본과 같게).
-      className={isJiknyeoWorld ? "teaser-light -mx-5 px-5 py-10" : undefined}
+      // 밝은 티저 — 청월당은 게이트만 검정이고 결제 직전 티저는 밝다(라이브 실측).
+      //
+      // ⚠ 2026-08-22 수정: 「밝다」는 맞았지만 **분홍**은 틀렸다. 이 페이지는 밤 컷(직녀 일러)과
+      //   밝은 조판이 번갈아 나오는 구조라 분홍이면 한 화면에서 톤이 서너 번 뒤집힌다.
+      //   그래서 밝기는 유지하고 색만 달빛으로 옮겨 **밤 위에 뜬 판**으로 만들었다.
+      //   `-mx-5` 를 뺀 이유: 화면 폭을 꽉 채우면 판이 아니라 그냥 배경이 된다 — 좌우 여백이 있어야 뜬다.
+      //   되돌리려면 `?skin=pink` (globals.css `.teaser-pink`).
+      className={isJiknyeoWorld ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
       style={
         imm && !isJiknyeoWorld
           ? {
@@ -2340,7 +2348,7 @@ function TeaserStep({
               {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
                   원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
               <div className="mt-14">
-                <InkFade from="#f3f2ef" to="#0b0f1a" height={110} />
+                <InkFade from="#E2D9F0" to="#0b0f1a" height={80} />
               </div>
             </>
           )}

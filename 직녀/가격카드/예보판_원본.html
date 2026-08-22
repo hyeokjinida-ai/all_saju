@@ -1,0 +1,162 @@
+<meta charset="utf-8">
+<title>직녀 예보판 — 부품 시안</title>
+<!--
+  ★ 이 파일이 새 방향의 원본(原本)이다. 4컷 전환의 기준이 된다.
+
+  왜 이렇게 갔나:
+  · 청월당(밝은 파스텔 + 카드 조판)을 색만 바꿔 쓰던 걸 그만둔다 — 출처가 보인다.
+  · 우리 에셋은 전부 밤이다(j1·j3·웹툰컷). 밝은 바탕에선 매 컷 brightness 보정을 걸어야 했다.
+  · 청월당에서 가져갈 것은 "밝음"이 아니라 **밝기 리듬과 정점**이다.
+    → 바탕은 밤, 정보 밀도 높은 판만 달빛으로 띄운다. "밤하늘에 뜬 예보"가 우리 화면.
+
+  우리 언어 = 「예보」. 일기예보가 ☀☁☂ 로 말하듯 우리는 **달 위상**으로 말한다.
+  보름 = 크게 열리는 달 / 반달 = 자리가 생기는 달 / 초승 = 평 / 구름 = 결이 엉키는 달.
+  아무도 안 쓰는 체계라 이것만으로 출처가 사라진다.
+-->
+<style>
+@font-face{font-family:P;src:url(fonts/Pretendard-Regular.woff2)format("woff2");font-weight:400}
+@font-face{font-family:P;src:url(fonts/Pretendard-Medium.woff2)format("woff2");font-weight:500}
+@font-face{font-family:P;src:url(fonts/Pretendard-SemiBold.woff2)format("woff2");font-weight:600}
+@font-face{font-family:P;src:url(fonts/Pretendard-Bold.woff2)format("woff2");font-weight:700}
+@font-face{font-family:P;src:url(fonts/Pretendard-ExtraBold.woff2)format("woff2");font-weight:800}
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=block');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1125px;font-family:P,sans-serif;letter-spacing:-0.025em;position:relative;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 62%),
+    radial-gradient(ellipse 90% 40% at 78% 88%,#2A2050 0%,rgba(42,32,80,0) 60%),
+    linear-gradient(180deg,#0B0F1A 0%,#12112A 42%,#0D0B1C 100%)}
+.sky{position:absolute;inset:0;pointer-events:none}
+
+/* ── 나레이션 (밤 위, 은사색) ── */
+.nar{position:relative;padding:186px 0 0;text-align:center;
+  font-family:'Gowun Batang',serif;font-size:56px;font-weight:400;color:#CFD6E6;line-height:1.72}
+.nar b{font-weight:400;color:#EFE7FA}
+
+/* ── 예보 판 — 밤하늘에 뜬 달빛 판 ── */
+.board{position:relative;margin:118px 46px 0;border-radius:30px;padding:78px 62px 86px;
+  background:linear-gradient(168deg,#F7F4FB 0%,#EDE7F6 58%,#E2D9F0 100%);
+  box-shadow:0 0 0 2px rgba(217,199,232,.45),0 40px 90px rgba(10,8,26,.62),
+             0 0 130px rgba(169,139,217,.22)}
+.board:before{content:"";position:absolute;left:0;right:0;top:0;height:120px;border-radius:30px 30px 0 0;
+  background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0));pointer-events:none}
+
+.btit{display:flex;align-items:center;justify-content:center;gap:22px;
+  font-size:50px;font-weight:800;color:#1B1729}
+.btit i{width:8px;height:46px;background:#6B4C9A;flex:none}
+.bsub{margin-top:20px;text-align:center;font-size:36px;font-weight:400;color:#5C5570}
+
+/* 12칸 */
+.grid{margin-top:62px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.cell{background:#FFFFFF;border:2px solid #DFD6EE;border-radius:18px;padding:26px 0 24px;text-align:center}
+.cell.big{border-color:#6B4C9A;box-shadow:0 0 0 3px rgba(107,76,154,.16)}
+.cell .m{font-size:32px;font-weight:700;color:#6C6483}
+.cell svg{display:block;margin:16px auto 13px;width:88px;height:88px}
+.cell .g{font-size:29px;font-weight:700;color:#8A82A2}
+.cell.big .g{color:#5B3F8F}
+
+/* 범례 */
+.leg{margin-top:52px;padding-top:44px;border-top:2px solid #DDD3EC;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:26px 40px}
+.leg div{display:flex;align-items:center;gap:18px;font-size:31px;font-weight:500;color:#3B3550;white-space:nowrap}
+.leg svg{width:52px;height:52px;flex:none}
+
+/* ── 잠금 3줄 — 문장은 다 읽히는데 명사만 없다 ── */
+.locks{position:relative;margin:104px 62px 0}
+.locks p{display:flex;align-items:flex-start;gap:22px;margin-bottom:40px;
+  font-size:44px;font-weight:400;color:#D8D2E8;line-height:1.6}
+.locks p:last-child{margin-bottom:0}
+.locks p i{margin-top:16px;width:9px;height:9px;border-radius:50%;background:#8B6FC4;flex:none}
+.mask{display:inline-block;background:rgba(139,111,196,.30);color:transparent;
+  border-radius:5px;padding:0 6px;user-select:none;
+  box-shadow:inset 0 0 0 1px rgba(199,176,236,.35)}
+.locks b{font-weight:700;color:#EFE7FA}
+
+.foot{margin:112px 62px 0;padding-bottom:170px;text-align:center;
+  font-family:'Gowun Batang',serif;font-size:42px;color:#9AA2B8;line-height:1.7}
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="mg"><stop offset="0%" stop-color="#FFFDF2"/><stop offset="100%" stop-color="#EFE3BE"/></radialGradient>
+  </defs>
+  <!-- 보름 : 크게 열리는 달 -->
+  <symbol id="m-full" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="url(#mg)" stroke="#C9A94E" stroke-width="2.5"/>
+    <circle cx="30" cy="30" r="5" fill="#E4D6A8" opacity=".7"/><circle cx="45" cy="42" r="7" fill="#E4D6A8" opacity=".55"/>
+  </symbol>
+  <!-- 반달 : 자리가 생기는 달 -->
+  <symbol id="m-half" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="#F3EDFA" stroke="#9B8AC4" stroke-width="2.5"/>
+    <path d="M37 10a27 27 0 0 1 0 54z" fill="#C7B0EC"/>
+  </symbol>
+  <!-- 초승 : 평 -->
+  <symbol id="m-cres" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="#E6E2EE" stroke="#B9B2CE" stroke-width="2.5"/>
+    <path d="M31 11a27 27 0 1 0 0 52 31 31 0 0 1 0-52z" fill="#FCFAFE"/>
+  </symbol>
+  <!-- 구름 : 결이 엉키는 달 -->
+  <symbol id="m-cloud" viewBox="0 0 74 74">
+    <circle cx="41" cy="30" r="21" fill="#EFECF6" stroke="#A9A2BE" stroke-width="2.5"/>
+    <path d="M20 52h34a12 12 0 0 0 0-24 17 17 0 0 0-32 5 10 10 0 0 0-2 19z" fill="#8F87A8"/>
+  </symbol>
+</svg>
+
+<svg class="sky" viewBox="0 0 1125 2400" preserveAspectRatio="none">
+  <!-- 은하수 두 줄기 -->
+  <path d="M-40 320C260 470 520 900 700 1360 840 1720 980 2040 1180 2260" fill="none"
+        stroke="#A9A0D8" stroke-width="150" opacity=".055" stroke-linecap="round"/>
+  <path d="M60 180C360 380 600 820 780 1300 900 1640 1020 1960 1200 2180" fill="none"
+        stroke="#C7B0EC" stroke-width="60" opacity=".05" stroke-linecap="round"/>
+  <g fill="#E8E6F5">
+    <circle cx="96" cy="152" r="3.2" opacity=".85"/><circle cx="242" cy="86" r="2.2" opacity=".6"/>
+    <circle cx="392" cy="196" r="2.8" opacity=".7"/><circle cx="612" cy="112" r="3.6" opacity=".9"/>
+    <circle cx="806" cy="182" r="2.4" opacity=".6"/><circle cx="978" cy="98" r="3" opacity=".8"/>
+    <circle cx="1064" cy="256" r="2.2" opacity=".55"/><circle cx="150" cy="392" r="2.6" opacity=".65"/>
+    <circle cx="1010" cy="470" r="3" opacity=".7"/><circle cx="66" cy="640" r="2.4" opacity=".6"/>
+    <circle cx="1078" cy="742" r="2.6" opacity=".6"/><circle cx="52" cy="1180" r="3" opacity=".7"/>
+    <circle cx="1086" cy="1290" r="2.4" opacity=".6"/><circle cx="120" cy="1560" r="2.8" opacity=".65"/>
+    <circle cx="1042" cy="1690" r="3.2" opacity=".75"/><circle cx="88" cy="1920" r="2.4" opacity=".6"/>
+    <circle cx="1074" cy="2060" r="2.8" opacity=".65"/><circle cx="196" cy="2210" r="3" opacity=".7"/>
+  </g>
+</svg>
+
+<div class="nar">직녀가 ○○님 하늘을 읽었어요.<br><b>앞으로 열두 달, 이렇게 지나갑니다.</b></div>
+
+<div class="board">
+  <div class="btit"><i></i>○○님 인연 예보<i></i></div>
+  <div class="bsub">2026년 9월 — 2027년 8월 · 만세력 계산 결과</div>
+
+  <div class="grid">
+    <div class="cell"><div class="m">9월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+    <div class="cell"><div class="m">10월</div><svg><use href="#m-half"/></svg><div class="g">자리</div></div>
+    <div class="cell big"><div class="m">11월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+    <div class="cell"><div class="m">12월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+
+    <div class="cell"><div class="m">1월</div><svg><use href="#m-cloud"/></svg><div class="g">엉킴</div></div>
+    <div class="cell"><div class="m">2월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+    <div class="cell big"><div class="m">3월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+    <div class="cell"><div class="m">4월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+
+    <div class="cell"><div class="m">5월</div><svg><use href="#m-half"/></svg><div class="g">자리</div></div>
+    <div class="cell"><div class="m">6월</div><svg><use href="#m-cloud"/></svg><div class="g">엉킴</div></div>
+    <div class="cell"><div class="m">7월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+    <div class="cell big"><div class="m">8월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+  </div>
+
+  <div class="leg">
+    <div><svg><use href="#m-full"/></svg>보름 — 크게 열리는 달</div>
+    <div><svg><use href="#m-half"/></svg>반달 — 자리가 생기는 달</div>
+    <div><svg><use href="#m-cres"/></svg>초승 — 평</div>
+    <div><svg><use href="#m-cloud"/></svg>구름 — 결이 엉키는 달</div>
+  </div>
+</div>
+
+<div class="locks">
+  <p><i></i><span>크게 열리는 달은 <b>세 번</b>, 첫 달은 <span class="mask">2026년 11월</span></span></p>
+  <p><i></i><span>그 사람은 <span class="mask">○○○○</span>에서 처음 마주쳐요</span></p>
+  <p><i></i><span><span class="mask">○○</span>살, 그게 매번 같은 자리를 끊어요</span></p>
+</div>
+
+<div class="foot">계산은 다 보여드렸어요.<br>읽어 드리는 건, 여기서부터예요.</div>

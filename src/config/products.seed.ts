@@ -67,7 +67,7 @@ export const productsSeed: ProductSeed[] = [
   // **2상품 중 하나.** 산군(포괄)이 광고를 받고, 인연은 크로스셀·번들·리타겟을 맡는다.
   {
     slug: "inyeon-saju",
-    name: "직녀 연애사주 — 만나는 달",
+    name: "직녀의 연애예보",
     description: "'곧 만난다'는 말은 그만 — 만나는 달과 조심할 달, 앞으로 12개월을 콕 집어드려요",
     price: 17900,
     // 정가 앵커(2026-08-11 신설) — 결제 시트에 카드가 나란히 서는데 인연 단품만 할인 표기가
@@ -85,7 +85,7 @@ export const productsSeed: ProductSeed[] = [
   //    한 칸 위에 둔다 — 결혼은 더 무거운 결정이라 같은 값이면 오히려 안 팔린다.
   {
     slug: "marriage-saju",
-    name: "직녀 결혼사주 — 결혼하는 해",
+    name: "직녀의 결혼예보",
     description: "'때 되면 하겠지'는 그만 — 결혼하는 해와 서두를 달, 피해야 할 시기까지 짚어드려요",
     price: 19900,
     compare_at_price: 29900,
@@ -121,8 +121,8 @@ export const productsSeed: ProductSeed[] = [
   //   ⚠ 구성품 중 하나라도 compare_at_price 를 바꾸면 이 값도 같이 바꿔야 산수가 안 깨진다.
   {
     slug: "bundle-sangun-inyeon",
-    name: "박수무당 사주 + 직녀 연애사주",
-    description: "네 장부 전체와 만나는 달을 함께 본다 — 박수무당 사주에 '직녀 연애사주'를 더한 묶음",
+    name: "박수무당 사주 + 직녀의 연애예보",
+    description: "네 장부 전체와 만나는 달을 함께 본다 — 박수무당 사주에 '직녀의 연애예보'를 더한 묶음",
     price: 26900,
     compare_at_price: 54800, // 29,900(산군 정가) + 24,900(인연 정가)
     bundle_slugs: ["sangun-sinjeom", "inyeon-saju"],

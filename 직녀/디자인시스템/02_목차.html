@@ -1,0 +1,173 @@
+<meta charset="utf-8">
+<title>직녀 목차 카드 — 분량 증명</title>
+<!--
+  청월당 result_14(POINT 4 + 목차 한지카드)를 직녀로 옮긴 판.
+  이 컷의 일은 하나다 — **분량을 눈으로 보여주는 것.** 그래서 목차를 전량 공개하고 내용만 감춘다.
+  정점은 헤드의 「8,000자」. 목차 줄은 일부러 조용하게(400·무채색) 깔아서 양으로 누른다.
+  에셋: hanji.png(한지 질감) · sd1/sd2(SD 직녀, 흰 배경 누끼 완료).
+-->
+<style>
+@font-face{font-family:P;src:url(fonts/Pretendard-Regular.woff2)format("woff2");font-weight:400}
+@font-face{font-family:P;src:url(fonts/Pretendard-Medium.woff2)format("woff2");font-weight:500}
+@font-face{font-family:P;src:url(fonts/Pretendard-SemiBold.woff2)format("woff2");font-weight:600}
+@font-face{font-family:P;src:url(fonts/Pretendard-Bold.woff2)format("woff2");font-weight:700}
+@font-face{font-family:P;src:url(fonts/Pretendard-ExtraBold.woff2)format("woff2");font-weight:800}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1125px;font-family:P,sans-serif;letter-spacing:-0.025em;background:
+    radial-gradient(ellipse 120% 40% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%),
+    radial-gradient(ellipse 90% 30% at 78% 94%,#2A2050 0%,rgba(42,32,80,0) 60%),
+    linear-gradient(180deg,#0D0B1C 0%,#12112A 50%,#0B0F1A 100%)}
+
+/* ── 헤드 ── */
+.head{padding:196px 0 150px;text-align:center}
+.badge{display:inline-block;border:3px solid #A98BD9;color:#A98BD9;
+  font-size:40px;font-weight:700;letter-spacing:.06em;padding:15px 48px;border-radius:999px}
+.h2{margin-top:58px;font-size:83px;font-weight:800;line-height:1.42;color:#EFE7FA}
+.h2 .accent{color:#C7B0EC}
+.hr{width:62px;height:3px;background:#4B4A66;margin:60px auto}
+.sub{font-size:46px;font-weight:400;color:#B9B2CE;line-height:1.6}
+.sub b{font-weight:700;color:#EFE7FA}
+
+/* ── 한지 카드 ── */
+.card{position:relative;margin:0 46px;padding:0 0 120px;
+  background:linear-gradient(168deg,#F7F4FB 0%,#EDE7F6 58%,#E2D9F0 100%);border-radius:28px;
+  box-shadow:0 0 0 2px rgba(217,199,232,.45),0 40px 90px rgba(10,8,26,.62),0 0 130px rgba(169,139,217,.22)}
+/* 네 모서리 전통 문양 — 원본은 卍자 격자를 넣는다 */
+.corner{position:absolute;width:74px;height:74px}
+.corner.tl{top:26px;left:26px}
+.corner.tr{top:26px;right:26px}
+.corner.bl{bottom:26px;left:26px}
+.corner.br{bottom:26px;right:26px}
+
+/* 12칸 달력 아이콘 — 원본의 두루마리 자리 */
+.scroll{display:block;margin:120px auto 0;width:380px}
+.note{margin:96px 84px 0;background:#FFFDF8;border:2px solid #C9B8E8;
+  padding:34px 0;text-align:center;font-size:38px;font-weight:400;color:#2B2440}
+.note b{font-weight:800;color:#5B3F8F}
+
+/* ── 장 블록 ── */
+.ch{margin:104px 84px 0}
+.ch .t{display:flex;align-items:center;font-size:52px;font-weight:800;color:#1B1729}
+.ch .t i{width:8px;height:52px;background:#6B4C9A;margin-right:26px;flex:none}
+.ch ul{margin-top:36px;list-style:none}
+.ch li{font-size:41px;font-weight:400;color:#332C4A;padding:26px 0 24px;
+  border-bottom:1px solid rgba(107,76,154,.22)}
+.ch li b{font-weight:800;color:#1B1729}
+
+/* SD 직녀 + 말풍선 — 장 사이에 끼워 글 연속을 끊는다 */
+.say{display:flex;align-items:center;margin:74px 84px 0;gap:26px}
+.say.rev{flex-direction:row-reverse}
+.say img{width:232px;flex:none}
+.say .bub{position:relative;flex:1;background:#FFFDF8;border:2px solid #C9B8E8;
+  border-radius:20px;padding:34px 38px;font-size:39px;font-weight:500;color:#2B2440;line-height:1.55}
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="cnr" viewBox="0 0 74 74">
+    <path d="M37 6l7.4 22.6L67 36l-22.6 7.4L37 66l-7.4-22.6L7 36l22.6-7.4z" fill="#A98BD9" opacity=".38"/>
+  </symbol>
+</svg>
+
+<div class="head">
+  <span class="badge">POINT 4</span>
+  <div class="h2">열 장, <span class="accent">8,000자</span> 분량!<br>한 장도 채워 넣지 않았어요</div>
+  <div class="hr"></div>
+  <div class="sub">‘아니, 이런 것까지 알려줘요?’<br><b>열두 달을 전부 편</b> 풀이를 만나보세요</div>
+</div>
+
+<div class="card">
+  <svg class="corner tl"><use href="#cnr"/></svg>
+  <svg class="corner tr"><use href="#cnr"/></svg>
+  <svg class="corner bl"><use href="#cnr"/></svg>
+  <svg class="corner br"><use href="#cnr"/></svg>
+
+  <!-- 12칸 달력 — 청월당은 두루마리(=책)를 놓는 자리다.
+       우리 상품은 「몇 월인지」라서, 표시된 달 셋이 있는 달력이 상품을 그대로 보여준다. -->
+  <svg class="scroll" viewBox="0 0 380 300">
+    <rect x="12" y="30" width="356" height="256" rx="12" fill="#FBF6EA" stroke="#6B4C9A" stroke-width="4"/>
+    <path d="M12 92h356" stroke="#6B4C9A" stroke-width="4"/>
+    <rect x="86" y="12" width="16" height="40" rx="8" fill="#6B4C9A"/>
+    <rect x="278" y="12" width="16" height="40" rx="8" fill="#6B4C9A"/>
+    <g fill="#C9B8E8">
+      <rect x="46" y="118" width="58" height="42" rx="6"/><rect x="128" y="118" width="58" height="42" rx="6"/>
+      <rect x="210" y="118" width="58" height="42" rx="6"/><rect x="292" y="118" width="34" height="42" rx="6"/>
+      <rect x="46" y="176" width="58" height="42" rx="6"/><rect x="128" y="176" width="58" height="42" rx="6"/>
+      <rect x="210" y="176" width="58" height="42" rx="6"/><rect x="292" y="176" width="34" height="42" rx="6"/>
+      <rect x="46" y="234" width="58" height="42" rx="6"/><rect x="128" y="234" width="58" height="42" rx="6"/>
+      <rect x="210" y="234" width="58" height="42" rx="6"/><rect x="292" y="234" width="34" height="42" rx="6"/>
+    </g>
+    <g fill="#6B4C9A">
+      <rect x="128" y="118" width="58" height="42" rx="6"/>
+      <rect x="210" y="176" width="58" height="42" rx="6"/>
+      <rect x="46" y="234" width="58" height="42" rx="6"/>
+    </g>
+  </svg>
+
+  <div class="note">*전체 풀이내용은 <b>페이지 맨 아래</b>에서 확인해 주세요!</div>
+
+  <div class="ch"><div class="t"><i></i>1장. 타고난 그릇</div><ul>
+    <li><b>풀이 1.</b> 내 사주의 뼈대는 어떤 모양인가</li>
+    <li><b>풀이 2.</b> 신강인가 신약인가, 무엇이 필요한가</li>
+    <li><b>풀이 3.</b> 연애에서 드러나는 나의 기질</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>2장. 지나온 자리</div><ul>
+    <li><b>풀이 1.</b> 지금까지 인연이 어떻게 흘러왔나</li>
+    <li><b>풀이 2.</b> 몰라서 지나친 달이 있었나</li>
+    <li><b>풀이 3.</b> 그때 무슨 일이 있었나</li>
+  </ul></div>
+
+  <div class="say"><img src="sd1.png"><div class="bub">지나온 자리를 펴 보면요, 다음에 올 자리도 같이 보여요.</div></div>
+
+  <div class="ch"><div class="t"><i></i>3장. 인연 달력 — 열두 달 전부</div><ul>
+    <li><b>풀이 1.</b> 열두 달 등급표 — 한 달도 빼지 않고</li>
+    <li><b>풀이 2.</b> 등급은 무엇을 기준으로 매겨졌나</li>
+    <li><b>풀이 3.</b> 이번 달은 어떤 달인가</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>4장. 만나는 달 셋</div><ul>
+    <li><b>풀이 1.</b> 가장 크게 열리는 달은 몇 월인가</li>
+    <li><b>풀이 2.</b> 그 달에 어디서 마주치나</li>
+    <li><b>풀이 3.</b> 그 달을 어떻게 써야 하나</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>5장. 내게 올 사람</div><ul>
+    <li><b>풀이 1.</b> 어떤 유형의 사람인가</li>
+    <li><b>풀이 2.</b> 나이대와 첫인상</li>
+    <li><b>풀이 3.</b> 그 사람의 다섯 가지 지표</li>
+  </ul></div>
+
+  <div class="say rev"><img src="sd2.png"><div class="bub">어떤 사람인지, 만나기 전에 미리 알아둘 수 있어요.</div></div>
+
+  <div class="ch"><div class="t"><i></i>6장. 알아보는 신호 셋</div><ul>
+    <li><b>풀이 1.</b> 그 사람이 보내는 신호는 무엇인가</li>
+    <li><b>풀이 2.</b> 놓치기 쉬운 자리</li>
+    <li><b>풀이 3.</b> 그때 하지 말아야 할 것</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>7장. 결이 엉키는 달</div><ul>
+    <li><b>풀이 1.</b> 조심해야 할 달은 몇 월인가</li>
+    <li><b>풀이 2.</b> 그 달에 흔히 벌어지는 일</li>
+    <li><b>풀이 3.</b> 그 달을 넘기는 법</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>8장. 크게 바뀌는 해</div><ul>
+    <li><b>풀이 1.</b> 인연이 크게 바뀌는 해는 언제인가</li>
+    <li><b>풀이 2.</b> 그 해에 무엇이 달라지나</li>
+    <li><b>풀이 3.</b> 미리 준비해 둘 것</li>
+  </ul></div>
+
+  <div class="say"><img src="sd1.png"><div class="bub">그 해가 오기 전에 알고 준비하면, 같은 해도 다르게 지나가요.</div></div>
+
+  <div class="ch"><div class="t"><i></i>9장. 네 물음의 답</div><ul>
+    <li><b>풀이 1.</b> 남겨 주신 질문에 대한 답</li>
+    <li><b>풀이 2.</b> 겉 고민 아래 진짜 물음</li>
+  </ul></div>
+
+  <div class="ch"><div class="t"><i></i>10장. 이번 주에 할 것 셋</div><ul>
+    <li><b>풀이 1.</b> 지금 당장 시작할 것</li>
+    <li><b>풀이 2.</b> 이번 달 안에 할 것</li>
+    <li><b>풀이 3.</b> 하지 말아야 할 것</li>
+  </ul></div>
+</div>

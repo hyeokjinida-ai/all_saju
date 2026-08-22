@@ -1,0 +1,243 @@
+<meta charset="utf-8">
+<title>직녀 티저 — 상단 (새 방향)</title>
+<!--
+  ★ 새 방향 티저 상단. 부품 출처를 컷마다 분산해 출처를 지운다.
+
+  히어로·고민버블 = 타이트(again) 실측 — 이미지를 밤으로 페이드시키고 그 위에 초대형 명조.
+    우리 기존 SCRIM 과 같은 기법인데 **글자 크기가 우리보다 훨씬 컸다**(720px 폭에서 60px).
+  원국 증거표   = 타이트(som_04) 실측 — 8칸 격자 + 오행 색칩 + 십성 라벨.
+    청월당은 "폭넓은 명리이론 적용"이라고 말로만 하는데, 우리는 실제로 계산하므로 실물을 보여준다.
+    말(주장) → 실물(증거)로 바꾸는 것이 이 컷의 일이다.
+  예보판 12칸   = 원본 없음(우리 것). 달 위상으로 등급을 읽는 우리 언어.
+
+  색·모티프·카피는 전부 직녀 토큰으로 치환 — 같은 색 0 · 같은 아이콘 0 · 같은 문장 0.
+-->
+<link rel="stylesheet" href="tokens.css">
+<style>
+@font-face{font-family:P;src:url(fonts/Pretendard-Regular.woff2)format("woff2");font-weight:400}
+@font-face{font-family:P;src:url(fonts/Pretendard-Medium.woff2)format("woff2");font-weight:500}
+@font-face{font-family:P;src:url(fonts/Pretendard-SemiBold.woff2)format("woff2");font-weight:600}
+@font-face{font-family:P;src:url(fonts/Pretendard-Bold.woff2)format("woff2");font-weight:700}
+@font-face{font-family:P;src:url(fonts/Pretendard-ExtraBold.woff2)format("woff2");font-weight:800}
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=block');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1125px;font-family:P,sans-serif;letter-spacing:var(--ls);background:var(--n-800)}
+.myeongjo{font-family:'Gowun Batang',serif}
+
+/* ══ 1. 히어로 — 타이트 기법: 이미지를 밤으로 녹이고 그 위에 초대형 명조 ══ */
+.hero{position:relative;width:1125px;height:1560px;overflow:hidden;background:var(--n-900)}
+.hero img{position:absolute;left:50%;top:-128px;transform:translateX(-50%);width:1125px}
+.hero .scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,
+    rgba(11,15,26,.42) 0%,rgba(11,15,26,.10) 22%,rgba(11,15,26,.30) 46%,
+    rgba(11,15,26,.88) 72%,var(--n-800) 96%)}
+.hero .copy{position:absolute;left:0;right:0;bottom:132px;text-align:center;padding:0 70px}
+.hero .l1{font-size:var(--f-lg);color:var(--silver);line-height:var(--lh-nar)}
+.hero .l2{margin-top:26px;font-size:var(--f-h2);white-space:nowrap;color:#fff;line-height:var(--lh-tight);
+  text-shadow:0 6px 40px rgba(0,0,0,.85)}
+.hero .l2 b{font-weight:400;color:var(--p-200)}
+
+/* ══ 2. 고민 버블 — 타이트 기법(알약형·좌정렬 3개), 색만 달빛으로 ══ */
+.ask{background:var(--n-800);padding:var(--s-6) 78px var(--s-7)}
+.ask .lead{text-align:center;font-size:var(--f-lg);color:var(--t-md);line-height:var(--lh-nar)}
+.bubs{margin-top:var(--s-5)}
+.bub{display:inline-block;margin-bottom:var(--s-2);padding:30px 44px;border-radius:var(--r-pill);
+  background:linear-gradient(140deg,var(--n-600),var(--n-500));
+  border:var(--bw) solid rgba(169,139,217,.30);
+  font-size:var(--f-bd);color:var(--t-md);box-shadow:var(--sh-lift)}
+.bub.b2{margin-left:96px}
+.bub.b3{margin-left:42px}
+.ask .close{margin-top:var(--s-5);text-align:center;font-size:var(--f-xl);
+  color:var(--t-hi);line-height:var(--lh-tight)}
+.ask .close b{font-weight:400;color:var(--p-200)}
+
+/* ══ 공통: 밤하늘 위에 뜨는 달빛 판 ══ */
+.plate{position:relative;margin:0 46px;border-radius:var(--r-md);padding:var(--s-4) 62px var(--s-4);
+  background:linear-gradient(168deg,var(--m-100) 0%,var(--m-200) 58%,var(--m-300) 100%);
+  box-shadow:0 0 0 2px rgba(217,199,232,.45),var(--sh-plate),var(--glow-moon)}
+.plate:before{content:"";position:absolute;left:0;right:0;top:0;height:120px;
+  border-radius:var(--r-md) var(--r-md) 0 0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0))}
+.ptit{display:flex;align-items:center;justify-content:center;gap:22px;
+  font-size:var(--f-lg);font-weight:800;color:var(--b-hi)}
+.ptit i{width:8px;height:46px;background:var(--p-500);flex:none}
+.psub{margin-top:var(--s-1);text-align:center;font-size:var(--f-sm);color:var(--b-lo)}
+
+/* ══ 3. 예보판 12칸 (우리 것) ══ */
+.sec{background:var(--n-800);padding:0 0 var(--s-7);position:relative}
+.sky{position:absolute;inset:0;pointer-events:none}
+.narr{position:relative;text-align:center;padding:0 70px var(--s-5);
+  font-size:var(--f-lg);color:var(--silver);line-height:var(--lh-nar)}
+.narr b{font-weight:400;color:var(--t-hi)}
+
+.grid{margin-top:var(--s-3);display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-1)}
+.cell{background:var(--m-050);border:var(--bw) solid var(--m-400);border-radius:var(--r-sm);
+  padding:26px 0 24px;text-align:center}
+.cell.big{border-color:var(--p-500);box-shadow:0 0 0 3px rgba(107,76,154,.16)}
+.cell .m{font-size:32px;font-weight:700;color:var(--b-lo)}
+.cell svg{display:block;margin:16px auto 13px;width:88px;height:88px}
+.cell .g{font-size:29px;font-weight:700;color:#8A82A2}
+.cell.big .g{color:var(--p-600)}
+.leg{margin-top:var(--s-3);padding-top:44px;border-top:var(--bw) solid #DDD3EC;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:26px 40px}
+.leg div{display:flex;align-items:center;gap:18px;font-size:var(--f-xs);font-weight:500;
+  color:#3B3550;white-space:nowrap}
+.leg svg{width:52px;height:52px;flex:none}
+
+.locks{position:relative;margin:var(--s-5) 62px 0}
+.locks p{display:flex;align-items:flex-start;gap:22px;margin-bottom:var(--s-2);
+  font-size:var(--f-bd);color:var(--t-md);line-height:var(--lh-body)}
+.locks p i{margin-top:18px;width:9px;height:9px;border-radius:50%;background:var(--p-400);flex:none}
+.mask{display:inline-block;background:rgba(139,111,196,.30);color:transparent;border-radius:5px;
+  padding:0 8px;box-shadow:inset 0 0 0 1px rgba(199,176,236,.35)}
+.locks b{font-weight:700;color:var(--t-hi)}
+
+/* ══ 4. 원국 증거표 — 타이트 som_04 실측, 오행색만 밤용으로 ══ */
+.chart{margin-top:var(--s-3)}
+.who{display:flex;align-items:center;gap:34px;padding-bottom:var(--s-2);
+  border-bottom:var(--bw) solid #DDD3EC}
+.who .day{width:132px;height:132px;border-radius:50%;flex:none;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--e-water),#2A3462);color:#fff}
+.who .day em{font-style:normal;font-size:62px;font-weight:700;line-height:1}
+.who .day span{margin-top:6px;font-size:26px;opacity:.85}
+.who .nm{font-size:var(--f-bd);font-weight:800;color:var(--b-hi)}
+.who .bd{margin-top:8px;font-size:var(--f-sm);color:var(--b-lo)}
+.tenrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:var(--s-2);
+  text-align:center;font-size:30px;font-weight:600;color:var(--b-lo)}
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.pil{border-radius:var(--r-sm);padding:22px 0 18px;text-align:center;color:#fff}
+.pil em{display:block;font-style:normal;font-size:64px;font-weight:700;line-height:1}
+.pil span{display:block;margin-top:8px;font-size:26px;opacity:.9}
+.pil.w{background:linear-gradient(150deg,var(--e-wood-l),var(--e-wood))}
+.pil.f{background:linear-gradient(150deg,var(--e-fire-l),var(--e-fire))}
+.pil.e{background:linear-gradient(150deg,var(--e-earth-l),var(--e-earth))}
+.pil.m{background:linear-gradient(150deg,var(--e-metal-l),var(--e-metal))}
+.pil.a{background:linear-gradient(150deg,var(--e-water-l),var(--e-water))}
+.pil.day{box-shadow:0 0 0 4px rgba(107,76,154,.35)}
+.foot12{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:var(--s-2);
+  padding-top:var(--s-2);border-top:var(--bw) solid #DDD3EC;
+  text-align:center;font-size:30px;color:var(--b-md)}
+.evid{margin:var(--s-3) 62px 0;text-align:center;font-size:var(--f-md);
+  color:var(--t-lo);line-height:var(--lh-body)}
+.evid b{font-weight:700;color:var(--p-200)}
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs><radialGradient id="mg"><stop offset="0%" stop-color="#FFFDF2"/><stop offset="100%" stop-color="#EFE3BE"/></radialGradient></defs>
+  <symbol id="m-full" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="url(#mg)" stroke="#C9A94E" stroke-width="2.5"/>
+    <circle cx="30" cy="30" r="5" fill="#E4D6A8" opacity=".7"/><circle cx="45" cy="42" r="7" fill="#E4D6A8" opacity=".55"/>
+  </symbol>
+  <symbol id="m-half" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="#F3EDFA" stroke="#9B8AC4" stroke-width="2.5"/>
+    <path d="M37 10a27 27 0 0 1 0 54z" fill="#C7B0EC"/>
+  </symbol>
+  <symbol id="m-cres" viewBox="0 0 74 74">
+    <circle cx="37" cy="37" r="27" fill="#E6E2EE" stroke="#B9B2CE" stroke-width="2.5"/>
+    <path d="M31 11a27 27 0 1 0 0 52 31 31 0 0 1 0-52z" fill="#FCFAFE"/>
+  </symbol>
+  <symbol id="m-cloud" viewBox="0 0 74 74">
+    <circle cx="41" cy="30" r="21" fill="#EFECF6" stroke="#A9A2BE" stroke-width="2.5"/>
+    <path d="M20 52h34a12 12 0 0 0 0-24 17 17 0 0 0-32 5 10 10 0 0 0-2 19z" fill="#8F87A8"/>
+  </symbol>
+</svg>
+
+<!-- 1. 히어로 -->
+<div class="hero">
+  <img src="j3.png">
+  <div class="scrim"></div>
+  <div class="copy">
+    <div class="l1 myeongjo">일 년에 하루만 만날 수 있었어요.</div>
+    <div class="l2 myeongjo">그 하루를<br><b>놓친 적이 없어요.</b></div>
+  </div>
+</div>
+
+<!-- 2. 고민 버블 -->
+<div class="ask">
+  <div class="lead myeongjo">○○님이 지금 이런 걸 세고 있는 동안,</div>
+  <div class="bubs">
+    <div class="bub b1">소개는 들어오는데, 마음이 가는 사람이 없어요</div>
+    <div class="bub b2">마음이 가면 꼭 어긋나요</div>
+    <div class="bub b3">올해는 진짜 만나고 싶은데, 언제쯤일까요</div>
+  </div>
+  <div class="close myeongjo">달은 이미 <b>세 번</b> 지나갔어요.</div>
+</div>
+
+<!-- 3. 예보판 -->
+<div class="sec">
+  <svg class="sky" viewBox="0 0 1125 3000" preserveAspectRatio="none">
+    <path d="M-40 260C280 460 560 980 740 1520 880 1960 1000 2400 1200 2820" fill="none"
+          stroke="#A9A0D8" stroke-width="150" opacity=".05" stroke-linecap="round"/>
+    <g fill="#E8E6F5">
+      <circle cx="96" cy="152" r="3.2" opacity=".8"/><circle cx="392" cy="96" r="2.6" opacity=".6"/>
+      <circle cx="1010" cy="220" r="3" opacity=".75"/><circle cx="66" cy="640" r="2.4" opacity=".6"/>
+      <circle cx="1078" cy="742" r="2.6" opacity=".6"/><circle cx="52" cy="1180" r="3" opacity=".7"/>
+      <circle cx="1086" cy="1490" r="2.4" opacity=".6"/><circle cx="120" cy="1860" r="2.8" opacity=".65"/>
+      <circle cx="1042" cy="2190" r="3.2" opacity=".7"/><circle cx="88" cy="2520" r="2.4" opacity=".6"/>
+    </g>
+  </svg>
+
+  <div class="narr myeongjo">직녀가 ○○님 하늘을 읽었어요.<br><b>앞으로 열두 달, 이렇게 지나갑니다.</b></div>
+
+  <div class="plate">
+    <div class="ptit"><i></i>○○님 인연 예보<i></i></div>
+    <div class="psub">2026년 9월 — 2027년 8월 · 만세력 계산 결과</div>
+    <div class="grid">
+      <div class="cell"><div class="m">9월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+      <div class="cell"><div class="m">10월</div><svg><use href="#m-half"/></svg><div class="g">자리</div></div>
+      <div class="cell big"><div class="m">11월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+      <div class="cell"><div class="m">12월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+      <div class="cell"><div class="m">1월</div><svg><use href="#m-cloud"/></svg><div class="g">엉킴</div></div>
+      <div class="cell"><div class="m">2월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+      <div class="cell big"><div class="m">3월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+      <div class="cell"><div class="m">4월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+      <div class="cell"><div class="m">5월</div><svg><use href="#m-half"/></svg><div class="g">자리</div></div>
+      <div class="cell"><div class="m">6월</div><svg><use href="#m-cloud"/></svg><div class="g">엉킴</div></div>
+      <div class="cell"><div class="m">7월</div><svg><use href="#m-cres"/></svg><div class="g">평</div></div>
+      <div class="cell big"><div class="m">8월</div><svg><use href="#m-full"/></svg><div class="g">크게 열림</div></div>
+    </div>
+    <div class="leg">
+      <div><svg><use href="#m-full"/></svg>보름 — 크게 열리는 달</div>
+      <div><svg><use href="#m-half"/></svg>반달 — 자리가 생기는 달</div>
+      <div><svg><use href="#m-cres"/></svg>초승 — 평</div>
+      <div><svg><use href="#m-cloud"/></svg>구름 — 결이 엉키는 달</div>
+    </div>
+  </div>
+
+  <div class="locks">
+    <p><i></i><span>크게 열리는 달은 <b>세 번</b>, 첫 달은 <span class="mask">2026년 11월</span></span></p>
+    <p><i></i><span>그 사람은 <span class="mask">○○○○</span>에서 처음 마주쳐요</span></p>
+    <p><i></i><span><span class="mask">○○</span>살, 그게 매번 같은 자리를 끊어요</span></p>
+  </div>
+</div>
+
+<!-- 4. 원국 증거표 -->
+<div class="sec">
+  <div class="narr myeongjo">이 예보는 어디서 나왔을까요.<br><b>○○님 명식을 직접 계산했어요.</b></div>
+  <div class="plate">
+    <div class="chart">
+      <div class="who">
+        <div class="day"><em>乙</em><span>을</span></div>
+        <div><div class="nm">○○님 명식</div><div class="bd">1992.07.14 · 미시 · 여성</div></div>
+      </div>
+      <div class="tenrow"><div>편인</div><div>일간(나)</div><div>편재</div><div>정관</div></div>
+      <div class="pillars">
+        <div class="pil a"><em>壬</em><span>임</span></div>
+        <div class="pil w day"><em>乙</em><span>을</span></div>
+        <div class="pil e"><em>己</em><span>기</span></div>
+        <div class="pil m"><em>庚</em><span>경</span></div>
+      </div>
+      <div class="pillars">
+        <div class="pil m"><em>申</em><span>신</span></div>
+        <div class="pil m"><em>酉</em><span>유</span></div>
+        <div class="pil e"><em>未</em><span>미</span></div>
+        <div class="pil e"><em>辰</em><span>진</span></div>
+      </div>
+      <div class="tenrow"><div>정관</div><div>편관</div><div>편재</div><div>정재</div></div>
+      <div class="foot12"><div>태</div><div>절</div><div>양</div><div>관대</div></div>
+    </div>
+  </div>
+  <div class="evid">절기와 시주까지 코드로 계산했어요.<br><b>신약 · 용신 수(水)</b> — 위 예보의 등급은 전부 여기서 나왔어요.</div>
+</div>

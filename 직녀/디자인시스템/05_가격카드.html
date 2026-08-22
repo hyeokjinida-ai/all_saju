@@ -1,0 +1,156 @@
+<meta charset="utf-8">
+<title>B판 — 직녀 가격카드</title>
+<!--
+  청월당 result_07 의 조판 문법을 직녀로 옮긴 판. 좌표·리듬은 A판(복제 검증)에서 확정한 값 그대로다.
+  다른 것은 색과 문안뿐 — 구조를 새로 지어내지 않는다.
+
+  색을 뒤집은 이유: 청월당은 [밝은 배경 + 흰 카드 + 붉은 한복 캐릭터]라 셋이 한편이다.
+  직녀 캐릭터(j1)는 밤·남색·은장식이라 흰 카드에 얹으면 캐릭터만 따로 논다.
+  그래서 [밝은 배경 + 어두운 한지 카드]로 뒤집었다 — 밝기 리듬(위 밝고 아래 진함)은
+  청월당 그대로 두고, 카드만 밤을 오려낸 한 폭으로. 캐릭터가 카드 안에서 자연스러워진다.
+
+  어휘: 2026-08-17 개편 반영 — 날실/씨실/천/무늬/실값 전면 폐기, 직설.
+-->
+<style>
+@font-face{font-family:P;src:url(fonts/Pretendard-Regular.woff2)format("woff2");font-weight:400}
+@font-face{font-family:P;src:url(fonts/Pretendard-Medium.woff2)format("woff2");font-weight:500}
+@font-face{font-family:P;src:url(fonts/Pretendard-SemiBold.woff2)format("woff2");font-weight:600}
+@font-face{font-family:P;src:url(fonts/Pretendard-Bold.woff2)format("woff2");font-weight:700}
+@font-face{font-family:P;src:url(fonts/Pretendard-ExtraBold.woff2)format("woff2");font-weight:800}
+@font-face{font-family:P;src:url(fonts/Pretendard-Black.woff2)format("woff2");font-weight:900}
+@font-face{font-family:BHS;src:url(fonts/BlackHanSans.ttf)format("truetype");font-weight:400}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1125px;height:3211px;position:relative;overflow:hidden;
+  font-family:P,sans-serif;letter-spacing:-0.025em;
+  /* 밤 바탕 — 정보 판은 달빛으로 띄우고 구매 판만 무겁게 둔다 */
+  background:
+    radial-gradient(ellipse 120% 50% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%),
+    radial-gradient(ellipse 90% 40% at 78% 92%,#2A2050 0%,rgba(42,32,80,0) 60%),
+    linear-gradient(180deg,#0D0B1C 0%,#12112A 46%,#0B0F1A 100%)}
+
+.sheen{position:absolute;inset:-20%;pointer-events:none;
+  background:linear-gradient(102deg,
+    transparent 34%,rgba(199,176,236,.07) 42%,rgba(199,176,236,.10) 47%,
+    rgba(199,176,236,.04) 52%,transparent 60%)}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.22;mix-blend-mode:overlay}
+
+.row{position:absolute;left:0;width:1125px;text-align:center}
+
+/* ── 헤드 ── */
+.eyebrow{top:238px;font-size:40px;font-weight:400;color:#CFD6E6}
+.eyebrow b{font-weight:800;color:#EFE7FA}
+.charname{top:353px;font-family:BHS;font-size:70px;line-height:90px;color:#C7B0EC;letter-spacing:.02em;
+  transform:scaleY(1.14)}
+
+/* ── 레터링 ── A판과 같은 기법: SVG stroke + paint-order + 흰 글로우 */
+.letsvg{position:absolute;top:0;left:0;
+  filter:drop-shadow(0 0 26px rgba(255,255,255,.98)) drop-shadow(0 0 58px rgba(255,255,255,.85))
+         drop-shadow(0 0 96px rgba(255,255,255,.55))}
+.letsvg text{font-family:BHS;font-size:236px}
+
+/* ── 분량 배지 ── */
+.badge{position:absolute;top:829px;left:243px;width:632px;background:#5B3F8F;z-index:3;
+  border-radius:18px;padding:37px 0 42px;text-align:center;
+  font-size:45px;font-weight:800;line-height:1.42;color:#fff}
+.badge:after{content:"";position:absolute;left:50%;transform:translateX(-50%);
+  bottom:-30px;border:22px solid transparent;border-top:34px solid #5B3F8F;border-bottom:0}
+
+/* ── 한지 카드 (밤을 오려낸 한 폭) ── */
+.card{position:absolute;top:971px;left:81px;width:959px;background:#15162A;
+  border-radius:24px 24px 0 0;overflow:hidden}
+.ctitle{padding:85px 0 0;text-align:center;font-size:80px;font-weight:800;color:#F1EDF9;
+  word-spacing:6.5px;position:relative;z-index:2}
+.rule{height:1px;background:rgba(217,199,232,.20);margin:27px 70px 0}
+.bullets{padding:73px 0 60px;position:relative;z-index:2}
+.bullets li{list-style:none;display:flex;align-items:center;height:93px;padding-left:92px}
+.bullets .hh{width:55px;height:55px;margin-right:28px;flex:none}
+.bullets .tx{font-size:48.6px;font-weight:600;color:#EDE9F6;white-space:nowrap}
+
+/* 캐릭터 — 카드 안 오른쪽. 왼쪽 가장자리만 카드색으로 녹인다 */
+.charwrap{position:absolute;right:0;top:459px;width:420px;height:730px;overflow:hidden;z-index:1}
+/* j1 은 밤 장면이라 그대로 두면 카드 바탕(#15162A)에 묻혀 얼굴이 안 보인다 — 올려서 띄운다 */
+.charwrap img{position:absolute;width:760px;left:-168px;top:-52px;
+  filter:brightness(1.42) contrast(1.06) saturate(1.05)}
+.charwrap:after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,#15162A 0%,rgba(21,22,42,.72) 30%,rgba(21,22,42,0) 60%),
+             linear-gradient(180deg,#15162A 0%,rgba(21,22,42,0) 16%)}
+.rule2{height:1px;background:rgba(217,199,232,.20);margin:0 70px}
+
+.note{margin:64px 65px 22px;border:2px solid #8B6FC4;padding:34px 0;text-align:center;
+  font-size:38px;font-weight:400;color:#E4DEF2}
+.note b{font-weight:800;color:#D9C7E8}
+
+.prow{display:flex;align-items:center;margin:0 70px;height:95px}
+.prow .lb{font-size:47px;font-weight:800;color:#C6BFDA}
+.prow .rt{margin-left:auto;display:flex;align-items:center;gap:26px}
+.strike{font-size:47px;font-weight:700;color:#79738F;text-decoration:line-through}
+.moon{color:#D9C7E8}
+.pct{background:#E8C96A;border-radius:999px;padding:9px 24px;font-size:39px;font-weight:800;color:#241C08}
+.minus{font-size:47px;font-weight:700;color:#D9C7E8}
+.rule3{height:1px;background:rgba(217,199,232,.20);margin:46px 70px 0}
+.final{display:flex;align-items:center;margin:0 70px;height:275px}
+.final .lb{font-size:45px;font-weight:800;color:#F1EDF9}
+.final .big{margin-left:auto;font-size:96px;font-weight:900;color:#fff;letter-spacing:-0.03em}
+
+.cta{position:absolute;top:2839px;left:81px;width:959px;height:164px;background:#5B3F8F;
+  border-radius:0 0 24px 24px;display:flex;align-items:center;justify-content:center;
+  gap:28px;font-size:56px;font-weight:800;color:#fff}
+</style>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/></filter>
+</svg>
+
+<div class="sheen"></div>
+<svg class="grain"><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
+
+<div class="row eyebrow">열 장, <b>8,000자</b>로 짚어드리는</div>
+<div class="row charname">직녀의</div>
+
+<svg class="letsvg" width="1125" height="900" viewBox="0 0 1125 900">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#A98BD9"/>
+      <stop offset="15%"  stop-color="#9878CD"/>
+      <stop offset="40%"  stop-color="#8465C0"/>
+      <stop offset="65%"  stop-color="#6F51AF"/>
+      <stop offset="86%"  stop-color="#5C3F9B"/>
+      <stop offset="100%" stop-color="#432B78"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0,586) scale(1,1.148) translate(0,-586)">
+    <text x="146" y="675" textLength="825" lengthAdjust="spacing" fill="#33205C"
+          transform="translate(9,12)">연애예보</text>
+    <text x="146" y="675" textLength="825" lengthAdjust="spacing"
+          stroke="#C7B0EC" stroke-width="11" stroke-linejoin="round"
+          paint-order="stroke" fill="url(#lg)">연애예보</text>
+  </g>
+</svg>
+
+<div class="badge">열 장, 8,000자 분량!<br>+ 열두 달 전부</div>
+
+<div class="card">
+  <div class="ctitle">열두 달 인연 사주풀이</div>
+  <div class="rule"></div>
+  <div class="charwrap"><img src="j1.png"></div>
+  <ul class="bullets">
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">앞으로 열두 달, 만나는 달 전부</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">그중 가장 큰 달 셋은 몇 월인지</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">내게 올 사람 — 유형과 나이대</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">어디서 처음 마주치는지</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">알아보는 신호 셋</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">만나면 어긋나는 사람</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">결이 엉키는 달과 피할 것</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">인연이 크게 바뀌는 해</span></li>
+    <li><svg class="hh" viewBox="0 0 32 32"><path fill="#DCCDF0" d="M16 0l3.6 10.9L30.9 11l-9.2 6.6 3.5 11L16 21.8 6.8 28.6l3.5-11L1.1 11l11.3-.1z"/></svg><span class="tx">이번 주에 할 것 셋</span></li>
+  </ul>
+  <div class="rule2"></div>
+  <div class="note">*전체 풀이항목은 <b>페이지 맨 아래</b>를 확인해 주세요!</div>
+  <div class="prow"><span class="lb">연애예보 정가</span><span class="rt"><span class="strike">24,900원</span></span></div>
+  <div class="prow"><span class="lb"><span class="moon">‘첫 손님’</span> 특별할인</span><span class="rt"><span class="pct">28%</span><span class="minus">- 7,000원</span></span></div>
+  <div class="rule3"></div>
+  <div class="final"><span class="lb">오늘 값</span><span class="big">17,900원</span></div>
+</div>
+
+<div class="cta">할인받고 연애예보 보기 <span>→</span></div>

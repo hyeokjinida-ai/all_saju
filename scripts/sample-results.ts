@@ -39,24 +39,32 @@ type Case = {
 // 예: 1993-05-15 생 → 2026년 34세 · 2027년 35세.
 const CASES: Case[] = [
   // "박수무당 사주"(포괄 확장) 검증 — 인연 검증과 같은 명식(캐시 재사용). 예상: 인연 68점·TOP3 2026-12/2027-05/2027-06 인용 일치 + 재물 점수·달 인용 일치
+  // [임시]
+  // {
+  //   slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [34, 35, 40, 45],
+  //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
+  // [임시] 결혼사주 1건만
   {
-    slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [34, 35, 40, 45],
+    slug: "marriage-saju", name: "지수", concern: "결혼 시기가 궁금해요", expectAges: [34, 35],
     birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   },
   // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
   // 2026-08-17 10장 개편 검증으로 활성화. 산군과 같은 생일이라 명식 캐시를 공유한다(API 0콜).
-  {
-    slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [34, 35],
-    birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
-  },
+  // [임시]
+  // {
+  //   slug: "inyeon-saju", name: "지수", concern: "결혼 시기", expectAges: [34, 35],
+  //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
   // 두 번째 인연 케이스 — 다른 명식으로 10장이 재현되는지(첫 케이스에만 맞춘 게 아닌지) 본다.
   // 명식은 verify-batch 가 깔아 둔 캐시(analysis-batch1 = 1990-05-24 17:00 여)를 재사용한다.
   // 만세력 API 가 죽어 있어도(2026-08-17 새벽 실측: 연결 실패) 샘플을 뽑을 수 있어야 하고,
   // 한도 6,000 도 아낀다. 생일·시각을 캐시와 **정확히** 맞춰야 나이 검사가 거짓말을 안 한다.
-  {
-    slug: "inyeon-saju", name: "은비", concern: "지금 만나는 사람과 결혼까지 갈 수 있을까요", expectAges: [37, 38],
-    birthInfo: { birthYear: "1990", birthMonth: "5", birthDay: "24", birthHour: "17", birthMinute: "0", calendarType: "양력", gender: "female" },
-  },
+  // [임시]
+  // {
+  //   slug: "inyeon-saju", name: "은비", concern: "지금 만나는 사람과 결혼까지 갈 수 있을까요", expectAges: [37, 38],
+  //   birthInfo: { birthYear: "1990", birthMonth: "5", birthDay: "24", birthHour: "17", birthMinute: "0", calendarType: "양력", gender: "female" },
+  // },
   // {
   //   slug: "sangun-sinjeom", name: "김영희", concern: "이직", expectAges: [50, 51, 52],
   //   birthInfo: { birthYear: "1975", birthMonth: "3", birthDay: "22", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },

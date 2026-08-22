@@ -66,7 +66,7 @@ export const PRODUCT_PITCH: Record<string, ProductPitch> = {
   },
   // 30대 여성 메인 — 전용 웹툰 랜딩이 본체. 이 항목은 목록·크로스셀 표면용.
   "inyeon-saju": {
-    eyebrow: "緣 · 직녀 연애사주",
+    eyebrow: "緣 · 직녀의 연애예보",
     headline: ["'때가 되면 만난다'는데", "그 때가 대체 언제인가요"],
     pains: [
       "'좋은 인연 올 거예요'… 그 말만 벌써 몇 번째인가요?",
@@ -86,7 +86,7 @@ export const PRODUCT_PITCH: Record<string, ProductPitch> = {
   // 직녀 2번째 — 결혼 축. 인연과 카니발 안 나게 질문을 가른다:
   // 인연은 「만날 사람이 언제 오나」, 결혼은 「그게 언제 결혼으로 가나」.
   "marriage-saju": {
-    eyebrow: "婚 · 직녀 결혼사주",
+    eyebrow: "婚 · 직녀의 결혼예보",
     headline: ["'때 되면 하겠지' 하다가", "벌써 몇 해가 지났나요"],
     pains: [
       "만나는 사람은 있는데, 이 사람이 맞는지 확신이 안 서나요?",

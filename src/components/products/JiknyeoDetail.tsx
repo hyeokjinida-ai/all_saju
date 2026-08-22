@@ -1,6 +1,6 @@
 "use client";
 
-// 직녀 결혼사주 상세페이지 — 청월당 시공법 1:1 클론.
+// 직녀의 결혼예보 상세페이지 — 청월당 시공법 1:1 클론.
 //
 // 베끼는 것은 **시공법**이다: 타입 스케일·색·여백·그라데이션·말풍선 규격·섹션 리듬.
 // 그림·문장은 우리 것을 쓴다(13컷 슬롯 + 확정 카피).
@@ -303,7 +303,7 @@ export function JiknyeoDetail({
             ))}
           </div>
           <p className="font-gothic mt-6 text-center text-[13px] font-bold tracking-[0.2em]" style={{ color: "#8a7f66" }}>
-            직녀 결혼사주
+            직녀의 결혼예보
           </p>
           <p className="mt-2 text-center">
             {compareLabel && (

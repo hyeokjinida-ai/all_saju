@@ -1,0 +1,290 @@
+// 직녀 예보판 · 원국 증거표 — 2026-08-22 신설.
+//
+// 이 두 부품이 직녀 티저의 새 축이다. 하는 일이 다르다:
+//   ForecastBoard  : 열두 달을 **달 위상**으로 편다. 계산은 전부 보여주고 이름만 잠근다.
+//   ChartEvidence  : "만세력을 직접 계산한다"는 주장을 **실물 명식**으로 증명한다.
+//
+// 왜 달 위상인가 — 일기예보가 ☀☁☂ 로 말하듯 우리는 보름/반달/초승/구름으로 말한다.
+// 상품명(연애예보)·세계관(밤)과 한 몸이고, 사주 시장에서 아무도 안 쓰는 체계라
+// 이 부품 하나로 "어디 따라했네"가 성립하지 않는다.
+//
+// ⚠ 조판 눈금: 이 랜딩은 max-w-520 이다. 디자인 원본(`직녀/디자인시스템/`)은 1125px 캔버스라
+//    값을 그대로 옮기면 안 된다 — 기존 랜딩 눈금(11/12/13/15/17/19)에 맞춰 환산해 쓴다.
+
+const MOON = "#d9c7e8";
+const SILVER = "#cfd6e6";
+const BONE = "#e8e6ef";
+const SUB = "#98a0b4";
+const PLATE_LINE = "rgba(217,199,232,0.45)";
+
+/* ── 달 위상 4종 ────────────────────────────────────
+   보름=크게 열림 / 반달=자리가 생김 / 초승=평 / 구름=결이 엉킴 */
+type Phase = "full" | "half" | "cres" | "cloud";
+
+function Moon({ phase, size = 34 }: { phase: Phase; size?: number }) {
+  const common = { width: size, height: size, viewBox: "0 0 74 74" } as const;
+  if (phase === "full")
+    return (
+      <svg {...common} aria-hidden>
+        <defs>
+          <radialGradient id="jf-full">
+            <stop offset="0%" stopColor="#FFFDF2" />
+            <stop offset="100%" stopColor="#EFE3BE" />
+          </radialGradient>
+        </defs>
+        <circle cx="37" cy="37" r="27" fill="url(#jf-full)" stroke="#C9A94E" strokeWidth="2.5" />
+        <circle cx="30" cy="30" r="5" fill="#E4D6A8" opacity=".7" />
+        <circle cx="45" cy="42" r="7" fill="#E4D6A8" opacity=".55" />
+      </svg>
+    );
+  if (phase === "half")
+    return (
+      <svg {...common} aria-hidden>
+        <circle cx="37" cy="37" r="27" fill="#F3EDFA" stroke="#9B8AC4" strokeWidth="2.5" />
+        <path d="M37 10a27 27 0 0 1 0 54z" fill="#C7B0EC" />
+      </svg>
+    );
+  if (phase === "cres")
+    return (
+      <svg {...common} aria-hidden>
+        <circle cx="37" cy="37" r="27" fill="#E6E2EE" stroke="#B9B2CE" strokeWidth="2.5" />
+        <path d="M31 11a27 27 0 1 0 0 52 31 31 0 0 1 0-52z" fill="#FCFAFE" />
+      </svg>
+    );
+  return (
+    <svg {...common} aria-hidden>
+      <circle cx="41" cy="30" r="21" fill="#EFECF6" stroke="#A9A2BE" strokeWidth="2.5" />
+      <path d="M20 52h34a12 12 0 0 0 0-24 17 17 0 0 0-32 5 10 10 0 0 0-2 19z" fill="#8F87A8" />
+    </svg>
+  );
+}
+
+const GRADE: Record<Phase, string> = {
+  full: "크게 열림",
+  half: "자리",
+  cres: "평",
+  cloud: "엉킴",
+};
+
+/** 밤하늘 위에 뜨는 달빛 판 — 정보 밀도가 높은 구간만 이렇게 띄운다(밝기 리듬). */
+function Plate({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-[14px] px-4 py-6"
+      style={{
+        background: "linear-gradient(168deg,#F7F4FB 0%,#EDE7F6 58%,#E2D9F0 100%)",
+        boxShadow: `0 0 0 1px ${PLATE_LINE}, 0 18px 44px rgba(10,8,26,.55), 0 0 60px rgba(169,139,217,.18)`,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-14"
+        style={{ background: "linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0))" }}
+      />
+      {children}
+    </div>
+  );
+}
+
+function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
+  return (
+    <>
+      <div className="flex items-center justify-center gap-2.5">
+        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
+        <p className="text-[17px] font-extrabold" style={{ color: "#1B1729" }}>
+          {children}
+        </p>
+        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
+      </div>
+      {sub ? (
+        <p className="mt-1.5 text-center text-[12px]" style={{ color: "#6C6483" }}>
+          {sub}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+/* ── 1. 예보판 ─────────────────────────────────────── */
+
+// 샘플 12칸. 광고 랜딩(/jiknyeo)은 아직 손님 명식이 없으므로 예시로 보여준다.
+// 결제 후 결과지에서는 computeInyeonFacts 의 실제 등급으로 이 자리를 채운다.
+const SAMPLE: { m: string; p: Phase }[] = [
+  { m: "9월", p: "cres" }, { m: "10월", p: "half" }, { m: "11월", p: "full" }, { m: "12월", p: "cres" },
+  { m: "1월", p: "cloud" }, { m: "2월", p: "cres" }, { m: "3월", p: "full" }, { m: "4월", p: "cres" },
+  { m: "5월", p: "half" }, { m: "6월", p: "cloud" }, { m: "7월", p: "cres" }, { m: "8월", p: "full" },
+];
+
+export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Phase }[] }) {
+  return (
+    <div className="px-4 py-6">
+      <Plate>
+        <PlateTitle sub="앞으로 열두 달 · 만세력 계산 결과">인연 예보</PlateTitle>
+
+        <div className="mt-5 grid grid-cols-4 gap-2">
+          {months.map(({ m, p }) => {
+            const big = p === "full";
+            return (
+              <div
+                key={m}
+                className="rounded-[9px] py-2.5 text-center"
+                style={{
+                  background: "#FCFAFE",
+                  border: `1px solid ${big ? "#6B4C9A" : "#DFD6EE"}`,
+                  boxShadow: big ? "0 0 0 2px rgba(107,76,154,.16)" : undefined,
+                }}
+              >
+                <p className="text-[12px] font-bold" style={{ color: "#6C6483" }}>
+                  {m}
+                </p>
+                <div className="my-1.5 flex justify-center">
+                  <Moon phase={p} />
+                </div>
+                <p className="text-[11px] font-bold" style={{ color: big ? "#5B3F8F" : "#8A82A2" }}>
+                  {GRADE[p]}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2 border-t pt-4" style={{ borderColor: "#DDD3EC" }}>
+          {([["full", "크게 열리는 달"], ["half", "자리가 생기는 달"], ["cres", "평"], ["cloud", "결이 엉키는 달"]] as const).map(
+            ([p, label]) => (
+              <div key={p} className="flex items-center gap-2">
+                <Moon phase={p} size={22} />
+                <span className="text-[12px]" style={{ color: "#3B3550" }}>
+                  {label}
+                </span>
+              </div>
+            ),
+          )}
+        </div>
+      </Plate>
+
+      {/* 잠금 — 계산은 다 보여줬으니, 가리는 건 명사 하나뿐이다 */}
+      <div className="mt-6 space-y-3">
+        {[
+          <>크게 열리는 달은 <b style={{ color: BONE }}>세 번</b>, 첫 달은 <Mask w={78} /></>,
+          <>그 사람은 <Mask w={56} />에서 처음 마주쳐요</>,
+          <><Mask w={30} />살, 그게 매번 같은 자리를 끊어요</>,
+        ].map((line, i) => (
+          <p key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed" style={{ color: "#d8d2e8" }}>
+            <i className="mt-2 block h-[5px] w-[5px] flex-none rounded-full" style={{ background: "#8B6FC4" }} />
+            <span>{line}</span>
+          </p>
+        ))}
+      </div>
+
+      <p className="mt-6 text-center font-myeongjo text-[14px] leading-relaxed" style={{ color: SUB }}>
+        계산은 다 보여드렸어요.
+        <br />
+        읽어 드리는 건, 여기서부터예요.
+      </p>
+    </div>
+  );
+}
+
+function Mask({ w }: { w: number }) {
+  return (
+    <span
+      className="inline-block translate-y-[2px] rounded-[3px]"
+      style={{
+        width: w,
+        height: 17,
+        background: "rgba(139,111,196,.30)",
+        boxShadow: "inset 0 0 0 1px rgba(199,176,236,.35)",
+      }}
+    />
+  );
+}
+
+/* ── 2. 원국 증거표 ────────────────────────────────── */
+
+type El = "wood" | "fire" | "earth" | "metal" | "water";
+const EL_BG: Record<El, string> = {
+  wood: "linear-gradient(150deg,#8FBFA0,#5E8F6E)",
+  fire: "linear-gradient(150deg,#E08098,#B4526B)",
+  earth: "linear-gradient(150deg,#D6AC76,#A8804A)",
+  metal: "linear-gradient(150deg,#BDB9D6,#8A86A8)",
+  water: "linear-gradient(150deg,#6E7BB8,#3E4A80)",
+};
+
+type Cell = { han: string; kor: string; el: El; isDay?: boolean };
+
+const SAMPLE_STEMS: Cell[] = [
+  { han: "壬", kor: "임", el: "water" },
+  { han: "乙", kor: "을", el: "wood", isDay: true },
+  { han: "己", kor: "기", el: "earth" },
+  { han: "庚", kor: "경", el: "metal" },
+];
+const SAMPLE_BRANCHES: Cell[] = [
+  { han: "申", kor: "신", el: "metal" },
+  { han: "酉", kor: "유", el: "metal" },
+  { han: "未", kor: "미", el: "earth" },
+  { han: "辰", kor: "진", el: "earth" },
+];
+
+function Pillar({ c }: { c: Cell }) {
+  return (
+    <div
+      className="rounded-[9px] py-2.5 text-center text-white"
+      style={{ background: EL_BG[c.el], boxShadow: c.isDay ? "0 0 0 2px rgba(107,76,154,.45)" : undefined }}
+    >
+      <em className="block text-[26px] font-bold not-italic leading-none">{c.han}</em>
+      <span className="mt-1 block text-[11px] opacity-90">{c.kor}</span>
+    </div>
+  );
+}
+
+export function ChartEvidence() {
+  return (
+    <div className="px-4 py-6">
+      <Plate>
+        <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "#DDD3EC" }}>
+          <div
+            className="flex h-16 w-16 flex-none flex-col items-center justify-center rounded-full text-white"
+            style={{ background: "linear-gradient(150deg,#3E4A80,#2A3462)" }}
+          >
+            <em className="text-[26px] font-bold not-italic leading-none">乙</em>
+            <span className="mt-0.5 text-[11px] opacity-85">을</span>
+          </div>
+          <div>
+            <p className="text-[15px] font-extrabold" style={{ color: "#1B1729" }}>
+              손님 명식 (예시)
+            </p>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#6C6483" }}>
+              1992.07.14 · 미시 · 여성
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-4 gap-1.5 text-center text-[11px] font-semibold" style={{ color: "#6C6483" }}>
+          <span>편인</span><span>일간(나)</span><span>편재</span><span>정관</span>
+        </div>
+        <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+          {SAMPLE_STEMS.map((c, i) => <Pillar key={i} c={c} />)}
+        </div>
+        <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+          {SAMPLE_BRANCHES.map((c, i) => <Pillar key={i} c={c} />)}
+        </div>
+        <div className="mt-2 grid grid-cols-4 gap-1.5 text-center text-[11px] font-semibold" style={{ color: "#6C6483" }}>
+          <span>정관</span><span>편관</span><span>편재</span><span>정재</span>
+        </div>
+        <div
+          className="mt-3 grid grid-cols-4 gap-1.5 border-t pt-3 text-center text-[11px]"
+          style={{ borderColor: "#DDD3EC", color: "#332C4A" }}
+        >
+          <span>태</span><span>절</span><span>양</span><span>관대</span>
+        </div>
+      </Plate>
+
+      <p className="mt-5 text-center text-[14px] leading-relaxed" style={{ color: SUB }}>
+        절기와 시주까지 코드로 계산해요.
+        <br />
+        <b style={{ color: MOON }}>신약 · 용신 수(水)</b> — 위 예보의 등급은 전부 여기서 나와요.
+      </p>
+    </div>
+  );
+}
+
+export { SILVER, MOON, BONE };
