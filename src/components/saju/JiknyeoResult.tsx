@@ -116,6 +116,18 @@ const EL_BG: Record<string, string> = {
   water: "linear-gradient(150deg,#6E7BB8,#3E4A80)",
 };
 
+
+/** 짝의 오행 → 「어떤 결의 사람인지」. 외모·직업은 넣지 않는다 —
+ *  outline 이 "직업명·얼굴·지역 단정 금지"로 못박은 항목이라 표에서도 지킨다.
+ *  (타이트는 외모·직업군까지 표로 단정하지만, 우리는 그 선을 안 넘기로 한 선택이다) */
+const OH_TRAIT: Record<string, { keul: string; how: string }> = {
+  목: { keul: "곧고 자라는 결", how: "먼저 계획을 세워 오고, 약속을 미루지 않아요" },
+  화: { keul: "밝고 퍼지는 결", how: "표현이 빠르고, 함께 있으면 분위기가 데워져요" },
+  토: { keul: "두텁고 받치는 결", how: "말수는 적어도 한 번 맡으면 끝까지 지켜요" },
+  금: { keul: "맺고 끊는 결", how: "기준이 분명하고, 아닌 건 아니라고 말해요" },
+  수: { keul: "깊고 스미는 결", how: "먼저 듣고, 시간이 지날수록 편해져요" },
+};
+
 export function JiknyeoResult({
   view,
   markdown,
@@ -285,6 +297,39 @@ export function JiknyeoResult({
               ))}
             </div>
           )}
+        </Plate>
+      )}
+
+      {/* ── ③-B 인연 프로필 표 ──
+          티저가 「그 사람은 ████ 에서 처음 마주쳐요」 로 가린 것의 **직접 보상**.
+          타이트 유료 결과지의 「[운명 카드] 내 앞에 나타날 진짜 인연 프로필」 자리인데,
+          걔넨 외모·직업군까지 단정하고 우리는 그 선을 안 넘는다 — 대신 근거 있는 항목만 표로 박는다. */}
+      {inyeon && !isMarriage && (
+        <Plate id="sec-profile">
+          <PlateTitle sub="티저에서 가려 두었던 자리예요">내 앞에 나타날 사람</PlateTitle>
+          <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #DFD6EE" }}>
+            {[
+              ["어떤 결", OH_TRAIT[inyeon.spouseOh]?.keul ?? "고르게 섞인 결"],
+              ["태도", OH_TRAIT[inyeon.spouseOh]?.how ?? "서두르지 않고 꾸준해요"],
+              ["인연의 성격", inyeon.spouseType === "정" ? "바르게 오래 가는 인연" : "강하게 끌리는 인연"],
+              ["나이대", inyeon.ageDir],
+              ["처음 마주치는 자리", inyeon.meetHint || "사람을 통해 자연스럽게 이어져요"],
+              ["가까워지는 속도", `${inyeon.iljiFortune || "보통"} — ${inyeon.iljiLevel >= 7 ? "빠르게 데워져요" : "천천히 깊어져요"}`],
+              ["첫 달", top3[0] ? `${top3[0].year}년 ${top3[0].month}월` : "—"],
+            ].map(([k, v], i) => (
+              <div
+                key={k}
+                className="flex gap-3 px-3.5 py-2.5"
+                style={{ background: i % 2 ? "#FCFAFE" : "transparent", borderTop: i ? "1px solid #E9E2F4" : undefined }}
+              >
+                <span className="w-[92px] flex-none text-[12px] font-bold" style={{ color: "#6B4C9A" }}>{k}</span>
+                <span className="flex-1 text-[13px] leading-relaxed" style={{ color: "#332C4A" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-center text-[11px]" style={{ color: "#8A82A2" }}>
+            얼굴·직업·사는 곳은 적지 않았어요. 명식으로 단정할 수 없는 건 쓰지 않습니다.
+          </p>
         </Plate>
       )}
 
