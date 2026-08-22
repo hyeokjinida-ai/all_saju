@@ -33,6 +33,23 @@
     --ring: 264 100% 79%;               /* #b794ff */
     --radius: 0.875rem;                 /* 부드러운 카드 — 14px */
 
+    /* ── 자(字) — 글자 크기 눈금 (2026-08-23) ─────────────────────────────
+       상품마다 새로 재지 않게 **눈금을 하나로 못박는다.** 지금은 화면에 12·14·15.5·14.5·10.5 같은
+       눈금 밖 값이 섞여 있어 위계가 0.5px 차로 무너진 자리가 있었다(조판 규칙 §2 실측).
+       ⚠ 0.5px 차이는 안 보인다 — 한 칸을 건너뛰어야 위계가 선다.
+       본문 15 < 대사 17 < 나레이션 19 는 이 눈금 위에서 정해진 값이다. */
+    --fs-11: 11px;   /* 캡션·각주 */
+    --fs-13: 13px;   /* 보조 설명 */
+    --fs-15: 15px;   /* 본문 */
+    --fs-17: 17px;   /* 대사(말풍선) */
+    --fs-19: 19px;   /* 나레이션(웹툰 글컷) */
+    --fs-23: 23px;   /* 소제목 */
+    --fs-28: 28px;   /* 섹션 헤드 */
+    --fs-34: 34px;   /* 큰 헤드 */
+    --fs-44: 44px;   /* 정점 — 컷마다 한 줄 (조판 규칙 §7) */
+    --lh-tight: 1.35;  /* 헤드·정점 */
+    --lh-body:  1.75;  /* 본문·대사 — 기존 화면 실측값 */
+
     /* 명운록 raw 토큰 — 자수정 다크 표면 */
     --night:      #120726;  /* 가장 깊은 자수정 밤 */
     --night-2:    #231052;
@@ -141,6 +158,32 @@
     --violet-text: #d9c7e8;
     /* 달빛 버튼 위에 얹는 글자색 — JiknyeoLanding CTA 와 같은 값 */
     --wine-deep: #1a1330;
+  }
+
+  /* 돈달 세계관 (2026-08-23) — 먹바탕 + 금 + 주홍.
+     값은 전부 WealthWebtoon.tsx 에 손으로 박혀 있던 것을 **그대로** 올린 것이다(새로 고른 색 0).
+     그래서 이 스킨을 붙여도 기존 돈달 랜딩과 색이 어긋나지 않는다.
+     산군(금)과 갈리는 지점은 포인트색 — 산군은 주사(#8f2b1e, 부적), 돈달은 주홍(#a4552c, 민화). */
+  .world-wealth {
+    --bone:       #efe6d2;
+    --bone-soft:  #cfd0d8;
+    --bone-faint: #7d8496;
+
+    --gold:        #e8c96a;
+    --gold-bright: #f0d98c;
+    --gold-soft:   #c9a227;
+    --gold-pale:  rgba(232, 201, 106, 0.13);
+    --gold-line:  rgba(201, 162, 39, 0.28);
+
+    /* 선택 상태 배경 — 주홍 */
+    --violet-pale: rgba(164, 85, 44, 0.14);
+    --violet-text: #e8c96a;
+    --wine-deep:   #10141f;
+
+    /* 돈달 전용 — 부품이 아니라 이 세계관만 쓰는 값 */
+    --wealth-point: #a4552c;                                       /* 민화 주홍 — 정점 한 줄에만 */
+    --wealth-ink:   linear-gradient(180deg,#0b0f1a 0%,#121a2c 100%); /* 먹바탕 */
+    --wealth-paper: #f3ead6;                                        /* 한지 카드(민화 컷 위 판) */
   }
 
   /* ── 밝은 티저 (2026-08-18) ──────────────────────────────────────────
@@ -713,4 +756,67 @@
   --gold-pale: rgba(232, 201, 106, 0.14);
   --gold-line: rgba(232, 201, 106, 0.35);
   --wine-deep: #241a08;
+}
+
+/* ══ 질감 (2026-08-23) ═══════════════════════════════════════════════════
+   "통짜 색면 + 기본 렌더" 가 AI 티(날티)의 정체다. 여기 넷을 얹으면 지워진다.
+   값은 전부 이미 검증된 자리에서 올린 것 — 새로 고른 값 0:
+     tx-hanji ← jiknyeo-comic-kit.HANJI_BG (진짜 한지 스캔)
+     tx-grain ← 직녀/가격카드/가격카드.html .grain (청월당 대조에서 쓴 feTurbulence)
+     tx-gloss ← 같은 파일 .sheen (102deg 사선 광택)
+     tx-ink   ← jiknyeo-comic-kit.InkFade (섹션 사이 먹 번짐)
+   ⚠ grain·gloss 는 ::after 라서 **부모가 position:relative + overflow:hidden** 이어야 한다. */
+@layer components {
+  /* 한지 바탕 — 밝은 카드(목차·발췌).
+     파일이 없으면 backgroundColor 만 남아 아이보리 판이 된다(페이지는 안 깨진다). */
+  .tx-hanji {
+    background-color: #faf7f0;
+    background-image: url(/products/jiknyeo/hanji.png);
+    background-size: 360px 360px;
+    background-repeat: repeat;
+  }
+
+  /* 그레인 — 통짜 색면 위 미세 노이즈.
+     ⚠ 세기(--tx-grain-o)는 섹션마다 다시 잰다. 원본 .grain 은 1125px 캔버스에서 .40 이었는데
+     실화면은 390px 라 같은 노이즈가 2.9배 굵게 읽힌다 — 그대로 쓰면 지저분해진다.
+     여기 기본값은 "출발점"이지 정답이 아니다. 대조할 원본이 있으면 거기서 재서 덮을 것. */
+  .tx-grain { position: relative; --tx-grain-o: 0.22; }
+  .tx-grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--tx-grain-o);
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='tg'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23tg)'/%3E%3C/svg%3E");
+  }
+
+  /* 사선 광택 — 금·은 면이 평평해 보일 때. 원본 .sheen 과 같은 각도·정지점. */
+  .tx-gloss { position: relative; }
+  .tx-gloss::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    background: linear-gradient(102deg,
+      transparent 30%,
+      rgba(255,255,255,0.34) 38%,
+      rgba(255,255,255,0.46) 44%,
+      rgba(255,255,255,0.20) 50%,
+      transparent 58%);
+  }
+
+  /* 먹 번짐 — 섹션과 섹션 사이. 칼같이 잘린 경계는 "블록 쌓기"로 보이고, 녹아 붙으면 한 편으로 읽힌다.
+     from/to 를 토큰으로 받아 밝은→어두운(기본)과 어두운→밝은(.tx-ink-up) 양쪽을 쓴다. */
+  .tx-ink {
+    height: var(--tx-ink-h, 90px);
+    background: linear-gradient(180deg,
+      var(--tx-ink-from, transparent) 0%,
+      var(--tx-ink-to, var(--night-edge)) 100%);
+  }
+  .tx-ink-up {
+    background: linear-gradient(180deg,
+      var(--tx-ink-to, var(--night-edge)) 0%,
+      var(--tx-ink-from, transparent) 100%);
+  }
 }
