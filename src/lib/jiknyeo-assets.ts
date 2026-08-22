@@ -30,6 +30,8 @@ export function readJiknyeoAssets(): AssetMap {
       }
     }
     if (existsSync(join(base, `${id}.mp4`))) a.video = `/${JIKNYEO_DIR}/${id}.mp4`;
+    // <id>_loop.mp4 가 있으면: <id>.mp4 는 인트로(1회), _loop 는 이어지는 무한 루프 (직녀 게이트 2단 재생)
+    if (existsSync(join(base, `${id}_loop.mp4`))) a.loopVideo = `/${JIKNYEO_DIR}/${id}_loop.mp4`;
     if (a.img || a.video) out[id] = a;
   }
   return out;

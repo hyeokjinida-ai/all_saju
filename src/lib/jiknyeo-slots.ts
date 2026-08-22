@@ -51,5 +51,5 @@ export const SLOTS: { id: SlotId; label: string; note: string; video?: boolean }
   { id: "sdThink", label: "SD · 설명", note: "2등신 직녀, 손가락 들고 — 목차 코멘트용" },
 ];
 
-export type Asset = { img?: string; video?: string };
+export type Asset = { img?: string; video?: string; loopVideo?: string };
 export type AssetMap = Partial<Record<SlotId, Asset>>;

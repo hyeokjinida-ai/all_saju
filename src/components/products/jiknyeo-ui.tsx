@@ -44,7 +44,7 @@ export function SlotCut({
       {/* ⚠ BgMedia 는 포스터(img)가 필수다 — mp4 만 넣으면 폴백할 그림이 없어 검은 칸이 된다.
           그 경우엔 영상 승격을 포기하고 아래 이미지/플레이스홀더로 내려앉힌다. */}
       {a?.video && a.img ? (
-        <BgMedia video={a.video} img={a.img} alt={meta?.label ?? ""} className="absolute inset-0 h-full w-full object-cover" />
+        <BgMedia video={a.video} img={a.img} loopVideo={a.loopVideo} alt={meta?.label ?? ""} className="absolute inset-0 h-full w-full object-cover" />
       ) : a?.img ? (
         <img
           src={a.img}
