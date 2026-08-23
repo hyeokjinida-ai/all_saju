@@ -607,9 +607,23 @@ export function SajuWizard({
       className={
         imm
           ? "world-sangun wizard-immersive relative flex w-full flex-col overflow-hidden"
-          : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
+          : isJiknyeoWorld
+            // 직녀도 산군과 같은 **전체화면 몰입**으로 세운다(2026-08-23).
+            // 그 전까지는 min-h-[560px] 카드였다 — 배경 영상이 카드 안에만 깔리고
+            // 화면 아래 1/3 이 검은 여백으로 남았다(실측). 카드 테두리·라운드도 뗀다.
+            // ⚠ `wizard-immersive` 는 쓰지 않는다 — 그 클래스의 .ap-input 이 **금색**이라
+            //    직녀 화면에 산군 색이 들어온다(실측: 「名」과 입력창 테두리가 금색으로 나옴).
+            //    직녀 은사판은 `.world-jiknyeo .ap-input` 이 이미 갖고 있고, 그 클래스는 부모에 있다.
+            ? "relative flex w-full flex-col overflow-hidden"
+            : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
       }
-      style={imm ? { background: "#0a090e", minHeight: "100svh" } : undefined}
+      style={
+        imm
+          ? { background: "#0a090e", minHeight: "100svh" }
+          : isJiknyeoWorld
+            ? { background: "#0b0f1a", minHeight: "100svh" }
+            : undefined
+      }
     >
       {imm ? (
         <>
@@ -639,17 +653,37 @@ export function SajuWizard({
         <>
           {/* 시장 1위 실측(#44·#46) — 캐릭터를 배경에 블러로 세워 두고 한 항목씩 묻는다.
               폼 화면으로 넘어가지 않아 이탈이 줄고, **자유 고민 화면에서만 블러가 풀린다**
-              (「이제 진짜 듣는다」 연출). 산군은 같은 일을 BgMedia(영상)로 하는데 그 경로는 안 건드린다. */}
-          <img
-            src="/products/inyeon/i1.webp"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              (「이제 진짜 듣는다」 연출).
+              2026-08-23: 배경을 정지 이미지에서 **아이들 루프 영상**으로 올렸다 — 청월당이
+              `?step=greeting` 부터 단계마다 캐릭터 루프를 까는 그 자리다(greeting.mp4 실측).
+              손님이 10문항 동안 가장 오래 머무는 화면이라, 살아 있는 배경이 이탈을 붙든다.
+              장부를 찾는 3초(teaserLoading)만 다른 영상으로 바꾼다 — 산군이 ritual.mp4 로 하는 것과 같다.
+              ⚠ 블러를 <video> 자체에 걸면 모바일 GPU 가 매 프레임 다시 흐린다. 영상은 그대로 두고
+                 **위에 얹은 유리판(backdrop-filter)** 이 흐림을 맡는다. 파일이 없으면 i1.webp 로 강등. */}
+          <div
+            className="pointer-events-none absolute inset-0"
             style={{
-              objectPosition: "center 16%",
-              filter: step === CONCERN_STEP ? "blur(0px)" : "blur(8px)",
-              opacity: step === CONCERN_STEP ? 0.6 : 0.34,
-              transition: "filter .6s ease-out, opacity .6s ease-out",
+              // 어둡게 하는 일은 **아래 그라데이션 한 곳**이 맡는다. 여기서 또 누르면
+              // 두 겹이 겹쳐 인물이 통째로 사라진다(실측: 유리판 0.58 + 그라데이션 → 새까만 화면).
+              opacity: step === CONCERN_STEP ? 0.78 : 0.6,
+              transition: "opacity .6s ease-out",
+            }}
+          >
+            <BgMedia
+              video={teaserLoading ? "/products/jiknyeo/loading.mp4" : "/products/jiknyeo/w2.mp4"}
+              img="/products/inyeon/i1.webp"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              // 유리판은 **흐림만** 맡는다(배경색 없음) — 어둡게는 위 opacity + 아래 그라데이션이 한다
+              backdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
+              WebkitBackdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
+              transition: "backdrop-filter .6s ease-out",
             }}
           />
           {/* 글자가 앉는 자리를 눌러 준다 — 위아래를 진하게, 가운데(얼굴)는 살려서 인물이 남게 */}
