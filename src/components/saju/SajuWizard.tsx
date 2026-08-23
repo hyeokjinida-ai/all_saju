@@ -1739,10 +1739,9 @@ function TeaserStep({
           id="j1"
           assets={jiknyeoAssets}
           say={
-            <ComicSay>
-              {name ? `${name}님 사주, 방금 다 읽었어요.` : "사주, 방금 다 읽었어요."}
-              <br />
-              여기까지는 그냥 보여드릴게요.
+            <ComicSay side="left" tail="down">
+              <span>{name ? `${name}님 사주,` : "사주,"}</span>
+              <span>방금 다 읽었어요.</span>
             </ComicSay>
           }
         />
@@ -1980,7 +1979,16 @@ function TeaserStep({
             <InyeonCut
               id="w3"
               assets={jiknyeoAssets}
-              say={<ComicSay>{teaser.judgeInvite}</ComicSay>}
+              say={
+                <ComicSay side="left" tail="down">
+                  {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
+                  {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
+                    <span key={i} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </ComicSay>
+              }
               // 손글씨 효과음 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(고칠 수 있어야 하니까).
               sfx="…딱"
               tilt={-2}
@@ -1994,24 +2002,28 @@ function TeaserStep({
               j2 = 직녀가 **달력을 내려다보는 옆모습**. 대사가 "아래 달력"을 가리키므로 시선이 맞물린다. */}
           {productSlug === "inyeon-saju" && (
             <div className="mt-6">
+              {/* 말풍선은 **2줄**까지만(청월당 실측). 넘치면 원이 깨지고 자막이 된다.
+                  j2 는 직녀가 왼쪽에서 달력을 내려다보는 옆모습 → 말풍선은 오른쪽 빈 자리, 꼬리는 아래로. */}
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
                 say={
-                  <ComicSay side="right">
-                    인연이 없는 게 아니에요. 날을 모르고 지나쳤을 뿐이에요.
-                    <br />
-                    자책은 여기서 끝내셔도 돼요.
-                    {teaser.hasPastCheck && (
-                      <>
-                        <br />
-                        <br />
-                        그때가 맞았다면 — <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
-                      </>
-                    )}
+                  <ComicSay side="right" tail="down">
+                    <span>인연이 없진 않아요.</span>
+                    <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
                 }
               />
+              {/* 긴 다리문장은 말풍선에서 빼 **나레이션 맨글**로 — 글·그림 교차가 여기서 성립한다 */}
+              {teaser.hasPastCheck && (
+                <p
+                  className="font-myeongjo mt-2 px-1 text-[15.5px] leading-[1.8]"
+                  style={{ color: "var(--bone-soft)" }}
+                >
+                  자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —{" "}
+                  <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                </p>
+              )}
             </div>
           )}
 
@@ -2467,10 +2479,9 @@ function TeaserStep({
                 id="w7"
                 assets={jiknyeoAssets}
                 say={
-                  <ComicSay>
-                    {name ? `${name}님 달력, 여기까지 폈어요.` : "달력, 여기까지 폈어요."}
-                    <br />
-                    나머지는 열어서 보세요.
+                  <ComicSay side="right" tail="down">
+                    <span>{name ? `${name}님 달력,` : "달력,"}</span>
+                    <span>여기까지 폈어요.</span>
                   </ComicSay>
                 }
               />

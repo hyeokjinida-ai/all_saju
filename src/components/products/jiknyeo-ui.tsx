@@ -40,7 +40,7 @@ export function SlotCut({
   const meta = SLOTS.find((s) => s.id === id);
   const a: Asset | undefined = assets?.[id];
   return (
-    <figure className="relative w-full overflow-hidden" style={{ aspectRatio: ratio }}>
+    <figure className="relative w-full" style={{ aspectRatio: ratio }}>
       {/* ⚠ BgMedia 는 포스터(img)가 필수다 — mp4 만 넣으면 폴백할 그림이 없어 검은 칸이 된다.
           그 경우엔 영상 승격을 포기하고 아래 이미지/플레이스홀더로 내려앉힌다. */}
       {a?.video && a.img ? (
@@ -80,8 +80,11 @@ export function SlotCut({
             className="pointer-events-none absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 40%, rgba(11,15,26,0.74) 76%, rgba(11,15,26,0.96) 100%)" }}
           />
-          {/* 컷 **안쪽**에 앉힌다. 가장자리(bottom-4)에 붙이면 말풍선이 아니라 UI 카드로 읽힌다 */}
-          <div className="absolute inset-x-4 bottom-7">{overlay}</div>
+          {/* 청월당 실측: 말풍선은 컷 **밖으로 절반 걸쳐** 종이 위에 뜬다.
+              컷 안에 가두면(bottom-4/bottom-7) 자막·UI 카드로 읽힌다.
+              overflow-visible 이 필요하므로 SlotCut 의 overflow-hidden 은 그림에만 걸고
+              오버레이는 이 래퍼 밖으로 나가게 둔다. */}
+          <div className="pointer-events-none absolute inset-x-3 bottom-0 translate-y-[38%]">{overlay}</div>
         </>
       )}
     </figure>
@@ -182,56 +185,74 @@ export function NeonMask({ text = "○○○○○○", scribble = true }: { tex
  * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
  * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
  */
-/** 직녀(웹툰 세계)의 대사판.
- *  ⚠ 산군은 실사라 **사진 밑 자막/직언 박스**를 쓰고, 직녀는 웹툰이라 **컷 안 말풍선**을 쓴다.
- *     이 둘을 섞으면 어느 쪽도 아닌 UI 카드가 된다(2026-08-23 형님 지적).
- *  청월당 유료 결과지 실측: 말풍선은 컷 폭을 다 먹지 않고(70~85%), 꼬리가 인물을 가리키며,
- *  컷 경계 안쪽에 앉는다. 그래서 전폭 카드가 아니라 폭을 묶고 꼬리를 단다.
- *  side: 꼬리가 향하는 쪽 = 인물이 서 있는 쪽. */
+/** 직녀(웹툰 세계)의 말풍선 — 청월당 티저원본 실측 규격(2026-08-23).
+ *
+ *  `경쟁사레퍼런스/청월당/랜딩/연애비책/티저원본/result_02·07·09.png` 를 픽셀로 재서 나온 값:
+ *    모양   **정원**(가로세로비 0.95~1.03) · 흰색 · **테두리 없음**
+ *    폭     화면의 **41~48%** (46% 를 기본값으로)
+ *    위치   **모서리**(중심 x = .26~.30 또는 .69~.72) — 얼굴 위에 절대 안 얹는다
+ *    걸침   컷 **밖으로 절반 나와** 종이 위에 떠 있다(컷 안에 갇히면 UI 카드가 된다)
+ *    꼬리   짧은 삼각형이 **입 쪽**을 가리킨다 — 누가 하는 말인지는 명패가 아니라 꼬리가 말한다
+ *    글     **2줄**, 고딕, 검정, 중앙정렬
+ *    명패   **없다**
+ *
+ *  ⚠ 산군은 실사라 문법이 다르다 — 한지 자막판(CutSay). 그 경로는 건드리지 않는다.
+ *  ⚠ 3줄 이상 들어가면 원이 깨진다. 긴 설명은 말풍선이 아니라 컷 아래 나레이션으로 뺀다.
+ */
 export function ComicSay({
   children,
   tail = "none",
   side = "left",
 }: {
   children: React.ReactNode;
-  tail?: "down" | "none";
+  /** 꼬리 방향 = 인물의 입이 있는 쪽. "none" 이면 꼬리 없음(나레이션성 대사) */
+  tail?: "down" | "up" | "none";
+  /** 말풍선이 앉는 모서리 */
   side?: "left" | "right";
 }) {
   return (
-    <div className={`relative w-[86%] ${side === "right" ? "ml-auto" : "mr-auto"}`}>
+    <div className={`relative w-[46%] ${side === "right" ? "ml-auto" : "mr-auto"}`}>
       <div
-        className="relative rounded-[18px] px-5 py-4"
-        style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
+        className="relative flex items-center justify-center rounded-full text-center"
+        style={{ aspectRatio: "1 / 1", background: "#ffffff", padding: "12% 7%" }}
       >
-        {/* 컷 안 말풍선의 꼬리 — 인물 쪽 아래로. 청월당은 이걸로 "누가 하는 말인지"를 위치로 말한다 */}
-        <span
-          aria-hidden
-          className="absolute -bottom-2 block h-4 w-4 rotate-45"
-          style={{ background: "#ffffff", [side === "right" ? "right" : "left"]: "28px" }}
-        />
-        <span
-          className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
-          style={{ background: "var(--gold-bright)", color: "#1a1330" }}
+        {/* ⚠ 원 안에서는 브라우저 줄바꿈에 맡기면 안 된다 — 좁은 폭 때문에 어절이 접혀
+            2줄로 쓴 대사가 3~4줄이 되고 원이 깨진다(실측). `<br/>` 로 끊은 줄을 그대로 지키도록
+            자식 span 을 nowrap 으로 못박고, 넘치면 글자 크기가 줄어들게 한다. */}
+        <div
+          className="font-gothic font-bold [&>span]:block [&>span]:whitespace-nowrap"
+          style={{ color: "#1a1330", fontSize: "min(3.7cqw, 15.5px)", lineHeight: 1.45, whiteSpace: "nowrap" }}
         >
-          직녀
-        </span>
-        <div className="font-myeongjo text-[17px] font-bold leading-[1.75]" style={{ color: "#1a1330" }}>
           {children}
         </div>
       </div>
-      {/* 꼬리 — 아래 컷을 가리킬 때만. CSS 삼각형이라 에셋이 필요 없다 */}
-      {tail === "down" && (
+      {tail !== "none" && (
         <span
           aria-hidden
-          className="absolute left-9 block h-0 w-0"
-          style={{ borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: "12px solid #ffffff" }}
+          className="absolute block h-0 w-0"
+          style={
+            tail === "down"
+              ? {
+                  bottom: -13,
+                  [side === "right" ? "right" : "left"]: "22%",
+                  borderLeft: "11px solid transparent",
+                  borderRight: "11px solid transparent",
+                  borderTop: "16px solid #ffffff",
+                }
+              : {
+                  top: -13,
+                  [side === "right" ? "right" : "left"]: "22%",
+                  borderLeft: "11px solid transparent",
+                  borderRight: "11px solid transparent",
+                  borderBottom: "16px solid #ffffff",
+                }
+          }
         />
       )}
     </div>
   );
 }
 
-/** 핵심 구절만 배경칠 — 청월당이 문장 안에서 시선을 강제하는 그 장치(형광박스) */
 export function Hi({ children }: { children: React.ReactNode }) {
   return (
     <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#1a1330" }}>
@@ -278,6 +299,8 @@ export function InyeonCut({
       )}
     </div>
   );
-  return <div className="-mx-5 mt-6">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
+  // 말풍선이 컷 밖으로 38% 걸치므로 **아래 여백**을 그만큼 비워 다음 블록과 안 겹치게 한다.
+  // (청월당도 컷 아래 종이 여백을 크게 두고 그 위에 말풍선을 띄운다 — 실측 result_02/07)
+  return <div className="-mx-5 mt-6 pb-[13%]">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
 }
 

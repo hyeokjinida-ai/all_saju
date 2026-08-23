@@ -557,10 +557,12 @@ export function buildTeaser(
     hasPastCheck: !!past,
     pastYear: past?.year ?? null,
     // 판정을 손님에게 넘긴다. 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다(모의구매 33세).
+    // ⚠ 직녀는 이 문장이 **원형 말풍선**에 들어간다 — 2줄을 넘기면 원이 깨진다
+    //    (청월당 티저원본 실측: 말풍선은 정원 + 2줄). 산군은 한지 자막판이라 길어도 된다.
     judgeInvite: past
       ? voice === "sangun"
         ? "맞으면 나머지를 열어라. 틀렸으면 여기서 닫아라. 나는 틀린 값은 안 받는다."
-        : "맞으면 나머지를 열어보세요. 틀렸으면 여기서 닫으셔도 돼요. 틀린 값은 받지 않아요."
+        : "맞으면 열어보세요." + String.fromCharCode(10) + "틀리면 닫으셔도 돼요."
       : "",
     chartRows: buildChartRows(analysis),
     sinsal: buildSinsal(analysis),
