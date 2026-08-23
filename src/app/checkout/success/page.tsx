@@ -58,7 +58,7 @@ function CheckoutSuccessInner() {
   // 중복 방지가 두 겹인 이유: confirm 은 멱등이라 비회원이 저장해 둔 이 주소를 나중에
   // 다시 열면 또 200 이 온다. ref 는 같은 탭만 막으므로 orderId 키로 localStorage 에도 남긴다.
   const purchaseSent = useRef(false);
-  const sendPurchase = useCallback((orderId: string, amount: number) => {
+  const sendPurchase = useCallback((orderId: string, amount: number, slug?: string | null) => {
     if (purchaseSent.current) return;
     const key = `mr_purchase_${orderId}`;
     try {
@@ -71,7 +71,13 @@ function CheckoutSuccessInner() {
       // 스토리지 차단(프라이빗·웹뷰) — 아래 ref 로 같은 탭 중복만 막는다
     }
     purchaseSent.current = true;
-    track("purchase", { value: amount > 0 ? amount : undefined, currency: "KRW" });
+    // slug 를 실어야 메타가 **어느 상품이 팔렸는지** 안다(analytics.ts 가 content_ids 로 바꾼다).
+    // 성공 URL 에는 상품이 없어서 이 경로뿐이고, 메타 쪽에서는 「맞춤 전환」으로만 갈린다.
+    track("purchase", {
+      value: amount > 0 ? amount : undefined,
+      currency: "KRW",
+      slug: slug ?? undefined,
+    });
   }, []);
 
   useEffect(() => {
@@ -122,7 +128,16 @@ function CheckoutSuccessInner() {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");
         // 여기가 돈이 잡힌 시점 — 결과지 생성 성공 여부와 무관하게 전환 1회 전송.
-        sendPurchase(orderId, amount);
+        //
+        // ⚠ 가상계좌는 예외다. confirm 은 200 을 주지만 토스 상태가 DONE 이 아니면
+        //   **아직 돈이 안 들어온 것**이다(reason: "awaiting_deposit"). 여기서 Purchase 를 쏘면
+        //   메타가 「입금 안 한 사람」을 구매자로 학습한다 — ROAS 가 부풀고 타깃이 틀어진다.
+        //   유입이 100% 메타라 이 거짓 신호는 광고비를 그대로 잘못된 사람에게 태운다.
+        //
+        //   입금이 실제로 들어오면 토스 웹훅·복구 크론이 마무리하는데, 그 경로엔 이 화면이 없어
+        //   그 전환은 지금 구조에선 놓친다. **놓치는 쪽이 거짓 신호보다 낫다** —
+        //   회수는 서버 CAPI 를 붙일 때 한다(주 50전환 쌓인 뒤).
+        if (json.reason !== "awaiting_deposit") sendPurchase(orderId, amount, json.productSlug);
         const guest = json.guest === true;
         if (guest) setIsGuest(true);
         if (json.resultId) {

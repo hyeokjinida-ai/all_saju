@@ -13,6 +13,7 @@ import { WealthStory } from "@/components/products/WealthWebtoon";
 import { InyeonStory } from "@/components/products/InyeonWebtoon";
 import { SangunStory } from "@/components/products/SangunWebtoon";
 import { JiknyeoStory } from "@/components/products/JiknyeoStory";
+import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
 import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
 import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
 import { formatKRW, formatDate } from "@/lib/utils";
@@ -336,6 +337,12 @@ export default async function ProductDetailPage({
           }),
         }}
       />
+
+      {/* 퍼널 첫 칸(ViewContent) — 게이트가 없는 랜딩은 **페이지 로드 = 상품 열람**이다.
+          산군·직녀는 게이트를 벗어나는 시점에 컴포넌트 안에서 각자 쏜다(그게 게이트 이탈률을
+          재는 유일한 자다). 그 둘만 빼면 남는 게 정확히 「게이트 없는 화면」 — 결혼·웹툰
+          레지스트리·일반 템플릿이고, **빌더로 만든 새 상품은 전부 일반 템플릿**으로 온다. */}
+      {!isSangunStory && !isJiknyeoStory && <ProductViewBeacon slug={product.slug} />}
 
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
       {isMarriage ? (
