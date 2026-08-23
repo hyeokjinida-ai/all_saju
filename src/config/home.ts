@@ -47,6 +47,10 @@ export const HOME_HERO: Record<string, { character: string; title: string; tagli
 };
 
 /** 히어로에 세울 순서. 배열 앞이 TOP 1. */
+// ⚠ 여기 있는 slug 가 곧 화면에 뜨는 건 아니다. 홈은 **판매중인 상품만** 읽고, 이 배열은
+//    그중 순서를 정할 뿐이다. 그래서 상품을 내려도(is_active=false) 카드는 저절로 빠지고,
+//    되살리면 이 자리로 그대로 돌아온다 — 뺄 때 이 파일을 건드릴 필요가 없다.
+//    (2026-08-23 결혼예보를 내렸지만 아래에 그대로 두는 이유)
 export const HERO_ORDER = ["sangun-sinjeom", "inyeon-saju", "marriage-saju"];
 
 /** 큰 카드(70%) 행에 세울 상품 — 히어로와 같은 상품이지만 그림이 다르다(같은 컷 두 번 금지). */

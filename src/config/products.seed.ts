@@ -90,7 +90,10 @@ export const productsSeed: ProductSeed[] = [
     price: 19900,
     compare_at_price: 29900,
     display_order: 23,
-    is_active: true,
+    // 2026-08-23 형님 「결혼예보 상품은 일단 빼두자」 — 판매만 내렸다.
+    // 그림(레터링·웹툰 슬롯)·카피·결과지 엔진은 전부 그대로다. 되살리려면 이 한 줄 true.
+    // 운영 DB 도 같이 내렸다(주문 0건이라 잃은 것 없음).
+    is_active: false,
   },
   // 박수무당 라인 — 포괄 메인 상품 (2026-07-28 확장: 총운+돈 달·인연 달·바뀌는 해 확언, 19,900)
   //
