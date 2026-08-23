@@ -10,7 +10,8 @@
  * 굵고 각진 전각 디스플레이체라 한 글자가 네모를 꽉 채운다. 고딕(Noto Sans KR 900)을
  * 가로로 눌러 쓰던 이전 방식은 "늘린 폰트" 티가 나서 형님이 「밤티 난다」고 잡았다.
  *
- * 산출물: 직녀/레터링/<slug>_원본.png (흰 배경, 글자 딱 맞게 잘림)
+ * 산출물: 직녀/레터링/<slug>_원본.png (기본 **크로마키 초록** 배경, 글자 딱 맞게 잘림)
+ * 글자체는 상품 세계관에 따라 둘 — 각진 전각체(부적·현판) / 서예체(달빛·붓글씨).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -25,7 +26,19 @@ type Job = {
   to: string;
   edge: string;
   shadow: string;
+  /** 글자체 — block: 각진 전각체(부적·현판) · brush: 서예체(달빛·붓글씨) */
+  face?: "block" | "brush";
 };
+
+/**
+ * 배경색. 기본은 **크로마키 초록**이다.
+ *
+ * ⚠ 흰 배경으로 받으면 누끼가 안 깨끗하다(2026-08-23 실측): 은·자개 글자는 가장자리가
+ *    거의 흰색이라 "밝기 문턱" 하나로 배경과 글자를 못 가른다 — 은색엔 흰 테가 남고
+ *    금색은 획이 깎였다. 글자에 절대 안 쓰는 색(순수 초록)을 배경으로 받으면
+ *    색상만으로 정확히 갈린다. 영화·방송이 크로마키를 쓰는 이유와 같다.
+ */
+const BG = process.env.LETTERING_BG === "white" ? "#FFFFFF" : "#00FF00";
 
 const JOBS: Job[] = [
   // 산군 — 검정+금+주사 세계관(globals.css .world-sangun). 촛불 금색.
@@ -41,18 +54,20 @@ const JOBS: Job[] = [
   {
     slug: "inyeon-saju",
     title: "연애예보",
-    from: "#E7E3F5",
-    to: "#6B5AA6",
-    edge: "#F6F3FF",
-    shadow: "#241C42",
+    from: "#FFFFFF",
+    to: "#8E7BC9",
+    edge: "#FFFFFF",
+    shadow: "#2A2150",
+    face: "brush",
   },
   {
     slug: "marriage-saju",
     title: "결혼예보",
-    from: "#E7E3F5",
-    to: "#6B5AA6",
-    edge: "#F6F3FF",
-    shadow: "#241C42",
+    from: "#FFFFFF",
+    to: "#8E7BC9",
+    edge: "#FFFFFF",
+    shadow: "#2A2150",
+    face: "brush",
   },
   // 돈달 — 먹바탕 + 금 + 주홍(.world-wealth). 지금은 비활성이지만 되살릴 때 바로 쓴다.
   {
@@ -67,7 +82,9 @@ const JOBS: Job[] = [
 
 const ROOT = process.cwd();
 const OUT_DIR = path.join(ROOT, "직녀", "레터링");
-const FONT = path.join(ROOT, "직녀", "가격카드", "fonts", "BlackHanSans.ttf");
+const FONT_BLOCK = path.join(ROOT, "직녀", "가격카드", "fonts", "BlackHanSans.ttf");
+// 서예체 — 청월당 카드 제목이 붓글씨다(정통사주·재회비책 실측). 프로젝트가 이미 쓰는 글자체.
+const FONT_BRUSH = path.join(ROOT, "src", "app", "fonts", "GapyeongHanseokbong-Bold.woff2");
 const CHROME = [
   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
@@ -78,14 +95,18 @@ const CANVAS = { w: 2000, h: 900 };
 
 function html(job: Job, fontB64: string): string {
   const n = [...job.title.replace(/\s/g, "")].length;
-  const size = n <= 4 ? 380 : n <= 6 ? 300 : 240;
+  const brush = job.face === "brush";
+  // 서예체는 글자 폭이 좁고 사이가 뜬다 — 같은 크기면 작아 보여서 키우고 자간을 조인다.
+  const size = brush ? (n <= 4 ? 440 : 340) : n <= 4 ? 380 : n <= 6 ? 300 : 240;
+  const fmt = brush ? "woff2" : "truetype";
+  const mime = brush ? "font/woff2" : "font/ttf";
   return `<!doctype html><meta charset="utf-8">
 <style>
-  @font-face{font-family:BHS;src:url(data:font/ttf;base64,${fontB64})format("truetype")}
-  html,body{margin:0;padding:0;background:#fff}
+  @font-face{font-family:BHS;src:url(data:${mime};base64,${fontB64})format("${fmt}");font-weight:700}
+  html,body{margin:0;padding:0;background:${BG}}
   body{width:${CANVAS.w}px;height:${CANVAS.h}px;display:flex;align-items:center;justify-content:center}
   svg{overflow:visible}
-  text{font-family:BHS;font-size:${size}px}
+  text{font-family:BHS;font-weight:700;font-size:${size}px;letter-spacing:${brush ? "-0.04em" : "0"}}
 </style>
 <svg width="${CANVAS.w}" height="${CANVAS.h}" viewBox="0 0 ${CANVAS.w} ${CANVAS.h}">
   <defs>
@@ -95,13 +116,19 @@ function html(job: Job, fontB64: string): string {
       <stop offset="100%" stop-color="${job.to}"/>
     </linearGradient>
   </defs>
-  <!-- 그림자를 먼저: 오른쪽 아래로 살짝. GPT 가 입체를 잡는 단서가 된다 -->
-  <text x="${CANVAS.w / 2 + 11}" y="${CANVAS.h / 2 + 14}" text-anchor="middle"
+  ${brush
+    ? // 서예체는 획 자체가 그림이다 — 그림자·두꺼운 테두리를 넣으면 붓 맛이 뭉갠다.
+      `<text x="${CANVAS.w / 2}" y="${CANVAS.h / 2}" text-anchor="middle"
+        dominant-baseline="central"
+        stroke="${job.edge}" stroke-width="5" stroke-linejoin="round"
+        paint-order="stroke" fill="url(#g)">${job.title}</text>`
+    : // 각진 체는 입체가 상품이라 그림자를 깔아 GPT 에게 단서를 준다.
+      `<text x="${CANVAS.w / 2 + 11}" y="${CANVAS.h / 2 + 14}" text-anchor="middle"
         dominant-baseline="central" fill="${job.shadow}">${job.title}</text>
   <text x="${CANVAS.w / 2}" y="${CANVAS.h / 2}" text-anchor="middle"
         dominant-baseline="central"
         stroke="${job.edge}" stroke-width="14" stroke-linejoin="round"
-        paint-order="stroke" fill="url(#g)">${job.title}</text>
+        paint-order="stroke" fill="url(#g)">${job.title}</text>`}
 </svg>`;
 }
 
@@ -116,18 +143,19 @@ function mix(a: string, b: string, t: number): string {
 
 async function main() {
   if (!CHROME) throw new Error("크롬을 못 찾았습니다");
-  if (!fs.existsSync(FONT)) {
+  if (!fs.existsSync(FONT_BLOCK)) {
     throw new Error(
-      `글자체가 없습니다: ${FONT}\n` +
+      `글자체가 없습니다: ${FONT_BLOCK}\n` +
         "  받는 법: curl -s https://raw.githubusercontent.com/google/fonts/main/ofl/blackhansans/BlackHanSans-Regular.ttf -o 직녀/가격카드/fonts/BlackHanSans.ttf",
     );
   }
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const fontB64 = fs.readFileSync(FONT).toString("base64");
+  const b64Block = fs.readFileSync(FONT_BLOCK).toString("base64");
+  const b64Brush = fs.existsSync(FONT_BRUSH) ? fs.readFileSync(FONT_BRUSH).toString("base64") : "";
   const tmp = path.join(OUT_DIR, "_tmp.html");
 
   for (const job of JOBS) {
-    fs.writeFileSync(tmp, html(job, fontB64), "utf8");
+    fs.writeFileSync(tmp, html(job, job.face === "brush" ? b64Brush : b64Block), "utf8");
     const raw = path.join(OUT_DIR, `_raw_${job.slug}.png`);
     if (fs.existsSync(raw)) fs.unlinkSync(raw);
 
@@ -154,8 +182,8 @@ async function main() {
     const img = sharp(raw);
     const meta = await img.metadata();
     await sharp(raw)
-      .trim({ background: "#ffffff", threshold: 12 })
-      .extend({ top: 40, bottom: 40, left: 40, right: 40, background: "#ffffff" })
+      .trim({ background: BG, threshold: 12 })
+      .extend({ top: 40, bottom: 40, left: 40, right: 40, background: BG })
       .png()
       .toFile(out);
     fs.unlinkSync(raw);
