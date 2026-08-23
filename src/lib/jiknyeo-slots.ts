@@ -22,8 +22,14 @@ export type SlotId =
 // 2026-08-17 스토리 개편(형님 확정): 산군 분리 + 날실·씨실·베틀 용어 폐기 →
 // 견우직녀 설화(전 국민이 아는 이야기)로 전면 교체. 베틀은 '직녀의 소품'으로만 남는다
 // (직녀가 베 짜는 여자라는 건 설화에 있어 설명이 필요 없다 — 금지는 그림이 아니라 용어다).
-export const SLOTS: { id: SlotId; label: string; note: string; video?: boolean }[] = [
-  { id: "j3", label: "J3 · 첫 화면", note: "은하수 아래 베틀에 앉은 직녀 — 멀리서", video: true },
+export const SLOTS: {
+  id: SlotId; label: string; note: string; video?: boolean;
+  /** 영상을 **1회만** 재생하고 마지막 프레임에서 멈춘다(루프 금지).
+      청월당 게이트 실측: intro.mp4 가 loop=false 로 한 번 돌고 정지 화면이 된다.
+      역동적인 인트로를 루프로 돌리면 끝↔처음이 튄다 — 그 자리는 아예 루프를 안 건다. */
+  once?: boolean;
+}[] = [
+  { id: "j3", label: "J3 · 첫 화면", note: "은하수 아래 베틀에 앉은 직녀 — 멀리서", video: true, once: true },
   { id: "j1", label: "J1 · 정면 반신", note: "기준 얼굴(시드). 고개 살짝 기울임", video: true },
   { id: "j2", label: "J2 · 옆모습", note: "달력을 내려다보는 옆모습 — 반론 처리 자리" },
   { id: "w1", label: "웹툰 1 · 은하수", note: "밤하늘을 가르는 은하수 — 설화의 시작" },

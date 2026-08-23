@@ -76,7 +76,12 @@ export function JiknyeoStory({
   // ⚠ useState 초기값으로 읽으면 서버(파라미터 모름)와 클라이언트가 달라져 hydration 이 깨진다.
   //    반드시 **마운트 후** effect 에서 적용한다. 파라미터가 없으면 동작은 그대로다.
   useEffect(() => {
-    const n = Number(new URLSearchParams(window.location.search).get("scene"));
+    // ⚠ raw 를 먼저 null 검사한다. Number(null) === 0 이라, 그냥 Number() 로 감싸면
+    //    파라미터가 **없을 때도** 0 이 되어 게이트를 건너뛰고 스토리로 점프한다
+    //    (2026-08-23 실측: 이 버그로 게이트가 통째로 사라진 채 배포됐다).
+    const raw = new URLSearchParams(window.location.search).get("scene");
+    if (raw === null || raw === "") return;
+    const n = Number(raw);
     if (Number.isInteger(n) && n >= 0 && n < SCENES.length) {
       setScene(n);
       setStage("story");
@@ -128,15 +133,23 @@ export function JiknyeoStory({
           <p className="font-gothic whitespace-nowrap text-center text-[13px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
             만날 사람은 있어요
           </p>
-          {/* 헤드라인은 **어절 단위로 내가 끊는다.** 브라우저에 맡기면 폰 글자배율(카톡 「가가」)에서
+          {/* 손실회피 훅(2026-08-23 형님 지시). 「놓치지 마세요」 같은 경고는 방어를 부르지만,
+              「이미 지나쳤을지도」는 **의심**이라 확인하러 들어가게 만든다.
+              ⚠ 이 문장은 약속이 아니라 질문이므로 퍼널이 답을 줘야 끝난다:
+                 설화 w7「몰라서 지나갔을 뿐이에요 / 이번엔 알고 만나요」가 면책으로 받고,
+                 페이월이 「올해 남은 보름 N번」이라는 실제 계산값으로 닫는다.
+              ⚠ 과거 달 등급은 못 보여준다 — 만세력 API 가 currentWeolun/nextWeolun/upcoming 만 준다(전부 미래).
+                 그래서 버튼은 「달력 펴러 들어가기」를 유지한다. 「지나간 달 확인하기」는 거짓이 된다.
+
+              헤드라인은 **어절 단위로 내가 끊는다.** 브라우저에 맡기면 폰 글자배율(카톡 「가가」)에서
               「몇 월 / 인지가 / 문제죠」로 부서진다(형님 폰 실측). clamp 로 좁은 폭·큰 배율에서도
               두 줄을 유지하고, nowrap 으로 각 줄 안에서는 절대 안 쪼개지게 못 박는다. */}
           <p
             className="font-gothic text-moonlit headline-kr mt-3 text-center leading-[1.28] tracking-[-0.02em]"
             style={{ fontWeight: 900, fontSize: "clamp(26px, 8.2vw, 34px)" }}
           >
-            <span className="block whitespace-nowrap">몇 월인지가</span>
-            <span className="block whitespace-nowrap">문제죠</span>
+            <span className="block whitespace-nowrap">이미 한 번,</span>
+            <span className="block whitespace-nowrap">지나쳤을지도…</span>
           </p>
           <button
             type="button"
