@@ -43,7 +43,7 @@ export function SlotCut({
   const meta = SLOTS.find((s) => s.id === id);
   const a: Asset | undefined = assets?.[id];
   return (
-    <figure className="relative w-full" style={{ aspectRatio: ratio }}>
+    <figure className="relative w-full" style={{ aspectRatio: ratio, background: "#0b0f1a" }}>
       {/* ⚠ BgMedia 는 포스터(img)가 필수다 — mp4 만 넣으면 폴백할 그림이 없어 검은 칸이 된다.
           그 경우엔 영상 승격을 포기하고 아래 이미지/플레이스홀더로 내려앉힌다. */}
       {a?.video && a.img ? (
@@ -320,6 +320,16 @@ export function InyeonCut({
   );
   // 말풍선이 컷 밖으로 38% 걸치므로 **아래 여백**을 그만큼 비워 다음 블록과 안 겹치게 한다.
   // (청월당도 컷 아래 종이 여백을 크게 두고 그 위에 말풍선을 띄운다 — 실측 result_02/07)
-  return <div className="-mx-5 mt-6">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
+  // ⚠ 직녀 티저는 **밝은 판(teaser-light)** 위에 얹히는데 컷은 **어두운 밤 그림**이다.
+  // mt-6 으로 컷 사이를 띄우면 그 틈으로 밝은 판이 드러나 **흰 가로 띠**가 생긴다
+  // (형님 폰 실측 2026-08-23: 컷마다 위아래로 흰 줄). 디자인 문서의 원칙도
+  // 「바탕은 밤, 정보 판만 달빛으로 띄운다」인데 컷 구간만 그걸 안 따르고 있었다.
+  // → 컷을 밤 배경 블록으로 감싸고 틈을 없앤다. 컷끼리 이어져 웹툰이 죽 흐르고,
+  //   정보 카드(원국표·달력·가격)는 밝은 판 그대로 둔다 — 청월당 유료 결과지와 같은 리듬.
+  return (
+    <div className="-mx-5" style={{ background: "#0b0f1a" }}>
+      {tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}
+    </div>
+  );
 }
 
