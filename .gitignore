@@ -20,3 +20,15 @@ supabase/.temp
 docs-private/
 # 다른 프로젝트 폴더가 워킹트리에 섞여 있어 실수로 딸려 올라가는 것을 막는다
 morelle-brand/
+
+# 광고 영상 산출물·재료(대용량) — 드라이브/로컬에서 관리
+marketing/소재/산군/영상/*.mp4
+marketing/소재/산군/재료/클립/
+marketing/소재/산군/재료/캡처/
+marketing/소재/산군/재료/UGC/*.png
+marketing/소재/산군/재료/UGC/*.mp4
+marketing/소재/산군/재료/UGC/gpt/
+
+# 파이썬 캐시
+__pycache__/
+*.pyc

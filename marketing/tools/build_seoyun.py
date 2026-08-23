@@ -93,7 +93,7 @@ HOOKS = {
 #   full  = 풀프레임(어두운 바탕에 96%)  pan = 세로로 긴 페이지를 훑기
 CARDS = [
     ("pin", "seo_line_jikeon.png", 0.22, 5.10, {"hl": True}),
-    ("pan", "__win0", 7.60, 10.10, {"y0": 0.06, "y1": 0.30}),
+    ("pan", "__win0", 7.60, 10.80, {"y0": 0.06, "y1": 0.160}),   # 570 px/s — 1,754 였던 걸 3배 느리게
     ("pin", "seo_line_ch1_a.png", 12.80, 14.90, {}),
     ("pin", "seo_line_ch1_b.png", 15.20, 17.40, {}),
     ("pin", "seo_line_ch1_c.png", 17.55, 19.60, {}),
@@ -103,9 +103,11 @@ CARDS = [
     ("full", "seo_partner_card_ad.png", 30.10, 32.60, {"reveal": (30.20, 31.40)}),
     ("full", "seo_inyeon_calendar.png", 33.00, 35.05, {}),
     ("full", "seo_daeun_table.png", 35.20, 37.25, {}),
-    ("pan", "__win1", 37.40, 39.60, {"y0": 0.10, "y1": 0.62}),
+    ("pan", "__win1", 37.40, 40.15, {"y0": 0.10, "y1": 0.186}),  # 570 px/s — 4,320 이라 글자가 못 읽혔다(형님 지적)
 ]
-CHROMA = (28.00, 30.00, "seo_partner_card_ad_blur.png")
+CHROMA = (28.60, 30.00, "seo_partner_card_ad_blur.png")  # 초록은 28.9s 시작·29.4s 부터 온전(실측).
+#   폰 화면은 **얼굴 블러**판 — 30.1s 풀스크린에서 얼굴이 열려야 「얼굴까지 보여줌」이 산다
+SCREEN_ASPECT = 2.57   # 폰 화면 세로/가로 실측(29.7s 꼭짓점) — 4:5 에서 아래 꼭짓점을 되짚을 때 쓴다
 FLASH = 15.00
 END_T = 46.00
 
@@ -178,7 +180,7 @@ def build_base(ratio):
 
 
 # ───────────────────────── 레이어 생성 ─────────────────────────
-def make_layers(ratio, hook_key, cta_line23):
+def make_layers(ratio, hook_key, cta_line23, plain=False):
     W, H = 1080, (1920 if ratio == "9x16" else 1350)
     L = []   # {"im":PIL RGBA, "pos":(x,y), "t0","t1","fade","fade_out","pop"}
 
@@ -187,6 +189,8 @@ def make_layers(ratio, hook_key, cta_line23):
                   "fade": fade, "fade_out": fade_out, "pop": pop, "full": full, "reveal": reveal})
 
     # ① 훅 3줄 고정 — 이 구도는 머리가 y8% 까지 올라오므로 **천장 띠**(y2~16%)에 놓는다
+    #    plain 판은 훅·자막을 통째로 뺀다: 형님이 다른 TTS·자막으로 갈아끼울 소스이므로
+    #    글자가 남아 있으면 새 자막과 겹친다. 카드·크로마·엔드카드는 그대로 둔다(그게 이 소재의 뼈대다).
     hk = HOOKS[hook_key]
     ys = [int(H * 0.030), int(H * 0.068), int(H * 0.142)] if ratio == "9x16" else [int(H * 0.020), int(H * 0.055), int(H * 0.135)]
     sc = 1.0 if ratio == "9x16" else 0.82
@@ -204,11 +208,16 @@ def make_layers(ratio, hook_key, cta_line23):
     wfull = d.textlength(t2, font=f2)
     x2 = (W - wfull) / 2
     d.text((x2, ys[1]), key, font=f2, fill=C["RED"] + (255,), stroke_width=6, stroke_fill=(0, 0, 0, 235))
-    add(hook, (0, 0), 0.0, 44.0, fade=0.0, fade_out=0.5)
+    if not plain:
+        add(hook, (0, 0), 0.0, 44.0, fade=0.0, fade_out=0.5)
 
     # ② 자막
     cap_y = int(H * 0.527)
-    for i, t0, spoken, rows, peak in LINES:
+    if plain:
+        LINES_ = []
+    else:
+        LINES_ = LINES
+    for i, t0, spoken, rows, peak in LINES_:
         txt_rows = rows if i != 23 else [cta_line23]
         px = int((81 if peak else 45) * (1.0 if ratio == "9x16" else 0.85))
         items = []
@@ -258,9 +267,12 @@ def composite(ratio, layers, base, W, H, out_mp4, audio_wav, chroma_card):
     n = int(round(DUR * FPS))
     dec = subprocess.Popen([FF, "-loglevel", "quiet", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
-    cmd = [FF, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-           "-i", audio_wav, "-map", "0:v", "-map", "1:a", "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
-           "-t", f"{DUR:.2f}", *qsv_args(16, "slow"), "-movflags", "+faststart", out_mp4]
+    cmd = [FF, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
+    if audio_wav:
+        cmd += ["-i", audio_wav, "-map", "0:v", "-map", "1:a", "-c:a", "aac", "-b:a", "160k", "-ar", "44100"]
+    else:
+        cmd += ["-an"]
+    cmd += ["-t", f"{DUR:.2f}", *qsv_args(16, "slow"), "-movflags", "+faststart", out_mp4]
     enc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     nb = W * H * 3
     # 크로마 카드 미리 준비
@@ -278,7 +290,7 @@ def composite(ratio, layers, base, W, H, out_mp4, audio_wav, chroma_card):
             t = i / FPS
             # 크로마(폰 화면에 결과지)
             if ck_np is not None and CHROMA[0] <= t < CHROMA[1]:
-                fr = chroma_replace(fr, ck_np)
+                fr = chroma_replace(fr, ck_np, t)
             # 레이어
             for l in layers:
                 if not (l["t0"] <= t < l["t1"]):
@@ -341,35 +353,107 @@ def paste_pan(fr, l, t, W, H, k):
         page = page.resize((W, int(page.height * W / page.width)), Image.LANCZOS)
         l["pan"] = page
     p = (t - l["t0"]) / max(1e-6, (l["t1"] - l["t0"]))
+    p = max(0.0, min(1.0, p))
+    # ease-in-out — 등속은 기계가 미는 느낌이다. 손으로 훑으면 시작·끝이 느려진다.
+    p = 4 * p ** 3 if p < 0.5 else 1 - ((-2 * p + 2) ** 3) / 2
     yy = l["y0"] + (l["y1"] - l["y0"]) * p
     top = int(max(0, min(page.height - H, yy * page.height)))
     win = np.asarray(page.crop((0, top, W, top + H)).convert("RGB")).astype(np.float32)
     return (fr.astype(np.float32) * (1 - k) + win * k).astype(np.uint8)
 
 
-def chroma_replace(fr, card):
-    """폰 화면의 초록 사각형에 결과지 카드를 박는다. 손가락은 마스크로 자동 가려진다."""
+# 크로마 상태(프레임 간 이어지는 값) — 꼭짓점 EMA·화면 켜진 시각
+_CH = {"quad": None, "wake": None}
+
+
+def _find_coeffs(dst, src):
+    """dst = 폰 화면 네 꼭짓점(출력 좌표), src = 카드 네 모서리. PIL PERSPECTIVE 계수."""
+    M = []
+    for (x, y), (u, v) in zip(dst, src):
+        M.append([x, y, 1, 0, 0, 0, -u * x, -u * y])
+        M.append([0, 0, 0, x, y, 1, -v * x, -v * y])
+    A = np.array(M, dtype=np.float64)
+    B = np.array(src, dtype=np.float64).reshape(8)
+    try:
+        return np.linalg.solve(A, B)
+    except np.linalg.LinAlgError:
+        return np.linalg.lstsq(A, B, rcond=None)[0]
+
+
+def _corners(mask):
+    """회전한 사각형의 네 꼭짓점 — x+y, x-y 의 극점(외곽 4방향)."""
+    ys, xs = np.where(mask)
+    s = xs + ys
+    d = xs - ys
+    return [(int(xs[s.argmin()]), int(ys[s.argmin()])),   # 좌상
+            (int(xs[d.argmax()]), int(ys[d.argmax()])),   # 우상
+            (int(xs[s.argmax()]), int(ys[s.argmax()])),   # 우하
+            (int(xs[d.argmin()]), int(ys[d.argmin()]))]   # 좌하
+
+
+def chroma_replace(fr, card, t=None):
+    """폰 화면의 초록에 결과지를 **원근 정합**으로 박는다. 손가락은 마스크가 알아서 가린다.
+
+    ⚠ 실측으로 밟은 것 셋 (2026-08-23)
+     1) 초록 상자(가로세로 bbox)에 그냥 붙이면 **폰이 기울어도 카드만 반듯이 서 있어** 티가 난다
+        (형님 지적 「화면이 핸드폰 화면을 못 따라간다」). → 네 꼭짓점에 원근 변환.
+     2) 마스크를 임계값 그대로 쓰면 테두리에 초록 실선이 1~2px 남는다 → 3px 부풀리기 + 디스필.
+     3) 28.9~29.4초는 폰이 **프레임 왼쪽으로 잘려** 있어 꼭짓점이 가짜다. 그때 카드를 넣으면
+        내용이 찌그러졌다 펴지며 헤엄친다. → 잘린 동안은 **꺼진 화면**으로 두고,
+        온전해지는 순간(29.4s) 화면이 **켜지듯** 0.22초 밝아지며 카드가 뜬다.
+    """
     f = fr.astype(np.int16)
     g = (f[:, :, 1] > 90) & (f[:, :, 1] - f[:, :, 0] > 45) & (f[:, :, 1] - f[:, :, 2] > 45)
-    if g.sum() < 4000:
+    if g.sum() < 3000:
         return fr
-    ys, xs = np.where(g)
-    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
-    bw, bh = x1 - x0, y1 - y0
-    ci = Image.fromarray(card.astype(np.uint8))
-    sw = bw / ci.width
-    sh = bh / ci.height
-    s = max(sw, sh)
-    ci = ci.resize((max(1, int(ci.width * s)), max(1, int(ci.height * s))), Image.LANCZOS)
-    cx = (ci.width - bw) // 2
-    cy = 0
-    patch = np.asarray(ci.crop((cx, cy, cx + bw, cy + bh))).astype(np.float32)
-    m = g[y0:y1, x0:x1].astype(np.float32)
-    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))).astype(np.float32) / 255.0
-    m = m[:, :, None]
-    reg = fr[y0:y1, x0:x1].astype(np.float32)
-    fr[y0:y1, x0:x1] = (reg * (1 - m) + patch * m).astype(np.uint8)
-    return fr
+    H, W = fr.shape[:2]
+    cor = _corners(g)
+    # 좌·우가 잘린 건 **폰이 아직 프레임에 덜 들어온 것**(꼭짓점이 가짜) → 꺼진 화면으로 둔다.
+    # 아래가 잘린 건 4:5 크롭에선 **정상**이다(화면이 원래 프레임보다 길다) → 위 두 꼭짓점과
+    # 화면 비율(실측 2.57)로 아래 두 꼭짓점을 되짚어 만든다. 안 그러면 4:5 는 화면이 내내 꺼져 있다.
+    side_clip = any(x <= 2 or x >= W - 3 for x, y in cor)
+    bottom_clip = any(y >= H - 3 for x, y in cor)
+    clipped = side_clip
+    if not side_clip and bottom_clip:
+        (tlx, tly), (trx, try_) = cor[0], cor[1]
+        vx, vy = trx - tlx, try_ - tly
+        wlen = max(1.0, (vx * vx + vy * vy) ** 0.5)
+        ux, uy = -vy / wlen, vx / wlen          # 화면 세로 방향(가로변에 수직)
+        h = wlen * SCREEN_ASPECT
+        cor = [(tlx, tly), (trx, try_),
+               (int(trx + ux * h), int(try_ + uy * h)),
+               (int(tlx + ux * h), int(tly + uy * h))]
+    # 꼭짓점 EMA — 프레임마다 1~2px 흔들리면 카드가 떤다
+    if _CH["quad"] is None or clipped:
+        sm = cor
+    else:
+        k = 0.45
+        sm = [(int(k * cx + (1 - k) * px), int(k * cy + (1 - k) * py))
+              for (cx, cy), (px, py) in zip(cor, _CH["quad"])]
+    if not clipped:
+        _CH["quad"] = sm
+        if _CH["wake"] is None and t is not None:
+            _CH["wake"] = t
+    mi = Image.fromarray((g * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(1.4))
+    m = (np.asarray(mi).astype(np.float32) / 255.0)[:, :, None]
+    if clipped:
+        # 꺼진 화면 — 위에서 아래로 아주 옅은 광택만
+        sheen = np.linspace(16, 6, H, dtype=np.float32)[:, None, None]
+        fill = np.repeat(sheen, W, axis=1) + np.array([3.0, 2.0, 2.0])
+    else:
+        ci = Image.fromarray(card.astype(np.uint8))
+        cw, ch = ci.size
+        coeffs = _find_coeffs(sm, [(0, 0), (cw, 0), (cw, ch), (0, ch)])
+        fill = np.asarray(ci.transform((W, H), Image.PERSPECTIVE, coeffs, Image.BICUBIC)).astype(np.float32)
+        if t is not None and _CH["wake"] is not None:
+            k = min(1.0, max(0.0, (t - _CH["wake"]) / 0.22))
+            fill = fill * (0.18 + 0.82 * k)      # 화면이 켜지듯
+    out = fr.astype(np.float32) * (1 - m) + fill * m
+    r, gg, b = out[:, :, 0], out[:, :, 1], out[:, :, 2]
+    cap = np.maximum(r, b) + 10
+    over = gg > cap
+    gg[over] = cap[over]
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 # ───────────────────────── 오디오 ─────────────────────────
@@ -452,6 +536,8 @@ def main():
         "V0": ("h24", "긁힐 준비는 하고!"),
         "V2": ("h25", "긁힐 준비는 하고!"),
         "V3": ("h26", "긁힐 준비는 하고!"),
+        # PLAIN = 편집용 소스. 서윤 연기 + 카드 + 크로마 + 엔드카드만, 자막·훅·소리 없음.
+        "PLAIN": ("h24", ""),
     }
     ids = list(variants) if a.ids == ["all"] else a.ids
     wav = f"{TMP}/narr.wav"
@@ -463,12 +549,15 @@ def main():
         log("base", ratio, base)
         for vid in ids:
             hook_key, cta = variants[vid]
-            layers = make_layers(ratio, hook_key, cta)
+            plain = vid == "PLAIN"
+            layers = make_layers(ratio, hook_key, cta, plain=plain)
             layers.append({"im": endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": DUR,
                            "fade": 0.10, "fade_out": 0.0, "pop": 0.0, "full": True, "reveal": None})
             tmp_out = f"{TMP}/{vid}_{ratio}.mp4"
-            composite(ratio, layers, base, W, H, tmp_out, wav, CHROMA[2])
-            final = f"{OUT}/sangun_vU5_{vid}_seoyun_1080x{H}.mp4"
+            composite(ratio, layers, base, W, H, tmp_out, None if plain else wav, CHROMA[2])
+            final = (f"{OUT}/편집용/_v5_무음무자막_1080x{H}.mp4" if plain
+                     else f"{OUT}/sangun_vU5_{vid}_seoyun_1080x{H}.mp4")
+            os.makedirs(os.path.dirname(final), exist_ok=True)
             shutil.copyfile(tmp_out, final)
             log("saved", final, f"{os.path.getsize(final)/1e6:.1f}MB")
 
