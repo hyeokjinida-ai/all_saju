@@ -68,7 +68,10 @@ export function TiltCut({
   bleed?: boolean;
 }) {
   return (
-    <div className={bleed ? "-mx-3 overflow-hidden" : "overflow-hidden"}>
+    // ⚠ overflow-hidden 을 걸면 **컷 밖으로 걸치는 말풍선이 잘린다**(2026-08-23 운영에서 발견:
+    //    w3 말풍선 둘째 줄이 컷 하단에서 잘려 나갔다). 기울임으로 뜨는 모서리는 안쪽 div 가
+    //    scale(1.04) 로 이미 덮으므로 자를 필요가 없다.
+    <div className={bleed ? "-mx-3" : ""}>
       <div
         style={{
           transform: `rotate(${deg}deg) scale(1.04)`,

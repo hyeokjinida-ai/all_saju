@@ -214,7 +214,14 @@ export function ComicSay({
     <div className={`relative w-[46%] ${side === "right" ? "ml-auto" : "mr-auto"}`}>
       <div
         className="relative flex items-center justify-center rounded-full text-center"
-        style={{ aspectRatio: "1 / 1", background: "#ffffff", padding: "12% 7%" }}
+        style={{
+          aspectRatio: "1 / 1",
+          background: "#ffffff",
+          padding: "12% 7%",
+          // 말풍선이 **밝은 판 위**에 걸칠 때 흰끼리 묻힌다(운영 캡처에서 확인) —
+          // 청월당은 컷 밖 종이가 크림색이라 그냥 두지만, 우리 달빛 판은 더 밝다. 그림자로 띄운다.
+          boxShadow: "0 10px 26px rgba(12,10,28,0.30), 0 2px 6px rgba(12,10,28,0.16)",
+        }}
       >
         {/* ⚠ 원 안에서는 브라우저 줄바꿈에 맡기면 안 된다 — 좁은 폭 때문에 어절이 접혀
             2줄로 쓴 대사가 3~4줄이 되고 원이 깨진다(실측). `<br/>` 로 끊은 줄을 그대로 지키도록
@@ -245,6 +252,7 @@ export function ComicSay({
                   borderLeft: "11px solid transparent",
                   borderRight: "11px solid transparent",
                   borderBottom: "16px solid #ffffff",
+                  filter: "drop-shadow(0 -2px 2px rgba(12,10,28,0.12))",
                 }
           }
         />
@@ -301,6 +309,8 @@ export function InyeonCut({
   );
   // 말풍선이 컷 밖으로 38% 걸치므로 **아래 여백**을 그만큼 비워 다음 블록과 안 겹치게 한다.
   // (청월당도 컷 아래 종이 여백을 크게 두고 그 위에 말풍선을 띄운다 — 실측 result_02/07)
-  return <div className="-mx-5 mt-6 pb-[13%]">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
+  // 말풍선(폭 46% 정원)이 컷 밖으로 38% 걸치므로 **아래 여백 = 46% x 38% ≈ 18%** 를 비운다.
+  // 13% 로는 모자라 아래 카드(원국표)를 침범했다 — 운영 캡처에서 확인(2026-08-23).
+  return <div className="-mx-5 mt-6 pb-[18%]">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
 }
 

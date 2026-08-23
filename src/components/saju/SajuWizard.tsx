@@ -1739,7 +1739,7 @@ function TeaserStep({
           id="j1"
           assets={jiknyeoAssets}
           say={
-            <ComicSay side="left" tail="down">
+            <ComicSay side="left" tail="up">
               <span>{name ? `${name}님 사주,` : "사주,"}</span>
               <span>방금 다 읽었어요.</span>
             </ComicSay>
@@ -1980,7 +1980,7 @@ function TeaserStep({
               id="w3"
               assets={jiknyeoAssets}
               say={
-                <ComicSay side="left" tail="down">
+                <ComicSay side="left" tail="up">
                   {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
                   {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
                     <span key={i} className="block">
@@ -1989,8 +1989,8 @@ function TeaserStep({
                   ))}
                 </ComicSay>
               }
-              // 손글씨 효과음 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(고칠 수 있어야 하니까).
-              sfx="…딱"
+              // 효과음 제거(2026-08-23): 「…딱」이 비녀 옆에 떠서 무슨 소리인지 안 읽혔다.
+              // 청월당 효과음은 **집중선**(≡)이지 글자가 아니다 — 글자 효과음은 우리 그림체와 안 맞는다.
               tilt={-2}
             />
           )}
@@ -2008,7 +2008,7 @@ function TeaserStep({
                 id="j2"
                 assets={jiknyeoAssets}
                 say={
-                  <ComicSay side="right" tail="down">
+                  <ComicSay side="right" tail="up">
                     <span>인연이 없진 않아요.</span>
                     <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
@@ -2397,7 +2397,7 @@ function TeaserStep({
                 isMarriage={productSlug === "marriage-saju"}
               />
               {/* 배웅 — 값을 다 말한 뒤 마지막 한 컷. 원본도 맨 끝을 캐릭터로 닫는다. */}
-              <InyeonCut id="t15" assets={jiknyeoAssets} sfx="…또 봬요" sfxAt="left" />
+              <InyeonCut id="t15" assets={jiknyeoAssets} />
 
               {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
                   원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
@@ -2479,7 +2479,7 @@ function TeaserStep({
                 id="w7"
                 assets={jiknyeoAssets}
                 say={
-                  <ComicSay side="right" tail="down">
+                  <ComicSay side="right" tail="up">
                     <span>{name ? `${name}님 달력,` : "달력,"}</span>
                     <span>여기까지 폈어요.</span>
                   </ComicSay>
