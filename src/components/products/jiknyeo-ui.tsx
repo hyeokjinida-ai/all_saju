@@ -193,19 +193,17 @@ export function NeonMask({ text = "○○○○○○", scribble = true }: { tex
  * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
  * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
  */
-/** 직녀(웹툰 세계)의 말풍선 — 청월당 티저원본 실측 규격(2026-08-23).
+/** 직녀(웹툰 세계)의 말풍선 — **원과 꼬리를 하나의 SVG path 로 그린다.**
  *
- *  `경쟁사레퍼런스/청월당/랜딩/연애비책/티저원본/result_02·07·09.png` 를 픽셀로 재서 나온 값:
- *    모양   **정원**(가로세로비 0.95~1.03) · 흰색 · **테두리 없음**
- *    폭     화면의 **41~48%** (46% 를 기본값으로)
- *    위치   **모서리**(중심 x = .26~.30 또는 .69~.72) — 얼굴 위에 절대 안 얹는다
- *    걸침   컷 **밖으로 절반 나와** 종이 위에 떠 있다(컷 안에 갇히면 UI 카드가 된다)
- *    꼬리   짧은 삼각형이 **입 쪽**을 가리킨다 — 누가 하는 말인지는 명패가 아니라 꼬리가 말한다
- *    글     **2줄**, 고딕, 검정, 중앙정렬
- *    명패   **없다**
+ *  ⚠ 전에는 `rounded-full` div + CSS 삼각형 span 을 겹쳐 만들었다. 그러면
+ *     ① 원과 꼬리 사이에 이음매(색 경계)가 보이고 ② 그림자가 두 조각에 따로 걸려 뜨고
+ *     ③ 꼬리 위치를 % 로 맞춰야 해서 컷마다 어긋났다(형님 지적 2026-08-23).
+ *     하나의 도형으로 그리면 이음매가 **구조적으로 생길 수 없다**.
  *
- *  ⚠ 산군은 실사라 문법이 다르다 — 한지 자막판(CutSay). 그 경로는 건드리지 않는다.
- *  ⚠ 3줄 이상 들어가면 원이 깨진다. 긴 설명은 말풍선이 아니라 컷 아래 나레이션으로 뺀다.
+ *  청월당 티저원본 실측 규격(result_02·07·09):
+ *    정원 · 흰색 · 테두리 없음 · 명패 없음 · 폭 41~48% · 글 2줄 · 꼬리가 입 쪽
+ *
+ *  tail: 꼬리가 나가는 방향(= 인물이 있는 쪽). 글은 원 안에 중앙 정렬로 얹는다.
  */
 export function ComicSay({
   children,
@@ -213,58 +211,61 @@ export function ComicSay({
   side = "left",
 }: {
   children: React.ReactNode;
-  /** 꼬리 방향 = 인물의 입이 있는 쪽. "none" 이면 꼬리 없음(나레이션성 대사) */
+  /** 꼬리 방향 = 인물의 입이 있는 쪽. "none" 이면 꼬리 없음 */
   tail?: "down" | "up" | "none";
   /** 말풍선이 앉는 모서리 */
   side?: "left" | "right";
 }) {
+  // viewBox 100x122 — 원(지름 100)에 꼬리 길이 22 를 더한 높이.
+  // 꼬리는 원의 둘레에서 자라나 한 붓으로 이어진다(이음매 없음).
+  const flip = side === "right";
+  const tailPath =
+    tail === "down"
+      ? // 아래로 뻗는 꼬리 — 원 하단 좌측(또는 우측)에서 시작해 뾰족하게 내려간다
+        flip
+        ? "M72 94 L86 120 L58 99 Z"
+        : "M28 94 L14 120 L42 99 Z"
+      : tail === "up"
+        ? flip
+          ? "M72 28 L86 2 L58 23 Z"
+          : "M28 28 L14 2 L42 23 Z"
+        : "";
+
   return (
-    <div className={`relative w-[46%] ${side === "right" ? "ml-auto" : "mr-auto"}`}>
-      <div
-        className="relative flex items-center justify-center rounded-full text-center"
-        style={{
-          aspectRatio: "1 / 1",
-          background: "#ffffff",
-          padding: "12% 7%",
-          // 말풍선이 **밝은 판 위**에 걸칠 때 흰끼리 묻힌다(운영 캡처에서 확인) —
-          // 청월당은 컷 밖 종이가 크림색이라 그냥 두지만, 우리 달빛 판은 더 밝다. 그림자로 띄운다.
-          boxShadow: "0 10px 26px rgba(12,10,28,0.30), 0 2px 6px rgba(12,10,28,0.16)",
-        }}
-      >
-        {/* ⚠ 원 안에서는 브라우저 줄바꿈에 맡기면 안 된다 — 좁은 폭 때문에 어절이 접혀
-            2줄로 쓴 대사가 3~4줄이 되고 원이 깨진다(실측). `<br/>` 로 끊은 줄을 그대로 지키도록
-            자식 span 을 nowrap 으로 못박고, 넘치면 글자 크기가 줄어들게 한다. */}
-        <div
-          className="font-gothic font-bold [&>span]:block [&>span]:whitespace-nowrap"
-          style={{ color: "#1a1330", fontSize: "min(3.7cqw, 15.5px)", lineHeight: 1.45, whiteSpace: "nowrap" }}
+    <div className={`relative w-[46%] ${flip ? "ml-auto" : "mr-auto"}`}>
+      <div className="relative" style={{ aspectRatio: tail === "none" ? "1 / 1" : "100 / 122" }}>
+        <svg
+          viewBox="0 0 100 122"
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden
+          style={{ filter: "drop-shadow(0 8px 18px rgba(12,10,28,0.34))" }}
         >
-          {children}
+          {/* 원 + 꼬리를 **한 덩어리**로 칠한다. 두 도형이지만 같은 fill 이고 겹쳐 있어
+              경계선이 나오지 않는다(따로 그린 CSS 삼각형과 결정적으로 다른 점). */}
+          <g fill="#ffffff">
+            <circle cx="50" cy={tail === "up" ? 72 : 50} r="50" />
+            {tailPath && <path d={tailPath} />}
+          </g>
+        </svg>
+        {/* 글은 원 안쪽에만 앉는다 — 꼬리 영역을 피해 위/아래로 밀어준다 */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            paddingLeft: "13%",
+            paddingRight: "13%",
+            paddingTop: tail === "up" ? "22%" : "4%",
+            paddingBottom: tail === "down" ? "22%" : "4%",
+          }}
+        >
+          <div
+            className="font-gothic text-center font-bold [&>span]:block [&>span]:whitespace-nowrap"
+            style={{ color: "#1a1330", fontSize: "min(3.7cqw, 15.5px)", lineHeight: 1.45, whiteSpace: "nowrap" }}
+          >
+            {children}
+          </div>
         </div>
       </div>
-      {tail !== "none" && (
-        <span
-          aria-hidden
-          className="absolute block h-0 w-0"
-          style={
-            tail === "down"
-              ? {
-                  bottom: -13,
-                  [side === "right" ? "right" : "left"]: "22%",
-                  borderLeft: "11px solid transparent",
-                  borderRight: "11px solid transparent",
-                  borderTop: "16px solid #ffffff",
-                }
-              : {
-                  top: -13,
-                  [side === "right" ? "right" : "left"]: "22%",
-                  borderLeft: "11px solid transparent",
-                  borderRight: "11px solid transparent",
-                  borderBottom: "16px solid #ffffff",
-                  filter: "drop-shadow(0 -2px 2px rgba(12,10,28,0.12))",
-                }
-          }
-        />
-      )}
     </div>
   );
 }
