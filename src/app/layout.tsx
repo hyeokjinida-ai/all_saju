@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { Analytics } from "@/components/analytics/Analytics";
+import { Logo } from "@/components/brand/Logo";
 import { ChromeGate } from "@/components/layout/ChromeGate";
 import { siteConfig, businessInfo } from "@/config/site";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -59,13 +60,8 @@ function SiteHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <header className="border-b border-hairline bg-night/60 backdrop-blur-sm sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-baseline gap-2 group">
-          <span className="font-myeongjo font-semibold text-[19px] tracking-[0.04em] text-gold-bright group-hover:text-gold transition-colors">
-            {siteConfig.name}
-          </span>
-          <span className="font-brush text-[15px] text-gold-soft/80 hidden sm:inline">
-            {siteConfig.nameHanja}
-          </span>
+        <Link href="/" className="flex items-center group" aria-label={siteConfig.name}>
+          <Logo tone="ivory" height={24} priority className="opacity-90 transition-opacity group-hover:opacity-100" />
         </Link>
         <nav className="flex items-center gap-7 text-[13px] tracking-[0.04em]">
           <Link href="/products" className="text-bone-soft hover:text-gold transition-colors">상품</Link>

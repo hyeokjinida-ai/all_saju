@@ -12,6 +12,7 @@
 //    그래서 이 화면에 있는 동안만 body 를 덮고, 떠날 때 원래대로 되돌린다.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/brand/Logo";
 import { T } from "@/config/home";
 import { siteConfig } from "@/config/site";
 
@@ -89,16 +90,8 @@ export function HomeShell({
           style={{ background: "rgba(0,0,0,0.90)" }}
         >
           <div className="flex w-full items-center justify-between px-5">
-            <Link href="/" className="flex items-baseline gap-2">
-              <span
-                className="font-myeongjo text-[19px] font-bold tracking-[0.10em]"
-                style={{ color: T.title }}
-              >
-                {siteConfig.name}
-              </span>
-              <span className="font-brush text-[13px]" style={{ color: "rgba(255,255,255,0.38)" }}>
-                {siteConfig.nameHanja}
-              </span>
+            <Link href="/" className="flex items-center" aria-label={siteConfig.name}>
+              <Logo tone="ivory" height={24} priority />
             </Link>
             <button
               type="button"

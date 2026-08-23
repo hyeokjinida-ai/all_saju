@@ -16,6 +16,7 @@ import { markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
 import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
+import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
@@ -346,6 +347,7 @@ export function SangunResult({
   daeunTimeline,
   prescription,
   reviewOrderId = null,
+  recordedAt = null,
 }: {
   view: ResultView;
   markdown: string;
@@ -362,6 +364,8 @@ export function SangunResult({
   prescription?: Prescription | null;
   /** 후기 자격이 있을 때만(로그인 회원 주문). 게스트는 null */
   reviewOrderId?: string | null;
+  /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
+  recordedAt?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
@@ -525,7 +529,11 @@ export function SangunResult({
           pos="center 45%"
         />
 
-        {/* 예고해 둔 자리 — 맺음 컷 바로 아래. 낙관을 찍고 나서 묻는 게 순서다 */}
+        {/* 기록 완료 낙관 — 맺음 컷(낙관 찍는 손 사진) 바로 아래에 진짜 낙관이 찍힌다.
+            사진 → 도장 → 후기 질문. 이 순서가 이야기다. */}
+        <ResultSealOff at={recordedAt} tone="ink" />
+
+        {/* 예고해 둔 자리 — 낙관을 찍고 나서 묻는 게 순서다 */}
         {reviewOrderId && <ResultReviewCTA orderId={reviewOrderId} tone="ink" />}
       </div>
     </div>

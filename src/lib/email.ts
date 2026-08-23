@@ -13,13 +13,24 @@ function siteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "").replace(/\/$/, "");
 }
 
+// 이메일 머리 브랜드 — 락업 이미지, 절대 URL 이 필요하다.
+// ⚠ 운영 SITE_URL 이 비었거나 localhost 면 메일함에서 그림이 깨진다(런칭 블로커 항목).
+//    그 경우엔 글자로 떨어뜨린다 — 깨진 이미지 아이콘보다 낫다.
+// ⚠ Gmail 은 이미지를 프록시로 캐시한다. 자산을 다시 구워도 파일명을 바꾸지 말 것(캐시가 갈린다).
+function brandMark(): string {
+  const base = siteUrl();
+  if (!base || base.includes("localhost")) {
+    return `<div style="font-family:serif;font-weight:800;font-size:20px;letter-spacing:.08em;color:#f3edff;">명운록</div>`;
+  }
+  return `<img src="${base}/brand/logo-h-ivory.png" alt="명운록" width="120" height="44" style="display:block;margin:0 auto;width:120px;height:auto;border:0;" />`;
+}
+
 function resultEmailHtml(url: string, productName: string) {
   return `<!DOCTYPE html><html lang="ko"><body style="margin:0;background:#0f0a1c;padding:32px 16px;font-family:'Apple SD Gothic Neo',Pretendard,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#160e30;border:1px solid rgba(180,140,255,.25);border-radius:18px;overflow:hidden;">
       <tr><td style="padding:28px 28px 0;text-align:center;">
-        <div style="font-family:serif;font-weight:800;font-size:20px;letter-spacing:.08em;color:#f3edff;">명운록</div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:.22em;color:#c9a8ff;margin-top:4px;">SAJU LAB</div>
+        ${brandMark()}
       </td></tr>
       <tr><td style="padding:22px 28px 6px;text-align:center;">
         <div style="font-family:serif;font-weight:800;font-size:22px;color:#ffffff;line-height:1.4;">결과지가 도착했어요</div>
@@ -32,7 +43,7 @@ function resultEmailHtml(url: string, productName: string) {
         <p style="margin:0;font-size:11px;color:#9a8cd0;line-height:1.6;">버튼이 안 열리면 아래 주소를 복사해 주세요<br/><span style="color:#b8a4e0;word-break:break-all;">${url}</span></p>
       </td></tr>
     </table>
-    <p style="margin:18px 0 0;font-size:11px;color:#6b5e96;">명운록 · SAJU LAB</p>
+    <p style="margin:18px 0 0;font-size:11px;color:#6b5e96;">명운록</p>
   </td></tr></table>
   </body></html>`;
 }

@@ -19,6 +19,7 @@ import { Fragment } from "react";
 import { splitChapters } from "./ResultChapters";
 import { ResultBody } from "./ResultBody";
 import { ResultCrossSell } from "./ResultCrossSell";
+import { ResultSealOff } from "./ResultSealOff";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { gradeMonths } from "@/lib/saju/teaser";
 import type { InyeonFacts } from "@/lib/saju/saju-api";
@@ -185,6 +186,7 @@ export function JiknyeoResult({
   chartRows,
   isMarriage = false,
   reviewOrderId = null,
+  recordedAt = null,
 }: {
   view: ResultView;
   markdown: string;
@@ -195,6 +197,8 @@ export function JiknyeoResult({
   isMarriage?: boolean;
   /** 후기 자격이 있을 때만 값이 온다(로그인 회원 주문). 게스트는 null — 눌러도 막히는 버튼은 안 세운다 */
   reviewOrderId?: string | null;
+  /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
+  recordedAt?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = (name ?? "").trim();
@@ -409,6 +413,9 @@ export function JiknyeoResult({
           </Fragment>
         );
       })}
+
+      {/* 기록 완료 낙관 — 본문 끝. 도장을 찍고 나서 후기를 묻는다 */}
+      <ResultSealOff at={recordedAt} tone="night" />
 
       {/* 후기 — 손님 1~10호가 평생 유일한 후기 원천이다 */}
       {reviewOrderId && <ResultReviewCTA orderId={reviewOrderId} tone="night" />}

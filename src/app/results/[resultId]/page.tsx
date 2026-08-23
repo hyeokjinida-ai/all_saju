@@ -227,6 +227,7 @@ export default async function ResultPage({
             }
             isMarriage={slug === "marriage-saju"}
             reviewOrderId={ownerId ? result.order_id : null}
+            recordedAt={result.created_at as string | null}
           />
         ) : isSangun ? (
           /* 산군은 전용 조판 — 결제 직전까지 쌓은 검정+금 세계관을 결과지가 이어받는다.
@@ -250,11 +251,12 @@ export default async function ResultPage({
             daeunTimeline={rawAnalysis ? computeDaeunTimeline(rawAnalysis) : null}
             prescription={rawAnalysis ? computePrescription(rawAnalysis) : null}
             reviewOrderId={ownerId ? result.order_id : null}
+            recordedAt={result.created_at as string | null}
           />
         ) : (
           <>
             {/* 한눈 요약 — 일간·원국·오행·영역별·대운·조언 + 목차(상세 풀이 포함) */}
-            <ResultScroll view={view} embedded extraToc={[{ label: "상세 풀이 전문", href: "#sec-detail" }]} />
+            <ResultScroll view={view} embedded extraToc={[{ label: "상세 풀이 전문", href: "#sec-detail" }]} recordedAt={result.created_at as string | null} />
 
             {/* 상세 풀이 — LLM 전문(챕터별 카드) */}
             <div id="sec-detail" className="mt-5" style={{ scrollMarginTop: 14 }}>

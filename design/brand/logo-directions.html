@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>명운록 로고 방향 3안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@500;700;900&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0e0e10; --ivory:#f3ead6; --paper:#efeff1; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;color:#1a1a1a;padding:28px 36px;width:1900px}
+  h1{font-size:22px;margin:0 0 4px;font-weight:700}
+  .sub{font-size:13px;color:#666;margin-bottom:22px}
+  .row{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:start;background:#fff;border-radius:16px;padding:18px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .label h2{font-size:18px;margin:0 0 6px}
+  .label p{font-size:12px;color:#555;line-height:1.5;margin:0}
+  .cells{display:flex;gap:18px;align-items:flex-end;flex-wrap:nowrap}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .cap{font-size:11px;color:#777;letter-spacing:-.01em}
+  .tile{border-radius:22%;display:grid;place-items:center;overflow:hidden}
+  .tile svg{width:100%;height:100%;display:block}
+  .ink{background:var(--ink);color:var(--ivory)}
+  .ivory{background:var(--ivory);color:var(--ink)}
+  .small{display:flex;gap:14px;align-items:flex-end}
+  /* 메타 광고 카드 머리 흉내 */
+  .adhead{width:300px;background:#fff;border:1px solid #e2e2e2;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+  .adhead .av{width:40px;height:40px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center}
+  .adhead .av svg{width:100%;height:100%}
+  .adhead .t{font-size:13px;line-height:1.25}
+  .adhead .t b{display:block;font-weight:700}
+  .adhead .t span{color:#65676b;font-size:12px}
+  /* 검정 헤더(홈 계획: h-60, 로고 h-24) */
+  .hdr{width:448px;height:60px;background:#000;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-radius:8px}
+  .hdr .logo{height:24px;display:flex;align-items:center;gap:8px;color:#fafafa}
+  .hdr .logo svg.sym{height:24px;width:24px}
+  .hdr .icons{display:flex;gap:10px}
+  .hdr .icons i{width:22px;height:22px;border:1.6px solid #bbb;border-radius:6px;display:block}
+  .hdr2x{transform:scale(1.5);transform-origin:left top;width:448px}
+  .hdrwrap{width:672px;height:90px;overflow:hidden}
+  .wm{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:21px;letter-spacing:-.02em;line-height:1;color:#fafafa;white-space:nowrap}
+  .wm.gowun{font-family:"Gowun Batang",serif;font-weight:700}
+  .stack{width:210px;height:210px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+  .stack svg{width:88px;height:88px}
+  .stack .wm{font-size:30px}
+  .stack .hj{font-family:"Noto Serif KR",serif;font-weight:500;font-size:12px;letter-spacing:.28em;opacity:.7;margin-top:-2px}
+  .note{font-size:11px;color:#888;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>명운록 로고 — 방향 3안 (판정용 스케치, 완성본 아님)</h1>
+<div class="sub">쓰일 자리 그대로: 앱아이콘 180 · 파비콘 32/16 · 메타 광고 프로필 40px 원 · 검정 헤더 24px(2배 확대) · 세로 스택(OG/엔드카드)</div>
+
+<!-- ====== A. 사침 장부 ====== -->
+<template id="symA">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- 책(장부) 표지 -->
+  <rect x="22" y="12" width="58" height="76" rx="4" fill="currentColor"/>
+  <!-- 제첨(題簽) 표제 종이 -->
+  <rect x="31" y="19" width="13" height="33" rx="1.8" fill="var(--bg)"/>
+  <rect x="35.5" y="24" width="4" height="4" fill="currentColor"/>
+  <rect x="35.5" y="31.5" width="4" height="4" fill="currentColor"/>
+  <rect x="35.5" y="39" width="4" height="4" fill="currentColor"/>
+  <!-- 사침(四針): 네 기둥 -->
+  <g fill="var(--bg)">
+    <rect x="67" y="23" width="15" height="3.2" rx="1.6"/>
+    <rect x="67" y="38" width="15" height="3.2" rx="1.6"/>
+    <rect x="67" y="53" width="15" height="3.2" rx="1.6"/>
+    <rect x="67" y="68" width="15" height="3.2" rx="1.6"/>
+  </g>
+</svg>
+</template>
+
+<!-- ====== B. 먹 인장 ====== -->
+<template id="symB">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="14" y="14" width="72" height="72" rx="4" fill="currentColor"/>
+  <g font-family="'Noto Serif KR',serif" font-weight="900" font-size="27" fill="var(--bg)" text-anchor="middle">
+    <text x="68" y="44">命</text><text x="32" y="44">錄</text>
+    <text x="68" y="78">運</text><text x="32" y="78">印</text>
+  </g>
+  <rect x="50" y="18" width="1.6" height="64" fill="var(--bg)" opacity=".55"/>
+  <rect x="18" y="49.5" width="64" height="1.6" fill="var(--bg)" opacity=".55"/>
+</svg>
+</template>
+
+<!-- ====== C. 먹 한 점 ====== -->
+<template id="symC">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="grain" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/>
+    </filter>
+  </defs>
+  <path filter="url(#grain)" fill="currentColor"
+    d="M47 18c18-2 34 11 35 29 1 19-13 34-31 35C32 83 17 69 17 51 17 34 30 20 47 18z"/>
+</svg>
+</template>
+
+<div id="rows"></div>
+
+<script>
+const dirs = [
+  {id:'A', name:'사침 장부 — 錄', desc:'선장본(線裝本) 장부. 제첨(題簽) + <b>바늘땀 4개 = 사주(四柱)</b>. 경쟁 4사 중 “책”은 아무도 없음.', sym:'symA', wmClass:''},
+  {id:'B', name:'먹 인장 — 印', desc:'「命運錄印」 2×2 관인. 기록의 공신력. ⚠ 청월당 靑月堂印(붉은 도장)과 같은 원형 — 먹색으로만 갈림.', sym:'symB', wmClass:''},
+  {id:'C', name:'먹 한 점 — 點', desc:'붓 한 점. 「점(占) 보다」의 점. 먹빛 단색 축(5사 전부 컬러)을 제일 직설로 씀. ⚠ 가장 일반적인 형태.', sym:'symC', wmClass:''},
+];
+function sym(id, bg){ const t=document.getElementById(id).content.cloneNode(true); const s=t.querySelector('svg'); s.style.setProperty('--bg', bg); return s; }
+const root=document.getElementById('rows');
+for(const d of dirs){
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`<div class="label"><h2>${d.id}. ${d.name}</h2><p>${d.desc}</p></div><div class="cells"></div>`;
+  const cells=row.querySelector('.cells');
+  const add=(node,cap)=>{const c=document.createElement('div');c.className='cell';c.appendChild(node);const p=document.createElement('div');p.className='cap';p.textContent=cap;c.appendChild(p);cells.appendChild(c);return c;};
+  // 180 ink
+  let t=document.createElement('div');t.className='tile ink';t.style.width='150px';t.style.height='150px';t.appendChild(sym(d.sym,'#0e0e10'));add(t,'앱아이콘 180 (먹)');
+  t=document.createElement('div');t.className='tile ivory';t.style.width='150px';t.style.height='150px';t.appendChild(sym(d.sym,'#f3ead6'));add(t,'앱아이콘 180 (상아)');
+  // small
+  const sm=document.createElement('div');sm.className='small';
+  for(const px of [48,32,16]){const x=document.createElement('div');x.className='tile ink';x.style.width=px+'px';x.style.height=px+'px';x.appendChild(sym(d.sym,'#0e0e10'));sm.appendChild(x);}
+  add(sm,'48 · 32 · 16 파비콘');
+  // ad head
+  const ad=document.createElement('div');ad.className='adhead';
+  const av=document.createElement('div');av.className='av ink';av.appendChild(sym(d.sym,'#0e0e10'));
+  ad.appendChild(av);ad.insertAdjacentHTML('beforeend','<div class="t"><b>명운록</b><span>광고 · 후원</span></div>');
+  add(ad,'메타 광고 프로필 40px');
+  // header
+  const hw=document.createElement('div');hw.className='hdrwrap';
+  const h=document.createElement('div');h.className='hdr hdr2x';
+  const lg=document.createElement('div');lg.className='logo';
+  const s=sym(d.sym,'#000');s.classList.add('sym');lg.appendChild(s);
+  lg.insertAdjacentHTML('beforeend',`<span class="wm ${d.wmClass}">명운록</span>`);
+  h.appendChild(lg);h.insertAdjacentHTML('beforeend','<div class="icons"><i></i><i></i></div>');
+  hw.appendChild(h);add(hw,'검정 헤더 h60 · 로고 h24 (2배)');
+  // stack
+  const st=document.createElement('div');st.className='stack ink';st.appendChild(sym(d.sym,'#0e0e10'));
+  st.insertAdjacentHTML('beforeend','<div class="wm">명운록</div><div class="hj">命運錄</div>');
+  add(st,'세로 스택 (OG · 엔드카드)');
+  root.appendChild(row);
+}
+</script>
+<div class="note">워드마크 글씨체: 나눔명조 ExtraBold, 자간 -2% · 심볼은 currentColor 1색(검정·상아 양쪽 성립) · 산군(금)/직녀(은) 세계관은 이 1색만 바꿔 끼움</div>
+</body>
+</html>

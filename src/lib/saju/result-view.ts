@@ -273,7 +273,7 @@ export function buildResultView(args: {
     : undefined;
 
   return {
-    brand: { title: "명운록", sub: "SAJU LAB" },
+    brand: { title: "명운록", sub: "" },
     ilgan,
     birthLine,
     pillars,
@@ -289,7 +289,7 @@ export function buildResultView(args: {
 // /results/demo 에서 실제 결과지 화면을 데이터 없이 미리 보기.
 // =====================================================
 export const DEMO_RESULT_VIEW: ResultView = {
-  brand: { title: "명운록", sub: "SAJU LAB" },
+  brand: { title: "명운록", sub: "" },
   ilgan: { element: "fire", title: "한낮의 태양 · 丙火", type: "火 추진력형" },
   birthLine: "1989.07.22 · 남 · 양력 · 해시",
   pillars: [

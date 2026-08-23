@@ -5,8 +5,11 @@
 // 한자는 장식 — 원국/오행에 한글 읽기를 함께 노출(알아보기 쉽게).
 // =====================================================
 import { ELEMENT_META, type CategoryKey, type ResultView } from "@/lib/saju/result-view";
+import { ResultSealOff } from "./ResultSealOff";
 
-const MARK = "/assets/saju/scroll/mark.svg";
+// 브랜드 마크 — 2026-08-23 로고 확정으로 구 족자 SVG(assets/saju/scroll)에서 교체.
+// 18px 에서도 면적 34% · 최대획 12px 로 읽힌다(design/brand/verify_assets.py 기준 통과).
+const MARK = "/brand/symbol-ivory.png";
 const PAD = 20; // 카드·제목 좌우 인셋 통일(정렬)
 
 type TocItem = { label: string; href: string; locked?: boolean };
@@ -159,7 +162,7 @@ function DaeunChart({ points }: { points: NonNullable<ResultView["daeun"]>["poin
   );
 }
 
-export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: ResultView; embedded?: boolean; extraToc?: TocItem[]; locked?: boolean }) {
+export function ResultScroll({ view, embedded, extraToc = [], locked, recordedAt = null }: { view: ResultView; embedded?: boolean; extraToc?: TocItem[]; locked?: boolean; /** 결과 생성일(ISO) — 맺음 낙관에 찍는다. 없으면 문구만 */ recordedAt?: string | null }) {
   const il = ELEMENT_META[view.ilgan.element];
   const barMax = Math.max(1, ...view.ohaeng.map((o) => o.count));
 
@@ -200,10 +203,12 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
     >
       <style dangerouslySetInnerHTML={{ __html: "html{scroll-behavior:smooth}" }} />
 
-      {/* 헤더 — 랜딩과 동일하게 중앙 워드마크, 공유는 우측 상단 */}
-      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", padding: `16px ${PAD}px 0` }}>
-        <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 18, letterSpacing: ".1em", color: "#f3edff" }}>{view.brand.title}</div>
-        <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".22em", textIndent: ".22em", color: "#c9a8ff", marginTop: 3 }}>{view.brand.sub}</div>
+      {/* 헤더 — 브랜드 락업(命 원 + 붓글씨). 글자 워드마크 2줄은 2026-08-23 로고 확정으로 은퇴.
+          ⚠ 높이 35 는 옛 조판(18px + 3 + 8.5 ≈ 30)과 맞춘 값이다. 바꾸면 아래 일간 오브가 밀려
+             티저 캡처 기준선이 어긋난다 — 바꿀 땐 `npm run measure:teaser` 재실측. */}
+      <div style={{ position: "relative", display: "flex", justifyContent: "center", padding: `16px ${PAD}px 0` }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo-h-ivory.png" alt={view.brand.title} width={96} height={35} style={{ width: 96, height: "auto" }} />
         {!locked && <span style={{ position: "absolute", right: PAD, top: 16, fontSize: 16, color: "#b8a4e0" }}>⤴</span>}
       </div>
 
@@ -371,15 +376,17 @@ export function ResultScroll({ view, embedded, extraToc = [], locked }: { view: 
 
       {/* 푸터 — 무료(잠금)에선 숨김(퍼널이 결제 CTA 제공) */}
       {!locked && (
-        <div style={{ padding: `22px ${PAD}px 26px` }}>
-          <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ padding: `0 ${PAD}px 26px` }}>
+          {/* 기록 완료 낙관 — 버튼 위. 도장을 찍고 나서 「저장·공유」를 묻는 게 순서다 */}
+          <ResultSealOff at={recordedAt} tone="night" />
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             <div style={{ flex: 1, textAlign: "center", padding: 14, borderRadius: 14, border: "1.5px solid rgba(180,140,255,.4)", fontSize: 13.5, fontWeight: 700, color: "#dcc8ff" }}>PDF 저장</div>
             <div style={{ flex: 1, textAlign: "center", padding: 14, borderRadius: 14, background: "linear-gradient(180deg,#fff,#f1eaff)", color: "#3a1a8a", fontSize: 13.5, fontWeight: 800 }}>결과 공유</div>
           </div>
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: 0.7 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={MARK} alt="" width={20} height={20} style={{ width: 20, height: 20 }} />
-            <span style={{ fontSize: 11, color: "#9a8cd0" }}>명운록 · SAJU LAB · 평생 다시 보기</span>
+            <span style={{ fontSize: 11, color: "#9a8cd0" }}>명운록 · 평생 다시 보기</span>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 // 자수정(amethyst) 랜딩 — SAJU LAB. 핸드오프 종합사주 랜딩.dc.html 재구현.
 // 풀스크린 그라데이션 + 나경반 시그니처 + 흰색 CTA + 라이브 인원.
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/brand/Logo";
 import Link from "next/link";
 import { Naegyeongban } from "./Naegyeongban";
 import { REVIEWS, maskName } from "@/lib/reviews";
@@ -48,14 +49,9 @@ export function SajuLabLanding() {
           }}
         />
 
-        {/* app bar — 명운록 워드마크 + SAJU LAB */}
-        <div className="relative z-30 flex flex-none flex-col items-center pb-1 pt-6">
-          <div style={{ fontFamily: "var(--font-myeongjo-nanum),serif", fontWeight: 800, fontSize: 20, letterSpacing: ".1em", color: "#f3edff" }}>
-            명운록
-          </div>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".24em", textIndent: ".24em", color: "#c9a8ff", marginTop: 4 }}>
-            SAJU LAB
-          </div>
+        {/* app bar — 브랜드 워드마크(붓글씨). 글자 2줄은 2026-08-23 로고 확정으로 은퇴 */}
+        <div className="relative z-30 flex flex-none justify-center pb-1 pt-6">
+          <Logo tone="ivory" height={24} priority />
         </div>
 
         {/* hero title */}

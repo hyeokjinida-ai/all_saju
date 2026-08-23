@@ -3,6 +3,7 @@
 // ⚠ 사업자정보는 **홈에 그대로 노출한다** — PG(카드사) 심사 요구사항이다.
 //    기존 자수정 홈에도 같은 이유로 붙어 있었다. 지우지 말 것.
 import Link from "next/link";
+import { Logo } from "@/components/brand/Logo";
 import { businessInfo, siteConfig } from "@/config/site";
 
 const Sep = () => (
@@ -16,15 +17,7 @@ export function HomeFooter() {
       style={{ background: "#141414", borderTop: "1px solid rgba(255,255,255,0.10)" }}
     >
       <div className="mb-7 flex flex-col items-center gap-1">
-        <span
-          className="font-myeongjo text-[17px] font-bold tracking-[0.12em]"
-          style={{ color: "#E8E8EA" }}
-        >
-          {siteConfig.name}
-        </span>
-        <span className="font-brush text-[13px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-          {siteConfig.nameHanja}
-        </span>
+        <Logo tone="ivory" height={22} className="opacity-85" />
       </div>
 
       <div
