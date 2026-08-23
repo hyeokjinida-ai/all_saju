@@ -14,11 +14,13 @@
 // 로그인하고 돌아오면 `?claim=1` 로 같은 주소에 떨어지고, 결제 페이지가 주문을 이관한다
 // (같은 order_id 유지, 금액만 −1,900). 재입력 없음.
 import Link from "next/link";
-import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
+import { KakaoLoginButton, useKakaoEnabled } from "@/components/auth/KakaoLoginButton";
 import { formatKRW } from "@/lib/utils";
 
 export function LoginNudge({ orderId, discount }: { orderId: string; discount: number }) {
   const back = `/checkout/${orderId}?claim=1`;
+  const kakao = useKakaoEnabled();
+  const loginHref = `/login?redirect=${encodeURIComponent(back)}`;
   return (
     <div
       className="mt-6 rounded-lg px-4 py-4"
@@ -27,17 +29,29 @@ export function LoginNudge({ orderId, discount }: { orderId: string; discount: n
       <p className="text-center text-[14px] font-bold text-bone">
         로그인하면 {formatKRW(discount)} 할인돼요
       </p>
-      <div className="mt-3">
-        <KakaoLoginButton redirect={back} label="카카오로 1초 만에 로그인" />
-      </div>
-      <p className="mt-2.5 text-center text-[12px]">
-        <Link
-          href={`/login?redirect=${encodeURIComponent(back)}`}
-          className="text-bone-faint underline underline-offset-2"
-        >
-          이메일로 로그인
-        </Link>
-      </p>
+      {/* 카카오가 켜져 있으면 카카오 크게 + 이메일 작게, 꺼져 있으면 이메일을 크게 */}
+      {kakao ? (
+        <>
+          <div className="mt-3">
+            <KakaoLoginButton redirect={back} label="카카오로 1초 만에 로그인" />
+          </div>
+          <p className="mt-2.5 text-center text-[12px]">
+            <Link href={loginHref} className="text-bone-faint underline underline-offset-2">
+              이메일로 로그인
+            </Link>
+          </p>
+        </>
+      ) : (
+        <div className="mt-3">
+          <Link
+            href={loginHref}
+            className="block w-full rounded-md py-3 text-center text-[14px] font-semibold"
+            style={{ background: "var(--gold)", color: "var(--wine-deep)" }}
+          >
+            로그인하고 할인받기
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

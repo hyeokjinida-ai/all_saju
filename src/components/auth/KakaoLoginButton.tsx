@@ -1,8 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { publicEnv } from "@/lib/env";
+
+// ── Kakao provider 가 Supabase 에서 켜져 있는지 ─────────────────────────────
+// `/auth/v1/settings` 는 공개 엔드포인트라 anon 키로 읽힌다. 꺼져 있으면 버튼을 **아예 안 그린다.**
+// 실측(2026-08-23): 운영 Supabase 의 kakao=false 였다. 그 상태로 배포하면 결제 화면의
+// "카카오로 1초 만에 로그인" 버튼이 손님 앞에서 에러 토스트를 띄운다 — 결제 직전에 깨진 버튼은
+// 최악이다. 대시보드에서 켜는 순간 새로고침 한 번으로 나타난다(코드 배포 불필요).
+let cached: boolean | null = null;
+let inflight: Promise<boolean> | null = null;
+
+async function fetchKakaoEnabled(): Promise<boolean> {
+  if (cached !== null) return cached;
+  if (!inflight) {
+    inflight = fetch(`${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY },
+    })
+      .then((r) => r.json())
+      .then((j) => (cached = !!j?.external?.kakao))
+      .catch(() => (cached = false));
+  }
+  return inflight;
+}
+
+/** null = 아직 모름(첫 렌더) · true/false = 확인됨 */
+export function useKakaoEnabled(): boolean | null {
+  const [on, setOn] = useState<boolean | null>(cached);
+  useEffect(() => {
+    let alive = true;
+    fetchKakaoEnabled().then((v) => alive && setOn(v));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return on;
+}
 
 // 카카오 OAuth 로그인 버튼.
 // Supabase 대시보드에서 Kakao 프로바이더를 활성화해야 실제로 동작합니다(아래 docs 참고).
@@ -11,12 +46,16 @@ export function KakaoLoginButton({
   redirect = "/mypage",
   label = "카카오로 3초 만에 시작하기",
   onBeforeRedirect,
+  divider,
 }: {
   redirect?: string;
   label?: string;
   onBeforeRedirect?: () => void;
+  /** 버튼 아래 「또는 이메일로」 구분선 — 버튼이 숨으면 같이 숨는다(로그인·가입 페이지용) */
+  divider?: string;
 }) {
   const [loading, setLoading] = useState(false);
+  const enabled = useKakaoEnabled();
 
   async function handle() {
     setLoading(true);
@@ -45,7 +84,11 @@ export function KakaoLoginButton({
     }
   }
 
+  // 꺼져 있거나 아직 확인 전이면 그리지 않는다 — 눌러서 깨지는 버튼보다 없는 버튼이 낫다
+  if (!enabled) return null;
+
   return (
+    <>
     <button type="button" onClick={handle} disabled={loading} className="btn-kakao disabled:opacity-70">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
         <path
@@ -55,5 +98,13 @@ export function KakaoLoginButton({
       </svg>
       {loading ? "카카오로 이동 중…" : label}
     </button>
+    {divider && (
+      <div className="my-5 flex items-center gap-3 text-xs text-bone-faint">
+        <span className="h-px flex-1 bg-hairline" />
+        {divider}
+        <span className="h-px flex-1 bg-hairline" />
+      </div>
+    )}
+    </>
   );
 }
