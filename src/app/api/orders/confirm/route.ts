@@ -37,6 +37,20 @@ export async function POST(request: NextRequest) {
   if (orderErr || !order) {
     return NextResponse.json({ error: "주문을 찾을 수 없습니다" }, { status: 404 });
   }
+
+  // 결제 성공 화면이 메타 Purchase 에 실을 상품(→ content_ids). 성공 URL 에는 상품이 없어
+  // 서버가 알려주는 수밖에 없다.
+  //
+  // ⚠ **조인을 쓰지 않는다.** 이 저장소의 생성 타입은 Relationships 를 전부 빈 배열로 두고 있어
+  //    `products(slug)` 는 타입 단계에서 깨진다. 무엇보다 여기는 돈이 오가는 경로라,
+  //    관계 탐지 같은 부가 기능에 결제 승인을 걸어 두지 않는다. id 로 한 건 읽는 비용은 무시할 만하다.
+  //    실패해도 null 로 흘려보낸다 — 전환은 나가고 상품만 안 실린다.
+  const { data: productRow } = await service
+    .from("products")
+    .select("slug")
+    .eq("id", order.product_id)
+    .maybeSingle();
+  const productSlug = productRow?.slug ?? null;
   // 비회원은 마이페이지에 못 들어간다 — 보류 응답에 이 사실을 실어 보내야
   // 결제 성공 화면이 "마이페이지에서 확인" 같은 못 쓰는 안내를 안 준다.
   const isGuest = !order.user_id;
@@ -44,8 +58,8 @@ export async function POST(request: NextRequest) {
   if (order.status === "paid") {
     // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
     const outcome = await generateResultForOrder(order.id, { service });
-    if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true });
-    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason });
+    if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true, productSlug });
+    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason, productSlug });
   }
   if (order.amount !== amount) {
     return NextResponse.json({ error: "금액이 일치하지 않습니다" }, { status: 400 });
@@ -94,7 +108,7 @@ export async function POST(request: NextRequest) {
   //    클라 자가복구 폴링 + 복구 크론 + 토스 웹훅이 백업으로 마무리한다.
   const outcome = await generateResultForOrder(order.id, { service });
   if (outcome.ok) {
-    return NextResponse.json({ resultId: outcome.resultId });
+    return NextResponse.json({ resultId: outcome.resultId, productSlug });
   }
 
   console.error("[confirm] 결과 생성 보류:", order.id, outcome.reason, outcome.detail ?? "");
@@ -104,6 +118,7 @@ export async function POST(request: NextRequest) {
     orderId,
     guest: isGuest,
     reason: outcome.reason,
+    productSlug,
     message: "결제는 완료됐어요. 결과지를 마무리하는 중이에요 — 잠시만 기다려 주세요.",
   });
 }
