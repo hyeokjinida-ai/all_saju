@@ -17,7 +17,15 @@ import type { AssetMap } from "@/lib/jiknyeo-slots";
 /** 만화 말풍선 — 청월당 실측 문법(흰 박스 + 명패). 티저(SajuWizard)의 ComicSay 와 같은 옷이다. */
 function Say({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative rounded-[18px] px-5 py-4" style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}>
+    // 청월당 실측 문법: 말풍선은 화면 폭을 다 먹지 않고 **꼬리로 인물에 붙는다.**
+    // 폭을 88% 로 묶고 아래쪽에 꼬리를 달아 "누가 하는 말인지"를 위치로 말한다.
+    <div className="relative mr-auto w-[90%] rounded-[18px] px-5 py-4" style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}>
+      {/* 꼬리 — 왼쪽 아래. 오른쪽 정렬이면 인물 없는 컷(까치 떼)에서 꼬리가 허공을 가리킨다 */}
+      <span
+        aria-hidden
+        className="absolute -bottom-2 left-7 block h-4 w-4 rotate-45"
+        style={{ background: "#ffffff" }}
+      />
       <span
         className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
         style={{ background: "var(--gold-bright)", color: "#1a1330" }}
@@ -63,6 +71,17 @@ export function JiknyeoStory({
 }) {
   const [stage, setStage] = useState<"gate" | "story" | "input">(initialStage === "input" ? "input" : "gate");
   const [scene, setScene] = useState(0);
+
+  // QA 딥링크 — `?scene=2` 로 스토리 특정 씬을 바로 연다(배치 검수용).
+  // ⚠ useState 초기값으로 읽으면 서버(파라미터 모름)와 클라이언트가 달라져 hydration 이 깨진다.
+  //    반드시 **마운트 후** effect 에서 적용한다. 파라미터가 없으면 동작은 그대로다.
+  useEffect(() => {
+    const n = Number(new URLSearchParams(window.location.search).get("scene"));
+    if (Number.isInteger(n) && n >= 0 && n < SCENES.length) {
+      setScene(n);
+      setStage("story");
+    }
+  }, []);
   const viewed = useRef(false);
 
   // 게이트를 벗어나는 모든 경로에서 한 번만 — 게이트 이탈과 본문 이탈을 가르는 유일한 지점이다.
@@ -94,13 +113,15 @@ export function JiknyeoStory({
     return (
       <div className="world-jiknyeo relative min-h-screen w-full overflow-hidden" style={{ background: "#0b0f1a" }}>
         <div className="absolute inset-0">
-          <SlotCut id="j3" assets={assets} ratio="9 / 16" pos="center 30%" priority />
+          <SlotCut id="j3" assets={assets} ratio="9 / 16" pos="center 22%" priority />
         </div>
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(11,15,26,0.82) 0%, rgba(11,15,26,0.14) 38%, rgba(11,15,26,0.2) 58%, rgba(11,15,26,0.92) 100%)",
+              // 하단 34% 를 글 띠로 못 박는다 — 그 위로는 그림을 최대한 열어 둔다.
+              // 형님 폰 실측: 헤드라인이 직녀 몸에 얹혀 글도 그림도 죽었다.
+              "linear-gradient(180deg, rgba(11,15,26,0.72) 0%, rgba(11,15,26,0.06) 26%, rgba(11,15,26,0.10) 48%, rgba(11,15,26,0.70) 66%, rgba(11,15,26,0.96) 82%, rgba(11,15,26,0.99) 100%)",
           }}
         />
         <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[520px] flex-col items-center justify-end px-6 pb-14">
@@ -149,13 +170,23 @@ export function JiknyeoStory({
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(11,15,26,0.7) 0%, rgba(11,15,26,0.16) 34%, rgba(11,15,26,0.3) 56%, rgba(11,15,26,0.95) 100%)",
+              "linear-gradient(180deg, rgba(11,15,26,0.62) 0%, rgba(11,15,26,0.06) 30%, rgba(11,15,26,0.14) 52%, rgba(11,15,26,0.86) 82%, rgba(11,15,26,0.97) 100%)",
           }}
         />
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[520px] flex-col justify-end px-6 pb-12">
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[520px] flex-col justify-end px-5 pb-9">
           {/* 나레이션(사각 박스)과 캐릭터 대사(말풍선)를 눈으로 구분되게 둔다 — 청월당도 이 둘을 분리한다 */}
-          {s.narration && <Narration>{s.narration}</Narration>}
-          {s.say && <div className="mt-3">
+          {/* 나레이션은 **박스를 두르지 않는다.** 박스+말풍선+버튼+스킵이 4단으로 쌓이면
+              화면 하단 절반이 막혀 그림(까치 떼·은하수)이 글 뒤로 사라진다 — 형님 폰 실측.
+              청월당도 나레이션은 맨글, 말풍선만 흰 판이다. 대신 글 그림자로 가독을 잡는다. */}
+          {s.narration && (
+            <p
+              className="font-myeongjo text-[17px] leading-[1.7]"
+              style={{ color: "#e8e6ef", textShadow: "0 2px 12px rgba(0,0,0,0.9), 0 0 26px rgba(0,0,0,0.75)" }}
+            >
+              {s.narration}
+            </p>
+          )}
+          {s.say && <div className="mt-3.5">
             <Say>{s.say}</Say>
           </div>}
           <button
@@ -180,18 +211,20 @@ export function JiknyeoStory({
           >
             {last ? "내 달력 펴 보기" : "다음"}
           </button>
-          {/* 스토리를 건너뛰는 문 — 이야기를 강제하면 값을 재러 온 손님이 갇힌다 */}
-          {!last && (
-            <button
-              type="button"
-              onClick={toInput}
-              className="font-myeongjo mt-2.5 w-full py-2 text-[13px] tracking-[0.15em]"
-              style={{ color: "var(--bone-faint)" }}
-            >
-              바로 시작할게
-            </button>
-          )}
         </div>
+
+        {/* 스토리를 건너뛰는 문 — 이야기를 강제하면 값을 재러 온 손님이 갇힌다.
+            하단 스택에 두면 글이 한 단 더 쌓여 그림을 먹는다 → 우상단으로 뺐다. */}
+        {!last && (
+          <button
+            type="button"
+            onClick={toInput}
+            className="font-myeongjo absolute right-4 top-4 z-20 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] tracking-[0.12em]"
+            style={{ color: "var(--bone-faint)", background: "rgba(11,15,26,0.55)", border: "1px solid var(--gold-line)" }}
+          >
+            바로 시작할게
+          </button>
+        )}
       </div>
     );
   }
