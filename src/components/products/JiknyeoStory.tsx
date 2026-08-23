@@ -104,21 +104,23 @@ export function JiknyeoStory({
           }}
         />
         <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[520px] flex-col items-center justify-end px-6 pb-14">
-          <p className="font-gothic text-center text-[13px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
+          <p className="font-gothic whitespace-nowrap text-center text-[13px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
             만날 사람은 있어요
           </p>
+          {/* 헤드라인은 **어절 단위로 내가 끊는다.** 브라우저에 맡기면 폰 글자배율(카톡 「가가」)에서
+              「몇 월 / 인지가 / 문제죠」로 부서진다(형님 폰 실측). clamp 로 좁은 폭·큰 배율에서도
+              두 줄을 유지하고, nowrap 으로 각 줄 안에서는 절대 안 쪼개지게 못 박는다. */}
           <p
-            className="font-gothic text-moonlit mt-3 text-center text-[34px] leading-[1.3] tracking-[-0.02em]"
-            style={{ fontWeight: 900 }}
+            className="font-gothic text-moonlit headline-kr mt-3 text-center leading-[1.28] tracking-[-0.02em]"
+            style={{ fontWeight: 900, fontSize: "clamp(26px, 8.2vw, 34px)" }}
           >
-            몇 월인지가
-            <br />
-            문제죠
+            <span className="block whitespace-nowrap">몇 월인지가</span>
+            <span className="block whitespace-nowrap">문제죠</span>
           </p>
           <button
             type="button"
             onClick={() => setStage("story")}
-            className="mt-9 w-full min-h-[56px] border-none text-[17px] font-bold tracking-[0.15em]"
+            className="mt-9 w-full min-h-[56px] whitespace-nowrap border-none text-[17px] font-bold tracking-[0.15em]"
             style={{
               fontFamily: "var(--font-serif-kr), serif",
               background: "linear-gradient(180deg,#efeaf6,#d9c7e8)",
@@ -159,7 +161,7 @@ export function JiknyeoStory({
           <button
             type="button"
             onClick={() => (last ? toInput() : setScene((n) => n + 1))}
-            className="mt-8 w-full min-h-[56px] border-none text-[17px] font-bold tracking-[0.15em]"
+            className="mt-8 w-full min-h-[56px] whitespace-nowrap border-none text-[17px] font-bold tracking-[0.15em]"
             style={
               last
                 ? {

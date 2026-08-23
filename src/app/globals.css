@@ -153,6 +153,24 @@
      산군이 금색을 쓰는 자리에 은사를 넣는다. 값은 JiknyeoLanding.tsx 팔레트와 같은 계열이라
      스토리(위)와 위저드·티저(아래)가 한 세계로 읽힌다.
      빨강은 이 스코프 어디에도 없다 — 직녀 확정 금기(NO RED). */
+  /* ── 한글 줄바꿈 — 어절을 쪼개지 않는다 ────────────────────────────
+     기본값(break-word 계열)은 한글을 **글자 단위**로 끊어서 「몇 월 / 인지가 / 문제죠」,
+     「일 / 년에 단 하루」 처럼 어절이 부서진다(형님 폰 실측 2026-08-23).
+     카톡·인스타 인앱은 사용자 글자배율(「가가」)까지 얹혀 더 잘게 쪼개진다.
+     keep-all 로 어절을 묶고, balance 로 줄 길이를 고르게 나눈다. ── */
+  .world-sangun,
+  .world-jiknyeo,
+  .world-wealth {
+    word-break: keep-all;
+    overflow-wrap: break-word; /* 어절 하나가 화면보다 길 때만 최후 수단으로 끊는다 */
+  }
+  .world-sangun h1, .world-sangun h2, .world-sangun h3,
+  .world-jiknyeo h1, .world-jiknyeo h2, .world-jiknyeo h3,
+  .world-wealth h1, .world-wealth h2, .world-wealth h3,
+  .world-jiknyeo .headline-kr {
+    text-wrap: balance;
+  }
+
   .world-jiknyeo {
     --bone:       #e8e6ef;
     --bone-soft:  #cfd0d8;
