@@ -80,7 +80,8 @@ export function SlotCut({
             className="pointer-events-none absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 40%, rgba(11,15,26,0.74) 76%, rgba(11,15,26,0.96) 100%)" }}
           />
-          <div className="absolute inset-x-5 bottom-4">{overlay}</div>
+          {/* 컷 **안쪽**에 앉힌다. 가장자리(bottom-4)에 붙이면 말풍선이 아니라 UI 카드로 읽힌다 */}
+          <div className="absolute inset-x-4 bottom-7">{overlay}</div>
         </>
       )}
     </figure>
@@ -181,13 +182,33 @@ export function NeonMask({ text = "○○○○○○", scribble = true }: { tex
  * 밤하늘 무대 위에서 **가장 세게 튀는 대비**라 캐릭터가 말하는 순간이 또렷하게 잡힌다.
  * 우리 판은 명패(「직녀」)를 좌상단 탭으로 달아 누가 말하는지도 같이 박는다.
  */
-export function ComicSay({ children, tail = "none" }: { children: React.ReactNode; tail?: "down" | "none" }) {
+/** 직녀(웹툰 세계)의 대사판.
+ *  ⚠ 산군은 실사라 **사진 밑 자막/직언 박스**를 쓰고, 직녀는 웹툰이라 **컷 안 말풍선**을 쓴다.
+ *     이 둘을 섞으면 어느 쪽도 아닌 UI 카드가 된다(2026-08-23 형님 지적).
+ *  청월당 유료 결과지 실측: 말풍선은 컷 폭을 다 먹지 않고(70~85%), 꼬리가 인물을 가리키며,
+ *  컷 경계 안쪽에 앉는다. 그래서 전폭 카드가 아니라 폭을 묶고 꼬리를 단다.
+ *  side: 꼬리가 향하는 쪽 = 인물이 서 있는 쪽. */
+export function ComicSay({
+  children,
+  tail = "none",
+  side = "left",
+}: {
+  children: React.ReactNode;
+  tail?: "down" | "none";
+  side?: "left" | "right";
+}) {
   return (
-    <div className="relative">
+    <div className={`relative w-[86%] ${side === "right" ? "ml-auto" : "mr-auto"}`}>
       <div
         className="relative rounded-[18px] px-5 py-4"
         style={{ background: "#ffffff", boxShadow: "0 12px 32px rgba(0,0,0,0.45)" }}
       >
+        {/* 컷 안 말풍선의 꼬리 — 인물 쪽 아래로. 청월당은 이걸로 "누가 하는 말인지"를 위치로 말한다 */}
+        <span
+          aria-hidden
+          className="absolute -bottom-2 block h-4 w-4 rotate-45"
+          style={{ background: "#ffffff", [side === "right" ? "right" : "left"]: "28px" }}
+        />
         <span
           className="font-myeongjo absolute -top-3 left-4 rounded-[3px] px-2.5 py-0.5 text-[11px] font-bold tracking-[0.22em]"
           style={{ background: "var(--gold-bright)", color: "#1a1330" }}
@@ -244,10 +265,13 @@ export function InyeonCut({
   const cut = (
     <div className="relative">
       <SlotCut id={id} assets={assets} overlay={say} />
+      {/* 효과음은 **컷 안에 완전히** 들어가야 한다. top 14% 는 컷을 -mx-5 로 넓힌 뒤라
+          기울임(rotate)까지 겹치면 위·옆이 잘려 글자 쓰레기처럼 보였다(형님 지적 2026-08-23).
+          충분히 안쪽(22%)으로 내리고 좌우 여백도 넓힌다. */}
       {sfx && (
         <span
-          className="absolute top-[14%]"
-          style={sfxAt === "right" ? { right: "9%" } : { left: "9%" }}
+          className="absolute top-[22%]"
+          style={sfxAt === "right" ? { right: "14%" } : { left: "14%" }}
         >
           <Sfx rotate={sfxAt === "right" ? 9 : -9}>{sfx}</Sfx>
         </span>
