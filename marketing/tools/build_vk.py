@@ -152,7 +152,7 @@ def build_audio(out_wav):
     return out_wav
 
 
-def make_layers(ratio, hook_key):
+def make_layers(ratio, hook_key, subs=True, hook=True):
     W, H = 1080, (1920 if ratio == "9x16" else 1350)
     L = []
 
@@ -169,18 +169,19 @@ def make_layers(ratio, hook_key):
         px = int(px * sc)
         col = {"bone": C["BONE"], "red_word": (255, 255, 255), "pink": (244, 194, 200)}[style]
         items.append((txt, "gothic_b" if style != "pink" else "gothic", px, col, y, 6 if style != "pink" else 3))
-    hook = S.shadowed(S.text_layer((W, H), items), blur=10, alpha=170, dy=5)
-    d = ImageDraw.Draw(hook)
+    hook_im = S.shadowed(S.text_layer((W, H), items), blur=10, alpha=170, dy=5)
+    d = ImageDraw.Draw(hook_im)
     f2 = S.font("gothic_b", int(hk[1][1] * sc))
     t2 = hk[1][0]
     key = t2.split()[0]
     x2 = (W - d.textlength(t2, font=f2)) / 2
     d.text((x2, ys[1]), key, font=f2, fill=(242, 124, 88, 255), stroke_width=6, stroke_fill=(0, 0, 0, 235))
-    add(hook, (0, 0), 0.0, END_T, fade=0.0, fade_out=0.5)
+    if hook:
+        add(hook_im, (0, 0), 0.0, END_T, fade=0.0, fade_out=0.5)
 
     # ② 자막 — TTS 문장. 정점은 1.8배
     cap_y = int(H * 0.527)
-    for k, (i, t0, rows, peak) in enumerate(LINES):
+    for k, (i, t0, rows, peak) in enumerate(LINES if subs else []):
         px = int((81 if peak else 45) * (1.0 if ratio == "9x16" else 0.85))
         items = []
         yy = cap_y - (len(rows) - 1) * int(px * 0.62)
@@ -218,7 +219,11 @@ def main():
     ap.add_argument("--ratios", default="9x16")
     a = ap.parse_args()
     # K0 = W4 그대로(CTA·엔드카드 0, 궁금증만) / KE = 엔드카드 1.1s
+    #  코드 : (훅, 엔드카드, 자막, 훅표시, 소리)
     variants = {"K0": ("k1", False), "KE": ("k1", True), "K2": ("k2", False), "K3": ("k3", False)}
+    # 편집용 — 형님이 자막·TTS 를 직접 갈아끼울 때 쓰는 판(§편집용_v6)
+    EDIT = {"NOSUB": ("k1", False, False, True, True),    # TTS O · 자막 X (훅은 남김 — 소재의 뼈대)
+            "CLEAN": ("k1", False, False, False, False)}  # TTS X · 자막 X · 훅 X (통짜 푸티지)
     ids = list(variants) if a.ids == ["all"] else a.ids
     wav = f"{TMP}/narr.wav"
     if not os.path.exists(wav):
@@ -228,8 +233,12 @@ def main():
         base, W, H = build_base(ratio)
         log("base", ratio, base)
         for vid in ids:
-            hook_key, endcard = variants[vid]
-            layers = make_layers(ratio, hook_key)
+            if vid in EDIT:
+                hook_key, endcard, subs, hookon, snd = EDIT[vid]
+            else:
+                hook_key, endcard = variants[vid]
+                subs, hookon, snd = True, True, True
+            layers = make_layers(ratio, hook_key, subs=subs, hook=hookon)
             if endcard:
                 layers.append({"im": S.endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": DUR,
                                "fade": 0.10, "fade_out": 0.0, "pop": 0.0, "full": True, "reveal": None})
@@ -237,8 +246,13 @@ def main():
             S.DUR = DUR                     # composite 이 모듈 상수를 본다
             S.CHROMA = (0, 0, None)         # vK 는 크로마 없음
             S.FLASH = -1.0                  # v5 의 A→B 화이트 플래시(15.0s)는 vK 에 없다 — 이음매를 카드가 덮는다
-            S.composite(ratio, layers, base, W, H, tmp_out, wav, None)
-            final = f"{OUT}/sangun_vK_{vid}_seoyun_1080x{H}.mp4"
+            S.composite(ratio, layers, base, W, H, tmp_out, wav if snd else None, None)
+            if vid in EDIT:
+                sub = f"{OUT}/편집용_v6/vK"
+                os.makedirs(sub, exist_ok=True)
+                final = f"{sub}/sangun_vK_1080x{H}_{'noSub' if vid == 'NOSUB' else 'clean'}.mp4"
+            else:
+                final = f"{OUT}/sangun_vK_{vid}_seoyun_1080x{H}.mp4"
             shutil.copyfile(tmp_out, final)
             log("saved", final, f"{os.path.getsize(final)/1e6:.1f}MB")
 

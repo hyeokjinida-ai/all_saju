@@ -23,6 +23,8 @@ morelle-brand/
 
 # 광고 영상 산출물·재료(대용량) — 드라이브/로컬에서 관리
 marketing/소재/산군/영상/*.mp4
+marketing/소재/산군/영상/**/*.mp4
+marketing/소재/산군/영상/**/*.wav
 marketing/소재/산군/재료/클립/
 marketing/소재/산군/재료/캡처/
 marketing/소재/산군/재료/UGC/*.png
