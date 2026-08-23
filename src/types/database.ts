@@ -85,6 +85,10 @@ type OrderRow = {
   created_at: string;
   result_attempts: number; // 0006 — 복구 크론 재시도 횟수
   result_last_attempt_at: string | null; // 0006
+  // 0012 결제 화면 연락처 — 휴대폰은 선택, 마케팅 동의는 **그 주문에서** 받은 기록
+  phone: string | null;
+  marketing_opt_in: boolean;
+  marketing_opt_in_at: string | null;
 };
 
 type SajuInputRow = {
@@ -226,6 +230,9 @@ export type Database = {
           toss_payment_key?: string | null;
           paid_at?: string | null;
           created_at?: string;
+          phone?: string | null;
+          marketing_opt_in?: boolean;
+          marketing_opt_in_at?: string | null;
         };
         Update: Partial<OrderRow>;
         Relationships: [];

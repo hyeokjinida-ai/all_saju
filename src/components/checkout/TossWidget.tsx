@@ -21,11 +21,16 @@ type Props = {
   /** 결제 버튼 바로 위 — 환불 보장처럼 마지막 불안을 더는 문구가 앉는 자리.
    *  카드 바깥 아래에 두면 버튼을 누르는 순간에는 시야 밖이라 아무 일도 못 한다. */
   beforeButton?: React.ReactNode;
+  /** 결제 직전 훅 — false 를 돌려주면 결제를 시작하지 않는다(입력값 검증용).
+   *  ⚠ 여기서 던지거나 오래 끌면 결제가 막힌다. 저장 실패는 훅 안에서 삼키고 true 를 돌려줄 것. */
+  onBeforePay?: () => Promise<boolean>;
+  /** 토스에 넘길 구매자 휴대폰(숫자만). 없으면 안 넘긴다. */
+  customerMobilePhone?: string | null;
   /** 버튼 글자. "결제"라는 말은 남긴다 — 세계관보다 결제 명확성이 먼저다. */
   ctaLabel?: string;
 };
 
-export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail, beforeButton, ctaLabel }: Props) {
+export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail, beforeButton, ctaLabel, onBeforePay, customerMobilePhone }: Props) {
   const paymentMethodsRef = useRef<HTMLDivElement>(null);
   const agreementRef = useRef<HTMLDivElement>(null);
   const widgetsRef = useRef<Awaited<ReturnType<typeof loadWidgets>> | null>(null);
@@ -68,12 +73,20 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
     if (!widgets) return;
     setPaying(true);
     try {
+      if (onBeforePay) {
+        const ok = await onBeforePay();
+        if (!ok) {
+          setPaying(false);
+          return;
+        }
+      }
       await widgets.requestPayment({
         orderId,
         orderName: productName,
         successUrl: `${window.location.origin}/checkout/success`,
         failUrl: `${window.location.origin}/checkout/fail`,
         customerEmail: customerEmail ?? undefined,
+        customerMobilePhone: customerMobilePhone || undefined,
       });
     } catch (err) {
       setPaying(false);

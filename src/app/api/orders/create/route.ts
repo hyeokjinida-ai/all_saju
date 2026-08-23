@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { MIN_CHARGE, chargeFor } from "@/lib/pricing";
 
 const bodySchema = z.object({
   productId: z.string().uuid(),
@@ -14,8 +15,6 @@ const bodySchema = z.object({
   concerns: z.array(z.string().max(500)).max(20),
   email: z.string().email().optional(), // 비회원 결과 수령용
 });
-
-const MEMBER_DISCOUNT = 1900; // 회원(로그인) 할인
 
 export async function POST(request: NextRequest) {
   const parsed = bodySchema.safeParse(await request.json());
@@ -46,9 +45,9 @@ export async function POST(request: NextRequest) {
   }
 
   // 회원 1,900원 할인(비회원은 정가). 금액은 서버에서만 산정.
-  const amount = Math.max(0, product.price - (user ? MEMBER_DISCOUNT : 0));
+  const amount = chargeFor(product.price, !!user);
   // 토스 최소 결제금액 방어 — 가격/할인 오설정으로 0원 위젯 에러 방지.
-  if (amount < 100) {
+  if (amount < MIN_CHARGE) {
     return NextResponse.json({ error: "결제 금액이 올바르지 않습니다" }, { status: 400 });
   }
 
