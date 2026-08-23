@@ -76,6 +76,12 @@ RECTS_JS = r"""
   out.ch1_b  = para(/두 번째 강점이다/);
   out.ch1_c  = para(/남들과 다른 결은/);
   out.olhae  = para(/미련을 확인하는 해가 아니라/);   // 3장 형광 — 흐름 블록 카드
+  // v6 vK — 2장 「네가 걸어온 길」 과거검증 2연타 (시간순: 20대 대운 → 2024년 콕)
+  out.ch2_a  = para(/여러 역할을 오가며/);           // 21~30세 정묘 대운 문단
+  out.ch2_a_t= tight(/21~30세 정묘 대운/);
+  out.ch2_b  = para(/그 흐름이 크게 꺾인 문턱/);      // 2024년 31세 문단
+  out.ch2_b_t= tight(/2024년 31세/);
+  out.ch2_hl = tight(/2024년 31세에 바뀐 것은/);      // 형광(mark) 한 줄
   out.daeun  = table('네 대운 연대기');
   out.money  = table('돈의 달력');
   out.inyeon_cal = table('인연의 달력');
@@ -137,6 +143,10 @@ BLOCKS = [
     ("ch1_b", "seo_pin_ch1_b.png", True, 12, 12),
     ("ch1_c", "seo_pin_ch1_c.png", True, 12, 12),
     ("olhae", "seo_pin_olhae.png", True, 12, 12),
+    ("ch2_a", "seo_pin_ch2_yearA.png", True, 12, 12),
+    ("ch2_b", "seo_pin_ch2_yearB.png", True, 12, 12),
+    ("ch2_b_t", "seo_line_ch2_yearB.png", True, 3, 3),
+    ("ch2_hl", "seo_line_ch2_hl.png", True, 3, 3),
     ("daeun", "seo_daeun_table.png", True, 8, 8),
     ("money", "seo_money_calendar.png", True, 8, 8),
     ("inyeon_cal", "seo_inyeon_calendar.png", True, 8, 8),
