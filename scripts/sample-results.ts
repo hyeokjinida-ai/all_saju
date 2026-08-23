@@ -44,11 +44,18 @@ const CASES: Case[] = [
   //   slug: "sangun-sinjeom", name: "지수", concern: "올해 이직해도 될까요", expectAges: [34, 35, 40, 45],
   //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
   // },
-  // [임시] 결혼사주 1건만
+  // [임시] 광고 v5 「서윤」 — 무성 UGC 광고(vU5)의 카드가 전부 이 결과지 실캡처다.
+  // 고민 문구에 「미련」을 넣는 이유: 훅 「나한테 미련 남았냐는데?」의 증거 카드가 9장 [산군의 직언]에서 나와야 한다.
+  // 계획서 marketing/소재/산군/광고영상_기획_v5_서윤UGC_2026-08-23.md §3-1
   {
-    slug: "marriage-saju", name: "지수", concern: "결혼 시기가 궁금해요", expectAges: [34, 35],
-    birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+    slug: "sangun-sinjeom", name: "서윤", concern: "헤어진 지 석 달인데, 아직 미련이 남은 건지 모르겠어요", expectAges: [33, 34, 38, 39, 43, 44],
+    birthInfo: { birthYear: "1994", birthMonth: "6", birthDay: "6", birthHour: "20", birthMinute: "10", calendarType: "양력", gender: "female" },
   },
+  // [임시] 결혼사주 1건만
+  // {
+  //   slug: "marriage-saju", name: "지수", concern: "결혼 시기가 궁금해요", expectAges: [34, 35],
+  //   birthInfo: { birthYear: "1993", birthMonth: "5", birthDay: "15", birthHour: "14", birthMinute: "30", calendarType: "양력", gender: "female" },
+  // },
   // "인연 들어오는 달" 검증 케이스 — 사양서 실측 명식(예상: 68점, TOP3 2026-12/2027-05/2027-06)
   // 2026-08-17 10장 개편 검증으로 활성화. 산군과 같은 생일이라 명식 캐시를 공유한다(API 0콜).
   // [임시]
