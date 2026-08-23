@@ -287,6 +287,7 @@ export function InyeonCut({
   assets,
   say,
   sayAt = "bottom",
+  padTop = 0,
   sfx,
   sfxAt = "right",
   tilt,
@@ -296,6 +297,8 @@ export function InyeonCut({
   say?: React.ReactNode;
   /** 말풍선이 앉는 컷 안 위치 */
   sayAt?: "top" | "bottom";
+  /** 앞 블록과의 간격 — **밤 배경 안에서** 준다(바깥 margin 은 흰 띠가 된다) */
+  padTop?: number;
   /** 손글씨 효과음 — 「멈칫」「갸웃」. 원본은 그림에 구워 넣는데 우리는 코드로 얹는다. */
   sfx?: string;
   sfxAt?: "left" | "right";
@@ -327,7 +330,9 @@ export function InyeonCut({
   // → 컷을 밤 배경 블록으로 감싸고 틈을 없앤다. 컷끼리 이어져 웹툰이 죽 흐르고,
   //   정보 카드(원국표·달력·가격)는 밝은 판 그대로 둔다 — 청월당 유료 결과지와 같은 리듬.
   return (
-    <div className="-mx-5" style={{ background: "#0b0f1a" }}>
+    // 간격은 **밤 배경 안쪽**에서 준다. 바깥에 margin 을 주면 그 틈으로 밝은 판이 드러나
+    // 흰 가로 띠가 된다(형님 폰 실측 2026-08-23 — 호출부의 mt-6 이 진짜 범인이었다).
+    <div className="-mx-5" style={{ background: "#0b0f1a", paddingTop: padTop }}>
       {tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}
     </div>
   );

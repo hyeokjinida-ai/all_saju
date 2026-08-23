@@ -2004,13 +2004,16 @@ function TeaserStep({
               「글 블록 두 개를 연달아 쌓지 않는다」는 우리 조판 규칙을 정면으로 어긴 화면이었다(형님 지적).
               j2 = 직녀가 **달력을 내려다보는 옆모습**. 대사가 "아래 달력"을 가리키므로 시선이 맞물린다. */}
           {productSlug === "inyeon-saju" && (
-            <div className="mt-6">
+            // ⚠ 여기에 mt-* 를 주면 **밝은 판(teaser-light)이 그 틈으로 드러나 흰 가로 띠**가 된다.
+            //    컷은 자기 밤 배경을 갖고 있으므로 간격은 컷 **안쪽**(InyeonCut 의 padTop)에서 준다.
+            <div>
               {/* 말풍선은 **2줄**까지만(청월당 실측). 넘치면 원이 깨지고 자막이 된다.
                   j2 는 직녀가 왼쪽에서 달력을 내려다보는 옆모습 → 말풍선은 오른쪽 빈 자리, 꼬리는 아래로. */}
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
                 sayAt="top"
+                padTop={24}
                 say={
                   <ComicSay side="right" tail="down">
                     <span>인연이 없진 않아요.</span>
@@ -2380,7 +2383,7 @@ function TeaserStep({
           {isJiknyeoWorld && (
             <>
               {/* 세계관 한 컷 — 조판이 길게 이어지는 구간이라 그림으로 한 번 끊는다(글·사진 교차). */}
-              <div className="mt-14">
+              <div>
                 <InyeonCut id="t06" assets={jiknyeoAssets} />
               </div>
 
