@@ -104,8 +104,64 @@ export default async function CheckoutPage({
     );
   }
 
+  // 직녀(연애·결혼예보)도 같은 이유로 전용 화면을 쓴다.
+  // 산군은 위처럼 세계관을 결제까지 끌고 오는데 직녀만 공용 카드였다 —
+  // 달빛 아래에서 직녀가 말을 걸어 놓고 다음 장 제목이 「결제」였다(2026-08-23 형님 지적).
+  // 값·앵커는 랜딩(JiknyeoDetail §9)이 쓰는 것과 **같은 숫자**다. 여기서 달라지면 앵커가 풀린다.
+  if (product?.slug === "inyeon-saju" || product?.slug === "marriage-saju") {
+    const marriage = product.slug === "marriage-saju";
+    return (
+      <div className="world-jiknyeo min-h-screen" style={{ background: "#0b0f1a" }}>
+        <div className="mx-auto max-w-md px-5 py-10">
+          <p className="font-myeongjo text-center text-[11px] tracking-[0.22em]" style={{ color: "var(--gold-soft)" }}>
+            직녀
+          </p>
+          <h1 className="font-myeongjo mt-2 text-center text-[23px] font-bold leading-[1.4] text-bone">
+            이제 값 이야기를 할게요
+          </h1>
+
+          {/* 받을 것 — 티저에서 본 목차를 결제 직전에 한 번 더. 분량 표기는 티저·랜딩과 같은 「여덟 장」 */}
+          <div className="mt-6 border border-gold-pale px-5 py-4" style={{ background: "rgba(255,255,255,0.035)" }}>
+            <p className="font-myeongjo text-center text-[15px] font-bold" style={{ color: "#e8e6ef" }}>
+              당신의 예보 여덟 장
+            </p>
+            <p className="font-myeongjo mt-1.5 text-center text-[13px] leading-[1.75] text-bone-soft">
+              {marriage
+                ? "결혼하는 해와 그 안에서 서두를 달"
+                : "열두 달 전부 · 만나는 달과 조심할 달"}
+            </p>
+          </div>
+
+          {/* 가격 앵커 — 랜딩과 같은 값(철학관 5만~30만 · 전화 회당 3만~10만) */}
+          <p className="font-myeongjo mt-4 text-center text-[13px] leading-[1.75] text-bone-faint">
+            같은 답을 철학관에서 들으면 <b style={{ color: "var(--gold-bright)" }}>5만에서 30만원</b>,
+            <br />
+            전화 상담은 회당 3만에서 10만원이에요.
+            <br />
+            저는 {marriage ? "그 해와 달을" : "열두 달을"} 적어 드리고{" "}
+            <b style={{ color: "var(--gold-bright)" }}>{formatKRW(order.amount)}</b>.
+          </p>
+
+          <div className="mt-7">
+            {widget({
+              ctaLabel: `${formatKRW(order.amount)} 결제하기`,
+              beforeButton: (
+                <p className="font-myeongjo text-center text-[13px] leading-[1.75]" style={{ color: "var(--gold-soft)" }}>
+                  예보가 제대로 서지 않으면 값은 돌려드려요
+                </p>
+              ),
+            })}
+          </div>
+
+          <TrustStrip className="mt-5" />
+        </div>
+      </div>
+    );
+  }
+
+  // 공용 — 전용 화면이 없는 상품. 폭은 앱셸(max-w-md)에 맞춘다.
   return (
-    <div className="container py-12 max-w-2xl">
+    <div className="container py-12 max-w-md">
       <Card>
         <CardHeader>
           <CardTitle>결제</CardTitle>
