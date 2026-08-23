@@ -1,10 +1,16 @@
-// 자수정 퍼널 공통 프리미티브 — 핸드오프 design_handoff_saju_flow 토큰 기준.
+// 퍼널 공통 프리미티브 — 핸드오프 design_handoff_saju_flow 골격 기준.
+//
+// ⚠ 바탕은 원래 자수정 보라 그라데이션이었다. 2026-08-23 사이트를 먹빛 중립으로 통일하면서
+//    여기만 보라로 남아 「같은 사이트가 중간에 색이 바뀌는」 자리가 됐다(형님 지적).
+//    골격·간격·글자 위계는 그대로 두고 **바탕만** 먹빛으로 바꿨다.
+//    ※ 지금 /funnel 로 가는 링크는 은퇴한 자수정 랜딩(SajuLabLanding)에만 있어 사이트에서
+//      도달하지 않는다. 되살릴 일이 있어도 색이 어긋나지 않도록 같이 맞춰 둔다.
 import type { CSSProperties, ReactNode } from "react";
 
 export const LANDING_BG =
-  "radial-gradient(120% 60% at 50% 4%, #5a2db0, #34186e 46%, #1b0d3c 72%, #120726)";
+  "radial-gradient(120% 60% at 50% 4%, #1B1B1E, #131315 46%, #0B0B0C 72%, #000000)";
 export const FUNNEL_BG =
-  "radial-gradient(120% 60% at 50% 4%, #4a2da0, #2c1668 50%, #14092e)";
+  "radial-gradient(120% 60% at 50% 4%, #17171A, #101012 50%, #000000)";
 
 // 화면 골격 — 풀스크린 그라데이션 + 모바일 컬럼(헤더/본문/푸터 3슬롯)
 export function ScreenScaffold({
@@ -21,7 +27,7 @@ export function ScreenScaffold({
   return (
     <div
       className="relative flex min-h-screen w-full justify-center overflow-hidden text-white"
-      style={{ background: bg, backgroundColor: "#160a36" }}
+      style={{ background: bg, backgroundColor: "#000000" }}
     >
       <div className="relative flex min-h-screen w-full max-w-[420px] flex-col">
         {header && <div className="flex-none px-[22px] pt-4">{header}</div>}
@@ -35,13 +41,13 @@ export function ScreenScaffold({
 // 상단 진행 인디케이터(6점) + 뒤로 + n/6
 export function ProgressHeader({ step, total = 6, onBack }: { step: number; total?: number; onBack?: () => void }) {
   return (
-    <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
+    <div className="flex items-center justify-between" style={{ color: "#D4D4D8" }}>
       <button
         type="button"
         onClick={onBack}
         aria-label="뒤로"
         className="text-[22px] leading-none"
-        style={{ color: "#dcd0ff", background: "none", border: "none", cursor: onBack ? "pointer" : "default", width: 24, textAlign: "left" }}
+        style={{ color: "#D4D4D8", background: "none", border: "none", cursor: onBack ? "pointer" : "default", width: 24, textAlign: "left" }}
       >
         ‹
       </button>
@@ -53,7 +59,7 @@ export function ProgressHeader({ step, total = 6, onBack }: { step: number; tota
               width: i === step ? 18 : 5,
               height: 5,
               borderRadius: 3,
-              background: i === step ? "#c9a8ff" : i < step ? "#9a6cff" : "rgba(200,170,255,.3)",
+              background: i === step ? "#FAFAFA" : i < step ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.22)",
               transition: "width .2s",
             }}
           />
@@ -68,7 +74,7 @@ export function ProgressHeader({ step, total = 6, onBack }: { step: number; tota
 export function QuestionHead({ hanja, title, sub }: { hanja: string; title: ReactNode; sub: string }) {
   return (
     <>
-      <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 44, color: "#c9a8ff", lineHeight: 1 }}>{hanja}</div>
+      <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 44, color: "#E8E8EA", lineHeight: 1 }}>{hanja}</div>
       <div
         style={{ marginTop: 13, fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24, lineHeight: 1.3 }}
       >
@@ -101,8 +107,8 @@ export function OptionRow({
       style={{
         padding: compact ? "14px 16px" : "17px 18px",
         borderRadius: compact ? 14 : 15,
-        background: selected ? "rgba(150,90,255,.24)" : "rgba(255,255,255,.05)",
-        border: selected ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)",
+        background: selected ? "rgba(255,255,255,.18)" : "rgba(255,255,255,.05)",
+        border: selected ? "2px solid #FAFAFA" : "1px solid rgba(255, 255, 255,.25)",
         fontSize: compact ? 14.5 : 15,
         fontWeight: selected ? 700 : 600,
         color: selected ? "#fff" : "#cbb8f0",
@@ -134,13 +140,13 @@ export function PrimaryCTA({
       style={{
         padding: 16,
         borderRadius: 16,
-        background: disabled ? "rgba(255,255,255,.18)" : "linear-gradient(180deg,#fff,#f1eaff)",
-        color: disabled ? "rgba(255,255,255,.5)" : "#3a1a8a",
+        background: disabled ? "rgba(255,255,255,.18)" : "linear-gradient(180deg,#fff,#E8E8EA)",
+        color: disabled ? "rgba(255,255,255,.5)" : "#0B0B0C",
         fontWeight: 800,
         fontSize: 15.5,
         border: "none",
         cursor: disabled ? "not-allowed" : "pointer",
-        boxShadow: disabled ? "none" : "0 12px 26px rgba(120,60,240,.4)",
+        boxShadow: disabled ? "none" : "0 12px 26px rgba(255, 255, 255,.4)",
       }}
     >
       {label}
@@ -154,7 +160,7 @@ export function SkipLink({ label, onClick }: { label: string; onClick: () => voi
       <button
         type="button"
         onClick={onClick}
-        style={{ fontSize: 13, fontWeight: 600, color: "#9a8cd0", background: "none", border: "none", cursor: "pointer" }}
+        style={{ fontSize: 13, fontWeight: 600, color: "#A1A1AA", background: "none", border: "none", cursor: "pointer" }}
       >
         {label}
       </button>
@@ -170,8 +176,8 @@ export function ReassureBanner({ tone, children }: { tone: "violet" | "green"; c
       style={{
         padding: "11px 14px",
         borderRadius: 12,
-        background: v ? "rgba(150,90,255,.16)" : "rgba(60,200,140,.12)",
-        border: `1px solid ${v ? "rgba(180,140,255,.35)" : "rgba(120,220,170,.35)"}`,
+        background: v ? "rgba(255,255,255,.12)" : "rgba(60,200,140,.12)",
+        border: `1px solid ${v ? "rgba(255, 255, 255,.35)" : "rgba(120,220,170,.35)"}`,
         fontSize: 12.5,
         lineHeight: 1.45,
         color: v ? "#dcc8ff" : "#aef0cc",
@@ -206,7 +212,7 @@ export function FrostedTextarea({
           boxSizing: "border-box",
           borderRadius: 16,
           background: "rgba(255,255,255,.06)",
-          border: "1.5px solid rgba(180,140,255,.3)",
+          border: "1.5px solid rgba(255, 255, 255,.3)",
           padding: 16,
           minHeight: 130,
           fontSize: 14,
@@ -217,7 +223,7 @@ export function FrostedTextarea({
           fontFamily: "'Pretendard', sans-serif",
         }}
       />
-      <div style={{ textAlign: "right", marginTop: 8, fontSize: 11, color: "#9a8cd0" }}>
+      <div style={{ textAlign: "right", marginTop: 8, fontSize: 11, color: "#A1A1AA" }}>
         {value.length} / {max}
       </div>
     </div>
@@ -248,8 +254,8 @@ export function SegmentToggle<T extends string>({
             style={{
               flex: 1,
               borderRadius: compact ? 10 : 12,
-              background: sel ? "rgba(150,90,255,.24)" : "rgba(255,255,255,.05)",
-              border: sel ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)",
+              background: sel ? "rgba(255,255,255,.18)" : "rgba(255,255,255,.05)",
+              border: sel ? "2px solid #FAFAFA" : "1px solid rgba(255, 255, 255,.25)",
               padding: compact ? 9 : 12,
               textAlign: "center",
               fontSize: compact ? 13 : 14,
@@ -280,7 +286,7 @@ export const frostedInputStyle: CSSProperties = {
   boxSizing: "border-box",
   borderRadius: 12,
   background: "rgba(255,255,255,.06)",
-  border: "1px solid rgba(180,140,255,.28)",
+  border: "1px solid rgba(255, 255, 255,.28)",
   padding: "13px 14px",
   fontSize: 13.5,
   color: "#fff",

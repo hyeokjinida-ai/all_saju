@@ -43,30 +43,35 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
-        // ── 보일러플레이트 alias 재매핑 — 자수정(amethyst) 다크 ──
-        // 기존 className 그대로 두고 색만 바꿔서 모든 페이지 자동 적용됨
-        ink: "#F1EEF9",                          // 강조 텍스트
-        canvas: "#1b0d3c",                       // 화면 배경 (screen)
-        "surface-soft": "#241047",               // 카드 표면
-        "surface-dark": "#120726",               // 가장 깊은 밤
-        charcoal: "#cbb8f0",                     // 서브 텍스트
-        body: "#cbb8f0",                         // 본문
-        mute: "#9a8cd0",                         // 보조 텍스트
-        hairline: "#3a2f5e",                     // 카드/입력 테두리
-        "hairline-strong": "#4a3a6e",            // 강한 테두리(차트 셀)
+        // ── 보일러플레이트 alias 재매핑 — **먹빛 중립**(2026-08-23 전면 통일) ──
+        // 기존 className 그대로 두고 **값만** 바꿔서 모든 페이지에 자동 적용된다.
+        //
+        // ⚠ 왜 CSS 변수가 아니라 hex 인가: 여기 이름들은 `bg-wine-2/50` 처럼 **투명도와 함께**
+        //    쓰이는 자리가 있다. Tailwind 는 색이 var() 면 투명도 수식을 못 붙인다
+        //    (--tw-bg-opacity 가 var 색에 안 먹는다). 세계관별로 갈려야 하는 색
+        //    (--bone/--gold)은 아래에서 변수로 두고, 표면·선은 여기 값으로 고정한다.
+        ink: "#FAFAFA",                          // 강조 텍스트
+        canvas: "#000000",                       // 화면 배경 (screen)
+        "surface-soft": "#18181B",               // 카드 표면
+        "surface-dark": "#0B0B0C",               // 가장 깊은 밤
+        charcoal: "#D4D4D8",                     // 서브 텍스트
+        body: "#D4D4D8",                         // 본문
+        mute: "#A1A1AA",                         // 보조 텍스트
+        hairline: "#27272A",                     // 카드/입력 테두리
+        "hairline-strong": "#3A3A40",            // 강한 테두리(차트 셀)
 
-        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold[보라], text-violet 등) ──
-        // 호환 위해 wine*/gold* 이름은 유지하되 값은 자수정으로 재매핑
-        wine: "#1b0d3c",          // 화면 배경
-        "wine-2": "#241047",      // 카드
-        "wine-deep": "#1c0e3e",   // 잠긴 카드·서브
-        "wine-soft": "#2a1a5c",   // 차트 셀 등 밝은 표면
-        screen: "#1b0d3c",
-        night: "#120726",
-        "night-2": "#231052",
-        "night-3": "#2c1668",
-        "night-edge": "#0c0420",
-        divider: "#2a2350",
+        // ── 명운록 명시적 토큰 (직접 사용: bg-wine, text-gold, text-violet 등) ──
+        // 호환 위해 wine*/gold* 이름은 유지하되 값은 먹빛 중립으로 재매핑
+        wine: "#000000",          // 화면 배경
+        "wine-2": "#18181B",      // 카드
+        "wine-deep": "#121214",   // 잠긴 카드·서브
+        "wine-soft": "#1F1F23",   // 차트 셀 등 밝은 표면
+        screen: "#000000",
+        night: "#0B0B0C",
+        "night-2": "#141416",
+        "night-3": "#1B1B1E",
+        "night-edge": "#000000",
+        divider: "#232327",
 
         // 아래 두 묶음은 **CSS 변수를 가리킨다**(고정 hex 아님).
         // 값을 여기 박아두면 .world-sangun 같은 세계관 스코프에서 색을 덮을 수 없다 —
@@ -198,8 +203,9 @@ const config: Config = {
         "mini": "0.4em",
       },
       boxShadow: {
-        "gold-glow": "0 0 24px rgba(180, 140, 255, 0.25)",
-        "gold-cta": "0 12px 26px rgba(120, 60, 240, 0.4)",
+        // 그림자도 보라였다 — 중립 검정에서 보라 후광이 뜨면 그 자리만 딴 사이트가 된다.
+        "gold-glow": "0 0 24px rgba(255, 255, 255, 0.14)",
+        "gold-cta": "0 12px 26px rgba(0, 0, 0, 0.55)",
         "violet-cta": "0 8px 24px rgba(138, 107, 242, 0.35)",
         "violet-glow": "0 0 50px rgba(138, 107, 242, 0.45)",
         "card-float": "0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",

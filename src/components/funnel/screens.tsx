@@ -90,7 +90,7 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
           >
             <span style={{ fontSize: 18 }}>💬</span> {loading ? "카카오로 이동 중…" : "카카오로 계속하기"}
           </button>
-          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 11, color: "#9a8cd0", lineHeight: 1.5 }}>
+          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 11, color: "#A1A1AA", lineHeight: 1.5 }}>
             재방문 시 입력값이 자동 복원돼요
           </p>
         </>
@@ -98,7 +98,7 @@ export function LoginScreen({ ctx }: { ctx: FunnelCtx }) {
     >
       <div className="flex h-full flex-col items-center justify-center text-center" style={{ minHeight: 420 }}>
         <div
-          style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(160deg,rgba(160,120,255,.3),rgba(80,40,160,.4))", border: "1px solid rgba(190,150,255,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-hanja), cursive", fontSize: 46, color: "#e6dbff", boxShadow: "0 10px 30px rgba(20,8,60,.5)" }}
+          style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(160deg,rgba(255, 255, 255,.3),rgba(80,40,160,.4))", border: "1px solid rgba(190,150,255,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-hanja), cursive", fontSize: 46, color: "#e6dbff", boxShadow: "0 10px 30px rgba(20,8,60,.5)" }}
         >
           命
         </div>
@@ -186,7 +186,7 @@ export function GenderScreen({ ctx }: { ctx: FunnelCtx }) {
           );
         })}
       </div>
-      <p className="mt-5 text-center" style={{ fontSize: 12, color: "#9a8cd0" }}>고르면 다음으로 자동 이동해요</p>
+      <p className="mt-5 text-center" style={{ fontSize: 12, color: "#A1A1AA" }}>고르면 다음으로 자동 이동해요</p>
     </ScreenScaffold>
   );
 }
@@ -229,7 +229,7 @@ export function BirthScreen({ ctx }: { ctx: FunnelCtx }) {
           style={{ ...frostedInputStyle, fontSize: 19, letterSpacing: "0.08em", textAlign: "center", fontFamily: "var(--font-mono), monospace" }}
         />
         {raw.length > 0 && raw.length < 8 && (
-          <div style={{ marginTop: 8, fontSize: 11.5, color: "#9a8cd0" }}>여덟 자리(연4·월2·일2)를 모두 입력해 주세요</div>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: "#A1A1AA" }}>여덟 자리(연4·월2·일2)를 모두 입력해 주세요</div>
         )}
         {raw.length === 8 && !isValidBirth(raw) && (
           <div style={{ marginTop: 8, fontSize: 11.5, color: "#ff9a9a" }}>올바른 날짜가 아니에요</div>
@@ -261,20 +261,20 @@ export function TimeScreen({ ctx }: { ctx: FunnelCtx }) {
           value={p.birthTime}
           disabled={p.unknownTime}
           onChange={(e) => ctx.setProfile("birthTime", e.target.value)}
-          style={{ ...frostedInputStyle, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark", accentColor: "#8a5cf0" }}
+          style={{ ...frostedInputStyle, opacity: p.unknownTime ? 0.4 : 1, colorScheme: "dark", accentColor: "#FAFAFA" }}
         >
-          <option value="" style={{ background: "#1b0d3c", color: "#9a8cd0" }}>시간 선택 (모르면 아래 체크)</option>
+          <option value="" style={{ background: "#121214", color: "#A1A1AA" }}>시간 선택 (모르면 아래 체크)</option>
           {SIJU.map((s) => (
-            <option key={s.v} value={s.v} style={{ background: "#1b0d3c", color: "#F1EEF9" }}>
+            <option key={s.v} value={s.v} style={{ background: "#121214", color: "#FAFAFA" }}>
               {s.label}
             </option>
           ))}
         </select>
       </div>
-      <div className="mt-4 mb-3 flex items-center gap-3" style={{ color: "#9a8cd0", fontSize: 12 }}>
-        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
+      <div className="mt-4 mb-3 flex items-center gap-3" style={{ color: "#A1A1AA", fontSize: 12 }}>
+        <span style={{ flex: 1, height: 1, background: "rgba(255, 255, 255,.2)" }} />
         또는
-        <span style={{ flex: 1, height: 1, background: "rgba(180,140,255,.2)" }} />
+        <span style={{ flex: 1, height: 1, background: "rgba(255, 255, 255,.2)" }} />
       </div>
       <button
         type="button"
@@ -283,18 +283,18 @@ export function TimeScreen({ ctx }: { ctx: FunnelCtx }) {
         style={{
           padding: "16px 18px",
           borderRadius: 15,
-          background: p.unknownTime ? "rgba(150,90,255,.24)" : "rgba(255,255,255,.05)",
-          border: p.unknownTime ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.3)",
+          background: p.unknownTime ? "rgba(255, 255, 255,.24)" : "rgba(255,255,255,.05)",
+          border: p.unknownTime ? "2px solid #FAFAFA" : "1px solid rgba(255, 255, 255,.3)",
           cursor: "pointer",
         }}
       >
         <span style={{ textAlign: "left" }}>
           <span style={{ fontSize: 15, fontWeight: p.unknownTime ? 700 : 600, color: p.unknownTime ? "#fff" : "#dcc8ff" }}>태어난 시각을 몰라요</span>
           <br />
-          <span style={{ fontSize: 12, color: "#9a8cd0" }}>태어난 날을 중심으로 정확히 봐드려요</span>
+          <span style={{ fontSize: 12, color: "#A1A1AA" }}>태어난 날을 중심으로 정확히 봐드려요</span>
         </span>
         <span
-          style={{ flex: "none", width: 24, height: 24, borderRadius: 7, background: p.unknownTime ? "#b794ff" : "rgba(255,255,255,.06)", border: p.unknownTime ? "none" : "1.5px solid rgba(180,140,255,.45)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#1b0d3c" }}
+          style={{ flex: "none", width: 24, height: 24, borderRadius: 7, background: p.unknownTime ? "#FAFAFA" : "rgba(255,255,255,.06)", border: p.unknownTime ? "none" : "1.5px solid rgba(255,255,255,.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#0B0B0C" }}
         >
           {p.unknownTime ? "✓" : ""}
         </span>
@@ -321,11 +321,11 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
       <div style={{ fontFamily: "var(--font-myeongjo-nanum), serif", fontWeight: 800, fontSize: 24 }}>이대로 분석할게요</div>
       <div className="mt-5 flex flex-col">
         {rows.map((r) => (
-          <div key={r.label} className="flex justify-between" style={{ padding: "13px 0", borderBottom: "1px solid rgba(180,140,255,.18)" }}>
+          <div key={r.label} className="flex justify-between" style={{ padding: "13px 0", borderBottom: "1px solid rgba(255, 255, 255,.18)" }}>
             <span style={{ fontSize: 13, color: "#b8a4e0" }}>{r.label}</span>
             <span style={{ fontSize: 13.5, fontWeight: 700 }}>
               {r.value}{" "}
-              <button type="button" onClick={() => ctx.goTo(r.to)} style={{ color: "#c9a8ff", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13.5 }}>
+              <button type="button" onClick={() => ctx.goTo(r.to)} style={{ color: "#E8E8EA", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13.5 }}>
                 수정
               </button>
             </span>
@@ -333,14 +333,14 @@ export function ConfirmScreen({ ctx }: { ctx: FunnelCtx }) {
         ))}
       </div>
       {(state.situationText || state.wishText) && (
-        <div className="mt-[18px]" style={{ background: "rgba(150,90,255,.16)", border: "1px solid rgba(180,140,255,.35)", borderRadius: 14, padding: 14 }}>
+        <div className="mt-[18px]" style={{ background: "rgba(255, 255, 255,.16)", border: "1px solid rgba(255, 255, 255,.35)", borderRadius: 14, padding: 14 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: "#dcc8ff", marginBottom: 6 }}>내가 적은 고민·질문</div>
           <div style={{ fontSize: 13, lineHeight: 1.55, color: "#cbb8f0" }}>
             &ldquo;{(state.situationText || state.wishText).slice(0, 120)}&rdquo;
           </div>
         </div>
       )}
-      <div className="mt-4" style={{ fontSize: 11.5, textAlign: "center", lineHeight: 1.5, color: "#9a8cd0" }}>
+      <div className="mt-4" style={{ fontSize: 11.5, textAlign: "center", lineHeight: 1.5, color: "#A1A1AA" }}>
         적어주신 정보는 사주 계산과
         <br />
         결과지 만드는 데만 써요
@@ -411,7 +411,7 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
       <div className="relative flex min-h-screen w-full max-w-[420px] flex-col">
         {/* 뒤로 */}
         <div className="flex-none px-5 pt-4">
-          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, lineHeight: 1, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>
+          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, lineHeight: 1, background: "none", border: "none", color: "#D4D4D8", cursor: "pointer" }}>
             ‹
           </button>
         </div>
@@ -421,7 +421,7 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
             <ResultScroll view={view} embedded locked />
           ) : (
             <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: 360 }}>
-              <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 42, color: "#c9a8ff" }}>命</div>
+              <div style={{ fontFamily: "var(--font-hanja), cursive", fontSize: 42, color: "#E8E8EA" }}>命</div>
               <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#cbb8f0" }}>
                 사주를 불러오지 못했어요. 그래도 전체 풀이는 받을 수 있어요.
               </div>
@@ -441,8 +441,8 @@ export function AnalysisScreen({ ctx }: { ctx: FunnelCtx }) {
 export function EmailScreen({ ctx }: { ctx: FunnelCtx }) {
   const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ctx.state.email.trim());
   const header = (
-    <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
-      <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>‹</button>
+    <div className="flex items-center justify-between" style={{ color: "#D4D4D8" }}>
+      <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#D4D4D8", cursor: "pointer" }}>‹</button>
       <span style={{ fontSize: 14, fontWeight: 700 }}>결과 받기</span>
       <span style={{ opacity: 0, fontSize: 22 }}>‹</span>
     </div>
@@ -562,8 +562,8 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
   return (
     <ScreenScaffold
       header={
-        <div className="flex items-center justify-between" style={{ color: "#dcd0ff" }}>
-          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#dcd0ff", cursor: "pointer" }}>‹</button>
+        <div className="flex items-center justify-between" style={{ color: "#D4D4D8" }}>
+          <button type="button" onClick={ctx.prev} aria-label="뒤로" style={{ fontSize: 22, background: "none", border: "none", color: "#D4D4D8", cursor: "pointer" }}>‹</button>
           <span style={{ fontSize: 14, fontWeight: 700 }}>결제</span>
           <span style={{ opacity: 0, fontSize: 22 }}>‹</span>
         </div>
@@ -584,11 +584,11 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
             onClick={pay}
             disabled={busy}
             className="mt-2.5 block w-full text-center disabled:opacity-70"
-            style={{ padding: 13, borderRadius: 14, border: "1.5px solid rgba(180,140,255,.4)", background: "none", fontSize: 14, fontWeight: 700, color: "#dcc8ff", cursor: "pointer" }}
+            style={{ padding: 13, borderRadius: 14, border: "1.5px solid rgba(255, 255, 255,.4)", background: "none", fontSize: 14, fontWeight: 700, color: "#dcc8ff", cursor: "pointer" }}
           >
             다른 결제수단
           </button>
-          <div className="mt-2.5 text-center" style={{ fontSize: 11, color: "#9a8cd0" }}>결제 즉시 전체 풀이가 열려요</div>
+          <div className="mt-2.5 text-center" style={{ fontSize: 11, color: "#A1A1AA" }}>결제 즉시 전체 풀이가 열려요</div>
         </>
       }
     >
@@ -612,17 +612,17 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
               type="button"
               onClick={() => setSelId(o.id)}
               className="w-full text-left transition-transform active:scale-[0.99]"
-              style={{ padding: "14px 16px", borderRadius: 16, background: on ? "rgba(150,90,255,.18)" : "rgba(255,255,255,.05)", border: on ? "2px solid #b794ff" : "1px solid rgba(180,140,255,.25)", cursor: "pointer", boxShadow: on ? "0 8px 22px rgba(120,60,240,.28)" : "none" }}
+              style={{ padding: "14px 16px", borderRadius: 16, background: on ? "rgba(255, 255, 255,.18)" : "rgba(255,255,255,.05)", border: on ? "2px solid #FAFAFA" : "1px solid rgba(255, 255, 255,.25)", cursor: "pointer", boxShadow: on ? "0 8px 22px rgba(255, 255, 255,.28)" : "none" }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span style={{ fontSize: 14.5, fontWeight: 700, color: on ? "#fff" : "#e6dbff" }}>{o.name}</span>
                     {m?.badge && (
-                      <span style={{ fontSize: 10, fontWeight: 800, color: "#241047", background: "#c9a8ff", borderRadius: 6, padding: "2px 6px", flex: "none" }}>{m.badge}</span>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: "#0B0B0C", background: "#E8E8EA", borderRadius: 6, padding: "2px 6px", flex: "none" }}>{m.badge}</span>
                     )}
                   </div>
-                  {m?.desc && <div style={{ marginTop: 4, fontSize: 11.5, color: "#9a8cd0", lineHeight: 1.4 }}>{m.desc}</div>}
+                  {m?.desc && <div style={{ marginTop: 4, fontSize: 11.5, color: "#A1A1AA", lineHeight: 1.4 }}>{m.desc}</div>}
                 </div>
                 <div style={{ flex: "none", textAlign: "right" }}>
                   <div style={{ fontSize: 17, fontWeight: 800, color: on ? "#fff" : "#dcc8ff" }}>{formatKRW(o.price)}</div>
@@ -635,19 +635,19 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
       </div>
 
       {/* 가격 요약 — 정가 → 회원 할인가(실제 할인) */}
-      <div className="mt-4" style={{ borderRadius: 14, background: "rgba(255,255,255,.05)", border: "1px solid rgba(180,140,255,.2)", padding: 14 }}>
+      <div className="mt-4" style={{ borderRadius: 14, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255, 255, 255,.2)", padding: 14 }}>
         <div className="flex items-center justify-between" style={{ fontSize: 13, color: "#cbb8f0" }}>
           <span>정가</span>
-          <span style={ctx.isAuthed ? { textDecoration: "line-through", color: "#9a8cd0" } : undefined}>{formatKRW(basePrice)}</span>
+          <span style={ctx.isAuthed ? { textDecoration: "line-through", color: "#A1A1AA" } : undefined}>{formatKRW(basePrice)}</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between" style={{ fontSize: 13, color: "#9fe1cb" }}>
           <span>회원 할인{ctx.isAuthed ? "" : " (로그인 시)"}</span>
           <span>− {formatKRW(1900)}</span>
         </div>
-        <div className="mt-2 flex items-center justify-between" style={{ borderTop: "1px solid rgba(180,140,255,.18)", paddingTop: 10 }}>
+        <div className="mt-2 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255, 255, 255,.18)", paddingTop: 10 }}>
           <span style={{ fontSize: 13, color: "#cbb8f0" }}>최종 결제금액</span>
           <span className="flex items-baseline gap-1.5">
-            {ctx.isAuthed && <span style={{ fontSize: 13, textDecoration: "line-through", color: "#9a8cd0" }}>{formatKRW(basePrice)}</span>}
+            {ctx.isAuthed && <span style={{ fontSize: 13, textDecoration: "line-through", color: "#A1A1AA" }}>{formatKRW(basePrice)}</span>}
             <span style={{ fontSize: 22, fontWeight: 800, color: "#fff" }}>{formatKRW(total)}</span>
           </span>
         </div>
@@ -670,7 +670,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
             type="button"
             onClick={loginKakao}
             className="flex w-full items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
-            style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(180,140,255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255, 255, 255,.3)", color: "#dcc8ff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             💬 카카오로 로그인하면 <b style={{ color: "#fff" }}>1,900원 할인</b>
           </button>
@@ -684,7 +684,7 @@ export function PaymentScreen({ ctx }: { ctx: FunnelCtx }) {
       <div className="mt-4 flex flex-col gap-[11px]">
         {benefits.map((b) => (
           <div key={b} className="flex items-center gap-2.5" style={{ fontSize: 13, color: "#cbb8f0" }}>
-            <span style={{ color: "#c9a8ff" }}>✓</span> {b}
+            <span style={{ color: "#E8E8EA" }}>✓</span> {b}
           </div>
         ))}
       </div>
