@@ -28,6 +28,7 @@ export function SlotCut({
   ratio = "4 / 5",
   pos = "center 18%",
   priority,
+  sayAt = "bottom",
 }: {
   id: SlotId;
   assets?: AssetMap;
@@ -36,6 +37,8 @@ export function SlotCut({
   ratio?: string;
   pos?: string;
   priority?: boolean;
+  /** 말풍선이 앉는 컷 안 위치 — 인물 얼굴이 없는 쪽 */
+  sayAt?: "top" | "bottom";
 }) {
   const meta = SLOTS.find((s) => s.id === id);
   const a: Asset | undefined = assets?.[id];
@@ -80,11 +83,16 @@ export function SlotCut({
             className="pointer-events-none absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 40%, rgba(11,15,26,0.74) 76%, rgba(11,15,26,0.96) 100%)" }}
           />
-          {/* 청월당 실측: 말풍선은 컷 **밖으로 절반 걸쳐** 종이 위에 뜬다.
-              컷 안에 가두면(bottom-4/bottom-7) 자막·UI 카드로 읽힌다.
-              overflow-visible 이 필요하므로 SlotCut 의 overflow-hidden 은 그림에만 걸고
-              오버레이는 이 래퍼 밖으로 나가게 둔다. */}
-          <div className="pointer-events-none absolute inset-x-3 bottom-0 translate-y-[38%]">{overlay}</div>
+          {/* ⚠ 한때 청월당처럼 **컷 밖으로 걸치게** 했다가 되돌렸다(2026-08-23).
+              저쪽은 페이지 바탕이 연한 종이 한 장이라 말풍선이 그 위에 자연스럽게 뜨는데,
+              우리는 **어두운 밤 컷 + 밝은 달빛 판**이라 걸치려고 만든 여백이 밝은 띠가 되어
+              「어두운 컷 → 밝은 띠 → 어두운 컷」 줄무늬가 됐다(형님 지적).
+              그래서 말풍선은 **컷 안 빈 모서리**에 앉힌다 — 청월당도 어두운 배경 컷에서는
+              말풍선을 컷 안에 둔다(result_02 좌상단). 자막이 안 되게 하는 건 걸침이 아니라
+              **정원 + 좁은 폭 + 입을 가리키는 꼬리**다. */}
+          <div className={`pointer-events-none absolute inset-x-4 ${sayAt === "top" ? "top-5" : "bottom-6"}`}>
+            {overlay}
+          </div>
         </>
       )}
     </figure>
@@ -278,6 +286,7 @@ export function InyeonCut({
   id,
   assets,
   say,
+  sayAt = "bottom",
   sfx,
   sfxAt = "right",
   tilt,
@@ -285,6 +294,8 @@ export function InyeonCut({
   id: SlotId;
   assets?: AssetMap;
   say?: React.ReactNode;
+  /** 말풍선이 앉는 컷 안 위치 */
+  sayAt?: "top" | "bottom";
   /** 손글씨 효과음 — 「멈칫」「갸웃」. 원본은 그림에 구워 넣는데 우리는 코드로 얹는다. */
   sfx?: string;
   sfxAt?: "left" | "right";
@@ -293,7 +304,7 @@ export function InyeonCut({
 }) {
   const cut = (
     <div className="relative">
-      <SlotCut id={id} assets={assets} overlay={say} />
+      <SlotCut id={id} assets={assets} overlay={say} sayAt={sayAt} />
       {/* 효과음은 **컷 안에 완전히** 들어가야 한다. top 14% 는 컷을 -mx-5 로 넓힌 뒤라
           기울임(rotate)까지 겹치면 위·옆이 잘려 글자 쓰레기처럼 보였다(형님 지적 2026-08-23).
           충분히 안쪽(22%)으로 내리고 좌우 여백도 넓힌다. */}
@@ -309,8 +320,6 @@ export function InyeonCut({
   );
   // 말풍선이 컷 밖으로 38% 걸치므로 **아래 여백**을 그만큼 비워 다음 블록과 안 겹치게 한다.
   // (청월당도 컷 아래 종이 여백을 크게 두고 그 위에 말풍선을 띄운다 — 실측 result_02/07)
-  // 말풍선(폭 46% 정원)이 컷 밖으로 38% 걸치므로 **아래 여백 = 46% x 38% ≈ 18%** 를 비운다.
-  // 13% 로는 모자라 아래 카드(원국표)를 침범했다 — 운영 캡처에서 확인(2026-08-23).
-  return <div className="-mx-5 mt-6 pb-[18%]">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
+  return <div className="-mx-5 mt-6">{tilt ? <TiltCut deg={tilt}>{cut}</TiltCut> : cut}</div>;
 }
 

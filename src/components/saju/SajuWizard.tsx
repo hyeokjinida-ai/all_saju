@@ -1738,8 +1738,9 @@ function TeaserStep({
         <InyeonCut
           id="j1"
           assets={jiknyeoAssets}
+          sayAt="top"
           say={
-            <ComicSay side="left" tail="up">
+            <ComicSay side="left" tail="down">
               <span>{name ? `${name}님 사주,` : "사주,"}</span>
               <span>방금 다 읽었어요.</span>
             </ComicSay>
@@ -1979,8 +1980,9 @@ function TeaserStep({
             <InyeonCut
               id="w3"
               assets={jiknyeoAssets}
+              sayAt="top"
               say={
-                <ComicSay side="left" tail="up">
+                <ComicSay side="left" tail="down">
                   {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
                   {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
                     <span key={i} className="block">
@@ -1991,7 +1993,8 @@ function TeaserStep({
               }
               // 효과음 제거(2026-08-23): 「…딱」이 비녀 옆에 떠서 무슨 소리인지 안 읽혔다.
               // 청월당 효과음은 **집중선**(≡)이지 글자가 아니다 — 글자 효과음은 우리 그림체와 안 맞는다.
-              tilt={-2}
+              // 기울임(tilt)도 뺐다: 사선 밑변이 **밝은 달빛 판**과 만나면 어긋남으로 읽힌다.
+              // 저쪽에서 사다리꼴이 먹히는 건 페이지 바탕이 연한 종이 한 장이기 때문이다.
             />
           )}
 
@@ -2007,8 +2010,9 @@ function TeaserStep({
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
+                sayAt="top"
                 say={
-                  <ComicSay side="right" tail="up">
+                  <ComicSay side="right" tail="down">
                     <span>인연이 없진 않아요.</span>
                     <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
