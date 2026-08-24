@@ -2350,8 +2350,10 @@ function TeaserStep({
                   : teaser.locked
               ).map((row, i) =>
                 isJiknyeoWorld ? (
-                  // 밝은 티저의 잠금 — 원본은 어두운 네온 박스가 아니라 **얇은 줄 + ████** 이다.
-                  // 행간을 24 가 아니라 16 으로 조이는 것까지 실측값이다.
+                  // 밝은 티저의 잠금 — 얇은 줄 + 가려진 값.
+                  // ⚠ 가리개는 회색 ████ 이 아니라 NeonMask 다(LockRow 주석 참조):
+                  //    회색 막대는 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다(2026-08-25 실측 대비 1.4).
+                  //    바로 위 열린 달 카드가 쓰는 가리개와 같은 것이라, 한 화면에서 잠금 문법이 하나로 선다.
                   <LockRow key={i} label={row.label} />
                 ) : (
                   <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">

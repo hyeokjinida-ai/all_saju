@@ -187,15 +187,24 @@ export function Val({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 잠금 줄 — 행간을 24 가 아니라 **16** 으로 조인다(원본 실측). 값은 DOM 에 넣지 않는다. */
-export function LockRow({ label, mask = "████" }: { label: string; mask?: string }) {
+/**
+ * 잠금 줄 — 값은 DOM 에 넣지 않는다(흐리게만 하면 소스에서 그대로 읽힌다).
+ *
+ * ⚠ 원래 `████` 글리프를 회색(#c9c9c9)으로 찍었다. 실측 대비 **1.4** — 안 읽히는 건 의도지만,
+ *   진짜 문제는 **모양이 스켈레톤(로딩 자리표시자)과 같다**는 것이었다. 손님은 「아직 안 뜬 화면」
+ *   으로 읽고 기다리다 나간다. 잠금이 팔리려면 「값이 이미 적혀 있는데 가려졌을 뿐」로 보여야 한다.
+ *   → 같은 화면의 열린 달 카드(OpenMonthCard)·금기 카드가 이미 쓰는 문법으로 통일한다:
+ *     **발광 테두리 + 흐린 더미 글자**(NeonMask). 가려 놓은 자리가 오히려 눈에 띈다.
+ *   낙서(scribble)는 끈다 — 다섯 줄이 연달아 서는 자리라 줄마다 밑줄이 들어가면 판이 시끄럽다.
+ */
+export function LockRow({ label, mask = "○○○○" }: { label: string; mask?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2" style={{ borderBottom: `1px solid ${LINE}` }}>
-      <span className="text-[16px] leading-[16px]" style={{ color: BODY }}>
+    <div className="flex items-center justify-between gap-3 py-2.5" style={{ borderBottom: `1px solid ${LINE}` }}>
+      <span className="text-[15px] leading-[21px]" style={{ color: BODY }}>
         {label}
       </span>
-      <span className="text-[16px] leading-[16px] select-none" style={{ color: "#c9c9c9", letterSpacing: "0.05em" }}>
-        {mask}
+      <span className="shrink-0">
+        <NeonMask text={mask} scribble={false} />
       </span>
     </div>
   );
