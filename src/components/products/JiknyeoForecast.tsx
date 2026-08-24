@@ -130,24 +130,36 @@ export const GRADE_TO_PHASE: Record<string, Phase> = { "●": "full", "◎": "ha
 export function MoonGrid({ months }: { months: { m: string; p: Phase }[] }) {
   return (
     <>
-      <div className="grid grid-cols-4 gap-1.5">
+      {/* 읽는 법을 **격자 위**에 둔다. 아래 범례만 있던 시절엔 기호를 모른 채 12칸을 보고,
+          다 본 뒤에야 해설을 읽고 다시 올려다봐야 했다 — 순서가 거꾸로였다(형님 지적). */}
+      <p className="mb-3 text-center text-[14px] leading-[21px]" style={{ color: "var(--bone-soft)" }}>
+        <span style={{ color: "var(--violet-text)", fontWeight: 700 }}>노란 보름달</span>이 크게 열리는 달이에요
+      </p>
+      <div className="grid grid-cols-4 gap-2">
         {months.map(({ m, p }) => {
           const big = p === "full";
           return (
+            // 평월은 판에 **잠기고**(반투명), 열린 달만 종이로 **떠오른다**.
+            // 전에는 12칸이 전부 같은 흰 박스에 1px 테두리 색만 달라서, 내 기회가 어디인지
+            // 스캔이 안 됐다. 떠오른 칸은 결론 카드(순백+그림자)와 **같은 재질**이라
+            // 「저 노란 칸 = 이 카드」가 설명 없이 이어진다.
             <div key={m} className="rounded-[9px] py-2 text-center"
-              style={{ background: "var(--gold-pale)", border: `1px solid ${big ? "var(--gold-bright)" : "var(--gold-line)"}`,
-                       boxShadow: big ? "0 0 0 2px rgba(107,76,154,.14)" : undefined }}>
-              <p className="text-[12px] font-bold" style={{ color: big ? "var(--gold-bright)" : "var(--bone-faint)" }}>{m}</p>
+              style={big
+                ? { background: "#ffffff", border: "2px solid var(--gold-bright)", boxShadow: "0 4px 12px rgba(107,76,154,.22)" }
+                : { background: "rgba(255,255,255,0.42)", border: "1px solid rgba(221,211,236,0.75)" }}>
+              <p className="text-[12px] font-bold" style={{ color: big ? "var(--violet-text)" : "var(--bone-faint)" }}>{m}</p>
               <div className="mt-1 flex justify-center"><Moon phase={p} size={30} /></div>
             </div>
           );
         })}
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5">
-        {([["full","크게 열리는 달"],["half","자리가 생기는 달"],["cres","평"],["cloud","결이 엉키는 달"]] as const).map(([p,label]) => (
+      {/* 범례는 **위에서 안 말한 것만**. 보름달은 이미 읽는 법이 설명했고, 「평」은 정보가 없다.
+          「결이 엉키는 달」은 남긴다 — POINT 2 의 「나쁜 시기도 같이 적는다」를 눈으로 증명하는 자리다. */}
+      <div className="mt-4 flex items-center justify-center gap-5">
+        {([["half","자리가 생기는 달"],["cloud","결이 엉키는 달"]] as const).map(([p,label]) => (
           <div key={p} className="flex items-center gap-1.5">
             <Moon phase={p} size={18} />
-            <span className="text-[11px]" style={{ color: "var(--bone-soft)" }}>{label}</span>
+            <span className="text-[12px]" style={{ color: "var(--bone-soft)" }}>{label}</span>
           </div>
         ))}
       </div>

@@ -2048,8 +2048,13 @@ function TeaserStep({
                   className="font-myeongjo mt-2 px-1 text-[15.5px] leading-[1.8]"
                   style={{ color: "var(--bone-soft)" }}
                 >
-                  자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —{" "}
-                  <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  {/* 대시에서 줄을 끊는다. 예전엔 이어 흘려서 「— 아래」까지 앞줄에 걸리고
+                      하이라이트가 두 줄로 꺾였다 — 강조 상자가 반 토막 나면 강조가 아니라 사고로 보인다.
+                      block 두 개로 갈라 **하이라이트가 자기 줄을 통째로** 쓰게 한다. */}
+                  <span className="block">자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —</span>
+                  <span className="mt-1.5 block">
+                    <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  </span>
                 </p>
               )}
             </div>
@@ -2629,6 +2634,10 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
   // ★ 숫자가 튀는 건 크기 때문이 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다(실측 판독).
   //   그래서 이 블록에서 핑크는 숫자 하나뿐이다. 여기저기 칠하면 그 효과가 사라진다.
   const { ref, inView } = useInView<HTMLDivElement>();
+  // 격자에 **실제로 그려진 것**을 센다. openCount(●+◎ 합)를 그대로 쓰면 노란 보름달 개수와
+  // 어긋나 손님이 세어 봤을 때 틀린 숫자가 된다.
+  const fullCount = data.calendar.filter((c) => c.grade === "●").length;
+  const halfCount = data.calendar.filter((c) => c.grade === "◎").length;
   return (
     <div className="mt-8">
       {/* 12칸 예보 격자 — 열두 달 등급을 **하나도 가리지 않고** 편다.
@@ -2641,24 +2650,29 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         />
       </div>
 
+      {/* 집계 = 이 구간의 표지이자 정보다.
+          ⚠ 예전엔 붓 헤드가 「이 달들을 놓치지 마세요!」(정보 0 인 명령)였고, 그 아래 「나의 인연
+             기회: 5회」가 따로 있었다. 그 5 는 **보름(●) + 반달(◎)** 합인데 화면에서 세면 노란
+             보름달은 3 개뿐이라, 읽는 법을 못 박는 순간 숫자가 거짓말로 보인다. 그래서 등급별로
+             갈라 적는다 — 세는 것과 보이는 것이 일치해야 증거가 증거로 산다.
+          느낌표를 뺀 것도 의도다(직녀 보이스 1번: 재촉하지 않는다, 대신 달을 못 박는다). */}
       <div ref={ref} className="text-center">
-        <T>앞으로 열두 달,</T>
+        <T>앞으로 열두 달</T>
         <div
-          className="mt-1"
+          className="mt-2"
           style={{
             opacity: inView ? 1 : 0,
             transform: inView ? "translateY(0)" : "translateY(6px)",
             transition: "opacity .5s ease, transform .5s ease",
           }}
         >
-          <BrushHead lines={["이 달들을 놓치지 마세요!"]} />
+          <BrushHead lines={[`크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount}`]} />
         </div>
-        <p className="mt-5 flex items-center justify-center gap-1.5">
-          <span className="text-[18px] leading-[27px]" style={{ color: BODY, fontWeight: 500 }}>
-            나의 인연 기회:
-          </span>
-          <BigNum value={data.openCount} unit="회" />
-        </p>
+        {halfCount > 0 && (
+          <p className="mt-3 text-[15.5px] leading-[24px]" style={{ color: BODY }}>
+            자리가 생기는 달 {KO_NUM[halfCount] ?? halfCount}
+          </p>
+        )}
       </div>
 
       {/* 열린 달 = 이 화면의 결론. 잠긴 달은 **그 카드 안에** 붙여 「같은 종류의 값이 몇 개 더
@@ -2675,7 +2689,9 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
           desc={m.desc}
           note={
             i === 0
-              ? `${data.openCount}번 중 가장 가까운 달 — 여기까지 무료로 열었어요`
+              // 「여기까지 무료」는 판 맨 위 「여기까지는 무료예요」와 겹치고, 붙이면 대시에서
+              // 줄이 꺾여 「여기까지 무료」만 다음 줄에 떨어진다. 한 줄에 드는 만큼만 적는다.
+              ? `크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount} 중 가장 가까운 달이에요`
               : undefined
           }
           moon={<Moon phase="full" size={30} />}
@@ -2691,13 +2707,17 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
       ))}
 
       {data.restOpen > 0 && (
-        <p className="mt-8 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
-          + 이런 풀이를 더 해드려요!
+        <p className="mt-8 text-center text-[17px] leading-[26px]" style={{ color: INK, fontWeight: 700 }}>
+          이런 풀이를 더 해드려요
         </p>
       )}
     </div>
   );
 }
+
+/** 개수를 **말로** 적는다 — 「3」은 표의 숫자고 「셋」은 사람이 하는 말이다.
+ *  이 화면에서 아라비아 숫자는 정점(카드의 「10월」) 하나만 쓴다: 숫자가 둘이면 둘 다 안 크다. */
+const KO_NUM: Record<number, string> = { 0: "없어요", 1: "하나", 2: "둘", 3: "셋", 4: "넷", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟" };
 
 /**
  * 로딩 체크리스트 — 항목은 **실제로 도는 계산**만 적는다(안 하는 걸 적으면 그게 거짓말이 된다).
