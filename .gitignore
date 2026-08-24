@@ -20,3 +20,4 @@ supabase/.temp
 docs-private/
 # 다른 프로젝트 폴더가 워킹트리에 섞여 있어 실수로 딸려 올라가는 것을 막는다
 morelle-brand/
+.claude/settings.local.json
