@@ -2723,7 +2723,9 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
       //   위저드를 감싼 세계관 래퍼의 토큰을 못 물려받는다(안 붙이면 공용 보라로 나온다).
       // 티저가 밝아졌으니 고정바도 같이 밝다 — 어두운 바가 흰 판 위에 떠 있으면 그 줄만 딴 페이지가 된다.
       // teaser-light 를 같이 붙여 토큰(값=먹색·강조=핑크)이 안에서 그대로 먹게 한다.
-      className="world-jiknyeo teaser-light fixed inset-x-0 bottom-0 z-40 px-4 py-2.5 text-center"
+      // mx-auto+max-w-md: 포털이 body 로 나가 ChromeGate 폰 기둥 밖이므로 폭을 스스로 죈다
+      // (fixed 는 뷰포트 기준 — 안 죄면 PC 에서 이 바만 모니터 전폭으로 뻗는다). 홈 고정 헤더와 같은 공식.
+      className="world-jiknyeo teaser-light fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md px-4 py-2.5 text-center"
       style={{ background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }}
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
