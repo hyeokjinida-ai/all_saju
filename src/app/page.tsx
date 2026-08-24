@@ -5,8 +5,7 @@
 // 홈은 광고 착지가 아니라 **로고를 눌러 들어오는 손님·결과지에서 넘어온 손님**이 만나는
 // 카탈로그다 — 그래서 파는 걸 전부 세운다. 광고 착지는 그대로 /products/* 몰입형.
 //
-// 이전 랜딩은 지우지 않았다: src/components/landing/saju-lab/SajuLabLanding.tsx.
-// 되돌리려면 이 파일을 `return <SajuLabLanding />` 한 줄로.
+// 이전 랜딩(SajuLabLanding)은 2026-08-24 죽은 코드 청소로 삭제 — 필요하면 git 이력에서 복원.
 import type { Metadata } from "next";
 import { HomeShell, type ShellTab } from "@/components/home/HomeShell";
 import { HeroCarousel, type HeroSlide } from "@/components/home/HeroCarousel";

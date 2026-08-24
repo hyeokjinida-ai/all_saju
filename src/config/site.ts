@@ -9,7 +9,7 @@
 export const PG_REVIEW_MODE = false;
 
 // 홈의 후기 마퀴 + 실시간 접속자 카운터 노출 스위치.
-// 현재 lib/reviews.ts 의 후기는 템플릿 샘플(이름·날짜·내용 전부 예시)이고 카운터도 난수라,
+// 옛 샘플 후기(이름·날짜·내용 전부 예시, 지금은 삭제됨)와 난수 카운터 시절에 끈 스위치라,
 // 실제 고객 후기가 DB에 쌓이면 true 로 켠다. (체험단/첫 구매 후기 확보 후)
 export const SHOW_SOCIAL_PROOF = false;
 
