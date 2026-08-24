@@ -143,7 +143,7 @@ export function ThoughtBubble({ children }: { children: React.ReactNode }) {
 // 파일이 없으면 backgroundColor 만 남아 카드가 그냥 아이보리 판이 된다 — 페이지는 깨지지 않는다.
 export const HANJI_BG: React.CSSProperties = {
   backgroundColor: "#faf7f0",
-  backgroundImage: "url(/products/jiknyeo/hanji.png)",
+  backgroundImage: "url(/products/jiknyeo/hanji.webp)",
   backgroundSize: "360px 360px",
   backgroundRepeat: "repeat",
 };

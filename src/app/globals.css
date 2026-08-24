@@ -816,7 +816,7 @@
      파일이 없으면 backgroundColor 만 남아 아이보리 판이 된다(페이지는 안 깨진다). */
   .tx-hanji {
     background-color: #faf7f0;
-    background-image: url(/products/jiknyeo/hanji.png);
+    background-image: url(/products/jiknyeo/hanji.webp);
     background-size: 360px 360px;
     background-repeat: repeat;
   }

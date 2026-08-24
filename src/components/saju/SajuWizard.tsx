@@ -2351,7 +2351,7 @@ function TeaserStep({
               우리는 마지막 한 번뿐이었다. 분량을 먼저 세우고(리본) 값을 말하는 순서까지 원본 그대로. */}
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
-              title={productSlug === "marriage-saju" ? "정통 결혼운 사주풀이" : "정통 연애운 사주풀이"}
+              title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}
               volume="A4 여덟 장 분량! + 내 고민 맞춤 답변"
               bullets={
                 productSlug === "marriage-saju"
