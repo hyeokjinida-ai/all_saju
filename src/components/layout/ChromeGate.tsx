@@ -28,12 +28,24 @@ export function ChromeGate({
   footer: ReactNode;
   children: ReactNode;
 }) {
-  const bare = isBare(usePathname() ?? "");
-  return (
+  const pathname = usePathname() ?? "";
+  const bare = isBare(pathname);
+  const body = (
     <>
       {!bare && header}
       {children}
       {!bare && footer}
     </>
   );
+  // 관리 화면은 표가 넓어야 한다 — 기둥 없이 전폭.
+  if (pathname.startsWith("/admin")) return body;
+  // 폰 기둥 — 전 라우트를 448(max-w-md, 홈·체크아웃과 같은 폭) 가운데로.
+  // PC 에서 랜딩 그림판(w-full × object-cover)이 모니터 폭으로 부풀어 그림 한 조각만
+  // 보이던 것을 여기 한 곳에서 막는다(랜딩마다 심으면 다음 랜딩에서 또 깨진다).
+  // 바깥은 body 의 #18191A 가 이미 칠한다(globals.css "본문 기둥" 주석 참조).
+  // ⚠ 순수 폭 클램프만 둘 것 —
+  //   transform/filter 금지: 안쪽 position:fixed 기준이 뷰포트→이 박스로 바뀐다(SajuWizard 실측).
+  //   overflow 금지: sticky 헤더가 죽는다.
+  //   배경·테두리 금지: 폰(≤448px)에서 픽셀이 변하면 안 된다.
+  return <div className="mx-auto w-full max-w-md">{body}</div>;
 }
