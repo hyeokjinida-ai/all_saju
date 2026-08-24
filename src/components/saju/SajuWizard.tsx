@@ -1205,7 +1205,7 @@ export function SajuWizard({
                         </span>
                         <span className="shrink-0 text-right">
                           {o.compareAtPrice && o.compareAtPrice > o.price && (
-                            <span className="mr-1.5 text-[11px] line-through" style={{ color: "var(--bone-faint)" }}>
+                            <span className="mr-1.5 text-[12px] line-through" style={{ color: "var(--bone-faint)" }}>
                               {formatKRW(o.compareAtPrice)}
                             </span>
                           )}
@@ -1218,9 +1218,11 @@ export function SajuWizard({
                         </span>
                       </div>
                       {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
+                      {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
+                          문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
                       {pct != null && (
                         <p
-                          className="mt-1 text-[11px]"
+                          className="mt-1 text-[13px]"
                           style={{ color: pct >= 40 && !isInyeon ? "#d8563f" : "var(--bone-faint)" }}
                         >
                           {pct}% 할인
@@ -1296,7 +1298,9 @@ export function SajuWizard({
                 "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
                 19,900 보다 할인가 18,000 을 먼저 누른다 = 결제 의사가 가장 높은 사람만 골라
                 에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
-            <p className="text-[11px] text-bone-faint text-center">
+            {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
+                안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
+            <p className="text-[13px] text-bone-faint text-center">
               {imm
                 ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
                 : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
@@ -1784,7 +1788,9 @@ function TeaserStep({
         >
           {birthDate && (
             <p
-              className="font-myeongjo text-center text-[11px] tracking-[0.06em]"
+              // 11 → 13px. 표의 머리글인데 표 안 어떤 글자보다도 작았다 — 「내 생일로 계산했다」를
+              // 증명하는 유일한 줄이라, 증거 화면에서 이게 제일 작으면 증거가 안 선다.
+              className="font-myeongjo text-center text-[13px] tracking-[0.06em]"
               // 이 줄은 표의 머리글 역할(어느 날짜에서 나온 글자인지)인데 가장 흐린 색이었다.
               style={imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
             >
@@ -1814,7 +1820,9 @@ function TeaserStep({
               13px 로 키우고, 무엇의 목록인지 한 줄 얹는다(타이트는 이걸 표 맨 아랫줄에 넣는다). */}
           {teaser && teaser.sinsal.length > 0 && (
             <div className="mt-3">
-              <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 라벨 11 → 13px. 바로 아래 배지가 17px 인데 「무엇의 목록인지」를 말하는 줄이
+                  11px 이면, 손님은 배지만 보고 이게 뭔지 모른 채 지나간다(실측 대비도 3.0 이었다). */}
+              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
               </p>
               {/* 배지 13 → 17px (형님: "살 부분이 더 크게 보이면 좋겠어").
@@ -1841,10 +1849,12 @@ function TeaserStep({
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
           {teaser && teaser.chartRows.length > 0 && (
-            // 11 → 13px. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야 기능한다 —
-            // 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 11 → 13 → **15px**. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야
+            // 기능한다 — 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 13px 도 여전히 본문(15) 아래였다. 이건 각주가 아니라 **아래 콜드리딩 전체의 근거 선언**이라
+            // 본문과 같은 눈금에 세운다.
             <p
-              className="font-myeongjo mt-2.5 text-center text-[13px] leading-[1.75]"
+              className="font-myeongjo mt-2.5 text-center text-[15px] leading-[1.75]"
               style={imm ? { color: "rgba(215,206,188,0.78)" } : undefined}
             >
               {/* 「장부」는 산군의 물건이다 — 직녀 화면에서 이 단어를 쓰면 다른 캐릭터의 말이 된다.
@@ -1937,7 +1947,9 @@ function TeaserStep({
                   </p>
                 ))}
               </div>
-              <p className="mt-2.5 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+              {/* 11 → 13px. 각주 지위는 유지하되(별표 그대로) 읽을 수는 있어야 한다 —
+                  콜드리딩 세 줄이 맞았을 때 「어떻게 알았지」의 답이 여기 있다. */}
+              <p className="mt-2.5 text-center text-[13px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
                 * 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 {name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.
               </p>
             </div>
@@ -2135,8 +2147,9 @@ function TeaserStep({
           }
         >
           {/* 직녀 화면엔 산군의 장부도, 빨강도 없다(형님 확정 금기). 같은 연출을 은사 색으로만 옮긴다. */}
+          {/* 라벨 11 → 13px. 이 카드의 40px 숫자가 무엇의 연도인지 말하는 유일한 줄이다. */}
           <p
-            className="font-myeongjo text-[11px] tracking-[0.15em]"
+            className="font-myeongjo text-[13px] tracking-[0.15em]"
             style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
           >
             {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
@@ -2205,7 +2218,9 @@ function TeaserStep({
               <path d={INK_STROKE} fill="url(#ink-tone)" mask="url(#ink-reveal)" />
             </svg>
           </span>
-          <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
+          {/* 13 → 15px. 40px 붓글씨 연도의 **뜻**을 말하는 줄(「37세에 한 번 크게 갈리세요」)인데
+              각주 크기였다 — 카드의 펀치라인이라 본문 눈금에 세운다. */}
+          <p className="font-myeongjo mt-3 text-[15px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
         </div>
       )}
 
@@ -2465,7 +2480,9 @@ function TeaserStep({
               // 토큰으로 그려 어두운 무대·밝은 티저 양쪽에서 같은 역할을 하게 한다.
               style={{ background: "var(--gold-pale)", border: "1px solid var(--gold-line)" }}
             >
-              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 제목 13 → 15px. 아래 목록이 15px 인데 제목이 13px 이라 위계가 뒤집혀 있었다
+                  (제목이 본문보다 작으면 카드가 아니라 각주 뭉치로 읽힌다). */}
+              <p className="font-myeongjo text-center text-[15px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 지금 이것만은 하지 마세요
               </p>
               <ol className="mt-4 space-y-3.5">

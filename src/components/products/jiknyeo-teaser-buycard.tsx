@@ -60,9 +60,9 @@ export function JiknyeoBuyCard({
 
         <ul className="space-y-3">
           {bullets.map((b) => (
-            <li key={b} className="flex items-start gap-2.5 text-[15px] leading-[22px]" style={{ color: BODY }}>
+            <li key={b} className="flex items-start gap-2.5 text-[15px] leading-[24px]" style={{ color: BODY }}>
               {/* 원본은 ♥ 다. 붉은 하트는 청월당 색이라 우리는 달빛 계열 글리프를 쓴다. */}
-              <span className="shrink-0 text-[14px] leading-[22px]" style={{ color: PINK }}>
+              <span className="shrink-0 text-[14px] leading-[24px]" style={{ color: PINK }}>
                 ✦
               </span>
               {b}
