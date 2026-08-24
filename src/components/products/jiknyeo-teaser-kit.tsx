@@ -117,6 +117,25 @@ export function T({ children, center = true }: { children: React.ReactNode; cent
   );
 }
 
+/**
+ * 정점 한 줄 — 섹션마다 **하나만**.
+ *
+ * 왜 필요한가(2026-08-25 실측): 본문 덩어리 174블록 중 **42% 가 이미 굵은 글씨**였다.
+ * 열 줄 중 넉 줄이 볼드면 볼드는 강조가 아니라 배경이 된다 — 그래서 섹션마다 「사는 이유」
+ * 한 줄이 나머지와 똑같은 옷을 입고 묻혀 있었다. 색 강조는 5% 뿐이었다.
+ *
+ * 규칙(형님 조판 규칙 그대로): **컷마다 정점 한 줄, 1.5~2배 + 색, 나머지는 400.**
+ *   · 22px = 본문 15~16 대비 약 1.4~1.5배. 헤드(24 서예체)와는 **글씨체가 달라** 안 겹친다.
+ *   · ⚠ 한 섹션에 두 번 쓰면 둘 다 죽는다. 이미 40px 숫자(연도·가격)가 정점인 섹션에는 쓰지 않는다.
+ */
+export function Em({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-2.5 text-center text-[22px] leading-[32px]" style={{ color: PINK, fontWeight: 700 }}>
+      {children}
+    </p>
+  );
+}
+
 /** 캡션·각주 — 13/MUTE. 자간만 normal 로 되돌린다(원본도 여기서만 normal).
  *
  * ⚠ 원래 `#a1a1a1` 하드코딩이었다 — 청월당 원본(바탕 #f3f2ef)에서 뜬 값인데, 우리 판은
@@ -312,8 +331,13 @@ export function TocChapter({ title, items }: { title: string; items: string[] })
       </p>
       <ul className="mt-2">
         {items.map((it, i) => (
-          <li key={it} className="py-3 text-[15px] leading-[24px]" style={{ color: BODY, borderBottom: `1px solid ${LINE}` }}>
-            <span style={{ fontWeight: 700 }}>풀이 {i + 1}.</span> {it}
+          // 강조가 거꾸로 걸려 있었다(2026-08-25 실측): 아무 뜻도 없는 「풀이 N.」 이 굵고,
+          // 정작 사는 이유인 질문 문장이 400 이었다. 목차 한 장에 10줄 × 10장 = 볼드 30개가
+          // 여기서 나왔고, 그게 페이지 전체의 볼드 예산을 먹어 다른 강조까지 죽였다.
+          // → 번호는 배경으로 물리고(작게·연하게) 질문을 값 색(INK)으로 올린다. 굵기는 **둘 다 안 쓴다** —
+          //   질문 30줄을 굵히면 인플레만 자리를 옮긴 꼴이 된다. 대비는 색과 크기로만 만든다.
+          <li key={it} className="py-3 text-[15px] leading-[24px]" style={{ color: INK, borderBottom: `1px solid ${LINE}` }}>
+            <span className="text-[13px]" style={{ color: MUTE }}>풀이 {i + 1}.</span> {it}
           </li>
         ))}
       </ul>

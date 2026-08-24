@@ -16,6 +16,7 @@ import {
   BrushHead,
   Rule,
   T,
+  Em,
   Cap,
   HanjiCard,
   TocChapter,
@@ -119,11 +120,9 @@ export function JiknyeoTeaserToc({
         />
       </div>
       <Rule />
-      <T>
-        &lsquo;이런 것까지 알려줘요?&rsquo;
-        <br />
-        열 장을 다 펴서 보여드릴게요.
-      </T>
+      {/* 손님 속말은 본문, 우리 약속이 정점 — 바로 아래 한지 카드(열 장)의 예고이자 근거다. */}
+      <T>&lsquo;이런 것까지 알려줘요?&rsquo;</T>
+      <Em>열 장을 다 펴서 보여드릴게요.</Em>
 
       <div className="mt-7">
         <HanjiCard>

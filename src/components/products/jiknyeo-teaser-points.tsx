@@ -12,14 +12,23 @@
 //
 // ⚠ 원본 11.png 의 「누적 고객 457,953명 / 팝업 방문자 13,745명 / 후기 19,793개」 금색 월계관 블록은
 //    **안 가져온다**. 우리한테 없는 숫자다. 자리를 비우는 게 지어내는 것보다 낫다.
-import { PointCard, BrushHead, Rule, T, Cap, LINE, PINK, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { PointCard, BrushHead, Rule, T, Em, Cap, LINE, PINK, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 
-/** 근거 줄 — 좌측에 얇은 핑크 바를 둔 흰 판. POINT 아래 증거를 얹는 규격. */
-function Proof({ head, body }: { head: string; body: string }) {
+/** 근거 줄 — 좌측에 얇은 핑크 바를 둔 흰 판. POINT 아래 증거를 얹는 규격.
+ *
+ *  `lead` = 이 섹션의 **정점 카드**. 세 장이 완전히 같은 옷이면 눈이 어디에도 안 걸려
+ *  세 장 다 안 읽힌다 — 그중 실제로 우리를 남과 가르는 한 장만 크기·색을 올린다(섹션당 하나). */
+function Proof({ head, body, lead }: { head: string; body: string; lead?: boolean }) {
   return (
-    <div className="mt-3 bg-white px-4 py-3.5" style={{ borderRadius: 10, border: `1px solid ${LINE}` }}>
-      <p className="flex items-center gap-2 text-[15px]" style={{ color: INK, fontWeight: 700 }}>
-        <span className="inline-block h-[14px] w-[3px]" style={{ background: PINK }} />
+    <div
+      className="mt-3 bg-white px-4 py-3.5"
+      style={{ borderRadius: 10, border: `1px solid ${lead ? `${PINK}55` : LINE}` }}
+    >
+      <p
+        className={`flex items-center gap-2 ${lead ? "text-[20px] leading-[30px]" : "text-[15px]"}`}
+        style={{ color: lead ? PINK : INK, fontWeight: 700 }}
+      >
+        <span className="inline-block w-[3px]" style={{ background: PINK, height: lead ? 22 : 14 }} />
         {head}
       </p>
       <p className="mt-1.5 text-[15px] leading-[22px]" style={{ color: BODY }}>
@@ -39,11 +48,9 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
           <BrushHead lines={[`내 ${subject} 이야기를`, "그림으로 읽어요"]} accent={1} />
         </div>
         <Rule />
-        <T>
-          줄글로 빼곡한 결과지, 끝까지 읽으신 적 있으세요?
-          <br />
-          직녀가 그림과 함께 짚어 드려요.
-        </T>
+        {/* 물음은 본문, 답이 정점 — 두 줄이 같은 옷이면 손님은 물음만 읽고 답을 지나간다. */}
+        <T>줄글로 빼곡한 결과지, 끝까지 읽으신 적 있으세요?</T>
+        <Em>직녀가 그림과 함께 짚어 드려요.</Em>
       </PointCard>
 
       {/* POINT 2 — 원본: 「다른 연애운 사주와 얼마든지 비교해 보세요」 */}
@@ -65,7 +72,11 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
           head="나쁜 시기도 같이 적어요"
           body="좋은 달만 말하는 풀이는 맞았는지 확인할 방법이 없어요. 조심할 시기를 같이 적어야 나중에 대조가 됩니다."
         />
+        {/* 정점 카드 — 세 장 중 이 한 장이 우리를 남과 가른다.
+            앞 두 장(채점·나쁜 시기)은 방법이고, 「지나간 일로 검증」은 손님이 **직접 확인할 수 있는**
+            유일한 약속이다. 비교해 보라고 해 놓고 비교 기준을 안 세우면 그 섹션은 빈 말이 된다. */}
         <Proof
+          lead
           head="지나간 일로 먼저 검증해요"
           body="앞일을 말하기 전에 지난 몇 해에 있었던 일을 먼저 짚어요. 그게 맞아야 나머지도 믿을 수 있으니까요."
         />
@@ -77,11 +88,10 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
           <BrushHead lines={["어디까지가 계산이고", "어디부터가 풀이인지"]} accent={1} />
         </div>
         <Rule />
-        <T>
-          챗봇에 생일을 넣으면 그럴듯한 문장은 나와요.
-          <br />
-          다만 <span style={{ color: PINK, fontWeight: 700 }}>달과 해는 계산에서만</span> 나옵니다.
-        </T>
+        {/* 색은 원래 있었지만 **문장 한가운데 인라인**이라 크기가 본문과 같았다 — 색만으로는
+            스크롤하는 눈에 안 걸린다. 한 줄로 떼어 정점으로 세운다(이 섹션의 결론이다). */}
+        <T>챗봇에 생일을 넣으면 그럴듯한 문장은 나와요.</T>
+        <Em>다만 달과 해는 계산에서만 나옵니다.</Em>
         <Proof
           head="계산이 하는 일"
           body="여덟 글자 세우기, 절입일 기준 대운 나이, 열두 달 월운 채점, 배우자 자리 판정 — 사람이 고르는 게 아니라 만세력에서 나와요."
