@@ -15,6 +15,8 @@
 // ⚠ 등급은 여기서 계산하지 않는다. `gradeMonths(facts)` 한 곳에서만 나온다 —
 //    티저가 ● 라고 한 달을 결과지가 안 짚으면 그 자리에서 신뢰가 끝난다.
 // ⚠ 재물·직업·건강 영역은 싣지 않는다. 안 판 것을 보여주면 상품이 흐려진다(공용 템플릿의 문제).
+import fs from "node:fs";
+import path from "node:path";
 import { Fragment } from "react";
 import { splitChapters } from "./ResultChapters";
 import { ResultBody } from "./ResultBody";
@@ -22,6 +24,22 @@ import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultSealOff } from "./ResultSealOff";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { gradeMonths } from "@/lib/saju/teaser";
+import { buildPartnerFace, buildWorstFace } from "@/lib/saju/partner-face";
+
+/** public 에 그 파일이 실제로 있는지 — 없으면 null.
+ *  ⚠ 이 컴포넌트는 **서버 컴포넌트**라 onError 같은 클라이언트 핸들러를 못 넘긴다
+ *  (넘기면 "Event handlers cannot be passed to Client Component props" 로 페이지 전체가 죽는다 —
+ *   2026-08-24 실측). 그래서 폴백을 브라우저가 아니라 **서버에서** 판정한다.
+ *  산군 SangunResult 의 assetSrc 와 같은 방식이다. */
+function assetSrc(src: string): string | null {
+  const p = path.join(process.cwd(), "public", src.replace(/^\//, ""));
+  return fs.existsSync(p) ? src : null;
+}
+
+/** 70장 → 산군 구 10장 → 없음. 화면이 비는 것보다 구 얼굴이라도 있는 게 낫다. */
+function faceSrc(src: string, legacy?: string): string | null {
+  return assetSrc(src) ?? (legacy ? assetSrc(legacy) : null);
+}
 import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -166,6 +184,51 @@ const EL_BG: Record<string, string> = {
   water: "linear-gradient(150deg,#6E7BB8,#3E4A80)",
 };
 
+
+/** 짝의 얼굴 — 티저에서 흐리게 본 **그 장**이 여기서 열린다.
+ *
+ *  왜 넣나(2026-08-24): 청월당은 유료 2종 모두 짝 얼굴을 열고(연애비책 2장·정통사주 1장),
+ *  타이트도 「[운명 카드]」로 같은 걸 한다. **두 회사가 같이 하면 시장 표준**이고,
+ *  연애가 본업인 직녀만 이 자리가 비어 있었다(`docs-private/청월당_정통사주_유료결과지_해부.md`).
+ *
+ *  단 우리가 안 넘는 선은 그대로다 — **키·직업명·사는 곳은 여전히 안 쓴다.**
+ *  얼굴은 「단정」이 아니라 「명식의 결을 그림으로 옮긴 것」이고, 그 근거를 카드 아래 한 줄로 댄다.
+ *  청월당 배경은 오행과 무관한 스튜디오 톤이지만, 우리 배경색은 **상대의 오행색**이라
+ *  "왜 이 얼굴인가"를 색으로도 설명한다 — 저쪽이 못 하는 자리다.
+ *
+ *  파일이 아직 없으면 산군 구 10장(legacySrc) → 실루엣 순으로 조용히 내려앉는다. */
+function FaceCard({
+  src,
+  title,
+  why,
+  tone,
+}: {
+  /** 서버에서 존재를 확인한 경로만 들어온다. null 이면 호출부가 카드를 통째로 안 그린다. */
+  src: string;
+  title: string;
+  why: React.ReactNode;
+  tone: "best" | "worst";
+}) {
+  const ring = tone === "best" ? "#DFD6EE" : "#E0D6D6";
+  return (
+    <div className="mx-auto mt-1 w-full max-w-[300px]">
+      <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#6B4C9A" : "#8A6B6B" }}>
+        {title}
+      </p>
+      {/* 3:4 — 생성 규격(1086×1448)과 같은 비율. 여기서 비율이 어긋나면 얼굴이 눌린다 */}
+      <div
+        className="relative mx-auto mt-2 overflow-hidden rounded-[10px]"
+        style={{ aspectRatio: "3 / 4", border: `1px solid ${ring}`, background: "#EFEAF6" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" />
+      </div>
+      <p className="mt-2 text-center text-[11px] leading-[1.6]" style={{ color: "#8A82A2" }}>
+        {why}
+      </p>
+    </div>
+  );
+}
 
 /** 짝의 오행 → 「어떤 결의 사람인지」. 외모·직업은 넣지 않는다 —
  *  outline 이 "직업명·얼굴·지역 단정 금지"로 못박은 항목이라 표에서도 지킨다.
@@ -363,6 +426,29 @@ export function JiknyeoResult({
       {inyeon && !isMarriage && (
         <Plate id="sec-profile">
           <PlateTitle sub="티저에서 가려 두었던 자리예요">내 앞에 나타날 사람</PlateTitle>
+
+          {/* 표보다 **얼굴이 먼저** 온다 — 티저가 흐리게 예고한 게 얼굴이라, 결제의 회수도 얼굴이어야 한다 */}
+          {(() => {
+            const f = buildPartnerFace(inyeon);
+            const src = faceSrc(f.src, f.legacySrc);
+            if (!src) return null;
+            return (
+              <div className="mt-4">
+                <FaceCard
+                  src={src}
+                  title="이런 결의 사람이에요"
+                  why={
+                    <>
+                      배우자 자리가 <b style={{ color: "#6B4C9A" }}>{inyeon.spouseOh || "토"}</b>의 결 —
+                      그 결을 그림으로 옮겼어요
+                    </>
+                  }
+                  tone="best"
+                />
+              </div>
+            );
+          })()}
+
           <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #DFD6EE" }}>
             {[
               ["어떤 결", OH_TRAIT[inyeon.spouseOh]?.keul ?? "고르게 섞인 결"],
@@ -384,8 +470,33 @@ export function JiknyeoResult({
             ))}
           </div>
           <p className="mt-3 text-center text-[11px]" style={{ color: "#8A82A2" }}>
-            얼굴·직업·사는 곳은 적지 않았어요. 명식으로 단정할 수 없는 건 쓰지 않습니다.
+            얼굴은 단정이 아니라 <b>명식의 결을 그린 것</b>이에요. 키·직업·사는 곳은 적지 않습니다 —
+            명식으로 단정할 수 없는 건 쓰지 않아요.
           </p>
+
+          {/* ── 멀리할 결 ──
+              청월당 연애비책 5장 「운명일 줄 알았는데, 아닌 사람」의 우리 판(8/22 실측).
+              좋은 것만 파는 상품보다 믿음이 간다 — 나쁜 소식을 같이 줘야 좋은 소식도 진짜로 읽힌다.
+              밉게 그리지 않는다(생성 프롬프트도 "good-looking but emotionally distant"). */}
+          {(() => {
+            const w = buildWorstFace(inyeon);
+            const src = assetSrc(w.src);
+            if (!src) return null;
+            return (
+              <div className="mt-6 border-t pt-5" style={{ borderColor: "#E9E2F4" }}>
+                <FaceCard
+                  src={src}
+                  title="반대로, 멀리할 결이에요"
+                  why={
+                    <>
+                      {w.why} — {w.how}
+                    </>
+                  }
+                  tone="worst"
+                />
+              </div>
+            );
+          })()}
         </Plate>
       )}
 

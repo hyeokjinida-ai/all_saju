@@ -34,3 +34,10 @@ marketing/소재/산군/재료/UGC/gpt/
 # 파이썬 캐시
 __pycache__/
 *.pyc
+
+# 짝 얼굴 생성 중간산출물 (2026-08-24) — 총 ~400MB 라 git 에 안 넣는다.
+# OneDrive 가 백업하고, 최종 산출물은 public/products/partner/*.webp 로 커밋된다.
+marketing/소재/짝얼굴/_원본/
+marketing/소재/짝얼굴/_합성/
+marketing/소재/짝얼굴/_앵커/
+marketing/소재/짝얼굴/_앵커_합성/
