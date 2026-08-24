@@ -5,9 +5,11 @@
 // 왜 따로 뺐나: 같은 세계관인데 컷 렌더링 규칙이 파일마다 따로 있으면 반드시 어긋난다
 // (실측으로 겪음 — 랜딩은 슬롯 방식인데 티저만 이미지 경로를 손으로 박아 화풍이 갈렸다).
 // 슬롯 규칙은 여기 한 곳에만 둔다.
+import { useRef } from "react";
 import { BgMedia } from "@/components/products/BgMedia";
 import { SLOTS, type Asset, type AssetMap, type SlotId } from "@/lib/jiknyeo-slots";
 import { Sfx, TiltCut } from "@/components/products/jiknyeo-comic-kit";
+import { type SayBox, setSayBox, useSayBox } from "@/lib/jiknyeo-say-box";
 
 /** 달빛 팔레트 — JiknyeoLanding 과 같은 값(세계관 한 벌) */
 export const MOON = "#d9c7e8";
@@ -28,7 +30,7 @@ export function SlotCut({
   ratio = "4 / 5",
   pos = "center 18%",
   priority,
-  sayAt = "bottom",
+  sayBox,
 }: {
   id: SlotId;
   assets?: AssetMap;
@@ -37,13 +39,51 @@ export function SlotCut({
   ratio?: string;
   pos?: string;
   priority?: boolean;
-  /** 말풍선이 앉는 컷 안 위치 — 인물 얼굴이 없는 쪽 */
-  sayAt?: "top" | "bottom";
+  /**
+   * 말풍선이 앉는 자리 — **컷 폭 기준 %**(x·w)와 **컷 높이 기준 %**(y).
+   *
+   * 왜 좌표인가: 예전엔 `sayAt="top"|"bottom"` 으로 모서리만 골랐다. 그런데 우리 컷은
+   * 2:3 원본을 4:5 로 자른 것이라 인물이 프레임을 거의 다 채운다 — "빈 모서리"가 컷마다
+   * 다른 자리에 있고, 어떤 컷은 아예 없다. 모서리 이름으로 고르면 반드시 얼굴이나 손 위에
+   * 떨어진다(운영 실측: 5컷 중 눈 1·손 2). 컷마다 그림을 재서 좌표를 박는다 —
+   * 값의 근거는 호출부(SajuWizard) 배치표에 컷별로 적어 둔다.
+   */
+  sayBox?: SayBox;
 }) {
   const meta = SLOTS.find((s) => s.id === id);
   const a: Asset | undefined = assets?.[id];
+  // `?edit=say` 면 브라우저에 저장된 자리를, 아니면 코드에 박힌 자리를 쓴다.
+  const { box, font, edit } = useSayBox(id, sayBox);
+  const figRef = useRef<HTMLElement | null>(null);
+  const drag = useRef<{ mode: "move" | "size"; sx: number; sy: number; b: SayBox } | null>(null);
+
+  const startDrag = (mode: "move" | "size") => (e: React.PointerEvent) => {
+    if (!edit || !box) return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = { mode, sx: e.clientX, sy: e.clientY, b: box };
+  };
+  const onDrag = (e: React.PointerEvent) => {
+    const d = drag.current;
+    const fig = figRef.current;
+    if (!d || !fig) return;
+    const r = fig.getBoundingClientRect();
+    const dx = ((e.clientX - d.sx) / r.width) * 100;
+    const dy = ((e.clientY - d.sy) / r.height) * 100;
+    const r1 = (n: number) => Math.round(n * 10) / 10;
+    setSayBox(
+      id,
+      d.mode === "move"
+        ? { ...d.b, x: r1(d.b.x + dx), y: r1(d.b.y + dy) }
+        : { ...d.b, w: Math.max(14, Math.min(92, r1(d.b.w + dx))) },
+    );
+  };
+  const endDrag = () => {
+    drag.current = null;
+  };
   return (
-    <figure className="relative w-full" style={{ aspectRatio: ratio, background: "#0b0f1a" }}>
+    <figure ref={figRef} className="relative w-full" style={{ aspectRatio: ratio, background: "#0b0f1a" }}>
       {/* ⚠ BgMedia 는 포스터(img)가 필수다 — mp4 만 넣으면 폴백할 그림이 없어 검은 칸이 된다.
           그 경우엔 영상 승격을 포기하고 아래 이미지/플레이스홀더로 내려앉힌다. */}
       {a?.video && a.img ? (
@@ -76,25 +116,48 @@ export function SlotCut({
           </div>
         </div>
       )}
-      {/* 글자가 앉는 아래쪽만 눌러 준다 — 그림이 들어와도 대사가 그대로 읽힌다 */}
-      {overlay && (
-        <>
+      {/* ⚠ 예전엔 컷 아래 60% 에 검은 그라데를 깔았다. 자막 상자를 쓰던 시절 글자 받침이었는데,
+          말풍선(흰 원)으로 바꾼 뒤에도 남아서 **직녀 그림의 아랫절반을 죽이고 있었다**
+          (j1 실측: 하단 1/3 밝기가 원본의 51%). 흰 원은 자기 테두리와 그림자로 이미 뜬다. */}
+      {overlay &&
+        (box ? (
+          // 좌표 배치 — 폭은 이 상자가 정하므로 안에 든 말풍선의 자기 폭(46%)을 덮어쓴다.
+          // 글씨 크기는 CSS 변수로 흘려보낸다(ComicSay 가 저장소를 몰라도 되게).
           <div
-            className="pointer-events-none absolute inset-0"
-            style={{ background: "linear-gradient(180deg, rgba(11,15,26,0) 40%, rgba(11,15,26,0.74) 76%, rgba(11,15,26,0.96) 100%)" }}
-          />
-          {/* ⚠ 한때 청월당처럼 **컷 밖으로 걸치게** 했다가 되돌렸다(2026-08-23).
-              저쪽은 페이지 바탕이 연한 종이 한 장이라 말풍선이 그 위에 자연스럽게 뜨는데,
-              우리는 **어두운 밤 컷 + 밝은 달빛 판**이라 걸치려고 만든 여백이 밝은 띠가 되어
-              「어두운 컷 → 밝은 띠 → 어두운 컷」 줄무늬가 됐다(형님 지적).
-              그래서 말풍선은 **컷 안 빈 모서리**에 앉힌다 — 청월당도 어두운 배경 컷에서는
-              말풍선을 컷 안에 둔다(result_02 좌상단). 자막이 안 되게 하는 건 걸침이 아니라
-              **정원 + 좁은 폭 + 입을 가리키는 꼬리**다. */}
-          <div className={`pointer-events-none absolute inset-x-4 ${sayAt === "top" ? "top-5" : "bottom-6"}`}>
+            // ⚠ `first-child` 로 좁힌다 — `[&>*]` 로 두면 편집 모드의 크기 손잡이(span)까지
+            //    폭 100% 를 먹어 동그라미가 가로로 늘어난 알약이 된다(실측).
+            className={`absolute [&>*:first-child]:!w-full ${edit ? "cursor-move touch-none" : "pointer-events-none"}`}
+            style={
+              {
+                left: `${box.x}%`,
+                top: `${box.y}%`,
+                width: `${box.w}%`,
+                "--say-font": `${font}px`,
+                ...(edit ? { outline: "1.5px dashed rgba(255,224,122,0.9)", outlineOffset: 2 } : null),
+              } as React.CSSProperties
+            }
+            onPointerDown={startDrag("move")}
+            onPointerMove={onDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
             {overlay}
+            {edit && (
+              // 오른쪽 아래 손잡이 — 좌우로 끌면 원이 커지고 작아진다.
+              <span
+                onPointerDown={startDrag("size")}
+                onPointerMove={onDrag}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                className="absolute -bottom-1 -right-1 block h-7 w-7 cursor-ew-resize touch-none rounded-full"
+                style={{ background: "#ffe07a", border: "2px solid #1a1330" }}
+              />
+            )}
           </div>
-        </>
-      )}
+        ) : (
+          // 좌표를 안 준 자리(상품 상세의 나레이션 등)는 예전 그대로 아래쪽에 앉힌다.
+          <div className="pointer-events-none absolute inset-x-4 bottom-6">{overlay}</div>
+        ))}
     </figure>
   );
 }
@@ -208,62 +271,73 @@ export function NeonMask({ text = "○○○○○○", scribble = true }: { tex
 export function ComicSay({
   children,
   tail = "none",
-  side = "left",
+  point = "right",
 }: {
   children: React.ReactNode;
-  /** 꼬리 방향 = 인물의 입이 있는 쪽. "none" 이면 꼬리 없음 */
+  /** 꼬리가 뻗는 세로 방향. "none" 이면 꼬리 없음 */
   tail?: "down" | "up" | "none";
-  /** 말풍선이 앉는 모서리 */
-  side?: "left" | "right";
+  /** 꼬리가 가리키는 가로 쪽 = **인물이 있는 방향**. 말풍선이 앉는 자리와는 무관하다 */
+  point?: "left" | "right";
 }) {
-  // viewBox 100x122 — 원(지름 100)에 꼬리 길이 22 를 더한 높이.
-  // 꼬리는 원의 둘레에서 자라나 한 붓으로 이어진다(이음매 없음).
-  const flip = side === "right";
+  // 정원 100 + 꼬리 22. `preserveAspectRatio` 를 **건드리지 않는다** —
+  // 한때 "none" 으로 두고 꼬리 없는 경우만 상자를 1:1 로 줬더니, viewBox 122 를 100 높이에
+  // 욱여넣어 원이 세로로 82% 눌린 타원이 됐다(t14 실측). 상자 비율과 viewBox 비율을 같게 두면
+  // 브라우저 기본값(xMidYMid meet)이 정원을 지켜 준다.
+  const H = tail === "none" ? 100 : 122;
+  const cy = tail === "up" ? 72 : 50;
+  // 꼬리는 원 둘레 안쪽 두 점에서 시작해 뾰족하게 나간다(겹쳐 칠하므로 이음매가 안 생긴다).
+  // 청월당 원본보다 뭉툭하면 "말풍선 아이콘"이 되므로 밑변을 좁게 잡는다.
   const tailPath =
     tail === "down"
-      ? // 아래로 뻗는 꼬리 — 원 하단 좌측(또는 우측)에서 시작해 뾰족하게 내려간다
-        flip
-        ? "M72 94 L86 120 L58 99 Z"
-        : "M28 94 L14 120 L42 99 Z"
+      ? point === "right"
+        ? "M56 97 L88 121 L70 91 Z"
+        : "M44 97 L12 121 L30 91 Z"
       : tail === "up"
-        ? flip
-          ? "M72 28 L86 2 L58 23 Z"
-          : "M28 28 L14 2 L42 23 Z"
+        ? point === "right"
+          ? "M56 25 L88 1 L70 31 Z"
+          : "M44 25 L12 1 L30 31 Z"
         : "";
 
   return (
-    <div className={`relative w-[46%] ${flip ? "ml-auto" : "mr-auto"}`}>
-      <div className="relative" style={{ aspectRatio: tail === "none" ? "1 / 1" : "100 / 122" }}>
-        <svg
-          viewBox="0 0 100 122"
-          preserveAspectRatio="none"
-          className="absolute inset-0 h-full w-full"
-          aria-hidden
-          style={{ filter: "drop-shadow(0 8px 18px rgba(12,10,28,0.34))" }}
-        >
-          {/* 원 + 꼬리를 **한 덩어리**로 칠한다. 두 도형이지만 같은 fill 이고 겹쳐 있어
-              경계선이 나오지 않는다(따로 그린 CSS 삼각형과 결정적으로 다른 점). */}
-          <g fill="#ffffff">
-            <circle cx="50" cy={tail === "up" ? 72 : 50} r="50" />
-            {tailPath && <path d={tailPath} />}
-          </g>
-        </svg>
-        {/* 글은 원 안쪽에만 앉는다 — 꼬리 영역을 피해 위/아래로 밀어준다 */}
+    // 폭은 sayBox 가 있으면 부모가 덮어쓴다 — 컷마다 인물이 다른 자리에 서 있어서
+    // 말풍선이 스스로 모서리를 고르면 반드시 어딘가에서 얼굴·손 위에 떨어진다(실측 5컷 중 3컷).
+    // 여기 46% 는 좌표를 안 주는 자리(상품 상세)용 기본값이다.
+    <div className="relative w-[46%]" style={{ aspectRatio: `100 / ${H}` }}>
+      <svg
+        viewBox={`0 0 100 ${H}`}
+        className="absolute inset-0 h-full w-full"
+        aria-hidden
+        style={{ filter: "drop-shadow(0 6px 14px rgba(12,10,28,0.45))" }}
+      >
+        <g fill="#ffffff" stroke="#15121f" strokeWidth="1.1" strokeLinejoin="round">
+          {/* 테두리를 원·꼬리에 따로 그으면 맞닿는 자리에 선이 지나간다.
+              같은 도형을 두 번 칠한다: ① 테두리까지 함께 → ② 안쪽을 흰색으로 덮어 이음매를 지운다. */}
+          <circle cx="50" cy={cy} r="49.4" />
+          {tailPath && <path d={tailPath} />}
+        </g>
+        <g fill="#ffffff">
+          <circle cx="50" cy={cy} r="48.8" />
+          {tailPath && <path d={tailPath} />}
+        </g>
+      </svg>
+      {/* 글은 원 안쪽에만 앉는다 — 꼬리 영역을 피해 위/아래로 밀어준다 */}
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{
+          paddingLeft: "12%",
+          paddingRight: "12%",
+          paddingTop: tail === "up" ? "20%" : "4%",
+          paddingBottom: tail === "down" ? "20%" : "4%",
+        }}
+      >
         <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            paddingLeft: "13%",
-            paddingRight: "13%",
-            paddingTop: tail === "up" ? "22%" : "4%",
-            paddingBottom: tail === "down" ? "22%" : "4%",
-          }}
+          className="font-gothic text-center font-bold [&>span]:block [&>span]:whitespace-nowrap"
+          // 크기는 컷마다 다르면 안 된다 — 폭이 36~47% 로 갈리는데 폭에 비례시키면 같은 화면에서
+          // 대사 크기가 들쭉날쭉해진다. 화면 전체에 하나의 값을 쓰고(`--say-font`), 줄이 넘치면
+          // 폭을 키워 받는다. 값은 `?edit=say` 편집 모드에서 형님이 직접 조절한다.
+          style={{ color: "#1a1330", fontSize: "var(--say-font, 16px)", lineHeight: 1.4, whiteSpace: "nowrap" }}
         >
-          <div
-            className="font-gothic text-center font-bold [&>span]:block [&>span]:whitespace-nowrap"
-            style={{ color: "#1a1330", fontSize: "min(3.7cqw, 15.5px)", lineHeight: 1.45, whiteSpace: "nowrap" }}
-          >
-            {children}
-          </div>
+          {children}
         </div>
       </div>
     </div>
@@ -287,7 +361,8 @@ export function InyeonCut({
   id,
   assets,
   say,
-  sayAt = "bottom",
+  sayBox,
+  pos,
   padTop = 0,
   sfx,
   sfxAt = "right",
@@ -296,8 +371,10 @@ export function InyeonCut({
   id: SlotId;
   assets?: AssetMap;
   say?: React.ReactNode;
-  /** 말풍선이 앉는 컷 안 위치 */
-  sayAt?: "top" | "bottom";
+  /** 말풍선 자리 — 컷 폭 기준 %(x·w) / 컷 높이 기준 %(y). 컷마다 그림을 재서 넣는다 */
+  sayBox?: { x: number; y: number; w: number };
+  /** 크롭 위치 — 기본은 SlotCut 의 `center 18%` */
+  pos?: string;
   /** 앞 블록과의 간격 — **밤 배경 안에서** 준다(바깥 margin 은 흰 띠가 된다) */
   padTop?: number;
   /** 손글씨 효과음 — 「멈칫」「갸웃」. 원본은 그림에 구워 넣는데 우리는 코드로 얹는다. */
@@ -308,7 +385,7 @@ export function InyeonCut({
 }) {
   const cut = (
     <div className="relative">
-      <SlotCut id={id} assets={assets} overlay={say} sayAt={sayAt} />
+      <SlotCut id={id} assets={assets} overlay={say} sayBox={sayBox} {...(pos ? { pos } : {})} />
       {/* 효과음은 **컷 안에 완전히** 들어가야 한다. top 14% 는 컷을 -mx-5 로 넓힌 뒤라
           기울임(rotate)까지 겹치면 위·옆이 잘려 글자 쓰레기처럼 보였다(형님 지적 2026-08-23).
           충분히 안쪽(22%)으로 내리고 좌우 여백도 넓힌다. */}

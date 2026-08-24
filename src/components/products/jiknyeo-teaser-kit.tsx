@@ -64,14 +64,43 @@ export function BrushHead({
 /** POINT 배지 — 알약, 테두리만 핑크. 배경은 비운다. */
 export function PointBadge({ n }: { n: number }) {
   return (
+    // ⚠ 예전엔 얇은 테두리 + 연한 글자였다. POINT 가 다섯 번 이어지는데 배지가 그렇게 약하면
+    // 섹션이 바뀐 걸 알아볼 표시가 화면에 하나도 안 남는다(형님 지적 — 스크롤하면 다 같은 판).
+    // 배지를 채워서 **섹션의 시작점**이 눈에 박히게 한다.
     <p className="text-center">
       <span
-        className="inline-block rounded-full px-4 py-1 text-[13px]"
-        style={{ border: `1px solid ${PINK}`, color: PINK, fontWeight: 500 }}
+        className="inline-block rounded-full px-4 py-[5px] text-[12px]"
+        style={{ background: PINK, color: "#ffffff", fontWeight: 700, letterSpacing: "0.1em" }}
       >
         POINT {n}
       </span>
     </p>
+  );
+}
+
+/**
+ * POINT 판 — 섹션 하나를 **한 장**으로 묶는다.
+ *
+ * 티저는 밝은 달빛 판 하나 위에 POINT 1~5 가 연달아 서는 구조인데, 전부 같은 바탕에 같은
+ * 조판이라 스크롤하는 손님 눈에는 끝없는 한 덩어리로 보였다. 섹션마다 바탕을 한 톤 내리고
+ * 테두리를 둘러 **경계**를 만든다 — 안에 드는 근거 카드(흰색)는 그 위에서 오히려 더 뜬다.
+ */
+export function PointCard({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <section
+      className="mt-12 rounded-[16px] px-4 py-7"
+      style={{
+        // 각도는 판(teaser-light, 168deg)과 같이 간다 — 다른 각도로 깔면 두 그라데가 서로 어긋나
+        // 판 안에서 사각형이 떠 보인다. 위(배지)가 짙고 가운데가 열렸다가 아래에서 다시 달빛으로.
+        background:
+          "linear-gradient(168deg, rgba(91,63,143,0.13) 0%, rgba(91,63,143,0.035) 52%, rgba(139,110,190,0.11) 100%)",
+        border: `1px solid ${LINE}`,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+      }}
+    >
+      <PointBadge n={n} />
+      {children}
+    </section>
   );
 }
 
@@ -195,8 +224,10 @@ export function HanjiCard({ children }: { children: React.ReactNode }) {
 /** 장 제목 + 풀이 줄들 — 목차 카드 안에 반복해서 쌓는다. */
 export function TocChapter({ title, items }: { title: string; items: string[] }) {
   return (
-    // 장과 장 사이는 크게 벌린다 — 원본 대조에서 우리 쪽이 붙어 보였다(풀이 마지막 줄과 다음 장 제목이 붙음).
-    <div className="mt-10 first:mt-0">
+    // ⚠ 장 사이 간격은 **호출부**가 준다. 여기 `mt-10 first:mt-0` 을 걸어 뒀더니, 호출부가 장마다
+    // `<div>` 로 감싸는 구조라 모든 장이 각자 first 가 되어 mt-10 이 한 번도 안 먹었다 —
+    // 장 끝 코멘트와 다음 장 제목이 간격 0 으로 붙어, 코멘트가 다음 장에 달린 말로 읽혔다(운영 실측).
+    <div>
       <p className="flex items-center gap-2.5 text-[17px]" style={{ color: INK, fontWeight: 700 }}>
         <span className="inline-block h-[16px] w-[3px]" style={{ background: PINK }} />
         {title}

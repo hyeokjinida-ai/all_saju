@@ -32,8 +32,9 @@ import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
 import { MoonGrid, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
+import { SayEditPanel } from "@/components/products/jiknyeo-say-edit";
+import { SAY_BOX_DEFAULT } from "@/lib/jiknyeo-say-box";
 import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
-import { InkFade } from "@/components/products/jiknyeo-comic-kit";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -700,7 +701,10 @@ export function SajuWizard({
       )}
 
       {/* 상단: 이전 + 진행률 + N/7 (몰입형은 스테이지 상단 바 아래로 여백 확보) */}
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : "pt-5"}`}>
+      {/* 직녀는 무대(JiknyeoStory)가 브랜드 줄을 **화면 상단에 고정**으로 얹는다(top 16~36).
+          위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
+          무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
+      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isJiknyeoWorld ? "pt-12" : "pt-5"}`}>
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -1738,9 +1742,10 @@ function TeaserStep({
         <InyeonCut
           id="j1"
           assets={jiknyeoAssets}
-          sayAt="top"
+          // 좌하단 치마 위 — 얼굴(y8~40)과 세로로 완전히 갈린다. 꼬리는 위쪽 얼굴을 가리킨다.
+          sayBox={SAY_BOX_DEFAULT.j1}
           say={
-            <ComicSay side="left" tail="down">
+            <ComicSay tail="up" point="right">
               <span>{name ? `${name}님 사주,` : "사주,"}</span>
               <span>방금 다 읽었어요.</span>
             </ComicSay>
@@ -1980,9 +1985,11 @@ function TeaserStep({
             <InyeonCut
               id="w3"
               assets={jiknyeoAssets}
-              sayAt="top"
+              // 클로즈업이라 빈 모서리가 없다 — 유일하게 눈·입이 없는 **턱 아래**로 내린다.
+              // 여기 있던 좌상단 자리가 왼쪽 눈을 정통으로 덮고 있었다(운영 실측).
+              sayBox={SAY_BOX_DEFAULT.w3}
               say={
-                <ComicSay side="left" tail="down">
+                <ComicSay tail="up" point="right">
                   {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
                   {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
                     <span key={i} className="block">
@@ -2012,10 +2019,12 @@ function TeaserStep({
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
-                sayAt="top"
                 padTop={24}
+                // 우하단 옷자락 — 왼쪽 아래 두루마리(대사가 가리키는 「아래 달력」)를 살린다.
+                // 꼬리는 왼쪽 위 옆얼굴을 가리킨다.
+                sayBox={SAY_BOX_DEFAULT.j2}
                 say={
-                  <ComicSay side="right" tail="down">
+                  <ComicSay tail="up" point="left">
                     <span>인연이 없진 않아요.</span>
                     <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
@@ -2394,7 +2403,14 @@ function TeaserStep({
               <InyeonCut
                 id="t14"
                 assets={jiknyeoAssets}
-                say={<ComicSay>{productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}</ComicSay>}
+                // 좌상단 은하수 — 이 컷의 전부인 **내민 손**(y72~95)에서 최대한 멀리 띄운다.
+                // 아래쪽에 있던 자리가 손을 통째로 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.t14}
+                say={
+                  <ComicSay tail="down" point="right">
+                    {productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}
+                  </ComicSay>
+                }
               />
 
               {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
@@ -2406,11 +2422,10 @@ function TeaserStep({
               {/* 배웅 — 값을 다 말한 뒤 마지막 한 컷. 원본도 맨 끝을 캐릭터로 닫는다. */}
               <InyeonCut id="t15" assets={jiknyeoAssets} />
 
-              {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
-                  원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
-              <div className="mt-14">
-                <InkFade from="#E2D9F0" to="#0b0f1a" height={80} />
-              </div>
+              {/* ⚠ 여기 있던 「밝은 판 → 검은 결제」 먹 번짐(InkFade)을 걷어냈다.
+                  이 자리는 판의 끝이 아니다 — 뒤에 금기 카드·배웅 컷·마감 펀치가 **아직 밝은 판 안에서**
+                  이어진다. 그래서 그라데가 판 한가운데 보라→검정 띠로 박혀 있었다(운영 실측).
+                  판은 둥근 모서리로 자기 끝을 이미 말하고 있으므로 녹일 것이 없다. */}
             </>
           )}
 
@@ -2485,8 +2500,11 @@ function TeaserStep({
               <InyeonCut
                 id="w7"
                 assets={jiknyeoAssets}
+                // 좌상단 달·창 — 달력 짚는 손가락(y45~57)과 얼굴(x55~80)을 둘 다 피한다.
+                // 우상단에 있던 자리가 그 손가락과 공책 모서리를 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.w7}
                 say={
-                  <ComicSay side="right" tail="up">
+                  <ComicSay tail="down" point="right">
                     <span>{name ? `${name}님 달력,` : "달력,"}</span>
                     <span>여기까지 폈어요.</span>
                   </ComicSay>
@@ -2497,16 +2515,21 @@ function TeaserStep({
                   <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
                     계산은 끝났어요
                   </p>
+                  {/* ⚠ 여기 `text-moonlit`(흰→달빛 그라데 글자)이 걸려 있었다. 그건 **검은 무대**용이라
+                      밝은 달빛 판 위에서는 흰 글자가 판에 묻혀 첫 줄이 통째로 안 보였다(운영 실측).
+                      마감 펀치는 이 페이지에서 손님이 마지막으로 읽는 두 줄이다 — 토큰 먹색으로 세운다. */}
                   <p
-                    className="font-gothic text-moonlit mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
-                    style={{ fontWeight: 900 }}
+                    className="font-gothic mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
+                    style={{ color: "var(--bone)", fontWeight: 900 }}
                   >
                     달 이름만,
                   </p>
                   <p className="mt-2">
                     <span
                       className="font-gothic inline-block rounded-[6px] px-3 py-1 text-[30px] leading-[1.25] tracking-[-0.02em]"
-                      style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
+                      // 밝은 판에서 --gold-bright 는 진보라(#6B4C9A)로 뒤집힌다. 먹색 글자를 얹으면
+                      // 대비가 2.6:1 까지 떨어져 강조가 아니라 얼룩이 된다 — 흰 글자로 받는다.
+                      style={{ background: "var(--gold-bright)", color: "#ffffff", fontWeight: 900 }}
                     >
                       아직이에요
                     </span>
@@ -2531,6 +2554,8 @@ function TeaserStep({
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
     {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
     {isJiknyeoWorld && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
+    {/* 말풍선 자리 편집 — `?edit=say` 에서만 뜬다(손님 화면엔 없다) */}
+    {isJiknyeoWorld && <SayEditPanel />}
     </>
   );
 }
@@ -2714,8 +2739,11 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
   //   연출은 공용이라 못 건드리므로 바만 포털로 꺼낸다.
   return (
     <>
-    {/* 고정바가 마지막 줄(환불 안내)을 덮지 않게 그만큼 바닥을 띄운다 */}
-    <div aria-hidden style={{ height: barH }} />
+    {/* 바닥 여백도 **포털로 body 끝에** 붙인다.
+        ⚠ 예전엔 이 자리(티저 컴포넌트 안)에 그냥 뒀는데, 티저 **뒤에** 결제 시트가 이어지므로
+        여백이 시트 앞에 끼어 아무 일도 안 했다 — 맨 끝의 결제 버튼과 「한 번만 결제돼요」가
+        고정바에 그대로 덮여 있었다(운영 실측). body 마지막 자식이어야 문서 끝이 밀린다. */}
+    {createPortal(<div aria-hidden style={{ height: barH }} />, document.body)}
     {createPortal(
     <div
       ref={(el) => { if (el) setBarH(el.offsetHeight); }}
