@@ -346,7 +346,10 @@ export function ComicSay({
 
 export function Hi({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#1a1330" }}>
+    // ⚠ 글자색을 먹색으로 하드코딩했다가 밝은 티저에서 안 보였다 — 거기선 --gold-bright 가
+    //    진보라(#6B4C9A)로 뒤집혀 먹색 글자와 대비가 2.6:1 로 무너진다(형님 실측 스샷).
+    //    「아직이에요」 펀치와 같은 병·같은 처방: 배경이 어느 판에서든 짙은 색이므로 글자는 흰색.
+    <span className="rounded-[3px] px-1.5 py-0.5" style={{ background: "var(--gold-bright)", color: "#ffffff" }}>
       {children}
     </span>
   );
