@@ -27,9 +27,9 @@ import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
-import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
-import { MoonGrid, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
+import { MoonGrid, Moon, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
 import { SayEditPanel } from "@/components/products/jiknyeo-say-edit";
@@ -2644,27 +2644,37 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         </p>
       </div>
 
-      {/* 연월 목록 — 가장 가까운 하나만 열고 나머지는 잠근다.
-          ⚠ 잠긴 줄에 실값을 넣지 않는다. 흐리게만 하면 소스에서 그대로 읽힌다 —
-          openList 에 애초에 공개분만 담겨 온다. */}
-      <div className="mt-6">
-        {data.openList.map((m, i) => (
-          <div key={i} className="py-3" style={{ borderBottom: `1px solid ${LINE}` }}>
-            <Val>
-              {m.year}년 {m.month}월
-            </Val>
-            <p className="mt-1 text-[16px] leading-[24px]" style={{ color: BODY }}>
-              {m.desc}
-            </p>
-          </div>
-        ))}
-        {Array.from({ length: data.restOpen }, (_, i) => (
-          <LockRow key={`lock-${i}`} label="○○○○년 ○월" mask="████████" />
-        ))}
-      </div>
+      {/* 열린 달 = 이 화면의 결론. 잠긴 달은 **그 카드 안에** 붙여 「같은 종류의 값이 몇 개 더
+          가려져 있다」로 읽히게 한다.
+          ⚠ 잠긴 줄에 실값을 넣지 않는다 — openList 에 애초에 공개분만 담겨 온다.
+          ⚠ 회색 막대(LockRow)를 여기서 걷어냈다. 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다 —
+             잠금은 금기 카드와 같은 NeonMask(발광 테두리 + 흐린 글자)로 통일한다. 다만
+             **맨 아래 항목 목록의 회색 막대는 그대로 둔다**: 발광이 일곱 개면 아무것도 안 빛난다. */}
+      {data.openList.map((m, i) => (
+        <OpenMonthCard
+          key={i}
+          year={m.year}
+          month={m.month}
+          desc={m.desc}
+          note={
+            i === 0
+              ? `${data.openCount}번 중 가장 가까운 달 — 여기까지 무료로 열었어요`
+              : undefined
+          }
+          moon={<Moon phase="full" size={30} />}
+          locks={
+            i === 0
+              ? Array.from({ length: data.restOpen }, (_, k) => ({
+                  // 라벨은 위 격자 범례에서 쓰는 말 그대로다 — 새 약속을 만들지 않는다.
+                  label: k === 0 ? "두 번째로 큰 달" : "자리가 생기는 달",
+                }))
+              : undefined
+          }
+        />
+      ))}
 
       {data.restOpen > 0 && (
-        <p className="mt-4 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
+        <p className="mt-8 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
           + 이런 풀이를 더 해드려요!
         </p>
       )}

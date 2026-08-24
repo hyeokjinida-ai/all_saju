@@ -21,7 +21,9 @@ const PLATE_LINE = "rgba(217,199,232,0.45)";
    보름=크게 열림 / 반달=자리가 생김 / 초승=평 / 구름=결이 엉킴 */
 type Phase = "full" | "half" | "cres" | "cloud";
 
-function Moon({ phase, size = 34 }: { phase: Phase; size?: number }) {
+// 티저 B2 의 「열린 달」 카드가 같은 달을 다시 그린다 — 격자에서 본 기호가 카드에 또 나와야
+// 「10월 = 저 보름달」이 설명 없이 붙는다. 그래서 내보낸다(정의는 여기 한 곳뿐).
+export function Moon({ phase, size = 34 }: { phase: Phase; size?: number }) {
   const common = { width: size, height: size, viewBox: "0 0 74 74" } as const;
   if (phase === "full")
     return (

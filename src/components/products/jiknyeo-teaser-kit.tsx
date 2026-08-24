@@ -17,6 +17,7 @@
 // 숫자 「9」가 튀는 이유도 30px 이라서가 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다.
 
 import { HANJI_BG } from "@/components/products/jiknyeo-comic-kit";
+import { NeonMask } from "@/components/products/jiknyeo-ui";
 
 // ⚠ 2026-08-22 — 색을 하드코딩에서 **CSS 변수 참조**로 바꿨다.
 // 티저 스킨(.teaser-light 달빛 / .teaser-pink 옛 분홍)이 한 곳에서 갈리게 하려면
@@ -171,6 +172,77 @@ export function LockRow({ label, mask = "████" }: { label: string; mask?
       <span className="text-[16px] leading-[16px] select-none" style={{ color: "#c9c9c9", letterSpacing: "0.05em" }}>
         {mask}
       </span>
+    </div>
+  );
+}
+
+/**
+ * 열린 달 카드 — 티저에서 **유일하게 날짜가 붙은 공짜 답**을 왕으로 세우는 자리.
+ *
+ * 왜 카드인가: 예전엔 열린 달과 잠긴 달이 같은 15px 목록체로 나란히 서 있어서, 이 화면의
+ * 결론(「가장 가까운 달이 언제다」)이 잠금 줄과 구분이 안 됐다. 장식은 정작 곁가지(2030년
+ * 붓 동그라미)가 다 가져가고 있었다. 조판 규칙대로 **정점 한 줄만** 키우고 색을 준다.
+ *
+ * 여백 규칙(형님 지시 2026-08-24): 왕은 혼자 있어야 왕이다.
+ *   · 카드 안 패딩을 넉넉히(px-5 pt-7 pb-6) — 비좁으면 보물이 아니라 표가 된다
+ *   · 「달」과 아래 잠금 덩어리 사이(mt-7)를 잠금 줄끼리 간격(mt-3)의 2배 이상으로
+ *   · 카드 자체도 위(mt-9)를 크게 비워 앞 문단에서 떼어 놓는다
+ *
+ * 달 그림은 **위 격자에서 쓴 것과 같은 부품**이다 — 같은 기호가 두 번 나와야 손님이
+ * 「10월 = 저 보름달」을 설명 없이 잇는다.
+ */
+export function OpenMonthCard({
+  year,
+  month,
+  desc,
+  note,
+  moon,
+  locks,
+}: {
+  year: number;
+  month: number;
+  desc: string;
+  /** 카드 밑에 까는 한 줄 — 「여기까지 무료」를 말이 아니라 자리로 알린다 */
+  note?: string;
+  moon?: React.ReactNode;
+  /** 잠긴 달들 — 값이 아니라 **가려진 자리의 개수와 모양**이 정보다 */
+  locks?: { label: string }[];
+}) {
+  return (
+    <div
+      className="mt-9 bg-white px-5 pb-6 pt-7"
+      style={{ borderRadius: 14, border: `1px solid ${LINE}`, boxShadow: "0 10px 26px rgba(20,12,40,0.10)" }}
+    >
+      <p className="flex items-center gap-2.5">
+        {moon}
+        <span className="font-myeongjo text-[17px]" style={{ color: INK, fontWeight: 700 }}>
+          {year}년{" "}
+          {/* 이 화면의 정점 — 크기·색은 여기 한 곳에만 준다 */}
+          <span className="text-[34px] leading-[1.1] tracking-[-0.02em]" style={{ color: PINK, fontWeight: 800 }}>
+            {month}월
+          </span>
+        </span>
+      </p>
+      <p className="mt-2.5 text-[17px] leading-[26px]" style={{ color: INK, fontWeight: 700 }}>
+        {desc}
+      </p>
+      {note && (
+        <p className="mt-1.5 text-[13px] leading-[20px]" style={{ color: MUTE }}>
+          {note}
+        </p>
+      )}
+      {locks && locks.length > 0 && (
+        <div className="mt-7 space-y-3 border-t pt-5" style={{ borderColor: "#EFE9F8" }}>
+          {locks.map((l, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <NeonMask text="20○○년 ○월" scribble={false} />
+              <span className="text-[15px] leading-[22px]" style={{ color: BODY }}>
+                {l.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
