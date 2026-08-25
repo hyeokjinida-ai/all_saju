@@ -624,6 +624,7 @@ export function computeInyeonFacts(
   const n = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
 
   // ① 원국 앵커
+  const birthYear = n(rec(rec(analysis.daeun).birth_info).year);
   const ilji = s(rec(rec(analysis.ganji).day).ji);
   const sum = rec(rec(analysis.sipseong).summary);
   // 상대가 남자면 관성, 여자면 재성. 안 물었으면 이성 인연으로 본다.
@@ -704,7 +705,11 @@ export function computeInyeonFacts(
     if (hongyeomJi.has(s(o.ji))) { sc += 7; tags.push("매력이 짙어짐"); }
     if (cheoneulJi.has(s(o.ji))) { sc += 6; tags.push("귀인이 다리를 놓음"); }
     if (tags.length === 0 && verdict) tags.push(`전체 흐름이 ${verdict}`);
-    return { label, year: n(o.year), month: n(o.month), age: n(o.age), score: sc, tags, verdict };
+    // ⚠ 월운 행에는 age 가 없다(공급사 미제공). 그대로 n(o.age) 를 쓰면 0 이 되어 화면에 「0세」가 찍힌다
+    //   (2026-08-25 실측). 세는나이 = 해당 연도 - 출생연도 + 1 로 채운다 — 결과지 전체가 쓰는 그 자다.
+    const rowYear = n(o.year);
+    const age = n(o.age) || (birthYear && rowYear ? rowYear - birthYear + 1 : 0);
+    return { label, year: rowYear, month: n(o.month), age, score: sc, tags, verdict };
   };
 
   // ④ 인연이 들어오는 달 TOP3 (과거 제외, 대흉 제외 — 부족하면 게이트 해제)

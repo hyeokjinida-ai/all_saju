@@ -45,22 +45,23 @@ function humanize(t: string): string {
  *  저쪽 결과지가 "읽어주는 사람이 있는 물건"으로 느껴지는 이유다 — 삽화 장수가 아니다.
  *  말풍선 규격은 8/23 확정 그대로: **한 덩어리 도형** · 꼬리가 인물 쪽 · 글 두 줄 이내. */
 function Band({
-  cap,
+  lines,
   children,
   sd = "sdSmile",
 }: {
-  cap: string;
+  /** 직녀의 대사 — 말맛대로 끊은 줄 배열 */
+  lines: string[];
   children: React.ReactNode;
-  /** 직녀 표정 — 좋은 소식은 웃음, 조심할 자리는 생각하는 얼굴 */
   sd?: "sdSmile" | "sdThink";
 }) {
-  // -cut = 흰 배경을 걷어낸 판(2026-08-25). 원본 png 는 흰 배경이라 밤 바탕에서 흰 사각형이 뜬다.
+  // -cut = 흰 배경을 걷어낸 판. 원본 png 는 흰 배경이라 밤 바탕에서 흰 사각형이 뜬다.
   const face = assetSrc(`/products/jiknyeo/${sd}-cut.png`) ?? assetSrc(`/products/jiknyeo/${sd}.png`);
   return (
-    <div style={{ margin: "16px 0 0" }}>
-      {/* 말풍선 규격(8/23 확정): 꽉 찬 배너가 아니라 **대사 길이만큼**의 타원 · 꼬리는 인물 쪽.
-          폭을 채우면 UI 라벨로 읽히고, 대사만큼이면 캐릭터의 말로 읽힌다(청월당 실측 스펙). */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+    <div style={{ margin: "20px 0 0" }}>
+      {/* 청월당 실물 배치: 말풍선이 위, 캐릭터가 아래 — 말이 먼저 오고 화자가 뒤따른다.
+          말풍선 꼬리가 캐릭터를 가리키고 **살짝 겹친다**(컷에 걸치는 문법). */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
+        <Bubble lines={lines} size="md" tail="bl" />
         {face ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -68,35 +69,91 @@ function Band({
             alt=""
             draggable={false}
             className="flex-none select-none"
-            style={{ width: 46, height: 62, objectFit: "contain", objectPosition: "bottom" }}
+            style={{ width: 74, height: 96, objectFit: "contain", objectPosition: "bottom", marginBottom: -6, marginLeft: -8 }}
           />
         ) : null}
-        <div
+      </div>
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+    </div>
+  );
+}
+
+/** 말풍선 — **청월당 실물 실측을 그대로 옮긴 규격**(2026-08-25 PIL 측정).
+ *
+ *  원본 750px 폭 기준: 386×352px · 폭비 51% · 종횡 1.10 · 글자높이 33px · 줄높이 54px(lh 1.18)
+ *  → 448px 기둥 환산: 폭 228 · 높이 207 · font 27px · lh 1.18
+ *
+ *  ⚠ 이전 판(2026-08-24)은 실물을 안 보고 만든 높이 40px 짜리 알약이었다. 크기가 5배 틀리면
+ *    같은 도형이어도 「캐릭터의 말」이 아니라 「UI 라벨」로 읽힌다 — 그래서 실측으로 다시 세웠다.
+ *
+ *  줄바꿈은 **말맛대로 손으로 끊는다**(폭 맞춤 아님). 그래서 문자열이 아니라 줄 배열을 받는다. */
+export function Bubble({
+  lines,
+  size = "lg",
+  tail = "bl",
+}: {
+  /** 말맛대로 끊은 줄 배열 — 원본도 폭이 아니라 호흡으로 끊는다 */
+  lines: string[];
+  /** lg = 실측값(228) · md = 카드 묶음용 축소판 */
+  size?: "lg" | "md";
+  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / 없음 */
+  tail?: "bl" | "br" | "none";
+}) {
+  const w = size === "lg" ? 228 : 190;
+  const h = Math.round(w / 1.1);
+  const fs = size === "lg" ? 19 : 16.5;
+  return (
+    <div style={{ position: "relative", width: w, height: h, flex: "none" }}>
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          borderRadius: "50%",
+          background: "#FFFFFF",
+          border: "2px solid #1B1729",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 10%",
+          boxShadow: "0 6px 20px rgba(10,8,26,.45)",
+        }}
+      >
+        {lines.map((t, i) => (
+          <span
+            key={i}
+            className="font-myeongjo"
+            style={{
+              fontSize: fs,
+              lineHeight: 1.18,
+              color: "#14111F",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+      {tail !== "none" && (
+        // 꼬리는 원과 **한 덩어리**로 보여야 한다 — 흰 삼각을 원에 겹쳐 이음매를 지운다(8/23 규격)
+        <svg
+          width="30"
+          height="26"
+          viewBox="0 0 30 26"
+          aria-hidden
           style={{
-            position: "relative",
-            maxWidth: "78%",
-            padding: "10px 17px",
-            borderRadius: 22,
-            background: "#FBF8F0",
-            border: "1px solid rgba(42,36,52,.5)",
-            boxShadow: "0 4px 14px rgba(10,8,26,.4)",
+            position: "absolute",
+            bottom: -14,
+            [tail === "bl" ? "left" : "right"]: "18%",
+            transform: tail === "br" ? "scaleX(-1)" : undefined,
           }}
         >
-          <svg
-            width="14"
-            height="13"
-            viewBox="0 0 14 13"
-            aria-hidden
-            style={{ position: "absolute", left: -10, bottom: 11 }}
-          >
-            <path d="M14 1L0 9l14 3z" fill="#FBF8F0" stroke="rgba(42,36,52,.5)" strokeWidth="1" />
-          </svg>
-          <p className="font-myeongjo" style={{ fontSize: 13.5, lineHeight: 1.55, color: "#1F1A2B", fontWeight: 700 }}>
-            {cap}
-          </p>
-        </div>
-      </div>
-      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+          <path d="M27 2C22 14 12 21 2 24c9-1 18-5 25-11z" fill="#FFFFFF" stroke="#1B1729" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M25 3C21 12 13 18 5 22" stroke="#FFFFFF" strokeWidth="3" />
+        </svg>
+      )}
     </div>
   );
 }
@@ -150,7 +207,7 @@ function RowCard({
 export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band cap="이 세 달만 따로 모아 뒀어요. 여기부터 보세요.">
+    <Band lines={["이 세 달만", "따로 모아 뒀어요.", "여기부터 보세요."]}>
       {rows.slice(0, 3).map((r) => (
         <RowCard
           key={r.label}
@@ -169,7 +226,7 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
 export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band cap="이 달은 나쁜 게 아니라, 속도만 늦추면 되는 달이에요." sd="sdThink">
+    <Band lines={["나쁜 달이 아니에요.", "속도만 늦추면", "되는 달이에요."]} sd="sdThink">
       {rows.slice(0, 2).map((r) => (
         <RowCard
           key={r.label}
@@ -200,7 +257,7 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
   const list = [...(inyeon.signals ?? []), OH_SIGNAL[inyeon.spouseOh || "토"]].filter(Boolean).slice(0, 3);
   if (!list.length) return null;
   return (
-    <Band cap="첫 두세 번 만나면서 이것만 보세요.">
+    <Band lines={["첫 두세 번", "만나면서", "이것만 보세요."]}>
       {list.map((s, i) => (
         <RowCard
           key={i}
@@ -242,7 +299,7 @@ export function CharmChips({ inyeon }: { inyeon: InyeonFacts }) {
   // 확정값 블록이 같은 자리에서 쓰는 문장("은은한 편 · 꾸준함이 무기")을 그대로 쓴다.
   if (!have.length) have.push(["은은한 편", "튀지 않아도 오래 남는 쪽 — 꾸준함이 무기예요"]);
   return (
-    <Band cap="당신이 원래 갖고 있는 신호예요.">
+    <Band lines={["원래 갖고 계신", "신호예요."]}>
       {have.slice(0, 3).map(([term, how]) => (
         <RowCard
           key={term}
@@ -354,5 +411,193 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
         </figcaption>
       </div>
     </figure>
+  );
+}
+
+/* ── ⑥ 프롤로그 — 결과지의 첫 화면 ────────────────────── */
+
+/** 청월당은 프롤로그 한 장(19,052px)을 통째로 인사에 쓴다. 타이트는 표지+목차 카드 6장으로 연다.
+ *  우리는 달력부터 들이밀고 있었다 — 결제 직후 1초가 원하는 건 정보가 아니라 **환대**다.
+ *
+ *  세 가지를 한 블록에서 끝낸다:
+ *   ① 호명 인사(관계)  ② 받은 분량을 숫자로(물성)  ③ 목차 + 「고민은 9장에서」 예고(재실망 공포 선해소)
+ *  ③이 중요한 이유: 확답이 스크롤 85% 지점에 있어서, 손님이 거기 닿기 전에 판정을 내려 버린다. */
+export function Prologue({
+  who,
+  chapters,
+  charCount,
+  monthCount,
+  isMarriage,
+}: {
+  who: string;
+  /** 장 제목 목록 — 목차 카드에 그대로 쓴다 */
+  chapters: string[];
+  charCount: number;
+  monthCount: number;
+  isMarriage: boolean;
+}) {
+  const name = who || "그대";
+  // 고민에 답하는 장 — 제목으로 찾는다(장 수가 바뀌어도 따라오게)
+  const askIdx = chapters.findIndex((t) => /고민|물음/.test(t));
+  const num = (n: number) => n.toLocaleString("ko-KR");
+  return (
+    <div style={{ margin: "18px 0 0" }}>
+      {/* 인사 — 말풍선이 화면의 주인공(실측 규격 lg) */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 2 }}>
+        <Bubble
+          lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]}
+          size="lg"
+          tail="bl"
+        />
+        {(() => {
+          const face = assetSrc("/products/jiknyeo/sdSmile-cut.png");
+          if (!face) return null;
+          // eslint-disable-next-line @next/next/no-img-element
+          return <img src={face} alt="" draggable={false} className="flex-none select-none"
+            style={{ width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", marginBottom: -8, marginLeft: -10 }} />;
+        })()}
+      </div>
+
+      {/* 물성 — 받은 양을 숫자로 못박는다. 21,838px 를 손님은 셀 수 없다 */}
+      <div
+        style={{
+          marginTop: 14,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 8,
+        }}
+      >
+        {[
+          [`${chapters.length}`, "장"],
+          [num(charCount), "자"],
+          [`${monthCount}`, isMarriage ? "개 시기" : "개 달"],
+        ].map(([big, small]) => (
+          <div
+            key={small}
+            style={{
+              textAlign: "center",
+              padding: "11px 6px",
+              borderRadius: 12,
+              background: "linear-gradient(160deg, rgba(30,26,60,.92), rgba(19,20,38,.86))",
+              border: "1px solid rgba(201,169,78,.34)",
+            }}
+          >
+            <p className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#F3EAD3", lineHeight: 1.1 }}>{big}</p>
+            <p style={{ marginTop: 3, fontSize: 11.5, color: "#9B8AC4" }}>{small}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* 자기 증명 — 우리만 하는 것을 우리만 한다고 말한다.
+          랜딩엔 있는 문구가 정작 결과지 안엔 없었다(손님은 비교 대상이 없어 유일함을 모른다) */}
+      <p style={{ marginTop: 10, textAlign: "center", fontSize: 12, lineHeight: 1.7, color: "#A99FC4" }}>
+        여기 적힌 달은 지어낸 말이 아니라
+        <br />
+        <b style={{ color: "#E4D9F6" }}>{name}님 만세력 계산에서 나온 값</b>이에요.
+      </p>
+
+      {/* 목차 — 탭하면 그 장으로. 고민 장에는 뱃지를 달아 미리 약속한다 */}
+      {chapters.length > 0 && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: "14px 15px",
+            borderRadius: 14,
+            background: "rgba(19,20,38,.72)",
+            border: "1px solid rgba(199,176,236,.20)",
+          }}
+        >
+          <p style={{ fontSize: 11.5, letterSpacing: "0.18em", color: "#9B8AC4", fontWeight: 600, textAlign: "center" }}>
+            오늘 여는 것
+          </p>
+          <ol style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 7 }}>
+            {chapters.map((t, i) => (
+              <li key={i}>
+                <a
+                  href={`#ch-${i}`}
+                  style={{ display: "flex", alignItems: "baseline", gap: 8, textDecoration: "none" }}
+                >
+                  <span className="font-myeongjo" style={{ fontSize: 12, color: "#C9A94E", flex: "none", width: 18 }}>
+                    {["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][i] ?? i + 1}
+                  </span>
+                  <span className="font-myeongjo" style={{ fontSize: 14, color: "#E4DCF2", lineHeight: 1.45 }}>
+                    {t.replace(/^\s*\d+\s*[.·)]\s*/, "")}
+                    {i === askIdx && (
+                      <b
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10.5,
+                          padding: "2px 7px",
+                          borderRadius: 999,
+                          background: "rgba(201,169,78,.18)",
+                          border: "1px solid rgba(201,169,78,.45)",
+                          color: "#E8D9A8",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        적어주신 고민, 여기서
+                      </b>
+                    )}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── ⑦ 마치며 — 결과지의 마지막 10초 ─────────────────── */
+
+/** 3사 공통 표준(청월당 14장 「마치며」·음양관·귀신사주). 후기·공유 직전의 감정을 정하는 자리다.
+ *  청월당도 410자뿐 — 길 필요가 없다. 정적 템플릿 + 이름·가장 가까운 좋은 달만 치환(토큰 0). */
+export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year: number; month: number } | null }) {
+  const name = who || "그대";
+  return (
+    <div
+      style={{
+        margin: "20px 0 0",
+        padding: "22px 20px 24px",
+        borderRadius: 16,
+        background: "linear-gradient(160deg, rgba(34,28,66,.94), rgba(19,20,38,.9))",
+        border: "1px solid rgba(201,169,78,.34)",
+      }}
+    >
+      <p className="font-myeongjo" style={{ fontSize: 13, letterSpacing: "0.22em", color: "#C9A94E", textAlign: "center" }}>
+        마치며
+      </p>
+      <div
+        className="font-myeongjo"
+        style={{ marginTop: 14, fontSize: 14.5, lineHeight: 2, color: "#DCD4EC", textAlign: "center" }}
+      >
+        <p>여기까지 읽어 주셔서 고마워요.</p>
+        <p style={{ marginTop: 12 }}>
+          제가 짚어 드린 건 <b style={{ color: "#F3EAD3" }}>달</b>이지
+          <br />
+          {name}님의 마음까지는 아니에요.
+        </p>
+        <p style={{ marginTop: 12 }}>
+          {nearest ? (
+            <>
+              가장 가까운 문은{" "}
+              <b style={{ color: "#F3EAD3" }}>
+                {nearest.year}년 {nearest.month}월
+              </b>
+              이에요.
+              <br />그 달이 오면, 오늘 읽은 걸 한 번 더 펴 보세요.
+            </>
+          ) : (
+            <>문이 열리는 달이 오면, 오늘 읽은 걸 한 번 더 펴 보세요.</>
+          )}
+        </p>
+        <p style={{ marginTop: 12 }}>기다리는 일은 제가 잘해요.</p>
+        <p style={{ marginTop: 12, color: "#B6ABD2" }}>그때까지, 잘 지내고 계세요.</p>
+      </div>
+      <p className="font-brush" style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: "#C9A94E", letterSpacing: "0.3em" }}>
+        織 女
+      </p>
+    </div>
   );
 }

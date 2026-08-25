@@ -44,7 +44,7 @@ import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
 import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
-import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude } from "./JiknyeoInterlude";
+import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, Prologue, ClosingLetter } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -307,6 +307,15 @@ export function JiknyeoResult({
         </p>
       </div>
 
+      {/* ── ⓪ 프롤로그 — 인사·물성·목차. 결제 직후 1초는 정보가 아니라 환대를 원한다 ── */}
+      <Prologue
+        who={who}
+        chapters={chapters.map((c) => c.title)}
+        charCount={markdown.replace(/[#*=>\-]/g, "").length}
+        monthCount={top3.length + shaky.length}
+        isMarriage={isMarriage}
+      />
+
       {/* ── ① 예보판 — 티저에서 가렸던 달 이름을 전부 연다 ── */}
       {months.length > 0 && (
         <Plate id="sec-forecast">
@@ -551,6 +560,9 @@ export function JiknyeoResult({
           </Fragment>
         );
       })}
+
+      {/* 마치며 — 3사 공통 표준. 낙관(도장) 앞에 편지가 와야 순서가 맞다 */}
+      <ClosingLetter who={who} nearest={top3[0] ?? null} />
 
       {/* 기록 완료 낙관 — 본문 끝. 도장을 찍고 나서 후기를 묻는다 */}
       <ResultSealOff at={recordedAt} tone="night" />
