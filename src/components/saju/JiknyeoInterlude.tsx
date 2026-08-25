@@ -162,9 +162,11 @@ export function Bubble({
   /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / 없음 */
   tail?: "bl" | "br" | "none";
 }) {
-  const w = size === "lg" ? 228 : 190;
-  const h = Math.round(w / 1.1);
-  const fs = size === "lg" ? 19 : 16.5;
+  // 실물 폭비 51% 를 화면 폭과 무관하게 지킨다. 448 에서는 228/190 그대로, 360 폰에서는 함께 줄어
+  // 글줄이 원을 뚫지 않는다(nowrap 이라 폭이 모자라면 글자가 삐져나온다).
+  const w = size === "lg" ? "min(228px, 51vw)" : "min(190px, 43vw)";
+  const h = size === "lg" ? "min(207px, 46.4vw)" : "min(173px, 39vw)";
+  const fs = size === "lg" ? "clamp(15px, 4.2vw, 19px)" : "clamp(13.5px, 3.7vw, 16.5px)";
   return (
     <div style={{ position: "relative", width: w, height: h, flex: "none" }}>
       <div

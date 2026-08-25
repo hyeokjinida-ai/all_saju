@@ -135,7 +135,7 @@ function stripInternalTerms(t: string): string {
  *  (2026-08-24 실측: 문장 끝에 구자라트 문자 2자). 조판이 깨지고 손님은 오류로 읽는다. */
 function stripAlienChars(t: string): string {
   return t.replace(
-    /[^\u0020-\u007E\uAC00-\uD7A3\u3130-\u318F\u00B7\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u25A0-\u25FF\u2605\u2606\u00D7\u2103\uFF05\n\r\t]/g,
+    /[^\u0020-\u007E\uAC00-\uD7A3\u3130-\u318F\u00B7\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u300C-\u300F\u3010\u3011\u25A0-\u25FF\u2605\u2606\u00D7\u2103\uFF05\n\r\t]/g,
     "",
   );
 }
@@ -234,7 +234,7 @@ export function normalizeResultVoice(
   note(
     "이상문자",
     count(
-      /[^\u0020-\u007E\uAC00-\uD7A3\u3130-\u318F\u00B7\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u25A0-\u25FF\u2605\u2606\u00D7\u2103\uFF05\n\r\t]/g,
+      /[^\u0020-\u007E\uAC00-\uD7A3\u3130-\u318F\u00B7\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u300C-\u300F\u3010\u3011\u25A0-\u25FF\u2605\u2606\u00D7\u2103\uFF05\n\r\t]/g,
     ),
   );
   if (!opts.banmal) note("반말 대명사", count(/(^|[\s(])(너는|너를|너와|너도|너에게|네게|네가|네 [가-힣])/g));

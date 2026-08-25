@@ -85,14 +85,17 @@ function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string
    아래를 본문 배경색으로 페이드시켜 이음매를 지운다. 우리는 이미지를 굽지 않는다 —
    같은 그림을 DOM 으로 세우면 장 제목이 바뀌어도 다시 만들 필요가 없다.
    핵심은 두 가지: **번호와 제목 사이의 매듭 구분선**, 그리고 **아래쪽 페이드**. ── */
-function ChapterGate({ no, title }: { no: number; title: string }) {
+function ChapterGate({ no, title, id }: { no: number; title: string; id?: string }) {
   // LLM 이 제목에 "9. " 처럼 번호를 붙여 온다. 간지가 이미 「제 9 장」을 세우므로
   // 그대로 두면 번호가 두 번 나온다 — 여기서 한 번만 남긴다.
   const clean = title.replace(/^\s*\d+\s*[.·)]\s*/, "");
   return (
     <div
+      id={id}
       style={{
         position: "relative",
+        // 목차에서 뛰어오는 자리 — 간지 제목이 화면 위에 걸리게 여유를 준다
+        scrollMarginTop: 12,
         margin: "34px 0 0",
         padding: "32px 20px 30px",
         borderRadius: "16px 16px 0 0",
@@ -551,8 +554,8 @@ export function JiknyeoResult({
         return (
           <Fragment key={i}>
             {before(t)}
-            <ChapterGate no={i + 1} title={c.title} />
-            <div id={`ch-${i}`} style={{ ...hanjiCard, marginTop: 0 }}>
+            <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} />
+            <div id={`ch-body-${i}`} style={{ ...hanjiCard, marginTop: 0 }}>
               <ResultBody markdown={c.body} tone="hanji" />
             </div>
             {after}
