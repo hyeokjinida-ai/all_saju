@@ -43,48 +43,8 @@ function faceSrc(src: string, legacy?: string): string | null {
 import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
-
-/* ── 달 위상 — 티저(JiknyeoForecast)와 같은 그림. 별도 파일이지만 모양이 갈리면 안 된다 ── */
-type Phase = "full" | "half" | "cres" | "cloud";
-const GRADE_TO_PHASE: Record<string, Phase> = { "●": "full", "◎": "half", "○": "cres", "△": "cloud" };
-
-function Moon({ phase, size = 30 }: { phase: Phase; size?: number }) {
-  const c = { width: size, height: size, viewBox: "0 0 74 74" } as const;
-  if (phase === "full")
-    return (
-      <svg {...c} aria-hidden>
-        <defs>
-          <radialGradient id="jr-full">
-            <stop offset="0%" stopColor="#FFFDF2" />
-            <stop offset="100%" stopColor="#EFE3BE" />
-          </radialGradient>
-        </defs>
-        <circle cx="37" cy="37" r="27" fill="url(#jr-full)" stroke="#C9A94E" strokeWidth="2.5" />
-        <circle cx="30" cy="30" r="5" fill="#E4D6A8" opacity=".7" />
-        <circle cx="45" cy="42" r="7" fill="#E4D6A8" opacity=".55" />
-      </svg>
-    );
-  if (phase === "half")
-    return (
-      <svg {...c} aria-hidden>
-        <circle cx="37" cy="37" r="27" fill="#F3EDFA" stroke="#9B8AC4" strokeWidth="2.5" />
-        <path d="M37 10a27 27 0 0 1 0 54z" fill="#C7B0EC" />
-      </svg>
-    );
-  if (phase === "cres")
-    return (
-      <svg {...c} aria-hidden>
-        <circle cx="37" cy="37" r="27" fill="#E6E2EE" stroke="#B9B2CE" strokeWidth="2.5" />
-        <path d="M31 11a27 27 0 1 0 0 52 31 31 0 0 1 0-52z" fill="#FCFAFE" />
-      </svg>
-    );
-  return (
-    <svg {...c} aria-hidden>
-      <circle cx="41" cy="30" r="21" fill="#EFECF6" stroke="#A9A2BE" strokeWidth="2.5" />
-      <path d="M20 52h34a12 12 0 0 0 0-24 17 17 0 0 0-32 5 10 10 0 0 0-2 19z" fill="#8F87A8" />
-    </svg>
-  );
-}
+import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
+import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -139,11 +99,18 @@ function ChapterGate({ no, title }: { no: number; title: string }) {
         border: "1px solid rgba(199,176,236,.20)",
         borderBottom: "none",
         textAlign: "center",
-        // 끝 색을 본문 카드(rgba(19,20,38,.72))와 같게 둬야 경계선이 사라진다.
-        // 청월당은 이걸 PNG 안에서 페이드로 처리한다 — 우리는 색을 맞춘다.
-        background:
+        // 끝 색을 **아래 본문 판과 같게** 둬야 경계선이 사라진다(청월당은 PNG 안에서 페이드로 처리).
+        // 2026-08-25: 본문이 한지로 바뀌어 끝색도 한지색으로 옮겼다. 어두운 간지에서 밝은 종이로
+        // 미끄러지듯 넘어가는 그 이음매가 저쪽 결과지의 「한 덩어리」 감각을 만든다.
+        // 2026-08-25: 그라디언트 위에 **간지 배경 그림**을 얹는다(은하수 + 베틀 실루엣, 하단이
+        // 한지색으로 페이드되게 구워 왔다). 파일이 없으면 아래 그라디언트만 남아 화면은 안 깨진다.
+        backgroundImage:
+          "url(/products/jiknyeo/gate-bg.webp)," +
           "radial-gradient(ellipse 90% 70% at 50% 0%, rgba(120,92,190,.30) 0%, rgba(120,92,190,0) 70%)," +
-          "linear-gradient(180deg, #1B1839 0%, #17142E 58%, rgba(19,20,38,.72) 100%)",
+          "linear-gradient(180deg, #1B1839 0%, #17142E 46%, #3A3355 78%, #FCFAF4 100%)",
+        backgroundSize: "cover, auto, auto",
+        backgroundPosition: "center bottom",
+        backgroundRepeat: "no-repeat",
       }}
     >
       <div style={{ fontSize: 12.5, letterSpacing: "0.34em", color: "#A98BD9", fontWeight: 600 }}>
@@ -166,7 +133,28 @@ function ChapterGate({ no, title }: { no: number; title: string }) {
   );
 }
 
-/* ── 본문 카드 — 밤 위 어두운 카드(글은 길어서 판으로 만들면 눈이 아프다) ── */
+/* ── 章 본문 판 — 한지(2026-08-25, 청월당 구조 이식) ──
+   저쪽 유료 결과지는 간지만 어둡고 본문은 밝다. 긴 글의 가독성과 삽화 발색을 같이 얻는 구조라
+   「청월당처럼」의 절반이 여기서 온다. 우리 정체성(밤)은 페이지 바탕·간지·설화 컷·카드가 지킨다.
+   HANJI_BG 와 같은 텍스처를 쓴다 — 티저 목차/발췌 카드와 종이가 갈리면 한 상품이 아니게 된다. */
+const hanjiCard: React.CSSProperties = {
+  borderRadius: "0 0 16px 16px",
+  backgroundColor: "#FCFAF4",
+  // 흰 반투명을 한 겹 얹어 스캔 원색의 노란기를 걷는다 — 청월당 본문은 우리 hanji 원색보다
+  // 한 단 밝은 아이보리다(2026-08-25 형님 검토). 질감은 유지되고 톤만 올라간다.
+  backgroundImage:
+    "linear-gradient(rgba(255,253,248,.6), rgba(255,253,248,.6)), url(/products/jiknyeo/hanji.png)",
+  backgroundSize: "auto, 360px 360px",
+  backgroundRepeat: "repeat",
+  border: "1px solid rgba(107,76,154,.22)",
+  borderTop: "none",
+  padding: "20px 20px 26px",
+  scrollMarginTop: 14,
+  // 밤 배경 위에 뜬 종이 — 그림자로 띄워야 '판'으로 읽힌다
+  boxShadow: "0 18px 44px rgba(10,8,26,.55)",
+};
+
+/* ── 본문 카드 — 밤 위 어두운 카드(요약부 등 章 밖에서 계속 쓴다) ── */
 const nightCard: React.CSSProperties = {
   borderRadius: 16,
   background: "rgba(19,20,38,.72)",
@@ -209,19 +197,30 @@ function FaceCard({
   why: React.ReactNode;
   tone: "best" | "worst";
 }) {
-  const ring = tone === "best" ? "#DFD6EE" : "#E0D6D6";
   return (
     <div className="mx-auto mt-1 w-full max-w-[300px]">
       <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#6B4C9A" : "#8A6B6B" }}>
         {title}
       </p>
-      {/* 3:4 — 생성 규격(1086×1448)과 같은 비율. 여기서 비율이 어긋나면 얼굴이 눌린다 */}
+      {/* 3:4 — 생성 규격(1086×1448)과 같은 비율. 여기서 비율이 어긋나면 얼굴이 눌린다.
+          2026-08-25: 맨 사진이던 자리에 **비단 자수 액자**를 씌운다(청월당 빈 액자 공식).
+          액자를 배경으로 깔고 얼굴을 안쪽에 앉힌다 — 액자 테두리가 전체의 약 11%다. */}
       <div
-        className="relative mx-auto mt-2 overflow-hidden rounded-[10px]"
-        style={{ aspectRatio: "3 / 4", border: `1px solid ${ring}`, background: "#EFEAF6" }}
+        className="relative mx-auto mt-2"
+        style={{
+          aspectRatio: "3 / 4",
+          backgroundImage: "url(/products/jiknyeo/frame-silk.webp)",
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" />
+        <div
+          className="absolute overflow-hidden"
+          style={{ inset: "9.5% 11% 9.5% 11%", background: "#EFEAF6", borderRadius: 3 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" />
+        </div>
       </div>
       <p className="mt-2 text-center text-[11px] leading-[1.6]" style={{ color: "#8A82A2" }}>
         {why}
@@ -264,6 +263,24 @@ export function JiknyeoResult({
   recordedAt?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
+
+  // 5章 「내게 올 사람」 **직전**에 짝 카드를 작게 다시 세운다 — 회수 루프를 잇는 자리.
+  // 큰 카드는 결과지 머리(결제 직후 보상)에 그대로 두고, 여기서는 썸네일 + 세 값만 되짚는다.
+  // 결혼 라인에는 얼굴을 안 쓴다(기혼·약혼 독자에게 역효과 — outline 이 정한 규칙 그대로).
+  const before = (title: string) => {
+    if (!inyeon || isMarriage) return null;
+    if (!/내게 올 사람|함께할 사람/.test(title)) return null;
+    const f = buildPartnerFace(inyeon);
+    return (
+      <PartnerRecall
+        src={faceSrc(f.src, f.legacySrc)}
+        ohKo={f.ohKo}
+        keul={OH_TRAIT[f.ohKo]?.keul ?? "오래 가는 결"}
+        ageDir={f.ageDir}
+        place={f.place}
+      />
+    );
+  };
   const who = (name ?? "").trim();
   const months = inyeon ? gradeMonths(inyeon) : [];
   // 점수순으로 오는 배열을 **읽는 순서(시간순)** 로 세운다 — 달력 아래에 붙는 목록이라 순서가 어긋나면 헷갈린다.
@@ -511,15 +528,25 @@ export function JiknyeoResult({
         // 끝(100%)에 두면 이미 스크롤을 놓은 뒤다. 장 인덱스 0.62 → 실측 스크롤 70%대에 앉는다
         // (뒷장이 길어서 인덱스 비율보다 픽셀 비율이 뒤로 밀린다). 장이 3개도 안 되면 넣지 않는다.
         const crossAt = chapters.length >= 3 ? Math.floor(chapters.length * 0.62) : -1;
+        // 章 사이 부품 — **제목으로 자리를 찾는다.** 인덱스로 박으면 장 수가 바뀔 때
+        // (9장 → 10장 개편 같은 것) 전부 어긋난다. 린터가 같은 이유로 제목 매칭을 쓴다.
+        const t = c.title;
+        const after = !inyeon ? null
+          : /인연 그릇|결혼 그릇/.test(t) ? <CharmChips inyeon={inyeon} />
+          : /만나는 달|들어오는 달|결혼하는 해/.test(t) ? <MonthCards rows={inyeon.top3} />
+          : /신호/.test(t) ? <SignalCards inyeon={inyeon} />
+          : /조심할 달|피해야 할|흔들리/.test(t) ? <ShakyCards rows={inyeon.shaky} />
+          : /걸어온 길/.test(t) ? <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." />
+          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="w5" say="당신에게도 그런 날이 와요. 올해도, 몇 번." />
+          : null;
         return (
           <Fragment key={i}>
+            {before(t)}
             <ChapterGate no={i + 1} title={c.title} />
-            <div
-              id={`ch-${i}`}
-              style={{ ...nightCard, marginTop: 0, borderTop: "none", borderRadius: "0 0 16px 16px" }}
-            >
-              <ResultBody markdown={c.body} />
+            <div id={`ch-${i}`} style={{ ...hanjiCard, marginTop: 0 }}>
+              <ResultBody markdown={c.body} tone="hanji" />
             </div>
+            {after}
             {i === crossAt && <ResultCrossSell to="sangun" />}
           </Fragment>
         );

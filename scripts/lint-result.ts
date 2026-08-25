@@ -43,6 +43,8 @@ export type Ctx = {
   tableMonths: Set<string> | null;
   /** 명식 월운에 존재하는 달 — 근거로는 정당하지만 표에는 없는 달 */
   dataMonths: Set<string> | null;
+  /** 이 명식의 대운 간지 — 본문이 인용한 간지가 진짜인지 대조한다. null = 캐시 없음 */
+  daeunGanji: Set<string> | null;
 };
 
 // 챕터 분리 — "### " 기준
@@ -64,7 +66,61 @@ function monthsInText(t: string): string[] {
   return [...t.matchAll(/(20\d{2})년\s*(\d{1,2})월/g)].map((m) => monthKey(m[1], m[2]));
 }
 
+// 60갑자 — 천간 10 × 지지 12 의 **짝수/홀수가 맞는 조합만** 존재한다(갑자·을축…계해 60개).
+// 모델은 세운의 천간과 대운의 지지를 섞어 「병축」 같은 없는 글자를 만들어 낸다(2026-08-24 실측).
+const GAN = "갑을병정무기경신임계";
+const JI = "자축인묘진사오미신유술해";
+const SIXTY = new Set(Array.from({ length: 60 }, (_, i) => GAN[i % 10] + JI[i % 12]));
+
+// 한글·ASCII·통용 기호 외의 글자(다른 문자권 글자가 섞여 나오는 사고)
+const ALIEN_CHAR =
+  /[^\u0020-\u007E\uAC00-\uD7A3\u3130-\u318F\u00B7\u2013\u2014\u2018\u2019\u201C\u201D\u2026\u25A0-\u25FF\u2605\u2606\u00D7\u2103\uFF05\n\r\t]/g;
+
 export const RULES: Rule[] = [
+  {
+    id: "간지오류",
+    what: "60갑자에 없거나 이 명식의 것이 아닌 간지를 대운으로 씀",
+    why: "만세력 앱을 켜 보는 손님이 있다. 없는 간지 하나면 결과지 전체가 창작으로 읽힌다",
+    severity: "FAIL",
+    find: (t, c) => {
+      // 「이번 대운」·「현재 대운」 같은 일반어를 간지로 오인하지 않게, 천간+지지 조합만 후보로 본다.
+      const cited = [...t.matchAll(
+        /([갑을병정무기경신임계][자축인묘진사오미신유술해])\s*(?:대운|10년 단위 운|십년 단위 운)/g,
+      )].map((m) => m[1]);
+      const bad: string[] = [];
+      for (const g of new Set(cited)) {
+        if (!SIXTY.has(g)) bad.push(`${g} — 60갑자에 없는 글자`);
+        else if (c.daeunGanji && c.daeunGanji.size && !c.daeunGanji.has(g)) bad.push(`${g} — 이 명식의 대운이 아님`);
+      }
+      return bad;
+    },
+  },
+  {
+    id: "2인칭반말",
+    what: "존댓말 상품에 반말 대명사(너·네)가 섞임",
+    why: "한 장만 반말로 넘어가도 손님은 다른 사람이 쓴 글로 읽는다. 따옴표 안 대사는 정상이라 뺀다",
+    severity: "FAIL",
+    find: (t, c) => {
+      if (c.banmal) return [];
+      const body = t.replace(/["\u201C\u201D'][^"\u201C\u201D'\n]{0,200}["\u201C\u201D']/g, " ");
+      return [...body.matchAll(/(?:^|[\s(])(너는|너를|너와|너도|너에게|네게|네가|네 [가-힣]{1,6})/g)].map((m) => m[1]);
+    },
+  },
+  {
+    id: "내부용어",
+    what: "프롬프트 재료의 어휘가 본문에 남음",
+    why: "「인연점수 26점」·「확정값」은 우리 계산기의 말이지 손님의 말이 아니다. 보이면 기계가 된다",
+    severity: "FAIL",
+    find: (t) =>
+      [...t.matchAll(/인연점수|재물점수|확정값|월운\s*판정|세운\s*판정|종합점수|소길|소흉/g)].map((m) => m[0]),
+  },
+  {
+    id: "이상문자",
+    what: "한글·ASCII 아닌 글자가 섞임",
+    why: "모델이 드물게 다른 문자권 글자를 흘린다(실측: 문장 끝 구자라트 문자 2자). 손님은 오류로 읽는다",
+    severity: "FAIL",
+    find: (t) => [...t.matchAll(ALIEN_CHAR)].map((m) => `${m[0]} (U+${m[0].codePointAt(0)?.toString(16).toUpperCase()})`),
+  },
   {
     id: "존대-당신",
     what: '독자를 "당신"이라 부름',
@@ -134,10 +190,16 @@ export const RULES: Rule[] = [
     what: "얼버무리는 표현",
     why: "돈 내고 확답을 사러 온 사람에게 '~일 수도'는 상품 훼손이다",
     severity: "WARN",
-    find: (t) =>
-      [...t.matchAll(/(가능성이 (크|높|있|많)[다습]|수도 있|일 수 있|될 수 있|경향이 있|보인다|듯하다|일 것이다|편이다)/g)].map(
+    // 「당신이 걸어온 길」은 아우트라인이 **두 갈래로 열어 두라**고 시킨 장이다
+    // ("관계가 정리됐거나, 반대로 크게 열렸을 거예요"). 시킨 표현을 위반으로 세면 안 된다.
+    find: (t) => {
+      const chs = chapters(t);
+      const pastIdx = chapterIndexBy(chs, /걸어온 길/);
+      const body = chs.filter((_, i) => i !== pastIdx).join("\n");
+      return [...body.matchAll(/(가능성이 (크|높|있|많)[다습]|수도 있|일 수 있|될 수 있|경향이 있|보인다|듯하다|일 것이다|편이다)/g)].map(
         (m) => m[0],
-      ),
+      );
+    },
   },
   {
     id: "나이오류",
@@ -168,8 +230,15 @@ export const RULES: Rule[] = [
     find: (t) => {
       const chs = chapters(t);
       // 돈 장·인연 장에서만 허용. 장 번호를 박아두면 11장 개편에서 통째로 어긋나므로 제목으로 찾는다.
+      // 고민 장은 "앞 장들의 근거를 한 줄로 다시 꿰어라"가 아우트라인 지시다 — 여기서 점수를
+      // 다시 부르는 건 재탕이 아니라 시킨 일이다(2026-08-24: 정상 결과지 4/4가 이걸로 잡혔다).
       const allow = new Set(
-        [chapterIndexBy(chs, /돈이 들어오는/), chapterIndexBy(chs, /인연이 들어오는/)].filter((i) => i >= 0),
+        [
+          chapterIndexBy(chs, /돈이 들어오는/),
+          chapterIndexBy(chs, /인연이 들어오는/),
+          chapterIndexBy(chs, /내 인연 그릇|내 결혼 그릇/),
+          chapterIndexBy(chs, /고민|물음/),
+        ].filter((i) => i >= 0),
       );
       const hits: string[] = [];
       chs.forEach((c, i) => {
@@ -321,6 +390,27 @@ export async function loadMonthSets(
   }
 }
 
+/** 명식 캐시에서 대운 간지를 모은다. 구조가 공급사마다 조금씩 달라 **2글자 60갑자 문자열**을
+ *  daeun 하위에서 훑어 담는다(키 이름에 기대지 않는다). */
+function loadDaeunGanji(cacheName: string): Set<string> | null {
+  const cache = resolve(tmpdir(), cacheName);
+  if (!existsSync(cache)) return null;
+  try {
+    const analysis = JSON.parse(readFileSync(cache, "utf8")) as Record<string, unknown>;
+    const out = new Set<string>();
+    const walk = (v: unknown) => {
+      if (typeof v === "string") {
+        if (v.length === 2 && SIXTY.has(v)) out.add(v);
+      } else if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === "object") Object.values(v as Record<string, unknown>).forEach(walk);
+    };
+    walk(analysis.daeun);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 async function lint(file: string) {
   const raw = readFileSync(file, "utf8");
   const header = raw.match(/^<!--([\s\S]*?)-->/)?.[1] ?? "";
@@ -347,6 +437,7 @@ async function lint(file: string) {
     banmal,
     tableMonths: months?.table ?? null,
     dataMonths: months?.data ?? null,
+    daeunGanji: cacheName ? loadDaeunGanji(cacheName) : null,
   };
 
   console.log(

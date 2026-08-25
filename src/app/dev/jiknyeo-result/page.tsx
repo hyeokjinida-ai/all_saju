@@ -5,6 +5,10 @@
 //
 // 샘플 md 가 없어도 조판은 봐야 하므로, 없으면 짧은 더미 본문으로 채워 화면을 세운다
 // (달력·명식은 실제 계산이라 더미가 아니다 — 조판 확인에는 그게 핵심이다).
+//
+// ⚠ 손님 스위치(?who=) — 2026-08-24 추가. 예전에는 명식이 지수로 **고정**인데 본문만 tmp 의
+//   최신 md 를 집어 왔다. 서윤·은비 샘플을 뽑아 두면 화면이 "지수 명식 + 은비 본문"이 되어
+//   달력·카드·본문이 서로 다른 사람을 가리킨다. 명식·본문·이름을 한 세트로 묶어 고른다.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -26,34 +30,58 @@ const FALLBACK_MD = `### 내 인연 그릇
 ### 내게 올 사람
 말수가 적고 약속을 먼저 정하는 사람이에요. 세 번째 만남부터 다르게 보이기 시작해요.`;
 
+/** 샘플 손님 — 명식 캐시·본문·생일을 한 세트로 묶는다(따로 고르면 화면이 거짓말을 한다). */
+const WHO: Record<
+  string,
+  { name: string; cache: string; birthDate: string; birthTime: string; suffix?: string; exclude?: string }
+> = {
+  지수: {
+    name: "지수",
+    cache: "analysis-19930515-female-14.json",
+    birthDate: "1993-05-15",
+    birthTime: "14:30",
+    exclude: "-연애중", // 같은 이름의 「연애중」 판이 최신이면 그쪽이 잡혀 버린다
+  },
+  "지수-연애중": {
+    name: "지수",
+    cache: "analysis-19930515-female-14.json",
+    birthDate: "1993-05-15",
+    birthTime: "14:30",
+    suffix: "-연애중",
+  },
+  서윤: { name: "서윤", cache: "analysis-19940606-female-20.json", birthDate: "1994-06-06", birthTime: "20:10" },
+  은비: { name: "은비", cache: "analysis-19900524-female-17.json", birthDate: "1990-05-24", birthTime: "17:00" },
+};
+
 export default async function DevJiknyeoResultPage({
   searchParams,
 }: {
-  searchParams: Promise<{ marriage?: string }>;
+  searchParams: Promise<{ marriage?: string; who?: string }>;
 }) {
   if (process.env.NODE_ENV !== "development") notFound();
-  const { marriage } = await searchParams;
+  const { marriage, who } = await searchParams;
+  const person = WHO[who ?? "지수"] ?? WHO["지수"];
 
   // sample-results.ts 가 tmp 에 남긴 것을 **파일명 규칙으로 찾는다**.
   // 규칙: 명식 `analysis-<생일>-<성별>-<시>.json` · 본문 `sample-<slug>-<이름>-<모델태그>.md`
   // 모델 태그가 바뀔 때마다 파일명이 달라지므로 하드코딩하지 않고 최신 것을 집는다.
   const tmp = os.tmpdir();
-  const anPath = path.join(tmp, "analysis-19930515-female-14.json"); // 지수 · 1993-05-15 14:30 여
-  const pick = (prefix: string) => {
+  const anPath = path.join(tmp, person.cache);
+  const pick = (prefix: string, exclude?: string) => {
     const hits = fs
       .readdirSync(tmp)
-      .filter((f) => f.startsWith(prefix) && f.endsWith(".md"))
+      .filter((f) => f.startsWith(prefix) && f.endsWith(".md") && (!exclude || !f.includes(exclude)))
       .map((f) => ({ f, t: fs.statSync(path.join(tmp, f)).mtimeMs }))
       .sort((a, b) => b.t - a.t);
     return hits[0] ? path.join(tmp, hits[0].f) : null;
   };
   const slug = marriage === "1" ? "marriage-saju" : "inyeon-saju";
-  const found = pick(`sample-${slug}-`);
+  const found = pick(`sample-${slug}-${person.name}${person.suffix ?? ""}-`, person.exclude);
   const mdPath = found ?? "";
   if (!fs.existsSync(anPath)) {
     return (
       <p style={{ padding: 40, color: "#fff" }}>
-        명식 캐시가 없습니다 — <code>npx tsx scripts/sample-results.ts</code> 를 한 번 돌리세요.
+        명식 캐시가 없습니다({person.cache}) — <code>npx tsx scripts/sample-results.ts</code> 를 한 번 돌리세요.
       </p>
     );
   }
@@ -69,9 +97,9 @@ export default async function DevJiknyeoResultPage({
   const view = buildResultView({
     myeongsik,
     rawAnalysis: analysis,
-    name: "지수",
-    birthDate: "1993-05-15",
-    birthTime: "14:30",
+    name: person.name,
+    birthDate: person.birthDate,
+    birthTime: person.birthTime,
     timeUnknown: false,
     gender: "female",
     calendar: "solar",
@@ -97,7 +125,7 @@ export default async function DevJiknyeoResultPage({
         <JiknyeoResult
           view={view}
           markdown={markdown}
-          name="지수"
+          name={person.name}
           inyeon={computeInyeonFacts(analysis, "female", "male")}
           chartRows={buildChartRows(analysis)}
           isMarriage={marriage === "1"}

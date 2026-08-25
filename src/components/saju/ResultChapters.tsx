@@ -70,7 +70,7 @@ export function ResultChapters({ markdown }: { markdown: string }) {
             </h3>
           </div>
           <div className="font-myeongjo mt-1">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
               {c.body}
             </ReactMarkdown>
           </div>

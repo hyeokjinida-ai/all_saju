@@ -413,7 +413,7 @@ export function SangunResult({
           <span>{c.title}</span>
         </h3>
         <div className="font-myeongjo mt-1">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
             {c.body}
           </ReactMarkdown>
         </div>
@@ -473,7 +473,7 @@ export function SangunResult({
 
         {intro && (
           <div className="font-myeongjo mt-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
               {intro}
             </ReactMarkdown>
           </div>

@@ -68,7 +68,7 @@ function ageKey(ageDir: string): FaceAge {
 
 /** 상극(剋) — 「멀리할 결」을 고르는 규칙. 木을 꺾는 건 金, 火를 끄는 건 水…
  *  LLM 에 맡기지 않고 표로 두는 이유: 근거를 한 줄로 댈 수 있어야 카드가 서기 때문이다
- *  ("네 짝의 결(木)을 꺾는 결(金) — 이 결이 스치면 오래 못 가요"). */
+ *  ("짝의 결(木)을 꺾는 결(金) — 이 결이 스치면 오래 못 가요"). */
 const GEUK: Record<FaceElement, FaceElement> = {
   wood: "metal", fire: "water", earth: "wood", metal: "fire", water: "earth",
 };
@@ -110,6 +110,11 @@ const NATURE: Record<FaceElement, { 정: string; 편: string }> = {
 // 통째로는 카드에 안 들어가는데, 그렇다고 버리고 오행으로만 채우면 **같은 힌트를 보고 쓰는 본문은
 // "직장에서 만난다"** 인데 카드만 "물가·온라인" 이 되어 한 장부 안에서 두 곳을 가리키게 된다(실측).
 const PLACE_WORD = /직장|조직|회사|업무|거래|모임|동호회|동아리|학교|학원|공부|소개|온라인|인터넷|여행|물가|종교|봉사|취미/;
+// 공급사 해설에는 장소와 **경고**가 한 절에 붙어 오는 경우가 있다(2026-08-24 실측:
+// "직장이나 모임에서 이미 기혼자와 관계가 생길 수 있어 주의가 필요합니다").
+// 그 절이 그대로 「운명의 짝」 카드의 만나는 자리 칸에 실리면 상품이 무너진다 —
+// 손님이 결제 전 티저에서 예고받은 그 카드다. 경고가 붙은 절은 버리고 오행 기본값으로 간다.
+const WARN_WORD = /기혼|유부|불륜|삼각|바람기|주의가 필요|조심|위험|경계/;
 const 존댓말 = /습니다$|합니다$|입니다$|됩니다$/;
 
 /** 도화 해석에서 "어디서 만나는지"를 말한 절 하나만 꺼내 반말로 맞춘다(결과지가 반말 세계관이다) */
@@ -118,7 +123,7 @@ function placeFromHint(hint: string): string | null {
     .split(/[.。]\s*|,\s*/)
     .map((s) => s.trim().replace(/^(그리고|또한|또)\s*/, ""))
     .filter(Boolean);
-  const hit = parts.find((p) => PLACE_WORD.test(p));
+  const hit = parts.find((p) => PLACE_WORD.test(p) && !WARN_WORD.test(p));
   if (!hit || hit.length > 46) return null;
   return hit
     .replace(/습니다$/, "다")
@@ -188,7 +193,8 @@ export function buildWorstFace(f: InyeonFacts): {
     src: `${FACE_DIR}/w-${sex}-${el}.webp`,
     el,
     ohKo: OH_KO[el],
-    why: `네 짝의 결(${OH_KO[mine]})을 꺾는 결(${OH_KO[el]})`,
+    // 인칭을 쓰지 않는다 - 직녀(존대)와 산군(반말)이 같은 카드를 쓴다(2026-08-24 수리).
+    why: `짝의 결(${OH_KO[mine]})을 꺾는 결(${OH_KO[el]})`,
     how: WORST_HOW[el],
   };
 }

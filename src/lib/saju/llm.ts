@@ -78,6 +78,26 @@ function demoteInnerHeadings(text: string): string {
   });
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** 한 챕터를 **쉬었다 다시** 던진다. 대기 간격은 동시 호출이 풀릴 시간을 주는 값이다.
+ *  전부 실패하면 null — 호출부가 그 장을 낙오로 표시하고 순차 단계에서 한 번 더 집는다. */
+async function genWithBackoff(
+  c: { system: string; user: string },
+  waits: number[] = [0, 1500, 4000],
+): Promise<LlmResponse | null> {
+  for (const w of waits) {
+    if (w) await sleep(w);
+    try {
+      const r = await generateInterpretation(c);
+      if (r.text.trim()) return r;
+    } catch {
+      /* 다음 간격에서 다시 */
+    }
+  }
+  return null;
+}
+
 export async function generateByChapters(
   title: string,
   chapters: { system: string; user: string }[],
@@ -85,27 +105,44 @@ export async function generateByChapters(
   const genOne = async (c: { system: string; user: string }) => {
     try {
       // 챕터 하나가 죽으면 그 장이 결과지에서 조용히 사라진다 — 티저 목차가 약속한 장이라
-      // 빠지면 들통이다(실측: deepseek-v4-pro 9챕터 중 1장이 통째로 실패). 한 번은 다시 던진다.
-      let r = await generateInterpretation(c).catch(() => generateInterpretation(c));
-      if (!r.text.trim()) r = await generateInterpretation(c);
-      if (findFamilyAssertions(r.text).length > 0) {
+      // 빠지면 들통이다(실측: deepseek-v4-pro 9챕터 중 1장이 통째로 실패).
+      // ⚠ 즉시 재시도는 무력하다 — 죽는 이유가 '동시 호출이 몰려서'이면 다시 던져도 같은 벽이다
+      //   (2026-08-24 실측: 4장 연속 생성에서 10장 중 6장만 나왔고, 같은 장을 나중에 혼자
+      //    부르니 4/4 성공했다). 그래서 **쉬었다가** 던진다.
+      const r = await genWithBackoff(c);
+      if (!r) return { text: "", provider: "", model: "" };
+      let out = r;
+      if (findFamilyAssertions(out.text).length > 0) {
         try {
           const retry = await generateInterpretation({ system: c.system, user: c.user + FAMILY_RETRY_NOTE });
-          if (retry.text.trim()) r = retry;
+          if (retry.text.trim()) out = retry;
         } catch {
           /* 재시도 실패 시 원본 유지 → 아래에서 문장 제거 */
         }
-        if (findFamilyAssertions(r.text).length > 0) {
-          r = { ...r, text: stripFamilyAssertions(r.text) };
+        if (findFamilyAssertions(out.text).length > 0) {
+          out = { ...out, text: stripFamilyAssertions(out.text) };
         }
       }
-      return { text: demoteInnerHeadings(r.text), provider: r.provider, model: r.model };
+      return { text: demoteInnerHeadings(out.text), provider: out.provider, model: out.model };
     } catch {
       return { text: "", provider: "", model: "" };
     }
   };
 
   const parts = await Promise.all(chapters.map(genOne));
+
+  // 낙오분 마무리 — 병렬 라운드가 끝난 뒤라 호출이 몰리지 않는다. 여기서 한 장씩 순서대로 집는다.
+  // 티저가 약속한 목차를 지키는 마지막 관문이라, 느려지더라도 장 수를 채우는 쪽이 맞다.
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].text.trim()) continue;
+    const again = await genOne(chapters[i]);
+    if (again.text.trim()) parts[i] = again;
+  }
+  const missing = parts.filter((p) => !p.text.trim()).length;
+  if (missing > 0) {
+    console.warn(`[generateByChapters] ${chapters.length}장 중 ${missing}장 실패 — 결과지가 목차보다 짧게 나간다`);
+  }
+
   const body = parts.map((p) => p.text.trim()).filter(Boolean).join("\n\n");
   const succeeded = parts.filter((p) => p.provider);
   const ok = succeeded[0];

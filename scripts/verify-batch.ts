@@ -157,6 +157,8 @@ async function main() {
       thisYear: new Date().getFullYear(),
       concern: CONCERN,
       banmal: slug === "sangun-sinjeom",
+      // 이 배치는 대운 간지 대조까지는 안 한다(60갑자 사전 검사는 null 이어도 돈다)
+      daeunGanji: null,
       tableMonths: months?.table ?? null,
       dataMonths: months?.data ?? null,
     };
