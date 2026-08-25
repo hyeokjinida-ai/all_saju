@@ -120,7 +120,7 @@ function Band({
   }
 
   // ── SD 문법 — 가벼운 자리(청월당도 반신과 SD 를 섞어 쓴다) ──
-  const face = assetSrc(`/products/jiknyeo/${sd}-cut.png`) ?? assetSrc(`/products/jiknyeo/${sd}.png`);
+  const face = assetSrc(`/products/jiknyeo/${sd}-cut.webp`) ?? assetSrc(`/products/jiknyeo/${sd}-cut.png`);
   return (
     <div style={{ margin: "20px 0 0" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
@@ -493,21 +493,14 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
 export function Prologue({
   who,
   chapters,
-  charCount,
-  monthCount,
-  isMarriage,
 }: {
   who: string;
   /** 장 제목 목록 — 목차 카드에 그대로 쓴다 */
   chapters: string[];
-  charCount: number;
-  monthCount: number;
-  isMarriage: boolean;
 }) {
   const name = who || "그대";
   // 고민에 답하는 장 — 제목으로 찾는다(장 수가 바뀌어도 따라오게)
   const askIdx = chapters.findIndex((t) => /고민|물음/.test(t));
-  const num = (n: number) => n.toLocaleString("ko-KR");
   return (
     // 프롤로그 전체를 **한지 판 하나**에 담는다 — 청월당도 인사~목차가 같은 종이 위에 있다.
     <div
@@ -522,51 +515,48 @@ export function Prologue({
         boxShadow: "0 10px 30px rgba(42,36,52,.10)",
       }}
     >
-      {/* 인사 — 말풍선이 화면의 주인공(실측 규격 lg) */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 2 }}>
-        <Bubble
-          lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]}
-          size="lg"
-          tail="bl"
-        />
-        {(() => {
-          const face = assetSrc("/products/jiknyeo/sdSmile-cut.png");
-          if (!face) return null;
-          // eslint-disable-next-line @next/next/no-img-element
-          return <img src={face} alt="" draggable={false} className="flex-none select-none"
-            style={{ width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", marginBottom: -8, marginLeft: -10 }} />;
-        })()}
-      </div>
-
-      {/* 물성 — 받은 양을 숫자로 못박는다. 21,838px 를 손님은 셀 수 없다 */}
-      <div
-        style={{
-          marginTop: 14,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 8,
-        }}
-      >
-        {[
-          [`${chapters.length}`, "장"],
-          [num(charCount), "자"],
-          [`${monthCount}`, isMarriage ? "개 시기" : "개 달"],
-        ].map(([big, small]) => (
-          <div
-            key={small}
-            style={{
-              textAlign: "center",
-              padding: "11px 6px",
-              borderRadius: 12,
-              background: "#FFFFFF",
-              border: "1px solid rgba(201,169,78,.45)",
-            }}
-          >
-            <p className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#3A2E12", lineHeight: 1.1 }}>{big}</p>
-            <p style={{ marginTop: 3, fontSize: 11.5, color: "#6B4C9A" }}>{small}</p>
+      {/* 인사 — **메인 캐릭터가 화면 크게** 나온다. 청월당 프롤로그도 SD 가 아니라 큰 일러다
+          (SD 는 본문 중간 추임새 자리). j1 은 README 가 「직녀 소개·어서 와요」로 지정한 컷이다. */}
+      {(() => {
+        const hero = assetSrc("/products/jiknyeo/j1.webp") ?? assetSrc("/products/jiknyeo/j1.png");
+        if (!hero) {
+          return (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <Bubble lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]} size="lg" tail="bl" />
+            </div>
+          );
+        }
+        return (
+          <div style={{ position: "relative", paddingBottom: 64 }}>
+            <div
+              style={{
+                position: "relative",
+                width: "84%",
+                marginLeft: "auto",
+                overflow: "hidden",
+                borderRadius: 14,
+                background: "#EFE9DC",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={hero}
+                alt=""
+                draggable={false}
+                className="w-full select-none"
+                style={{ aspectRatio: "4 / 5", objectFit: "cover", objectPosition: "center 12%", display: "block" }}
+              />
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0"
+                style={{ height: "42%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
+              />
+            </div>
+            <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
+              <Bubble lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]} size="lg" tail="br" />
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* 자기 증명 — 우리만 하는 것을 우리만 한다고 말한다.
           랜딩엔 있는 문구가 정작 결과지 안엔 없었다(손님은 비교 대상이 없어 유일함을 모른다) */}

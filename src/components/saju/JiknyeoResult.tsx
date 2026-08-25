@@ -311,13 +311,7 @@ export function JiknyeoResult({
       </div>
 
       {/* ── ⓪ 프롤로그 — 인사·물성·목차. 결제 직후 1초는 정보가 아니라 환대를 원한다 ── */}
-      <Prologue
-        who={who}
-        chapters={chapters.map((c) => c.title)}
-        charCount={markdown.replace(/[#*=>\-]/g, "").length}
-        monthCount={top3.length + shaky.length}
-        isMarriage={isMarriage}
-      />
+      <Prologue who={who} chapters={chapters.map((c) => c.title)} />
 
       {/* ── ① 예보판 — 티저에서 가렸던 달 이름을 전부 연다 ── */}
       {months.length > 0 && (
