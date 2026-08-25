@@ -48,18 +48,81 @@ function Band({
   lines,
   children,
   sd = "sdSmile",
+  cut,
+  sfx,
 }: {
   /** 직녀의 대사 — 말맛대로 끊은 줄 배열 */
   lines: string[];
   children: React.ReactNode;
   sd?: "sdSmile" | "sdThink";
+  /** 반신 컷 id(j2·w2·w3…). 주면 **컷이 주인공**인 청월당 문법으로 렌더한다 */
+  cut?: string;
+  /** 손글씨 방백 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(8/23 규격) */
+  sfx?: string;
 }) {
-  // -cut = 흰 배경을 걷어낸 판. 원본 png 는 흰 배경이라 밤 바탕에서 흰 사각형이 뜬다.
+  const cutSrc = cut
+    ? assetSrc(`/products/jiknyeo/${cut}.webp`) ?? assetSrc(`/products/jiknyeo/${cut}.png`)
+    : null;
+
+  // ── 컷 문법 — 청월당 실물 배치 ──
+  if (cutSrc) {
+    return (
+      <div style={{ margin: "22px 0 0" }}>
+        <div style={{ position: "relative", paddingBottom: 74 }}>
+          {/* 컷: 폭 86%(실물 80~90%) · 3:2 · 아래를 밤 배경으로 녹여 액자 느낌을 지운다 */}
+          <div
+            style={{
+              position: "relative",
+              width: "86%",
+              marginLeft: "auto",
+              overflow: "hidden",
+              borderRadius: 12,
+              background: "#0B0F1A",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cutSrc}
+              alt=""
+              draggable={false}
+              className="w-full select-none"
+              style={{ aspectRatio: "3 / 2", objectFit: "cover", objectPosition: "center 18%", display: "block" }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0"
+              style={{ height: "52%", background: "linear-gradient(180deg, rgba(11,15,26,0), rgba(11,15,26,.92) 72%, #0B0F1A)" }}
+            />
+            {sfx && (
+              <span
+                className="font-brush absolute"
+                style={{
+                  top: "16%",
+                  right: "9%",
+                  fontSize: 21,
+                  color: "#F0E3B8",
+                  transform: "rotate(8deg)",
+                  textShadow: "0 2px 10px rgba(10,8,26,.9)",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {sfx}
+              </span>
+            )}
+          </div>
+          {/* 말풍선이 **컷에 걸친다** — 꼬리는 오른쪽(컷 안 인물) 쪽 */}
+          <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
+            <Bubble lines={lines} size="lg" tail="br" />
+          </div>
+        </div>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+      </div>
+    );
+  }
+
+  // ── SD 문법 — 가벼운 자리(청월당도 반신과 SD 를 섞어 쓴다) ──
   const face = assetSrc(`/products/jiknyeo/${sd}-cut.png`) ?? assetSrc(`/products/jiknyeo/${sd}.png`);
   return (
     <div style={{ margin: "20px 0 0" }}>
-      {/* 청월당 실물 배치: 말풍선이 위, 캐릭터가 아래 — 말이 먼저 오고 화자가 뒤따른다.
-          말풍선 꼬리가 캐릭터를 가리키고 **살짝 겹친다**(컷에 걸치는 문법). */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
         <Bubble lines={lines} size="md" tail="bl" />
         {face ? (
@@ -207,7 +270,7 @@ function RowCard({
 export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["이 세 달만", "따로 모아 뒀어요.", "여기부터 보세요."]}>
+    <Band lines={["이 세 달만", "따로 모아 뒀어요.", "여기부터 보세요."]} cut="j2" sfx="콕—">
       {rows.slice(0, 3).map((r) => (
         <RowCard
           key={r.label}
@@ -226,7 +289,7 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
 export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["나쁜 달이 아니에요.", "속도만 늦추면", "되는 달이에요."]} sd="sdThink">
+    <Band lines={["나쁜 달이 아니에요.", "속도만 늦추면", "되는 달이에요."]} cut="w2">
       {rows.slice(0, 2).map((r) => (
         <RowCard
           key={r.label}
@@ -257,7 +320,7 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
   const list = [...(inyeon.signals ?? []), OH_SIGNAL[inyeon.spouseOh || "토"]].filter(Boolean).slice(0, 3);
   if (!list.length) return null;
   return (
-    <Band lines={["첫 두세 번", "만나면서", "이것만 보세요."]}>
+    <Band lines={["첫 두세 번", "만나면서", "이것만 보세요."]} cut="w3">
       {list.map((s, i) => (
         <RowCard
           key={i}
