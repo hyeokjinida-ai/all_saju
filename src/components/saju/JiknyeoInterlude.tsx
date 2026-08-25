@@ -68,7 +68,7 @@ function Band({
   if (cutSrc) {
     return (
       <div style={{ margin: "22px 0 0" }}>
-        <div style={{ position: "relative", paddingBottom: 74 }}>
+        <div style={{ position: "relative", paddingBottom: 58 }}>
           {/* 컷: 폭 86%(실물 80~90%) · 3:2 · 아래를 밤 배경으로 녹여 액자 느낌을 지운다 */}
           <div
             style={{
@@ -96,8 +96,8 @@ function Band({
               <span
                 className="font-brush absolute"
                 style={{
-                  top: "16%",
-                  right: "9%",
+                  top: "11%",
+                  right: "5%",
                   fontSize: 21,
                   color: "#F0E3B8",
                   transform: "rotate(8deg)",
@@ -110,7 +110,7 @@ function Band({
             )}
           </div>
           {/* 말풍선이 **컷에 걸친다** — 꼬리는 오른쪽(컷 안 인물) 쪽 */}
-          <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
+          <div style={{ position: "absolute", left: 12, bottom: 18, zIndex: 2 }}>
             <Bubble lines={lines} size="lg" tail="br" />
           </div>
         </div>
@@ -270,7 +270,7 @@ function RowCard({
 export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["이 세 달만", "따로 모아 뒀어요.", "여기부터 보세요."]} cut="j2" sfx="콕—">
+    <Band lines={["방금 그 세 달,", "달력에 옮겨", "적어 뒀어요."]} cut="j2" sfx="콕—">
       {rows.slice(0, 3).map((r) => (
         <RowCard
           key={r.label}
@@ -320,7 +320,7 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
   const list = [...(inyeon.signals ?? []), OH_SIGNAL[inyeon.spouseOh || "토"]].filter(Boolean).slice(0, 3);
   if (!list.length) return null;
   return (
-    <Band lines={["첫 두세 번", "만나면서", "이것만 보세요."]} cut="w3">
+    <Band lines={["방금 그 셋,", "이렇게만", "기억하세요."]} cut="w3">
       {list.map((s, i) => (
         <RowCard
           key={i}
