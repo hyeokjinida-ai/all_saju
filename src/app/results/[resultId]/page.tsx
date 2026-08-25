@@ -166,13 +166,13 @@ export default async function ResultPage({
         flexDirection: "column",
         alignItems: "center",
         background: isJiknyeo
-          ? "radial-gradient(ellipse 120% 50% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%)," +
-            "linear-gradient(180deg,#0D0B1C 0%,#12112A 46%,#0B0F1A 100%)"
+          ? "radial-gradient(ellipse 120% 42% at 50% 0%,rgba(36,28,70,.10) 0%,rgba(36,28,70,0) 60%)," +
+            "linear-gradient(180deg,#F7F3EA 0%,#FBF8F1 40%,#F4EFE4 100%)"
           : isSangun
           ? "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)"
           : "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
         padding: "30px 12px 64px",
-        color: "#fff",
+        color: isJiknyeo ? "#2A2434" : "#fff",
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>

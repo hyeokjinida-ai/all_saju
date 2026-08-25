@@ -298,14 +298,14 @@ export function JiknyeoResult({
     <div className="space-y-5">
       {/* ── 머리 ── */}
       <div className="text-center">
-        <p className="font-brush text-[13px] tracking-[0.34em]" style={{ color: "#cfd6e6", opacity: 0.9 }}>
+        <p className="font-brush text-[13px] tracking-[0.34em]" style={{ color: "#6B4C9A", opacity: 0.95 }}>
           織 女
         </p>
-        <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#EFE7FA" }}>
+        <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#2A2434" }}>
           {who ? `${who}님의 ` : ""}
           {isMarriage ? "결혼예보" : "연애예보"}
         </h1>
-        <p className="mt-1.5 text-[12px]" style={{ color: "#98a0b4" }}>
+        <p className="mt-1.5 text-[12px]" style={{ color: "#6C6483" }}>
           만세력 계산 · 앞으로 열두 달
         </p>
       </div>
@@ -531,8 +531,8 @@ export function JiknyeoResult({
 
       {/* ── ④ 본문 10장 ── */}
       {intro && (
-        <div style={nightCard}>
-          <ResultBody markdown={intro} />
+        <div style={{ ...hanjiCard, borderRadius: 16, borderTop: "1px solid rgba(107,76,154,.22)" }}>
+          <ResultBody markdown={intro} tone="hanji" />
         </div>
       )}
       {chapters.map((c, i) => {

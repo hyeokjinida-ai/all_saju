@@ -116,8 +116,9 @@ export default async function DevJiknyeoResultPage({
         justifyContent: "center",
         // 실제 결과지의 직녀 바탕과 같은 값 — 다르면 미리보기가 거짓말이 된다
         background:
-          "radial-gradient(ellipse 120% 50% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%)," +
-          "linear-gradient(180deg,#0D0B1C 0%,#12112A 46%,#0B0F1A 100%)",
+          "radial-gradient(ellipse 120% 42% at 50% 0%,rgba(36,28,70,.10) 0%,rgba(36,28,70,0) 60%)," +
+          "linear-gradient(180deg,#F7F3EA 0%,#FBF8F1 40%,#F4EFE4 100%)",
+        color: "#2A2434",
         padding: "30px 12px 64px",
       }}
     >

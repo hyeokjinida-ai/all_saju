@@ -77,7 +77,7 @@ function Band({
               marginLeft: "auto",
               overflow: "hidden",
               borderRadius: 12,
-              background: "#0B0F1A",
+              background: "#EFE9DC",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,7 +90,7 @@ function Band({
             />
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0"
-              style={{ height: "52%", background: "linear-gradient(180deg, rgba(11,15,26,0), rgba(11,15,26,.92) 72%, #0B0F1A)" }}
+              style={{ height: "52%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 72%, #F7F3EA)" }}
             />
             {sfx && (
               <span
@@ -237,8 +237,9 @@ function RowCard({
   body: string;
   tone?: "good" | "care";
 }) {
-  const edge = tone === "good" ? "rgba(201,169,78,.42)" : "rgba(155,138,196,.38)";
-  const bigColor = tone === "good" ? "#F3EAD3" : "#DCD4EC";
+  // 한지 바탕 위 카드 — 흰 판 + 먹 글씨. 어두운 판은 밝은 종이 위에서 UI 위젯처럼 튄다.
+  const edge = tone === "good" ? "rgba(201,169,78,.55)" : "rgba(107,76,154,.30)";
+  const bigColor = tone === "good" ? "#3A2E12" : "#2A2434";
   return (
     <div
       style={{
@@ -247,8 +248,9 @@ function RowCard({
         gap: 13,
         padding: "13px 15px",
         borderRadius: 14,
-        background: "linear-gradient(160deg, rgba(30,26,60,.92) 0%, rgba(19,20,38,.86) 100%)",
+        background: tone === "good" ? "linear-gradient(160deg,#FFFDF7,#FBF6EA)" : "#FCFAFE",
         border: `1px solid ${edge}`,
+        boxShadow: "0 2px 10px rgba(42,36,52,.06)",
       }}
     >
       <div className="flex-none" style={{ width: 34, display: "flex", justifyContent: "center" }}>
@@ -259,9 +261,9 @@ function RowCard({
           <span className="font-myeongjo" style={{ fontSize: 25, fontWeight: 700, color: bigColor, lineHeight: 1.1 }}>
             {big}
           </span>
-          {small ? <span style={{ fontSize: 11.5, color: "#8F87A8" }}>{small}</span> : null}
+          {small ? <span style={{ fontSize: 11.5, color: "#8A82A2" }}>{small}</span> : null}
         </div>
-        <p style={{ marginTop: 5, fontSize: 13, lineHeight: 1.62, color: "#C8C0DC" }}>{body}</p>
+        <p style={{ marginTop: 5, fontSize: 13, lineHeight: 1.62, color: "#5B5470" }}>{body}</p>
       </div>
     </div>
   );
@@ -410,8 +412,9 @@ export function PartnerRecall({
         alignItems: "center",
         padding: "13px 15px",
         borderRadius: 14,
-        background: "linear-gradient(160deg, rgba(34,28,66,.94) 0%, rgba(21,20,42,.88) 100%)",
-        border: "1px solid rgba(201,169,78,.35)",
+        background: "linear-gradient(160deg,#FFFDF7,#F8F2E6)",
+        border: "1px solid rgba(201,169,78,.55)",
+        boxShadow: "0 2px 10px rgba(42,36,52,.06)",
       }}
     >
       {ok ? (
@@ -425,13 +428,13 @@ export function PartnerRecall({
         />
       ) : null}
       <div style={{ minWidth: 0 }}>
-        <p style={{ fontSize: 11.5, letterSpacing: "0.14em", color: "#9B8AC4", fontWeight: 600 }}>
+        <p style={{ fontSize: 11.5, letterSpacing: "0.14em", color: "#6B4C9A", fontWeight: 600 }}>
           앞에서 본 그 사람
         </p>
-        <p className="font-myeongjo" style={{ marginTop: 3, fontSize: 16, fontWeight: 700, color: "#F3EAD3" }}>
+        <p className="font-myeongjo" style={{ marginTop: 3, fontSize: 16, fontWeight: 700, color: "#3A2E12" }}>
           {ohKo}의 결 · {ageDir}
         </p>
-        <p style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.6, color: "#C8C0DC" }}>
+        <p style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.6, color: "#5B5470" }}>
           {keul} · {place}
         </p>
       </div>
@@ -450,7 +453,7 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
     // 풀블리드 — 청월당은 테두리 컷과 **가장자리까지 꽉 찬 컷**을 번갈아 써서 리듬을 만든다
     // (해부 §3: 우리에게 없던 장치 3개 중 하나). 페이지 좌우 패딩(12px)을 음수 마진으로 상쇄한다.
     <figure style={{ margin: "18px -12px 0" }}>
-      <div style={{ position: "relative", overflow: "hidden", background: "#0B0F1A" }}>
+      <div style={{ position: "relative", overflow: "hidden", background: "#EFE9DC" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -462,11 +465,11 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
         {/* 위·아래를 페이지 바탕으로 녹인다 — 액자 대신 페이드로 잇는 게 청월당 문법이다 */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0"
-          style={{ height: "22%", background: "linear-gradient(180deg, #0B0F1A, rgba(11,15,26,0))" }}
+          style={{ height: "22%", background: "linear-gradient(180deg, #F7F3EA, rgba(247,243,234,0))" }}
         />
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0"
-          style={{ height: "62%", background: "linear-gradient(180deg, rgba(11,15,26,0), rgba(11,15,26,.92) 78%, #0B0F1A)" }}
+          style={{ height: "62%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 78%, #F7F3EA)" }}
         />
         <figcaption
           className="font-myeongjo absolute inset-x-0 bottom-0 px-5 pb-4 text-center"
@@ -506,7 +509,19 @@ export function Prologue({
   const askIdx = chapters.findIndex((t) => /고민|물음/.test(t));
   const num = (n: number) => n.toLocaleString("ko-KR");
   return (
-    <div style={{ margin: "18px 0 0" }}>
+    // 프롤로그 전체를 **한지 판 하나**에 담는다 — 청월당도 인사~목차가 같은 종이 위에 있다.
+    <div
+      style={{
+        margin: "18px 0 0",
+        padding: "20px 18px 22px",
+        borderRadius: 16,
+        backgroundColor: "#faf7f0",
+        backgroundImage: "url(/products/jiknyeo/hanji.png)",
+        backgroundSize: "360px 360px",
+        border: "1px solid rgba(107,76,154,.20)",
+        boxShadow: "0 10px 30px rgba(42,36,52,.10)",
+      }}
+    >
       {/* 인사 — 말풍선이 화면의 주인공(실측 규격 lg) */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 2 }}>
         <Bubble
@@ -543,22 +558,22 @@ export function Prologue({
               textAlign: "center",
               padding: "11px 6px",
               borderRadius: 12,
-              background: "linear-gradient(160deg, rgba(30,26,60,.92), rgba(19,20,38,.86))",
-              border: "1px solid rgba(201,169,78,.34)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(201,169,78,.45)",
             }}
           >
-            <p className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#F3EAD3", lineHeight: 1.1 }}>{big}</p>
-            <p style={{ marginTop: 3, fontSize: 11.5, color: "#9B8AC4" }}>{small}</p>
+            <p className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#3A2E12", lineHeight: 1.1 }}>{big}</p>
+            <p style={{ marginTop: 3, fontSize: 11.5, color: "#6B4C9A" }}>{small}</p>
           </div>
         ))}
       </div>
 
       {/* 자기 증명 — 우리만 하는 것을 우리만 한다고 말한다.
           랜딩엔 있는 문구가 정작 결과지 안엔 없었다(손님은 비교 대상이 없어 유일함을 모른다) */}
-      <p style={{ marginTop: 10, textAlign: "center", fontSize: 12, lineHeight: 1.7, color: "#A99FC4" }}>
+      <p style={{ marginTop: 10, textAlign: "center", fontSize: 12, lineHeight: 1.7, color: "#6C6483" }}>
         여기 적힌 달은 지어낸 말이 아니라
         <br />
-        <b style={{ color: "#E4D9F6" }}>{name}님 만세력 계산에서 나온 값</b>이에요.
+        <b style={{ color: "#5B3F8F" }}>{name}님 만세력 계산에서 나온 값</b>이에요.
       </p>
 
       {/* 목차 — 탭하면 그 장으로. 고민 장에는 뱃지를 달아 미리 약속한다 */}
@@ -568,11 +583,11 @@ export function Prologue({
             marginTop: 14,
             padding: "14px 15px",
             borderRadius: 14,
-            background: "rgba(19,20,38,.72)",
-            border: "1px solid rgba(199,176,236,.20)",
+            background: "rgba(255,255,255,.72)",
+            border: "1px solid rgba(107,76,154,.22)",
           }}
         >
-          <p style={{ fontSize: 11.5, letterSpacing: "0.18em", color: "#9B8AC4", fontWeight: 600, textAlign: "center" }}>
+          <p style={{ fontSize: 11.5, letterSpacing: "0.18em", color: "#6B4C9A", fontWeight: 600, textAlign: "center" }}>
             오늘 여는 것
           </p>
           <ol style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 7 }}>
@@ -582,10 +597,10 @@ export function Prologue({
                   href={`#ch-${i}`}
                   style={{ display: "flex", alignItems: "baseline", gap: 8, textDecoration: "none" }}
                 >
-                  <span className="font-myeongjo" style={{ fontSize: 12, color: "#C9A94E", flex: "none", width: 18 }}>
+                  <span className="font-myeongjo" style={{ fontSize: 12, color: "#A8842C", flex: "none", width: 18 }}>
                     {["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][i] ?? i + 1}
                   </span>
-                  <span className="font-myeongjo" style={{ fontSize: 14, color: "#E4DCF2", lineHeight: 1.45 }}>
+                  <span className="font-myeongjo" style={{ fontSize: 14, color: "#2A2434", lineHeight: 1.45 }}>
                     {t.replace(/^\s*\d+\s*[.·)]\s*/, "")}
                     {i === askIdx && (
                       <b
@@ -594,9 +609,9 @@ export function Prologue({
                           fontSize: 10.5,
                           padding: "2px 7px",
                           borderRadius: 999,
-                          background: "rgba(201,169,78,.18)",
-                          border: "1px solid rgba(201,169,78,.45)",
-                          color: "#E8D9A8",
+                          background: "rgba(201,169,78,.20)",
+                          border: "1px solid rgba(168,132,44,.55)",
+                          color: "#6B5214",
                           whiteSpace: "nowrap",
                         }}
                       >
@@ -626,20 +641,23 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
         margin: "20px 0 0",
         padding: "22px 20px 24px",
         borderRadius: 16,
-        background: "linear-gradient(160deg, rgba(34,28,66,.94), rgba(19,20,38,.9))",
-        border: "1px solid rgba(201,169,78,.34)",
+        backgroundColor: "#faf7f0",
+        backgroundImage: "url(/products/jiknyeo/hanji.png)",
+        backgroundSize: "360px 360px",
+        border: "1px solid rgba(201,169,78,.50)",
+        boxShadow: "0 10px 30px rgba(42,36,52,.10)",
       }}
     >
-      <p className="font-myeongjo" style={{ fontSize: 13, letterSpacing: "0.22em", color: "#C9A94E", textAlign: "center" }}>
+      <p className="font-myeongjo" style={{ fontSize: 13, letterSpacing: "0.22em", color: "#A8842C", textAlign: "center" }}>
         마치며
       </p>
       <div
         className="font-myeongjo"
-        style={{ marginTop: 14, fontSize: 14.5, lineHeight: 2, color: "#DCD4EC", textAlign: "center" }}
+        style={{ marginTop: 14, fontSize: 14.5, lineHeight: 2, color: "#2A2434", textAlign: "center" }}
       >
         <p>여기까지 읽어 주셔서 고마워요.</p>
         <p style={{ marginTop: 12 }}>
-          제가 짚어 드린 건 <b style={{ color: "#F3EAD3" }}>달</b>이지
+          제가 짚어 드린 건 <b style={{ color: "#5B3F8F" }}>달</b>이지
           <br />
           {name}님의 마음까지는 아니에요.
         </p>
@@ -647,7 +665,7 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
           {nearest ? (
             <>
               가장 가까운 문은{" "}
-              <b style={{ color: "#F3EAD3" }}>
+              <b style={{ color: "#5B3F8F" }}>
                 {nearest.year}년 {nearest.month}월
               </b>
               이에요.
@@ -658,9 +676,9 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
           )}
         </p>
         <p style={{ marginTop: 12 }}>기다리는 일은 제가 잘해요.</p>
-        <p style={{ marginTop: 12, color: "#B6ABD2" }}>그때까지, 잘 지내고 계세요.</p>
+        <p style={{ marginTop: 12, color: "#6C6483" }}>그때까지, 잘 지내고 계세요.</p>
       </div>
-      <p className="font-brush" style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: "#C9A94E", letterSpacing: "0.3em" }}>
+      <p className="font-brush" style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: "#A8842C", letterSpacing: "0.3em" }}>
         織 女
       </p>
     </div>
