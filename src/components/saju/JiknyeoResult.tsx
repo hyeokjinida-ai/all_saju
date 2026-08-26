@@ -44,7 +44,7 @@ import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
 import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
-import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, Prologue, ClosingLetter } from "./JiknyeoInterlude";
+import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -301,10 +301,36 @@ export function JiknyeoResult({
         <p className="font-brush text-[13px] tracking-[0.34em]" style={{ color: "#6B4C9A", opacity: 0.95 }}>
           織 女
         </p>
-        <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#2A2434" }}>
-          {who ? `${who}님의 ` : ""}
-          {isMarriage ? "결혼예보" : "연애예보"}
-        </h1>
+        {(() => {
+          // 손으로 그린 레터링을 갖고 있으면서 시스템 폰트를 쓰고 있었다(자산 미사용).
+          // 연애예보 전용 자산이라 결혼판은 기존 활자 그대로 둔다.
+          // ⚠ lettering-yeonae-yebo.png 는 보라·형광 3D 게임 로고체다. 먹빛 담채 세계관과 어긋나
+          //   붙였다가 되돌렸다(2026-08-25 화면 실측). 붓글씨 레터링을 새로 굽기 전까지 활자로 간다.
+          const lettering: string | null = null;
+          if (lettering) {
+            return (
+              <div className="mt-2">
+                {who ? (
+                  <p className="font-myeongjo text-[15px]" style={{ color: "#5B5470" }}>{who}님의</p>
+                ) : null}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={lettering}
+                  alt="연애예보"
+                  draggable={false}
+                  className="mx-auto mt-1 select-none"
+                  style={{ width: "62%", maxWidth: 240, height: "auto" }}
+                />
+              </div>
+            );
+          }
+          return (
+            <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#2A2434" }}>
+              {who ? `${who}님의 ` : ""}
+              {isMarriage ? "결혼예보" : "연애예보"}
+            </h1>
+          );
+        })()}
         <p className="mt-1.5 text-[12px]" style={{ color: "#6C6483" }}>
           만세력 계산 · 앞으로 열두 달
         </p>
@@ -468,6 +494,13 @@ export function JiknyeoResult({
                   }
                   tone="best"
                 />
+                {/* 공유각 1순위 자산인데 유도가 없었다. 캡처가 단톡방에 돌면 낙관이 곧 광고다 */}
+                <div className="mt-2 flex items-center justify-center gap-1.5">
+                  <span style={{ fontSize: 11.5, color: "#8A82A2" }}>이 카드, 캡처해서 간직하세요</span>
+                  <span className="font-brush" style={{ fontSize: 11, color: "#A8842C", letterSpacing: "0.14em" }}>
+                    · 명운록
+                  </span>
+                </div>
               </div>
             );
           })()}
@@ -550,10 +583,13 @@ export function JiknyeoResult({
             {before(t)}
             <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} />
             <div id={`ch-body-${i}`} style={{ ...hanjiCard, marginTop: 0 }}>
+              {/* 장 머리에서 직녀가 한마디 — 지금 무엇을 볼지 쉬운 말로 예고한다(청월당 밀도) */}
+              <ChapterSay title={c.title} who={who} />
               <ResultBody markdown={c.body} tone="hanji" />
             </div>
             {after}
-            {i === crossAt && <ResultCrossSell to="sangun" />}
+            {/* 크로스셀 2회 — 청월당은 연애 장 안에 두 개를 넣는다. 5章(짝 얘기) 직후가 관심 최고점 */}
+            {(i === crossAt || /내게 올 사람|함께할 사람/.test(t)) && <ResultCrossSell to="sangun" />}
           </Fragment>
         );
       })}

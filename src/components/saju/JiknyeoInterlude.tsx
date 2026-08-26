@@ -274,7 +274,7 @@ function RowCard({
 export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["방금 그 세 달,", "달력에 옮겨", "적어 뒀어요."]} cut="j2" sfx="콕—">
+    <Band lines={["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]} cut="j2" sfx="콕—">
       {rows.slice(0, 3).map((r) => (
         <RowCard
           key={r.label}
@@ -284,6 +284,10 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
           body={humanize(r.tags.slice(0, 2).join(" · ")) || "흐름이 열리는 달이에요"}
         />
       ))}
+      {/* 3사 중 우리만 「달」을 준다. 손님 폰에 남겨야 그 값이 산다 */}
+      <p style={{ marginTop: 2, textAlign: "center", fontSize: 11.5, color: "#8A82A2" }}>
+        폰 달력에 적어 두면 그 달에 알림이 와요
+      </p>
     </Band>
   );
 }
@@ -293,7 +297,7 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
 export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["나쁜 달이 아니에요.", "속도만 늦추면", "되는 달이에요."]} cut="w2">
+    <Band lines={["이 두 달은", "무서워하지 말아요.", "천천히 가면 돼요."]} cut="w2">
       {rows.slice(0, 2).map((r) => (
         <RowCard
           key={r.label}
@@ -324,7 +328,7 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
   const list = [...(inyeon.signals ?? []), OH_SIGNAL[inyeon.spouseOh || "토"]].filter(Boolean).slice(0, 3);
   if (!list.length) return null;
   return (
-    <Band lines={["방금 그 셋,", "이렇게만", "기억하세요."]} cut="w3">
+    <Band lines={["이 세 가지만 기억하면", "그 사람을", "알아볼 수 있어요."]} cut="w3">
       {list.map((s, i) => (
         <RowCard
           key={i}
@@ -366,7 +370,7 @@ export function CharmChips({ inyeon }: { inyeon: InyeonFacts }) {
   // 확정값 블록이 같은 자리에서 쓰는 문장("은은한 편 · 꾸준함이 무기")을 그대로 쓴다.
   if (!have.length) have.push(["은은한 편", "튀지 않아도 오래 남는 쪽 — 꾸준함이 무기예요"]);
   return (
-    <Band lines={["원래 갖고 계신", "신호예요."]}>
+    <Band lines={["원래 이런 매력이", "있어요.", "알고 있었어요?"]}>
       {have.slice(0, 3).map(([term, how]) => (
         <RowCard
           key={term}
@@ -482,6 +486,51 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
   );
 }
 
+/* ── ⑤-B 장 머리 대사 — 캐릭터가 계속 말을 건다 ─────────── */
+
+/** 章 본문 맨 위에서 직녀가 한마디 하고 시작한다.
+ *  청월당은 장마다 캐릭터가 2~3번 말을 건다(「다음은 이성들이 너를 처음 만났을 때…알아보자구」).
+ *  그 밀도가 「읽어주는 사람이 있는 물건」의 정체다 — 삽화 장수가 아니다.
+ *  ⚠ 대사는 **고정 테이블**이다. 모델에게 맡기면 어려운 말이 섞인다(형님 지적 2026-08-25). */
+const CHAPTER_LINES: [RegExp, string[]][] = [
+  [/인연 그릇|결혼 그릇/, ["먼저 ○○님이", "어떤 사람인지부터", "볼게요."]],
+  [/걸어온 길/, ["지나온 시간부터", "잠깐 짚을게요.", "맞나 보세요."]],
+  [/놓치는 패턴|늦어지는 이유/, ["○○님이 사람을", "놓치던 버릇,", "여기 있어요."]],
+  [/만나는 달|들어오는 달|결혼하는 해/, ["여기가 제일 중요해요.", "만나는 달이에요."]],
+  [/내게 올 사람|함께할 사람/, ["아까 그 얼굴,", "이제 자세히", "말해 줄게요."]],
+  [/신호/, ["만났을 때", "알아보는 법이에요."]],
+  [/조심할 달|피해야 할|흔들리/, ["겁내지 말고 읽어요.", "피하는 법도", "같이 드려요."]],
+  [/크게 바뀌는 해|정리할 것/, ["조금 멀리 볼게요.", "○○님 판이", "바뀌는 해예요."]],
+  [/고민|물음/, ["이제 ○○님이", "물어보신 것에", "답할 차례예요."]],
+  [/이번 주에 할 것/, ["마지막으로,", "이번 주에 할 것만", "남겼어요."]],
+];
+
+/** 장 제목으로 대사를 찾아 이름을 끼운다. 없으면 렌더하지 않는다(억지로 말 걸지 않는다). */
+export function ChapterSay({ title, who }: { title: string; who: string }) {
+  const hit = CHAPTER_LINES.find(([re]) => re.test(title));
+  if (!hit) return null;
+  const name = (who || "").trim();
+  const lines = hit[1].map((l) => l.replace(/○○/g, name || "그대"));
+  const face = assetSrc("/products/jiknyeo/sdSmile-cut.webp") ?? assetSrc("/products/jiknyeo/sdSmile-cut.png");
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "flex-start", gap: 4, marginBottom: 14 }}>
+      {face ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={face}
+          alt=""
+          draggable={false}
+          className="flex-none select-none"
+          style={{ width: 58, height: 76, objectFit: "contain", objectPosition: "bottom", marginBottom: -4 }}
+        />
+      ) : null}
+      <div style={{ marginLeft: -6 }}>
+        <Bubble lines={lines} size="md" tail="bl" />
+      </div>
+    </div>
+  );
+}
+
 /* ── ⑥ 프롤로그 — 결과지의 첫 화면 ────────────────────── */
 
 /** 청월당은 프롤로그 한 장(19,052px)을 통째로 인사에 쓴다. 타이트는 표지+목차 카드 6장으로 연다.
@@ -518,11 +567,16 @@ export function Prologue({
       {/* 인사 — **메인 캐릭터가 화면 크게** 나온다. 청월당 프롤로그도 SD 가 아니라 큰 일러다
           (SD 는 본문 중간 추임새 자리). j1 은 README 가 「직녀 소개·어서 와요」로 지정한 컷이다. */}
       {(() => {
-        const hero = assetSrc("/products/jiknyeo/j1.webp") ?? assetSrc("/products/jiknyeo/j1.png");
+        // j-greet = 인사 전용 컷(2026-08-26 생성). j1 은 창가를 보는 옆모습이라 맞이하는 자리와 안 맞았다.
+        //   생산법은 에셋_생산_프롬프트시트 ③ j-greet 행 — j1 첨부 + 고정블록 전문 + POSE MUST CHANGE.
+        const hero =
+          assetSrc("/products/jiknyeo/j-greet.webp") ??
+          assetSrc("/products/jiknyeo/j1.webp") ??
+          assetSrc("/products/jiknyeo/j1.png");
         if (!hero) {
           return (
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <Bubble lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]} size="lg" tail="bl" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!", "하나씩 열어볼게요."]} size="lg" tail="bl" />
             </div>
           );
         }
@@ -552,7 +606,7 @@ export function Prologue({
               />
             </div>
             <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
-              <Bubble lines={[`${name}님,`, "기다리고 있었어요.", "오늘 것부터 열게요."]} size="lg" tail="br" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!", "하나씩 열어볼게요."]} size="lg" tail="br" />
             </div>
           </div>
         );
@@ -645,27 +699,27 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
         className="font-myeongjo"
         style={{ marginTop: 14, fontSize: 14.5, lineHeight: 2, color: "#2A2434", textAlign: "center" }}
       >
-        <p>여기까지 읽어 주셔서 고마워요.</p>
+        <p>여기까지 읽느라 고생했어요.</p>
         <p style={{ marginTop: 12 }}>
-          제가 짚어 드린 건 <b style={{ color: "#5B3F8F" }}>달</b>이지
+          제가 알려 드린 건 <b style={{ color: "#5B3F8F" }}>날짜</b>예요.
           <br />
-          {name}님의 마음까지는 아니에요.
+          가는 건 {name}님이 하는 거고요.
         </p>
         <p style={{ marginTop: 12 }}>
           {nearest ? (
             <>
-              가장 가까운 문은{" "}
+              가장 먼저 오는 달은{" "}
               <b style={{ color: "#5B3F8F" }}>
                 {nearest.year}년 {nearest.month}월
               </b>
               이에요.
-              <br />그 달이 오면, 오늘 읽은 걸 한 번 더 펴 보세요.
+              <br />그때 이 종이를 다시 열어 보세요.
             </>
           ) : (
-            <>문이 열리는 달이 오면, 오늘 읽은 걸 한 번 더 펴 보세요.</>
+            <>그 달이 오면 이 종이를 다시 열어 보세요.</>
           )}
         </p>
-        <p style={{ marginTop: 12 }}>기다리는 일은 제가 잘해요.</p>
+        <p style={{ marginTop: 12 }}>저는 여기 있을게요.</p>
         <p style={{ marginTop: 12, color: "#6C6483" }}>그때까지, 잘 지내고 계세요.</p>
       </div>
       <p className="font-brush" style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: "#A8842C", letterSpacing: "0.3em" }}>
