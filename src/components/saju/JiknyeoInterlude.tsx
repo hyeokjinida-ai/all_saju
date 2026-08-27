@@ -49,6 +49,10 @@ function Band({
   children,
   sd = "sdSmile",
   cut,
+  cutRatio = "3 / 2",
+  cutPos = "center 18%",
+  cutFade = 52,
+  bubbleSide = "left",
   sfx,
 }: {
   /** 직녀의 대사 — 말맛대로 끊은 줄 배열 */
@@ -57,6 +61,17 @@ function Band({
   sd?: "sdSmile" | "sdThink";
   /** 반신 컷 id(j2·w2·w3…). 주면 **컷이 주인공**인 청월당 문법으로 렌더한다 */
   cut?: string;
+  /** 컷 액자 비율. 기본 3:2 는 원본(2:3)의 **10~54% 구간만** 보여준다 —
+   *  연기가 가슴 아래(손·소품)에서 일어나는 컷은 잘려 나가므로 세로로 키운다. */
+  cutRatio?: string;
+  /** 크롭 기준점. 기본 18% 는 얼굴을 가운데 두는 값이다 */
+  cutPos?: string;
+  /** 아래쪽 페이드 높이(%). 액자를 지우려고 넣은 건데, 연기가 아래에서 일어나는 컷에서는
+   *  기본 52% 가 **손과 소품을 통째로 지워 버린다**(N2 은사 실측). 그런 컷은 28 안팎으로. */
+  cutFade?: number;
+  /** 말풍선을 어느 쪽에 걸칠지. **연기와 같은 쪽에 두면 연기를 덮는다** —
+   *  N2 는 손이 화면 왼쪽인데 말풍선도 왼쪽이라 은사가 통째로 가려졌다(실측). */
+  bubbleSide?: "left" | "right";
   /** 손글씨 방백 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(8/23 규격) */
   sfx?: string;
 }) {
@@ -86,11 +101,11 @@ function Band({
               alt=""
               draggable={false}
               className="w-full select-none"
-              style={{ aspectRatio: "3 / 2", objectFit: "cover", objectPosition: "center 18%", display: "block" }}
+              style={{ aspectRatio: cutRatio, objectFit: "cover", objectPosition: cutPos, display: "block" }}
             />
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0"
-              style={{ height: "52%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 72%, #F7F3EA)" }}
+              style={{ height: `${cutFade}%`, background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 72%, #F7F3EA)" }}
             />
             {sfx && (
               <span
@@ -109,9 +124,16 @@ function Band({
               </span>
             )}
           </div>
-          {/* 말풍선이 **컷에 걸친다** — 꼬리는 오른쪽(컷 안 인물) 쪽 */}
-          <div style={{ position: "absolute", left: 12, bottom: 18, zIndex: 2 }}>
-            <Bubble lines={lines} size="lg" tail="br" />
+          {/* 말풍선이 **컷에 걸친다** — 꼬리는 컷 안 인물 쪽을 향한다 */}
+          <div
+            style={{
+              position: "absolute",
+              ...(bubbleSide === "right" ? { right: 0 } : { left: 12 }),
+              bottom: 18,
+              zIndex: 2,
+            }}
+          >
+            <Bubble lines={lines} size="lg" tail={bubbleSide === "right" ? "bl" : "br"} />
           </div>
         </div>
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
@@ -274,7 +296,7 @@ function RowCard({
 export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   if (!rows?.length) return null;
   return (
-    <Band lines={["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]} cut="j2" sfx="콕—">
+    <Band lines={["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]} cut="w7" sfx="콕—">
       {rows.slice(0, 3).map((r) => (
         <RowCard
           key={r.label}
@@ -314,21 +336,38 @@ export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
 
 /* ── ③ 알아보는 신호 — 6章 뒤 ─────────────────────────── */
 
-/** 짝의 결(오행)이 관계에서 드러나는 방식 — 세 번째 신호를 여기서 만든다.
- *  (앞의 둘은 확정값의 signals 를 그대로 쓴다. 본문과 카드가 같은 값을 말해야 한다) */
-const OH_SIGNAL: Record<string, string> = {
-  목: "다음에 할 일을 자기가 먼저 정해 온다",
-  화: "좋다는 말을 그 자리에서 한다",
-  토: "말보다 손이 먼저 나가 필요한 걸 해둔다",
-  금: "시간 약속이 정확하고 어길 것 같으면 미리 알린다",
-  수: "내가 지나가듯 말한 걸 기억했다가 되묻는다",
+/** 세 번째 카드는 라벨이 **「속도」**다 — 관계가 어떤 박자로 가까워지는지.
+ *  앞의 두 카드(약속·기억)는 확정값 signals 를 그대로 쓰므로 여기는 **다른 축**이어야 한다.
+ *  ⚠ 예전엔 이 표가 SIGNAL_POOL 문장을 그대로 베껴 놓아서, 짝이 수(水)·정(正)이면
+ *     一 과 三 이 **같은 문장**으로 떴다(2026-08-26 실측). 축이 겹치면 반드시 부딪친다. */
+const OH_PACE: Record<string, string> = {
+  목: "처음부터 빠르게 붙었다가 한 번 숨을 고르고, 그 뒤로 쭉 간다",
+  화: "만난 지 얼마 안 돼 마음을 다 보여 주고, 식지 않게 하는 건 내 몫이 된다",
+  토: "느리게 시작해서 어느 날 보면 생활이 겹쳐 있다 — 티가 안 나게 스민다",
+  금: "재는 시간이 길고, 정하고 나면 그 뒤로는 뒤를 안 돌아본다",
+  수: "가까워졌다 멀어졌다 두어 번 하고, 세 번째에 자리를 잡는다",
 };
 
 export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
-  const list = [...(inyeon.signals ?? []), OH_SIGNAL[inyeon.spouseOh || "토"]].filter(Boolean).slice(0, 3);
+  // 중복 제거 — 앞의 둘과 겹치는 문장이 들어오면 카드 두 장이 같은 말을 한다(안전망)
+  const list = [...new Set(
+    [...(inyeon.signals ?? []), OH_PACE[inyeon.spouseOh || "토"]].filter(Boolean),
+  )].slice(0, 3);
   if (!list.length) return null;
   return (
-    <Band lines={["이 세 가지만 기억하면", "그 사람을", "알아볼 수 있어요."]} cut="w3">
+    <Band
+      lines={["이 세 가지만 기억하면", "그 사람을", "알아볼 수 있어요."]}
+      cut="N2"
+      // 연기가 가슴 아래(손바닥의 은사 세 가닥)에서 일어난다. 기본 3:2 는 원본의 10~54%
+      // 구간만 보여 줘서 손이 통째로 잘려 나갔다(실측). 4:5 로 키워야 대사와 그림이 같은 말을 한다
+      // 은사가 얇아 폰 폭에서 죽는다 → **소재를 3:4 로 구워 뒀다**(CSS 크롭 없음).
+      // 페이드도 12 로 낮춘다 — 손이 프레임 아래쪽에 있어 기본값이면 씻긴다
+      cutRatio="3 / 4"
+      cutPos="center"
+      cutFade={12}
+      // 은사를 든 손이 화면 왼쪽에 있다 — 말풍선을 오른쪽으로 비켜 준다
+      bubbleSide="right"
+    >
       {list.map((s, i) => (
         <RowCard
           key={i}
@@ -450,7 +489,7 @@ export function PartnerRecall({
 
 /** 티저가 쓰는 설화 컷을 결과지 본문 사이에 한 장씩 눕힌다.
  *  새 이미지를 만들지 않는다 — 이미 있는 자산(public/products/jiknyeo)의 재배치다. */
-export function CutInterlude({ id, say }: { id: string; say: string }) {
+export function CutInterlude({ id, say, ratio = "3 / 2", pos = "center 22%" }: { id: string; say: string; ratio?: string; pos?: string }) {
   const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
   if (!src) return null;
   return (
@@ -464,7 +503,7 @@ export function CutInterlude({ id, say }: { id: string; say: string }) {
           alt=""
           draggable={false}
           className="w-full select-none object-cover"
-          style={{ aspectRatio: "3 / 2", objectPosition: "center 22%", display: "block" }}
+          style={{ aspectRatio: ratio, objectPosition: pos, display: "block" }}
         />
         {/* 위·아래를 페이지 바탕으로 녹인다 — 액자 대신 페이드로 잇는 게 청월당 문법이다 */}
         <div
@@ -531,6 +570,55 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
   );
 }
 
+/** 컷 한 장 + 말풍선. 카드가 안 따라붙는 자리(짝 얼굴 직전 같은 곳)에서 쓴다.
+ *  Band 는 children(카드)을 전제하므로 그 자리엔 안 맞는다. */
+export function CutSay({
+  id,
+  lines,
+  ratio = "4 / 5",
+  pos = "center 12%",
+  fade = 26,
+}: {
+  id: string;
+  lines: string[];
+  ratio?: string;
+  pos?: string;
+  fade?: number;
+}) {
+  const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
+  if (!src) return null;
+  return (
+    <div style={{ position: "relative", marginTop: 18, paddingBottom: 56 }}>
+      <div
+        style={{
+          position: "relative",
+          width: "84%",
+          marginLeft: "auto",
+          overflow: "hidden",
+          borderRadius: 14,
+          background: "#EFE9DC",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          className="w-full select-none"
+          style={{ aspectRatio: ratio, objectFit: "cover", objectPosition: pos, display: "block" }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0"
+          style={{ height: `${fade}%`, background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
+        />
+      </div>
+      <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
+        <Bubble lines={lines} size="lg" tail="br" />
+      </div>
+    </div>
+  );
+}
+
 /* ── ⑥ 프롤로그 — 결과지의 첫 화면 ────────────────────── */
 
 /** 청월당은 프롤로그 한 장(19,052px)을 통째로 인사에 쓴다. 타이트는 표지+목차 카드 6장으로 연다.
@@ -576,7 +664,7 @@ export function Prologue({
         if (!hero) {
           return (
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!", "하나씩 열어볼게요."]} size="lg" tail="bl" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="bl" />
             </div>
           );
         }
@@ -606,7 +694,7 @@ export function Prologue({
               />
             </div>
             <div style={{ position: "absolute", left: 0, bottom: 0, zIndex: 2 }}>
-              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!", "하나씩 열어볼게요."]} size="lg" tail="br" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="br" />
             </div>
           </div>
         );
@@ -619,6 +707,46 @@ export function Prologue({
         <br />
         <b style={{ color: "#5B3F8F" }}>{name}님 만세력 계산에서 나온 값</b>이에요.
       </p>
+
+      {/* 두 번째 컷 — 인사 다음은 **여는 동작**이다. 컷 하나 + 말풍선 하나로 끝나면 삽화지만
+          컷→말풍선→컷→말풍선이 되면 그때부터 웹툰으로 읽힌다(몰입 판독 §3 「컷 연쇄가 없다」).
+          첫 컷과 좌우를 뒤집어 리듬을 만든다 — 오른쪽 컷 다음은 왼쪽 컷. */}
+      {(() => {
+        const open = assetSrc("/products/jiknyeo/N1.webp") ?? assetSrc("/products/jiknyeo/N1.png");
+        if (!open) return null;
+        return (
+          <div style={{ position: "relative", marginTop: 16, paddingBottom: 58 }}>
+            <div
+              style={{
+                position: "relative",
+                width: "84%",
+                marginRight: "auto",
+                overflow: "hidden",
+                borderRadius: 14,
+                background: "#EFE9DC",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={open}
+                alt=""
+                draggable={false}
+                className="w-full select-none"
+                // 두루마리가 아래쪽에 있어 **소재를 3:4 로 구워 뒀다**. 페이드도 얕게 —
+                // 기본값(42%)이면 펼친 손과 종이가 통째로 씻긴다
+                style={{ aspectRatio: "3 / 4", objectFit: "cover", objectPosition: "center", display: "block" }}
+              />
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0"
+                style={{ height: "14%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
+              />
+            </div>
+            <div style={{ position: "absolute", right: 0, bottom: 0, zIndex: 2 }}>
+              <Bubble lines={["오늘 밤 것부터,", "하나씩 펼쳐", "볼게요."]} size="lg" tail="bl" />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 목차 — 탭하면 그 장으로. 고민 장에는 뱃지를 달아 미리 약속한다 */}
       {chapters.length > 0 && (

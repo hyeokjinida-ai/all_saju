@@ -44,7 +44,7 @@ import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
 import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
-import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
+import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, CutSay, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -476,6 +476,10 @@ export function JiknyeoResult({
         <Plate id="sec-profile">
           <PlateTitle sub="티저에서 가려 두었던 자리예요">내 앞에 나타날 사람</PlateTitle>
 
+          {/* 빈 액자를 들어 보이는 컷 → 바로 다음이 얼굴 카드다. 「들어갈 자리」를 먼저 보여 주고
+              얼굴을 여는 순서라, 결제의 회수 지점이 한 박자 늦춰지면서 더 세게 열린다 */}
+          <CutSay id="N3" lines={["이 사람이에요.", "잘 봐 두세요."]} pos="center 30%" />
+
           {/* 표보다 **얼굴이 먼저** 온다 — 티저가 흐리게 예고한 게 얼굴이라, 결제의 회수도 얼굴이어야 한다 */}
           {(() => {
             const f = buildPartnerFace(inyeon);
@@ -576,7 +580,10 @@ export function JiknyeoResult({
           : /신호/.test(t) ? <SignalCards inyeon={inyeon} />
           : /조심할 달|피해야 할|흔들리/.test(t) ? <ShakyCards rows={inyeon.shaky} />
           : /걸어온 길/.test(t) ? <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." />
-          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="w5" say="당신에게도 그런 날이 와요. 올해도, 몇 번." />
+          // 「판이 바뀌는 해」에는 인물이 아니라 하늘이 맞다 — 은하수 한 장으로 스케일을 벌린다
+          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="w1" say="당신에게도 그런 날이 와요. 올해도, 몇 번." />
+          // 확답 장 뒤에 확신하는 얼굴. 말과 표정이 같은 자리에서 만나야 답이 무겁게 읽힌다
+          : /고민|물음/.test(t) ? <CutInterlude id="w3" say="제가 아는 건 여기까지예요. 그리고 이건 확실해요." />
           : null;
         return (
           <Fragment key={i}>
@@ -593,6 +600,10 @@ export function JiknyeoResult({
           </Fragment>
         );
       })}
+
+      {/* 배웅 — 편지 바로 앞. 돌아보며 눈을 맞추는 컷이라 「저는 여기 있을게요」와 붙는다.
+          마지막 10초가 후기·공유 직전 감정이라 여기에 사람 얼굴이 있어야 한다 */}
+      <CutInterlude id="w5" say="여기까지 같이 왔네요." />
 
       {/* 마치며 — 3사 공통 표준. 낙관(도장) 앞에 편지가 와야 순서가 맞다 */}
       <ClosingLetter who={who} nearest={top3[0] ?? null} />
