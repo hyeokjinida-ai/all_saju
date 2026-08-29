@@ -41,14 +41,14 @@ export function Moon({ phase, size = 30 }: { phase: Phase; size?: number }) {
   if (phase === "half")
     return (
       <svg {...c} aria-hidden>
-        <circle cx="37" cy="37" r="27" fill="#F3EDFA" stroke="#9B8AC4" strokeWidth="2.5" />
-        <path d="M37 10a27 27 0 0 1 0 54z" fill="#C7B0EC" />
+        <circle cx="37" cy="37" r="27" fill="#FBF5E6" stroke="#C7AE72" strokeWidth="2.5" />
+        <path d="M37 10a27 27 0 0 1 0 54z" fill="#DCC793" />
       </svg>
     );
   if (phase === "cres")
     return (
       <svg {...c} aria-hidden>
-        <circle cx="37" cy="37" r="27" fill="#E6E2EE" stroke="#B9B2CE" strokeWidth="2.5" />
+        <circle cx="37" cy="37" r="27" fill="#F2ECDD" stroke="#D5C9A9" strokeWidth="2.5" />
         <path d="M31 11a27 27 0 1 0 0 52 31 31 0 0 1 0-52z" fill="#FCFAFE" />
       </svg>
     );

@@ -23,6 +23,7 @@ import { ResultBody } from "./ResultBody";
 import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultSealOff } from "./ResultSealOff";
 import { ResultReviewCTA } from "./ResultReviewCTA";
+import { PastCheck } from "./PastCheck";
 import { gradeMonths } from "@/lib/saju/teaser";
 import { buildPartnerFace, buildWorstFace } from "@/lib/saju/partner-face";
 
@@ -52,30 +53,35 @@ function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
     <div
       id={id}
       className="relative overflow-hidden rounded-[16px] px-4 py-5"
+      // 2026-08-29 형님 검수: 연보라 판은 **구 공용 템플릿 잔재**였다 — 직녀 세계(밤·한지·먹·금)와
+      // 남남이라 카드만 다른 상품처럼 떴다. 章 본문(hanjiCard)과 같은 한지로 맞춘다.
       style={{
-        background: "linear-gradient(168deg,#F7F4FB 0%,#EDE7F6 58%,#E2D9F0 100%)",
-        boxShadow: "0 0 0 1px rgba(217,199,232,.45), 0 18px 44px rgba(10,8,26,.55)",
+        backgroundColor: "#FCFAF4",
+        backgroundImage:
+          "linear-gradient(rgba(255,253,248,.6), rgba(255,253,248,.6)), url(/products/jiknyeo/hanji.png)",
+        backgroundSize: "auto, 360px 360px",
+        backgroundRepeat: "repeat",
+        boxShadow: "0 0 0 1px rgba(107,76,154,.22), 0 18px 44px rgba(10,8,26,.55)",
         scrollMarginTop: 14,
       }}
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-12"
-        style={{ background: "linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0))" }}
-      />
       {children}
     </div>
   );
 }
 
+/** 판 머리 — 章 간지와 **같은 붓**(매듭 + 좌우 선)을 쓰되 색만 판에 맞춘다.
+ *  간지는 밤 무대라 보라, 이 판은 한지라 금(낙관색)이다. 예전엔 보라 세로막대 두 개였는데
+ *  밝은 종이 위에서 구 템플릿 말투로 읽혔다(2026-08-29 형님 검수). */
 function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
   return (
     <>
-      <div className="flex items-center justify-center gap-2.5">
-        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
-        <p className="text-[17px] font-extrabold" style={{ color: "#1B1729" }}>{children}</p>
-        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
+      <div className="flex items-center justify-center gap-3">
+        <i className="block h-px w-9 flex-none" style={{ background: "linear-gradient(90deg, rgba(168,132,44,0), rgba(168,132,44,.6))" }} />
+        <p className="font-myeongjo text-[19px] font-bold" style={{ color: "#1B1729", letterSpacing: "-0.01em" }}>{children}</p>
+        <i className="block h-px w-9 flex-none" style={{ background: "linear-gradient(90deg, rgba(168,132,44,.6), rgba(168,132,44,0))" }} />
       </div>
-      {sub ? <p className="mt-1.5 text-center text-[12px]" style={{ color: "#6C6483" }}>{sub}</p> : null}
+      {sub ? <p className="mt-2 text-center text-[13px]" style={{ color: "#6C6483" }}>{sub}</p> : null}
     </>
   );
 }
@@ -231,7 +237,7 @@ function FaceCard({
 }) {
   return (
     <div className="mx-auto mt-1 w-full max-w-[300px]">
-      <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#6B4C9A" : "#8A6B6B" }}>
+      <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#8A6A1E" : "#8A6B6B" }}>
         {title}
       </p>
       {/* 3:4 — 생성 규격(1086×1448)과 같은 비율. 여기서 비율이 어긋나면 얼굴이 눌린다.
@@ -264,6 +270,53 @@ function FaceCard({
 /** 짝의 오행 → 「어떤 결의 사람인지」. 외모·직업은 넣지 않는다 —
  *  outline 이 "직업명·얼굴·지역 단정 금지"로 못박은 항목이라 표에서도 지킨다.
  *  (타이트는 외모·직업군까지 표로 단정하지만, 우리는 그 선을 안 넘기로 한 선택이다) */
+/** 만나는 자리 — 만세력 도화 해설 **원문**이 표에 그대로 실리던 것을 손님 말로 옮긴다.
+ *
+ *  2026-08-29 형님 검수: 「처음 마주치는 자리」 칸에 「도삽도화라고도 하며, 어려서부터 성숙한
+ *  감성을 가집니다…」가 통째로 찍히고 있었다. ①전문용어 ②합쇼체(다른 칸은 해요체)
+ *  ③「어디서 만나나」에 답을 안 함 — 결제 직후 첫 보상 화면이라 손상이 컸다.
+ *
+ *  ⚠ `partner-face.ts` 의 `placeFromHint` 를 그냥 쓸 수 없다 — 그건 **반말**로 맞춘다(산군 세계관).
+ *     직녀는 해요체다. 그리고 그 파일은 산군도 쓰므로 건드리면 산군까지 흔들린다.
+ *     그래서 **직녀 전용**으로 둔다. 원문에서 장소 낱말만 집어 같은 곳을 가리키게 하되(본문 LLM 도
+ *     같은 힌트를 근거로 쓴다) 문장은 우리 말로 새로 쓴다. */
+const PLACE_BY_WORD: Array<[RegExp, string]> = [
+  [/직장|조직|회사|업무|거래/, "일로 엮이는 자리예요 — 직장·거래처"],
+  [/소개/, "아는 사람의 소개로 이어져요"],
+  [/모임|동호회|동아리|취미/, "사람이 모이는 자리예요 — 모임·동호회"],
+  [/학교|학원|공부|스터디/, "배우는 자리예요 — 학교·학원"],
+  [/온라인|인터넷/, "화면 너머예요 — 온라인에서 먼저 말이 오가요"],
+  [/여행/, "길 위예요 — 여행지에서"],
+  [/물가/, "물가 가까운 곳이에요"],
+  [/종교|봉사/, "뜻이 같은 자리예요 — 종교·봉사"],
+];
+/** 공급사 해설은 장소와 **경고**를 한 절에 붙여 온다(「기혼자와 관계가 생길 수 있어 주의가 필요」).
+ *  그게 「운명의 짝」 칸에 실리면 상품이 무너진다 — 경고가 섞인 힌트는 통째로 버린다. */
+const PLACE_WARN = /기혼|유부|불륜|삼각|바람기|주의가 필요|조심|위험|경계/;
+const PLACE_BY_OH: Record<string, string> = {
+  목: "배우는 자리예요 — 학원·스터디·동호회",
+  화: "사람이 모이는 밝은 자리예요 — 모임·행사·소개",
+  토: "오래 머문 자리예요 — 직장·동네·아는 사람의 소개",
+  금: "일로 엮이는 자리예요 — 업무·거래처·전문 모임",
+  수: "물가나 늦은 시간, 또는 화면 너머예요",
+};
+function meetPlace(hint: string | undefined, ohKo: string): string {
+  const h = (hint ?? "").trim();
+  if (h && !PLACE_WARN.test(h)) {
+    for (const [re, label] of PLACE_BY_WORD) if (re.test(h)) return label;
+  }
+  return PLACE_BY_OH[ohKo] ?? PLACE_BY_OH.토;
+}
+
+/** 가까워지는 속도 — 십이운성 **이름을 노출하지 않는다.**
+ *  「병 — 천천히 깊어져요」에서 손님은 병(病)을 질병으로 읽는다(2026-08-29 형님 검수).
+ *  단계는 뜻으로만 말한다. */
+function meetSpeed(level: number): string {
+  if (level >= 9) return "빠르게 데워져요";
+  if (level >= 5) return "차근히 가까워져요";
+  return "천천히 깊어져요";
+}
+
 const OH_TRAIT: Record<string, { keul: string; how: string }> = {
   목: { keul: "곧고 자라는 결", how: "먼저 계획을 세워 오고, 약속을 미루지 않아요" },
   화: { keul: "밝고 퍼지는 결", how: "표현이 빠르고, 함께 있으면 분위기가 데워져요" },
@@ -309,7 +362,8 @@ export function JiknyeoResult({
         ohKo={f.ohKo}
         keul={OH_TRAIT[f.ohKo]?.keul ?? "오래 가는 결"}
         ageDir={f.ageDir}
-        place={f.place}
+        // 표와 **같은 값**을 써야 한 장부 안에서 두 곳을 가리키지 않는다(회수 카드가 표를 되짚는 자리다)
+        place={meetPlace(inyeon.meetHint, f.ohKo)}
       />
     );
   };
@@ -372,11 +426,19 @@ export function JiknyeoResult({
           인사 다음에 바로 목차였다. 청월당이 프롤로그 한 장을 통째로 서사에 쓰는 이유가 이것.
           j3 는 **인물이 작고 하늘이 주인공인 유일한 와이드 컷**인데 안 쓰고 있었다 —
           반신 컷만 이어지던 샷 리듬도 여기서 한 번 끊긴다. */}
+      {/* ⚠ 대사는 **직녀가 손님에게 직접 하는 말**만 쓴다 — 3인칭 설정 소개 금지(2026-08-29 형님).
+          예전 문장은 「직녀는 밤마다 여기 앉아…」였다. 화자가 갑자기 세계 밖 나레이터로 바뀌어
+          직녀와 마주 앉은 프레임이 깨지고, 손님 정보가 0이라 와닿지도 않았다(설정은 티저 설화가 이미 함). */}
+      {/* ⚠ 비율은 **컷마다 다르다** — 2:3 을 일괄로 쓰면 안 된다(2026-08-29 형님 검수).
+          j3 는 하단이 빈 마루라 원본 그대로 두면 컷 아래 1/6 이 볼 것 없는 검정으로 남는다.
+          실측(행별 디테일 std<6): **y=1276 = 83.1% 부터 죽은 공간.**
+          4/5 + top 정렬이면 위 83.3% 만 남아 딱 그 자리가 잘린다.
+          (같은 자로 전수 측정: w7 은 15% 가 죽었지만 그 자리를 말풍선이 덮어 실害 없음) */}
       <CutInterlude
         id="j3"
-        say="직녀는 밤마다 여기 앉아, 사람과 사람 사이를 잇는 실을 짭니다."
-        ratio="2 / 3"
-        pos="center"
+        say={who ? `${who}님 달력을 짜던 밤이에요.` : "그대의 달력을 짜던 밤이에요."}
+        ratio="4 / 5"
+        pos="center top"
         sfx="탁, 탁—"
       />
 
@@ -395,12 +457,14 @@ export function JiknyeoResult({
                   key={`${m.year}-${m.month}`}
                   className="rounded-[9px] py-2 text-center"
                   style={{
-                    background: "#FCFAFE",
-                    border: `1px solid ${big ? "#6B4C9A" : "#DFD6EE"}`,
-                    boxShadow: big ? "0 0 0 2px rgba(107,76,154,.16)" : undefined,
+                    background: "#FDFAF1",
+                    // 열린 달의 표식은 **금**이다 — 보라 테두리는 구 템플릿 색이라 한지 위에서 떴다.
+                    // 달 그림 자체가 이미 금색이므로 테두리도 금이어야 한 덩어리로 읽힌다.
+                    border: `1px solid ${big ? "#C2A35C" : "#E2D8BF"}`,
+                    boxShadow: big ? "0 0 0 2px rgba(194,163,92,.22)" : undefined,
                   }}
                 >
-                  <p className="text-[12px] font-bold" style={{ color: big ? "#5B3F8F" : "#6C6483" }}>
+                  <p className="text-[12px] font-bold" style={{ color: big ? "#8A6A1E" : "#6C6483" }}>
                     {m.month}월
                   </p>
                   <div className="mt-1 flex justify-center"><Moon phase={p} /></div>
@@ -432,7 +496,7 @@ export function JiknyeoResult({
               <div
                 key={m.label}
                 className="rounded-[10px] px-3.5 py-3"
-                style={{ background: "#FCFAFE", border: "1px solid #DFD6EE" }}
+                style={{ background: "#FDFAF1", border: "1px solid #E2D8BF" }}
               >
                 <div className="flex items-baseline gap-2">
                   <Moon phase="full" size={20} />
@@ -447,7 +511,7 @@ export function JiknyeoResult({
                       <span
                         key={t}
                         className="rounded-full px-2 py-[3px] text-[11px]"
-                        style={{ background: "#E4DAF4", color: "#3F2E63" }}
+                        style={{ background: "#F2E8CF", color: "#6B5420" }}
                       >
                         {t}
                       </span>
@@ -533,7 +597,7 @@ export function JiknyeoResult({
                   title="이런 결의 사람이에요"
                   why={
                     <>
-                      배우자 자리가 <b style={{ color: "#6B4C9A" }}>{inyeon.spouseOh || "토"}</b>의 결 —
+                      배우자 자리가 <b style={{ color: "#8A6A1E" }}>{inyeon.spouseOh || "토"}</b>의 결 —
                       그 결을 그림으로 옮겼어요
                     </>
                   }
@@ -550,22 +614,22 @@ export function JiknyeoResult({
             );
           })()}
 
-          <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #DFD6EE" }}>
+          <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #E2D8BF" }}>
             {[
               ["어떤 결", OH_TRAIT[inyeon.spouseOh]?.keul ?? "고르게 섞인 결"],
               ["태도", OH_TRAIT[inyeon.spouseOh]?.how ?? "서두르지 않고 꾸준해요"],
               ["인연의 성격", inyeon.spouseType === "정" ? "바르게 오래 가는 인연" : "강하게 끌리는 인연"],
               ["나이대", inyeon.ageDir],
-              ["처음 마주치는 자리", inyeon.meetHint || "사람을 통해 자연스럽게 이어져요"],
-              ["가까워지는 속도", `${inyeon.iljiFortune || "보통"} — ${inyeon.iljiLevel >= 7 ? "빠르게 데워져요" : "천천히 깊어져요"}`],
+              ["처음 마주치는 자리", meetPlace(inyeon.meetHint, inyeon.spouseOh || "토")],
+              ["가까워지는 속도", meetSpeed(inyeon.iljiLevel)],
               ["첫 달", top3[0] ? `${top3[0].year}년 ${top3[0].month}월` : "—"],
             ].map(([k, v], i) => (
               <div
                 key={k}
                 className="flex gap-3 px-3.5 py-2.5"
-                style={{ background: i % 2 ? "#FCFAFE" : "transparent", borderTop: i ? "1px solid #E9E2F4" : undefined }}
+                style={{ background: i % 2 ? "#FDFAF1" : "transparent", borderTop: i ? "1px solid #E8DFC8" : undefined }}
               >
-                <span className="w-[92px] flex-none text-[12px] font-bold" style={{ color: "#6B4C9A" }}>{k}</span>
+                <span className="w-[92px] flex-none text-[12px] font-bold" style={{ color: "#8A6A1E" }}>{k}</span>
                 <span className="flex-1 text-[13px] leading-relaxed" style={{ color: "#332C4A" }}>{v}</span>
               </div>
             ))}
@@ -584,7 +648,7 @@ export function JiknyeoResult({
             const src = assetSrc(w.src);
             if (!src) return null;
             return (
-              <div className="mt-6 border-t pt-5" style={{ borderColor: "#E9E2F4" }}>
+              <div className="mt-6 border-t pt-5" style={{ borderColor: "#E8DFC8" }}>
                 <FaceCard
                   src={src}
                   title="반대로, 멀리할 결이에요"
@@ -620,14 +684,22 @@ export function JiknyeoResult({
           : /만나는 달|들어오는 달|결혼하는 해/.test(t) ? <MonthCards rows={inyeon.top3} />
           : /신호/.test(t) ? <SignalCards inyeon={inyeon} />
           : /조심할 달|피해야 할|흔들리/.test(t) ? <ShakyCards rows={inyeon.shaky} />
-          : /걸어온 길/.test(t) ? <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." sfx="사락—" />
+          // 컷 다음에 **검증**을 세운다 — 이 장만 손님이 채점할 수 있는 장이다(과거는 이미 살아 봤다).
+          // 결과지 전체에서 유일한 인터랙션이라, 순서는 「직녀가 한마디 → 손님이 대답」이어야 한다.
+          : /걸어온 길/.test(t) ? (
+            <>
+              <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." sfx="사락—" />
+              <PastCheck who={who} />
+            </>
+          )
           // 놓치는 패턴 장은 컷이 없었다. j2 는 **유일한 옆모습**(종이를 내려다보는 조용한 얼굴)이라
           // 「지나간 것을 들여다본다」와 맞고, 정면 반신만 이어지던 감정도 한 번 갈린다
           : /놓치는 패턴|늦어지는 이유/.test(t) ? <CutInterlude id="j2" say="여기까지가 지나온 자리예요." ratio="2 / 3" pos="center" />
           // 「판이 바뀌는 해」에는 인물이 아니라 하늘이 맞다. w1(은하수)보다 **t3(까치다리가 놓인 밤)**이
           // 낫다 — 설화를 회수하고, 「건널 수 없던 것을 건너는 해」라는 뜻이 그림 자체에 있다.
           // (t2 는 같은 풍경의 어두운 판이라 한 쌍이다 — 대구가 필요해지면 조심할 달에 쓴다)
-          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="t3" say="일 년에 한 번, 건널 수 없던 곳에 다리가 놓여요." ratio="2 / 3" pos="center" sfx="푸드득—" />
+          // 설화 설명("일 년에 한 번 다리가 놓여요")이 아니라 **손님에게 짚어 주는 말**로 옮겼다
+          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="t3" say={who ? `${who}님께 다리가 놓이는 해예요.` : "다리가 놓이는 해예요."} ratio="2 / 3" pos="center" sfx="푸드득—" />
           // 확답 장 뒤에 확신하는 얼굴. 말과 표정이 같은 자리에서 만나야 답이 무겁게 읽힌다.
           // 인물 컷은 **원본 2:3 그대로** — 3:2 로 자르면 얼굴만 남고 몰입이 안 산다(형님 8/28)
           : /고민|물음/.test(t) ? <CutInterlude id="w3" say="제가 아는 건 여기까지예요. 그리고 이건 확실해요." ratio="2 / 3" pos="center" />
