@@ -18,7 +18,16 @@ import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
-import { SangunNote, SangunNudge, SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
+import {
+  BujeokCard,
+  ClosingLetter,
+  SangunNote,
+  SangunNudge,
+  SangunPrologue,
+  SangunSay,
+  SayPlate,
+  SANGUN_VOICE,
+} from "./SangunInterlude";
 import { DAEUN_NOTE, ilganNote } from "@/lib/saju/sangun-notes";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
@@ -455,6 +464,24 @@ export function SangunResult({
   // 산군의 주석 — 손님의 일간 하나를 골라 1장 끝에 붙인다(LLM 0원 · 개인화는 «고르기»뿐).
   const ilgan = ilganNote(view.pillars.find((p) => p.isDay)?.gan.char);
 
+  // 빈 액자 2장 — 파일이 없으면 그 자리는 조용히 비운다(다른 컷과 같은 방식).
+  const bujeokSrc = assetSrc("/products/sangun/frame-buchak.webp");
+  const letterSrc = assetSrc("/products/sangun/frame-seochal.webp");
+
+  // 편지에 박을 «가장 먼저 오는 달» — 돈·인연의 좋은 달 중 이르게 오는 것 하나.
+  // 확정값에서 그대로 집으므로 본문·표와 다른 달이 나올 수 없다(맺음 컷의 「적어 준 달」과 같은 달).
+  const nearMonth =
+    [...(wealth?.top ?? []), ...(inyeon?.top3 ?? [])]
+      .map((m) => m.label)
+      .filter(Boolean)
+      .sort((a, b) => {
+        const key = (t: string) => {
+          const m = t.match(/(\d{4})\D+(\d{1,2})/);
+          return m ? Number(m[1]) * 100 + Number(m[2]) : 999999;
+        };
+        return key(a) - key(b);
+      })[0] ?? null;
+
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
 
@@ -621,7 +648,13 @@ export function SangunResult({
                     ) : null}
                     {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
                     {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
-                    {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
+                    {/산군의 처방/.test(titleOf(idx)) && prescription ? (
+                      <>
+                        <PrescriptionTable p={prescription} />
+                        {/* 표는 읽는 것, 부적은 담아 가는 것 — 빈 액자에 핵심 석 줄만 옮겨 적는다 */}
+                        {bujeokSrc && <BujeokCard src={bujeokSrc} yongKo={prescription.yongKo} rows={prescription.rows} />}
+                      </>
+                    ) : null}
                     {chapterBlock(idx, i === 0)}
                     {/* 장 끝 읽을거리 — 청월당은 여기에 4,000px 짜리 상식란을 둔다.
                         1장(그릇)엔 일간 주석, 2장(걸어온 길)엔 대운 주석. 둘 다 토큰 0. */}
@@ -641,6 +674,10 @@ export function SangunResult({
           // 9/11챕터가 아니면(다른 구성) 간지 없이 순서대로
           chapters.map((_, i) => chapterBlock(i))
         )}
+
+        {/* 마치며 편지 — 3사 공통 표준(마지막 장 = 캐릭터의 편지). 본문 다음, 맺음 컷 앞.
+            정적 템플릿 + 이름·가장 가까운 달 치환이라 LLM 토큰 0. */}
+        {letterSrc && <ClosingLetter src={letterSrc} who={who || null} nearMonth={nearMonth} />}
 
         {/* 맺음 컷 — 장부를 덮고 낙관을 찍는 손. "다시 열어라"가 재열람 루프의 씨앗이고,
             나중에 후기·추가질문 버튼이 이 자리 아래 붙는다. */}

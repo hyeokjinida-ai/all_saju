@@ -88,8 +88,13 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
     say: "네 본바탕부터 읽는다.",
   },
   { match: /걸어온 길/, src: "/products/sangun/t1-open.webp", alt: "옛 장부를 펴 든 손", say: "지나온 장부터 넘긴다." },
-  // 컷 없음 — 3장. 앞장(걸어온 길)에서 과거를 맞혔으니 여기서 올해로 넘어온다는 이음매를 준다.
-  { match: /올해 네게|오는 것/, say: "지나온 건 됐고, 올해로 오자." },
+  {
+    // 3장 — 부름의 장. 방울은 바이블 §1-5 소품인데 컷이 없어 대사만 서 있던 자리(8/29 수급)
+    match: /올해 네게|오는 것/,
+    src: "/products/sangun/bell.webp",
+    alt: "놋쇠 무당방울을 흔드는 노인의 손",
+    say: "지나온 건 됐고, 올해로 오자.",
+  },
   {
     match: /돈이 들어오는/,
     src: "/products/sangun/money.webp",
@@ -103,16 +108,26 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
     alt: "손가락에 붉은 실을 감고 장부를 짚은 손",
     say: "네 짝이 적힌 자리다.",
   },
-  // 컷 없음 — 7장. 겁주는 장이라 대사에서 미리 대처 쪽으로 틀어 둔다(결과지 톤 규칙).
-  { match: /조심할 달/, say: "겁주려는 게 아니다. 알고 지나가면 덜 다친다." },
+  {
+    // 7장 — 겁주는 장이 아니라 **덮어 두는** 장이라 그림도 장부를 덮는 손이다(대사와 한 몸)
+    match: /조심할 달/,
+    src: "/products/sangun/close-book.webp",
+    alt: "장부를 덮으려는 두 손과 책장 사이로 흘러나온 붉은 실",
+    say: "겁주려는 게 아니다. 알고 지나가면 덜 다친다.",
+  },
   {
     match: /크게 바뀌는 해/,
     src: "/products/sangun/t6-mark.webp",
     alt: "붉은 붓으로 장부의 한 해에 동그라미를 치는 손",
     say: "장부에 붉게 적힌 해가 있다.",
   },
-  // 컷 없음 — 9장. 손님이 적어 온 물음에 답하는 자리. 프롤로그 뱃지가 예고한 곳이다.
-  { match: /네 물음|물음에 답/, say: "네가 적어 온 것, 이제 답한다." },
+  {
+    // 9장 — 프롤로그 뱃지가 예고한 자리. 장부를 이쪽으로 미는 시점 컷이 「이제 네 차례」를 만든다
+    match: /네 물음|물음에 답/,
+    src: "/products/sangun/hand-over.webp",
+    alt: "펼친 장부를 탁자 너머로 밀어 건네는 두 손",
+    say: "네가 적어 온 것, 이제 답한다.",
+  },
   {
     match: /산군의 처방/,
     src: "/products/sangun/altar.webp",
@@ -176,6 +191,136 @@ export function SangunNote({ note }: { note: { title: string; lead: string; body
         </p>
       </div>
     </aside>
+  );
+}
+
+/** 빈 액자 — **액자·질감은 구운 그림, 내용물은 DOM.**
+ *
+ *  청월당 해부 §2 의 기법이다. 저쪽은 종이·제목·캐릭터까지 PNG 로 굽고 개인화 값만 절대배치로
+ *  얹는다. 그래서 손님이 몇 명이든 그림은 한 장이면 되고, **상품당 6~7장이면 디자인이 끝난다.**
+ *  우리도 글자를 굽지 않는다 — 비워 둔 종이 위에 코드가 손님 값을 앉힌다.
+ *
+ *  padX/padY 는 그림 안 «빈 종이» 영역의 안쪽 여백(%)이다. 액자를 다시 구우면 이 값만 고친다. */
+export function EmptyFrame({
+  src,
+  alt,
+  children,
+  padX = 16,
+  padY = 13,
+  ink = "#241d10",
+}: {
+  src: string;
+  alt: string;
+  children: React.ReactNode;
+  padX?: number;
+  padY?: number;
+  ink?: string;
+}) {
+  return (
+    <div className="relative mt-6 overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" draggable={false} />
+      <div
+        className="absolute overflow-y-auto"
+        style={{ left: `${padX}%`, right: `${padX}%`, top: `${padY}%`, bottom: `${padY}%`, color: ink }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** 부적 — 처방표의 **핵심 세 줄만** 부적 종이에 옮겨 적는다.
+ *
+ *  왜: 처방이 표로만 있으면 «정보»고, 부적 위에 얹히면 «지니고 다니는 물건»이 된다.
+ *  표는 위에 그대로 두고(다섯 줄 전부) 여기선 줄여 적는다 — 같은 값을 두 번 보여 주는 게
+ *  아니라, 표는 읽는 것이고 부적은 담아 가는 것이다(캡처 정점).
+ *  글자는 굽지 않았다(빈 액자) — 손님 값이 여기 앉는다. */
+export function BujeokCard({
+  src,
+  yongKo,
+  rows,
+}: {
+  src: string;
+  yongKo: string;
+  rows: { label: string; do_: string }[];
+}) {
+  // 부적은 «지니는 것»이라 표보다 짧아야 한다 — 설명 절(「, 머물 곳도…」)은 떼고 값만 남긴다.
+  const pick = (["방향", "색", "곁에 둘 것"] as const)
+    .map((k) => rows.find((r) => r.label === k))
+    .filter(Boolean)
+    .map((r) => ({ label: r!.label, do_: r!.do_.split(/[,(]/)[0].replace(/에 앉고$/, "").trim() }));
+  if (!pick.length) return null;
+  return (
+    <>
+      <EmptyFrame src={src} alt="붉은 주사로 테두리를 두른 한지 부적" padX={19} padY={15}>
+        <div className="flex h-full flex-col justify-center text-center">
+          <p className="font-brush text-[15px] leading-none" style={{ color: "#7a2418" }}>
+            {yongKo}
+          </p>
+          <p className="font-myeongjo mt-1 text-[10px] tracking-[0.16em]" style={{ color: "rgba(52,34,12,0.82)" }}>
+            네게 이로운 결
+          </p>
+          <div className="mt-3.5 space-y-2.5">
+            {pick.map((r) => (
+              <div key={r.label}>
+                <p className="font-myeongjo text-[10px] tracking-[0.1em]" style={{ color: "rgba(52,34,12,0.78)" }}>
+                  {r.label}
+                </p>
+                <p className="font-myeongjo mt-0.5 text-[12.5px] font-semibold leading-[1.5]">{r.do_}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </EmptyFrame>
+      <SangunNudge>이 석 줄이 네 부적이다. 화면째 담아 두고 지니고 다녀라.</SangunNudge>
+    </>
+  );
+}
+
+/** 마치며 — 서찰 한 장. **3사 공통 표준**(마지막 장 = 캐릭터의 편지)의 산군판.
+ *
+ *  청월당 연애비책 「홍연의 마지막 편지」·정통사주 「마치며」(410자, 14장 중 최소)와 같은 자리다.
+ *  본문(11장 당부)은 위 종이에 그대로 두고, 여기서는 **짧게 맺는다** — 정보가 아니라 배웅이다.
+ *  글은 정적 템플릿에 **이름과 가장 가까운 좋은 달만 치환** = LLM 토큰 0. */
+export function ClosingLetter({
+  src,
+  who,
+  nearMonth,
+}: {
+  src: string;
+  who: string | null;
+  nearMonth: string | null;
+}) {
+  const name = who || "너";
+  return (
+    <EmptyFrame src={src} alt="촛불 아래 반쯤 펼쳐진 한지 서찰" padX={17} padY={16}>
+      <div className="flex h-full flex-col">
+        <p className="font-myeongjo text-[13px] font-bold leading-[1.7]">{name}에게.</p>
+        {/* ⚠ 액자 안은 219×282 뿐이다(실측). 길게 쓰면 종이 밖으로 넘쳐 스크롤이 생기고
+            «편지»가 아니라 잘린 글이 된다 — 청월당 마치며도 410자로 14장 중 가장 짧다.
+            여기는 정보가 아니라 배웅이라, 세 문장이면 족하다. */}
+        <p className="font-myeongjo mt-2 text-[12px] leading-[1.75]">
+          좋은 것만 적지는 않았다. 좋은 것만 적는 장부는 쓸모가 없다.
+        </p>
+        <p className="font-myeongjo mt-1.5 text-[12px] leading-[1.75]">
+          {nearMonth ? (
+            <>
+              가장 먼저 오는 건 <span className="font-bold">{nearMonth}</span>이다. 그달이 오거든 다시 펴 보아라.
+            </>
+          ) : (
+            <>적어 둔 달이 오거든 다시 펴 보아라.</>
+          )}
+        </p>
+        <p className="font-myeongjo mt-1.5 text-[12px] leading-[1.75]">
+          팔자는 정해진 길이 아니라 <span className="font-bold">지형</span>이다. 어디가 오르막인지 알고 걸으면 덜
+          다친다. 그러라고 적어 준 것이다.
+        </p>
+        <p className="font-myeongjo mt-auto pt-2 text-right text-[11.5px] font-bold" style={{ color: "#7a2418" }}>
+          山君
+        </p>
+      </div>
+    </EmptyFrame>
   );
 }
 
