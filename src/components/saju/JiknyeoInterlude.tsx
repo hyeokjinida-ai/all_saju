@@ -536,7 +536,21 @@ export function PartnerRecall({
 
 /** 티저가 쓰는 설화 컷을 결과지 본문 사이에 한 장씩 눕힌다.
  *  새 이미지를 만들지 않는다 — 이미 있는 자산(public/products/jiknyeo)의 재배치다. */
-export function CutInterlude({ id, say, ratio = "3 / 2", pos = "center 22%" }: { id: string; say: string; ratio?: string; pos?: string }) {
+export function CutInterlude({
+  id,
+  say,
+  ratio = "3 / 2",
+  pos = "center 22%",
+  sfx,
+}: {
+  id: string;
+  say: string;
+  ratio?: string;
+  pos?: string;
+  /** 손글씨 방백 — 말풍선 없이 컷 위에 기울여 얹는다.
+   *  청월당 웹툰 문법 4종 중 하나인데(해부 §3) 우리는 밴드 한 곳에서만 쓰고 있었다. */
+  sfx?: string;
+}) {
   const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
   if (!src) return null;
   return (
@@ -555,15 +569,33 @@ export function CutInterlude({ id, say, ratio = "3 / 2", pos = "center 22%" }: {
         {/* 위·아래를 페이지 바탕으로 녹인다 — 액자 대신 페이드로 잇는 게 청월당 문법이다 */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0"
-          style={{ height: "22%", background: "linear-gradient(180deg, #F7F3EA, rgba(247,243,234,0))" }}
+          // 위 페이드 22% 는 3:2 크롭 시절 값 — 원본 2:3 컷에서는 그림 머리를 너무 먹는다
+          style={{ height: "10%", background: "linear-gradient(180deg, #F7F3EA, rgba(247,243,234,0))" }}
         />
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0"
-          style={{ height: "62%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 78%, #F7F3EA)" }}
+          style={{ height: "34%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 82%, #F7F3EA)" }}
         />
+        {sfx && (
+          <span
+            className="font-brush absolute"
+            style={{
+              top: "9%",
+              right: "6%",
+              fontSize: 22,
+              color: "#F0E3B8",
+              transform: "rotate(7deg)",
+              textShadow: "0 2px 10px rgba(10,8,26,.9)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {sfx}
+          </span>
+        )}
         <figcaption
           className="font-myeongjo absolute inset-x-0 bottom-0 px-5 pb-4 text-center"
-          style={{ fontSize: 15, lineHeight: 1.6, color: "#F1EAFB" }}
+          // 글자색은 **페이드가 끝나는 바탕색** 기준으로 정한다 — 크림 위 흰 글자는 안 보인다
+          style={{ fontSize: 15.5, lineHeight: 1.62, color: "#3A3350", fontWeight: 600 }}
         >
           {say}
         </figcaption>
@@ -597,7 +629,11 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
   if (!hit) return null;
   const name = (who || "").trim();
   const lines = hit[1].map((l) => l.replace(/○○/g, name || "그대"));
-  const face = assetSrc("/products/jiknyeo/sdSmile-cut.webp") ?? assetSrc("/products/jiknyeo/sdSmile-cut.png");
+  // 표정 분기 — 10章 전부 웃는 얼굴이면 감정이 단조롭다. 무겁게 짚는 장은 생각하는 얼굴로.
+  // (sdThink-cut 은 진작 있었는데 안 쓰고 있었다)
+  const grave = /놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리|고민|물음/.test(title);
+  const sd = grave ? "sdThink" : "sdSmile";
+  const face = assetSrc(`/products/jiknyeo/${sd}-cut.webp`) ?? assetSrc(`/products/jiknyeo/${sd}-cut.png`);
   return (
     // 캐릭터와 말풍선이 **붙어 있어야** 대사로 읽힌다. 예전엔 58px SD 옆에 190px 말풍선이
     // 나란히 서 있고 꼬리는 SD 가 아니라 그 오른쪽 허공을 가리켰다 — 둘이 남남으로 보였다.
