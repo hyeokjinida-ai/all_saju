@@ -18,6 +18,7 @@ import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
+import { SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -70,38 +71,11 @@ function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: st
         style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.66) 0%,rgba(8,7,6,0.15) 42%,rgba(8,7,6,0) 64%)" }}
       />
       <div className="absolute inset-x-4 bottom-3.5 z-10">
-        <div
-          className="relative rounded-[5px] px-4 py-2.5"
-          style={{
-            background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
-            border: "1px solid rgba(201,185,142,0.8)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
-          }}
-        >
-          <span
-            className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
-            style={{ background: RED, color: "#f3e6cf" }}
-          >
-            산군
-          </span>
-          <p className="font-myeongjo text-[14.5px] font-semibold leading-[1.7] text-[#241d10]">{say}</p>
-        </div>
+        <SayPlate say={say} />
       </div>
     </div>
   );
 }
-
-/** 장 제목 → 컷 배치표. 장 번호가 아니라 **제목**으로 매칭하므로 9장(구)·11장(신) 양쪽에서
- *  해당 장이 있는 자리에만 알아서 선다(없는 장은 자연 생략 — 하위호환 공짜). */
-const CHAPTER_CUTS: { match: RegExp; src: string; alt: string; say: string; pos?: string }[] = [
-  { match: /그릇부터/, src: "/products/sangun/t2-read.webp", alt: "탁자 너머로 고개를 숙이고 마주 앉은 산군", say: "네 본바탕부터 읽는다.", pos: "center 28%" },
-  { match: /걸어온 길/, src: "/products/sangun/t1-open.webp", alt: "옛 장부를 펴 든 손", say: "지나온 장부터 넘긴다." },
-  { match: /돈이 들어오는/, src: "/products/sangun/money.webp", alt: "엽전 꾸러미를 든 손과 펼친 장부", say: "돈 얘기다. 몇 월인지까지 적어 뒀다." },
-  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "움직일 때와 엎드릴 때가 갈린다." },
-  { match: /인연이 들어오는/, src: "/products/sangun/t5-thread.webp", alt: "손가락에 붉은 실을 감고 장부를 짚은 손", say: "네 짝이 적힌 자리다." },
-  { match: /크게 바뀌는 해/, src: "/products/sangun/t6-mark.webp", alt: "붉은 붓으로 장부의 한 해에 동그라미를 치는 손", say: "장부에 붉게 적힌 해가 있다." },
-  { match: /산군의 처방/, src: "/products/sangun/altar.webp", alt: "촛불 제단 앞에 선 박수의 뒷모습", say: "마지막으로, 네가 지니고 살 것들이다.", pos: "center 40%" },
-];
 
 /** 짝의 얼굴 — 결제 전 티저에서 흐리게 보여준 **그 장**을 여기서 연다.
  *
@@ -348,6 +322,7 @@ export function SangunResult({
   prescription,
   reviewOrderId = null,
   recordedAt = null,
+  concern = null,
 }: {
   view: ResultView;
   markdown: string;
@@ -366,6 +341,9 @@ export function SangunResult({
   reviewOrderId?: string | null;
   /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
   recordedAt?: string | null;
+  /** 손님이 적어 온 고민 원문 — 프롤로그 차례에 「네 물음 여기」 뱃지와 함께 되비춘다.
+   *  [프로필] 태그는 고민이 아니라 상황 정보라 호출부에서 걸러 넘긴다. */
+  concern?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
@@ -379,10 +357,32 @@ export function SangunResult({
   // 章 그룹핑이 주제별이라(二=돈[3,5] · 三=인연[4,6]) 목차 인덱스를 그대로 쓰면
   // 손님 눈에는 四 → 六 → 五 → 七 로 번호가 거꾸로 흐른다(2026-08-29 실측).
   // 손님은 목차 번호를 모르고 읽는 순서만 보므로, 보이는 대로 다시 센다.
+  const readOrder = (useJang ? SANGUN_JANG.flatMap((j) => jangIdx(j.no, j.chapterIdx)) : chapters.map((_, i) => i))
+    .filter((idx) => chapters[idx]);
   const displayNo = new Map<number, number>();
-  (useJang ? SANGUN_JANG.flatMap((j) => jangIdx(j.no, j.chapterIdx)) : chapters.map((_, i) => i)).forEach(
-    (idx, pos) => displayNo.set(idx, pos + 1),
-  );
+  readOrder.forEach((idx, pos) => displayNo.set(idx, pos + 1));
+  const numOf = (idx: number) => CHAPTER_NUM[(displayNo.get(idx) ?? idx + 1) - 1] ?? "";
+
+  // 프롤로그 차례 — 읽는 순서 그대로. 제목 앞 「4. 」 번호는 한자 번호와 겹치므로 뗀다.
+  const tocEntries = readOrder.map((idx) => ({
+    idx,
+    no: numOf(idx),
+    title: chapters[idx].title.replace(/^\d+\.\s*/, ""),
+    isConcern: /물음|고민/.test(chapters[idx].title),
+  }));
+
+  // 물성 — **계산한 실값만** 적는다(타이트는 실측의 2~5배로 부풀렸다).
+  // 자수는 판매 카피와 같은 자로 센다: 헤딩을 뺀 본문의 **한글 음절**
+  // (SangunSalesBlocks 2026-08-17 정정 주석 — 렌더 화면 글자수를 세면 표·라벨까지 섞여 부풀려진다).
+  const charCount = markdown.replace(/^#{1,3}\s.*$/gm, "").replace(/[^가-힣]/g, "").length;
+  const monthCount = new Set(
+    [
+      ...(wealth?.top ?? []).map((m) => m.label),
+      ...(wealth?.bad ?? []).map((m) => m.label),
+      ...(inyeon?.top3 ?? []).map((m) => m.label),
+      ...(inyeon?.shaky ?? []).map((m) => m.label),
+    ].filter(Boolean),
+  ).size;
 
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
@@ -411,15 +411,18 @@ export function SangunResult({
     const c = chapters[idx];
     if (!c) return null;
     return (
-      <section key={idx} className={firstInJang ? "mt-6" : "mt-12"}>
+      // id 는 프롤로그 「장부의 차례」가 눌러 오는 자리 — 상단이 잘리지 않게 여백을 준다.
+      <section key={idx} id={`jang-${idx}`} className={firstInJang ? "mt-6" : "mt-12"} style={{ scrollMarginTop: 14 }}>
         <h3
           className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
           style={{ color: HANJI }}
         >
           <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
-            {CHAPTER_NUM[(displayNo.get(idx) ?? idx + 1) - 1] ?? ""}
+            {numOf(idx)}
           </span>
-          <span>{c.title}</span>
+          {/* 제목 앞 「6. 」은 목차 순서 번호다. 한자 번호를 읽는 차례로 다시 매긴 뒤로는
+              둘이 어긋나 보인다(실측: 「五 6. 일과 자리」 · 「六 5. 인연」) — 아라비아는 뗀다. */}
+          <span>{c.title.replace(/^\d+\.\s*/, "")}</span>
         </h3>
         <div className="font-myeongjo mt-1">
           <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
@@ -469,6 +472,18 @@ export function SangunResult({
       </div>
 
       <div className="px-4 pb-8 pt-2">
+        {/* ── 개봉 의식 — 산군이 먼저 말을 걸고, 받은 물건의 크기를 적고, 차례를 편다.
+            여기가 없던 시절엔 표지 다음이 곧장 1장이라 «뭘 받았는지 모른 채» 읽기 시작했다. ── */}
+        {tocEntries.length > 0 && (
+          <SangunPrologue
+            who={who || null}
+            entries={tocEntries}
+            charCount={charCount}
+            monthCount={monthCount}
+            concern={concern}
+          />
+        )}
+
         {/* ── 원국 — 티저와 **같은 판**(PillarChart). 결제 전엔 십성·12운성이 붙어 있었는데
             결제 후에 한자만 남으면 돈 내고 정보가 줄어든 셈이 된다 — 같은 컴포넌트로 통일 ── */}
         {shown.length > 0 && (
@@ -506,10 +521,16 @@ export function SangunResult({
               {jangIdx(j.no, j.chapterIdx).map((idx, i) => {
                 // 타이트 8-2 리듬: 컷(그림+말) → 표(개인화 그래픽) → 본문. 그림이 먼저 와야
                 // 장이 바뀐 게 눈으로 먼저 읽힌다.
-                const cut = CHAPTER_CUTS.find((c) => c.match.test(titleOf(idx)));
+                // 컷이 없는 장(올해·조심할 달·네 물음·당부)에서도 산군이 말을 건다 —
+                // 말을 거는 장만 말을 걸면 나머지 장에서 화자가 사라져 동행 감각이 끊긴다.
+                const v = SANGUN_VOICE.find((c) => c.match.test(titleOf(idx)));
                 return (
                   <div key={idx}>
-                    {cut && <ResultCut src={cut.src} alt={cut.alt} say={cut.say} pos={cut.pos} />}
+                    {v?.src ? (
+                      <ResultCut src={v.src} alt={v.alt ?? ""} say={v.say} pos={v.pos} />
+                    ) : v ? (
+                      <SangunSay say={v.say} />
+                    ) : null}
                     {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
                     {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
                     {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
