@@ -91,6 +91,28 @@ async function main() {
   if (core.length >= 4) ok("산군 핵심 장", `${core.map((i) => i + 1).join(",")} (총 ${core.length}장)`);
   else bad("산군 핵심 장이 너무 적다", String(core.length));
 
+  console.log("\n7) 소제목에 장 번호가 붙어 나가지 않는가");
+  const { normalizeResultVoice, countSubheadingNumbers } = await import("../src/lib/saju/normalize-voice");
+  const subs = [
+    "### 1. 네 그릇부터 보자",
+    "",
+    "**2. 네가 남들과 다른 칼날**", // ← 걷어내야 할 것(모델이 장 번호를 소제목에 이어 매김)
+    "",
+    "**2027년, 벌린 판을 골라 담는 해**", // ← 연도 소제목은 그대로
+    "",
+    "1. 번호 목록은 그대로", // ← 목록도 그대로
+    "",
+    "**[산군의 직언]** 굵게로 시작하지만 문장이 이어지는 줄도 그대로.",
+  ].join("\n");
+  eq("걸린 소제목", countSubheadingNumbers(subs), 1);
+  const fixedText = normalizeResultVoice(subs, { banmal: true, name: "지수" }).text;
+  if (fixedText.includes("**네가 남들과 다른 칼날**")) ok("소제목 번호가 떨어짐");
+  else bad("소제목 번호가 안 떨어짐");
+  if (fixedText.includes("**2027년, 벌린 판을 골라 담는 해**")) ok("연도 소제목 무사");
+  else bad("연도 소제목이 깎임 — 네 자리 숫자를 건드렸다");
+  if (fixedText.includes("1. 번호 목록은 그대로")) ok("번호 목록 무사");
+  else bad("번호 목록이 깎임");
+
   console.log(process.exitCode ? "\n실패 있음\n" : "\n전 항목 통과\n");
 }
 

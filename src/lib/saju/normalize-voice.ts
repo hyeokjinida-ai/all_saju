@@ -216,6 +216,33 @@ export type NormalizeReport = { rule: string; before: number }[];
  * @param banmal 반말 하대체 상품(산군)인지 — "당신"·이름 3인칭 교정은 여기서만 한다.
  *               존댓말 상품에서 "당신"은 정상이므로 건드리면 안 된다.
  */
+/** 소제목에 붙은 장 번호를 뗀다.
+ *
+ *  프롬프트는 「장 제목은 그대로 두고 소제목엔 굵은 글씨를 쓰라」고 하는데, 모델이 이따금
+ *  소제목까지 장 번호로 이어 매긴다(2026-08-29 실측 gpt-5.6-luna: 1장 본문에
+ *  `**2. 네가 남들과 다른 칼날**`). 손님 화면에는 「1.」 없이 「2.」만 뜬 소제목이 되고,
+ *  화면의 장 번호(한자)와도 어긋난다 — 기계적으로 정답이 하나라 후처리로 못 박는다.
+ *
+ *  **굵은 글씨만으로 이뤄진 줄**에서, 앞머리의 한두 자리 번호만 뗀다:
+ *   · 목록(`1. …`)은 굵은 글씨 줄이 아니라 안 걸린다
+ *   · 연도 소제목(`**2027년, 벌린 판을 …**`)은 네 자리라 안 걸린다 */
+/** 소제목 줄(굵은 글씨만으로 이뤄진 한 줄) 앞머리의 번호 — 치환과 계측이 **같은 자**를 쓴다.
+ *  (다른 자로 세면 「고쳤다는데 숫자가 그대로」가 된다 — countDanglingEmphasis 가 남긴 교훈) */
+const SUBHEAD_NUM = /^(\s{0,3}\*\*)\d{1,2}\.[ \t]+(?=\S)/;
+const isBoldOnlyLine = (l: string) => /^\s{0,3}\*\*/.test(l) && l.trimEnd().endsWith("**");
+
+function stripSubheadingNumbers(t: string): string {
+  return t
+    .split("\n")
+    .map((line) => (isBoldOnlyLine(line) ? line.replace(SUBHEAD_NUM, "$1") : line))
+    .join("\n");
+}
+
+/** 위 치환이 걸릴 줄의 수 — 계측용(같은 잣대). */
+export function countSubheadingNumbers(t: string): number {
+  return t.split("\n").filter((l) => isBoldOnlyLine(l) && SUBHEAD_NUM.test(l)).length;
+}
+
 export function normalizeResultVoice(
   md: string,
   opts: { banmal: boolean; name?: string | null },
@@ -243,6 +270,7 @@ export function normalizeResultVoice(
     .split(/(?=\n###\s)/)
     .reduce((n, c) => n + Math.max(0, (c.match(/==[^=]+==/g) ?? []).length - 1), 0);
   note("형광펜 과다", extraMarks);
+  note("소제목 번호", countSubheadingNumbers(md));
 
   let out = fixImperatives(md);
   out = stripHanjaParens(out);
@@ -251,6 +279,7 @@ export function normalizeResultVoice(
   out = stripAlienChars(out);
   out = fixDanglingEmphasis(out);
   out = keepOneHighlightPerChapter(out);
+  out = stripSubheadingNumbers(out);
   if (opts.banmal) out = fixSecondPerson(out, opts.name);
   // 존댓말 상품은 반대 방향 - 반말로 넘어간 대명사를 되돌린다(대사는 건드리지 않는다)
   else out = fixInformalPronounsToPolite(out);

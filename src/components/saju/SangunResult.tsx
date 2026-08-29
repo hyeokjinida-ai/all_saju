@@ -12,7 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { markdownComponents } from "./ResultBody";
+import { makeMarkdownComponents, markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
 import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
@@ -31,6 +31,33 @@ const GOLD_SOFT = "rgba(232,201,106,0.75)";
 const GOLD_PALE = "rgba(232,201,106,0.25)";
 const HANJI = "#efe6d2";
 const RED = "#8f2b1e";
+
+/** 장부 한 장 — 어두운 신당 위에 놓인 종이.
+ *
+ *  왜 본문만 밝히나: 청월당·타이트 유료 결과지는 **간지만 어둡고 본문은 밝다.** 13,000자를
+ *  밤 판에 계속 얹으면 눈이 먼저 지친다. 그렇다고 직녀처럼 전부 밝히면(명:암 88:12) 신점의
+ *  어둠이 사라진다 — 산군의 답은 「어두운 신당 안, 촛불에 비친 밝은 장부 한 장」이다.
+ *  그래서 무대(표지·간지·컷·표)는 밤, **읽는 면만** 종이로 간다.
+ *
+ *  종이는 이미지 없이 만든다(자산 0바이트·요청 0건). 위가 촛불에 밝고 아래로 그늘진다. */
+const HANJI_PAGE: React.CSSProperties = {
+  background:
+    "radial-gradient(120% 70% at 50% 0%, rgba(255,252,240,0.78), rgba(255,252,240,0) 62%), linear-gradient(180deg,#efe5cd 0%,#e6dabd 100%)",
+  borderTop: "1px solid rgba(143,43,30,0.20)",
+  borderBottom: "1px solid rgba(143,43,30,0.20)",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+  // ⚠ 종이 위에서 금은 안 보인다(#e8c96a on #e6dabd = 대비 1.6). 공용 부품(불릿·구분선·인용
+  //   테두리)이 전부 var(--gold-*) 를 쓰므로, 카드 안에서만 **붉은 먹으로 갈아 끼운다.**
+  //   이러면 ResultBody 마크업을 한 줄도 안 고치고 종이 판에서 살아난다.
+  ["--gold" as string]: "#8f2b1e",
+  ["--gold-bright" as string]: "#7a2418",
+  ["--gold-soft" as string]: "#a4512f",
+  ["--gold-pale" as string]: "rgba(143,43,30,0.16)",
+  ["--gold-line" as string]: "rgba(143,43,30,0.28)",
+};
+
+/** 종이 판 위의 본문 — 먹빛 글자 + 붉은 형광(ResultBody 의 ink 톤). */
+const inkComponents = makeMarkdownComponents("ink");
 
 /** 표지 이미지 — cover.webp 가 오기 전엔 제단 그림으로 내려앉는다(화면이 비면 안 된다) */
 function coverSrc(): string {
@@ -413,21 +440,24 @@ export function SangunResult({
     return (
       // id 는 프롤로그 「장부의 차례」가 눌러 오는 자리 — 상단이 잘리지 않게 여백을 준다.
       <section key={idx} id={`jang-${idx}`} className={firstInJang ? "mt-6" : "mt-12"} style={{ scrollMarginTop: 14 }}>
-        <h3
-          className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
-          style={{ color: HANJI }}
-        >
-          <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
-            {numOf(idx)}
-          </span>
-          {/* 제목 앞 「6. 」은 목차 순서 번호다. 한자 번호를 읽는 차례로 다시 매긴 뒤로는
-              둘이 어긋나 보인다(실측: 「五 6. 일과 자리」 · 「六 5. 인연」) — 아라비아는 뗀다. */}
-          <span>{c.title.replace(/^\d+\.\s*/, "")}</span>
-        </h3>
-        <div className="font-myeongjo mt-1">
-          <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
-            {c.body}
-          </ReactMarkdown>
+        {/* 본문 패딩(px-4)을 되물려 종이가 판 끝까지 깔린다 — 읽는 폭을 한 뼘도 안 버린다 */}
+        <div className="-mx-4 px-4 pb-7 pt-6" style={HANJI_PAGE}>
+          <h3
+            className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
+            style={{ color: "#1a1309" }}
+          >
+            <span className="font-brush shrink-0 text-[20px]" style={{ color: RED }}>
+              {numOf(idx)}
+            </span>
+            {/* 제목 앞 「6. 」은 목차 순서 번호다. 한자 번호를 읽는 차례로 다시 매긴 뒤로는
+                둘이 어긋나 보인다(실측: 「五 6. 일과 자리」 · 「六 5. 인연」) — 아라비아는 뗀다. */}
+            <span>{c.title.replace(/^\d+\.\s*/, "")}</span>
+          </h3>
+          <div className="font-myeongjo mt-1">
+            <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={inkComponents}>
+              {c.body}
+            </ReactMarkdown>
+          </div>
         </div>
       </section>
     );
