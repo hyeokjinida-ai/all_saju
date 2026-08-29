@@ -49,9 +49,9 @@ function Band({
   children,
   sd = "sdSmile",
   cut,
-  cutRatio = "3 / 2",
-  cutPos = "center 18%",
-  cutFade = 52,
+  cutRatio = "2 / 3",
+  cutPos = "center",
+  cutFade = 8,
   say,
   saySize = "lg",
   sfx,
@@ -62,20 +62,21 @@ function Band({
   sd?: "sdSmile" | "sdThink";
   /** 반신 컷 id(j2·w2·w3…). 주면 **컷이 주인공**인 청월당 문법으로 렌더한다 */
   cut?: string;
-  /** 컷 액자 비율. 기본 3:2 는 원본(2:3)의 **10~54% 구간만** 보여준다 —
-   *  연기가 가슴 아래(손·소품)에서 일어나는 컷은 잘려 나가므로 세로로 키운다. */
+  /** 컷 액자 비율. 기본은 **원본 그대로(2:3)** — 자르지 않는다.
+   *  예전 기본값 3:2 는 원본의 10~54% 구간만 보여 줘서 연기(손·소품)가 통째로 잘렸고,
+   *  폭도 86% 라 컷이 작았다. 형님 지시(2026-08-28): 「작게 보여주지 말고 화면에 꽉 차게」. */
   cutRatio?: string;
   /** 크롭 기준점. 기본 18% 는 얼굴을 가운데 두는 값이다 */
   cutPos?: string;
-  /** 아래쪽 페이드 높이(%). 액자를 지우려고 넣은 건데, 연기가 아래에서 일어나는 컷에서는
-   *  기본 52% 가 **손과 소품을 통째로 지워 버린다**(N2 은사 실측). 그런 컷은 28 안팎으로. */
+  /** 아래쪽 페이드 높이(%). 컷을 종이 바탕에 녹이는 장치인데 크게 주면 **연기를 지운다** —
+   *  52% 였을 때 w7 달력 종이가 하얗게 날아가고 N2 은사가 사라졌다. 기본 14. */
   cutFade?: number;
   /** 말풍선 자리 — **컷 폭·높이 기준 %**(x=왼쪽, y=위쪽). 티저의 SAY_BOX 와 같은 좌표계다.
    *  모서리 이름(left/right)으로 고르면 컷마다 인물이 다른 자리에 서 있어서 반드시
    *  얼굴이나 연기 위에 떨어진다 — w2 는 오른쪽 절반이 빈 밤하늘인데 말풍선이 인물 위에
    *  얹혀 있었고, w7 은 말풍선이 달력(연기 그 자체)을 덮고 있었다(2026-08-28 격자 실측).
    *  값의 근거는 호출부에 컷별로 적는다. 자는 `python 직녀/tools/say-grid.py`. */
-  say?: { x: number; y: number };
+  say?: { x: number; y: number; tail?: "bl" | "br" };
   /** 밴드 컷(3:2)은 높이가 짧아 lg(207px)면 컷보다 커진다 — 그런 자리는 md 로 */
   saySize?: "lg" | "md";
   /** 손글씨 방백 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(8/23 규격) */
@@ -92,12 +93,11 @@ function Band({
         <div style={{ position: "relative", paddingBottom: say ? 26 : 58 }}>
           {/* 컷 상자 — 좌표의 기준. 액자(overflow hidden)는 한 겹 안쪽이고,
               말풍선은 이 상자 위에 얹혀서 필요하면 밖으로 삐져나간다 */}
-          <div style={{ position: "relative", width: "86%", marginLeft: "auto" }}>
+          <div style={{ position: "relative", margin: "0 -12px" }}>
           <div
             style={{
               position: "relative",
               overflow: "hidden",
-              borderRadius: 12,
               background: "#EFE9DC",
             }}
           >
@@ -133,7 +133,7 @@ function Band({
           {/* 말풍선 — 좌표를 주면 컷 기준 %로 앉고, 없으면 예전대로 왼쪽 아래에 걸친다 */}
           {say ? (
             <div style={{ position: "absolute", left: `${say.x}%`, top: `${say.y}%`, zIndex: 2 }}>
-              <Bubble lines={lines} size={saySize} tail={say.x > 40 ? "bl" : "br"} />
+              <Bubble lines={lines} size={saySize} tail={say.tail ?? (say.x > 40 ? "bl" : "br")} />
             </div>
           ) : (
             <div style={{ position: "absolute", left: 12, bottom: 18, zIndex: 2 }}>
@@ -187,8 +187,10 @@ export function Bubble({
   lines: string[];
   /** lg = 실측값(228) · md = 카드 묶음용 축소판 */
   size?: "lg" | "md";
-  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / 없음 */
-  tail?: "bl" | "br" | "none";
+  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / **l(왼쪽 옆)** / 없음.
+   *  l 은 캐릭터가 말풍선 **옆**에 서는 배치용이다. 아래 꼬리만 있던 시절엔
+   *  SD 를 옆에 세우면 꼬리가 SD 를 비켜 가서 둘이 남남으로 보였다(형님 지적 2026-08-28). */
+  tail?: "bl" | "br" | "l" | "none";
 }) {
   // 실물 폭비 51% 를 화면 폭과 무관하게 지킨다. 448 에서는 228/190 그대로, 360 폰에서는 함께 줄어
   // 글줄이 원을 뚫지 않는다(nowrap 이라 폭이 모자라면 글자가 삐져나온다).
@@ -229,7 +231,19 @@ export function Bubble({
           </span>
         ))}
       </div>
-      {tail !== "none" && (
+      {tail === "l" ? (
+        // 옆 꼬리 — 왼쪽 가운데에서 왼쪽으로 뻗는다. 바로 옆에 선 캐릭터의 얼굴을 가리킨다
+        <svg
+          width="26"
+          height="30"
+          viewBox="0 0 26 30"
+          aria-hidden
+          style={{ position: "absolute", left: -13, top: "44%" }}
+        >
+          <path d="M24 3C12 8 5 15 2 25c1-9 5-18 11-24z" fill="#FFFFFF" stroke="#1B1729" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M23 5C14 9 8 15 5 23" stroke="#FFFFFF" strokeWidth="3" />
+        </svg>
+      ) : tail !== "none" ? (
         // 꼬리는 원과 **한 덩어리**로 보여야 한다 — 흰 삼각을 원에 겹쳐 이음매를 지운다(8/23 규격)
         <svg
           width="30"
@@ -246,7 +260,7 @@ export function Bubble({
           <path d="M27 2C22 14 12 21 2 24c9-1 18-5 25-11z" fill="#FFFFFF" stroke="#1B1729" strokeWidth="2" strokeLinejoin="round" />
           <path d="M25 3C21 12 13 18 5 22" stroke="#FFFFFF" strokeWidth="3" />
         </svg>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -308,10 +322,9 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
       sfx="콕—"
       // 달력 x13~52 · 가리키는 손가락 x40~48 y82~95 를 피해 오른쪽으로. 예전 좌하단은
       // 달력(이 컷의 연기 그 자체)을 통째로 덮고 있었다
-      say={{ x: 47, y: 62 }}
-      saySize="md"
-      // 달력이 y52~95 라 기본 페이드(52%)가 종이를 통째로 하얗게 날려 버렸다(실측)
-      cutFade={18}
+      // 원본 2:3 풀 프레임 실측 — 달력 x8~50 y33~63 · 가리키는 손가락 x38~48 y47~58 ·
+      // 얼굴 x38~58 y10~32. 오른쪽 아래(창·배경)가 유일하게 다 비어 있다
+      say={{ x: 48, y: 66, tail: "bl" }}
     >
       {rows.slice(0, 3).map((r) => (
         <RowCard
@@ -340,10 +353,9 @@ export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
       cut="w2"
       // 인물은 왼쪽(x18~50)뿐이고 오른쪽 절반이 빈 밤하늘 — 여기만 말풍선이 컷 안에 다 들어간다.
       // 예전 좌하단 고정값은 인물 얼굴 위에 얹혀 있었다
-      say={{ x: 48, y: 12 }}
-      saySize="md"
-      // 인물이 아래쪽(y42~100)이라 기본 페이드가 얼굴·어깨를 씻는다
-      cutFade={20}
+      // 인물 x28~62 y28~100(측면). 인물이 **올려다보는 오른쪽 위** 밤하늘에 앉힌다 —
+      // 시선이 말풍선으로 이어져 대사가 그 인물 것으로 읽힌다
+      say={{ x: 46, y: 4, tail: "bl" }}
     >
       {rows.slice(0, 2).map((r) => (
         <RowCard
@@ -385,13 +397,9 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
       cut="N2"
       // 연기가 가슴 아래(손바닥의 은사 세 가닥)에서 일어난다. 기본 3:2 는 원본의 10~54%
       // 구간만 보여 줘서 손이 통째로 잘려 나갔다(실측). 4:5 로 키워야 대사와 그림이 같은 말을 한다
-      // 은사가 얇아 폰 폭에서 죽는다 → **소재를 3:4 로 구워 뒀다**(CSS 크롭 없음).
-      // 페이드도 12 로 낮춘다 — 손이 프레임 아래쪽에 있어 기본값이면 씻긴다
-      cutRatio="3 / 4"
-      cutPos="center"
-      cutFade={12}
-      // 은사를 든 손이 화면 왼쪽(x8~45 y58~88)이라 오른쪽으로 비킨다
-      say={{ x: 44, y: 56 }}
+      // 은사를 든 손이 화면 왼쪽이라 오른쪽으로 비킨다
+      // 은사 든 손 x20~42 y48~92 · 얼굴 x38~62 y10~40. 오른쪽(x76~100)이 배경
+      say={{ x: 48, y: 60, tail: "bl" }}
     >
       {list.map((s, i) => (
         <RowCard
@@ -580,25 +588,24 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
     // 캐릭터와 말풍선이 **붙어 있어야** 대사로 읽힌다. 예전엔 58px SD 옆에 190px 말풍선이
     // 나란히 서 있고 꼬리는 SD 가 아니라 그 오른쪽 허공을 가리켰다 — 둘이 남남으로 보였다.
     // 말풍선을 오른쪽 위로 올리고 SD 를 그 꼬리 밑에 겹쳐 세운다(웹툰 기본 배치).
-    // 꼬리 끝 좌표를 계산해서 그 밑에 SD 를 세운다(눈대중 금지).
-    //   말풍선 md = 190×173 · 꼬리 svg 는 왼쪽 18% 지점·아래로 14px · 끝점은 svg 안 (2,24)
-    //   → 꼬리 끝 = (left + 0.18*190 + 2, 173 - 14 + 24) = (left+36, 183)
-    //   left=20 이면 끝점 (56,183). SD 를 x6~80 · y110~206 에 세우면 그 점이 SD 몸 위에 떨어진다.
-    <div style={{ position: "relative", marginBottom: 16, height: 206 }}>
-      <div style={{ position: "absolute", left: 20, top: 0 }}>
-        <Bubble lines={lines} size="md" tail="bl" />
-      </div>
+    // 청월당은 SD 를 세워만 두지 않는다 — **캐릭터에서 말풍선이 나오는 한 덩어리**로 그린다.
+    // 우리는 아래 꼬리밖에 없어서 SD 를 옆에 세우면 꼬리가 SD 를 비켜 갔다(형님 지적).
+    // 옆 꼬리(tail="l")를 만들어 **말풍선 왼쪽 44% 지점**이 SD 얼굴 높이에 오게 맞춘다.
+    //   말풍선 md 173px · 꼬리 y = 173*0.44 ≈ 76 → SD 얼굴(위에서 1/4 지점)이 y76 에 오도록
+    //   SD 를 top 44 에 세운다(96px 중 얼굴이 y44~76).
+    <div style={{ position: "relative", marginBottom: 18, height: 176 }}>
       {face ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={face}
           alt=""
           draggable={false}
-          // 꼬리(말풍선 왼쪽 18% 지점)가 머리 위로 떨어지도록 SD 를 그 아래에 세운다.
-          // 74×96 — 58px 은 190px 말풍선 옆에서 부속품처럼 보였다
-          style={{ position: "absolute", left: 6, top: 110, width: 74, height: 96, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
+          style={{ position: "absolute", left: 0, top: 44, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
         />
       ) : null}
+      <div style={{ position: "absolute", left: 100, top: 0 }}>
+        <Bubble lines={lines} size="md" tail="l" />
+      </div>
     </div>
   );
 }
@@ -608,10 +615,10 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
 export function CutSay({
   id,
   lines,
-  ratio = "4 / 5",
-  pos = "center 12%",
-  fade = 26,
-  say = { x: 0, y: 74 },
+  ratio = "2 / 3",
+  pos = "center",
+  fade = 8,
+  say = { x: 0, y: 74, tail: "br" },
 }: {
   id: string;
   lines: string[];
@@ -619,23 +626,16 @@ export function CutSay({
   pos?: string;
   fade?: number;
   /** 말풍선 자리 — 컷 폭·높이 기준 %. 자는 `python 직녀/tools/say-grid.py` */
-  say?: { x: number; y: number };
+  say?: { x: number; y: number; tail?: "bl" | "br" };
 }) {
   const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
   if (!src) return null;
   return (
     // 말풍선이 컷 아래로 삐져나오는 만큼 자리를 비운다 — 안 비우면 다음 블록(얼굴 카드) 위를 덮는다.
     // 컷 높이 470 · say.y 74% · 말풍선 207px → 85px 초과. 96 이면 겹침 0.
-    <div style={{ position: "relative", marginTop: 18, paddingBottom: 96 }}>
-      <div style={{ position: "relative", width: "84%", marginLeft: "auto" }}>
-      <div
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: 14,
-          background: "#EFE9DC",
-        }}
-      >
+    <div style={{ position: "relative", marginTop: 18, paddingBottom: 20 }}>
+      <div style={{ position: "relative", margin: "0 -12px" }}>
+      <div style={{ position: "relative", overflow: "hidden", background: "#EFE9DC" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
@@ -650,7 +650,7 @@ export function CutSay({
         />
       </div>
       <div style={{ position: "absolute", left: `${say.x}%`, top: `${say.y}%`, zIndex: 2 }}>
-        <Bubble lines={lines} size="lg" tail={say.x > 40 ? "bl" : "br"} />
+        <Bubble lines={lines} size="lg" tail={say.tail ?? (say.x > 40 ? "bl" : "br")} />
       </div>
       </div>
     </div>
@@ -707,33 +707,26 @@ export function Prologue({
           );
         }
         return (
-          <div style={{ position: "relative", paddingBottom: 30 }}>
-            <div style={{ position: "relative", width: "84%", marginLeft: "auto" }}>
-            <div
-              style={{
-                position: "relative",
-                overflow: "hidden",
-                borderRadius: 14,
-                background: "#EFE9DC",
-              }}
-            >
+          <div style={{ position: "relative", paddingBottom: 22 }}>
+            <div style={{ position: "relative", margin: "0 -18px" }}>
+            <div style={{ position: "relative", overflow: "hidden", background: "#EFE9DC" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={hero}
                 alt=""
                 draggable={false}
                 className="w-full select-none"
-                style={{ aspectRatio: "4 / 5", objectFit: "cover", objectPosition: "center 12%", display: "block" }}
+                style={{ aspectRatio: "2 / 3", objectFit: "cover", objectPosition: "center", display: "block" }}
               />
               <div
                 className="pointer-events-none absolute inset-x-0 bottom-0"
-                style={{ height: "42%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
+                style={{ height: "8%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
               />
             </div>
             {/* 격자 실측(say-grid): 얼굴 x25~60 y8~45 · 손 x25~45 y48~78 · 땋은머리 x62~80.
                 손 반대쪽(오른쪽) 아래에 걸친다 — 예전엔 컷 **밖** 좌하단이라 대사가 아니라
                 그림 밑 캡션으로 읽혔다 */}
-            <div style={{ position: "absolute", left: "44%", top: "58%", zIndex: 2 }}>
+            <div style={{ position: "absolute", left: "48%", top: "56%", zIndex: 2 }}>
               <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="bl" />
             </div>
             </div>
@@ -756,34 +749,25 @@ export function Prologue({
         const open = assetSrc("/products/jiknyeo/N1.webp") ?? assetSrc("/products/jiknyeo/N1.png");
         if (!open) return null;
         return (
-          <div style={{ position: "relative", marginTop: 16, paddingBottom: 30 }}>
-            <div style={{ position: "relative", width: "84%", marginRight: "auto" }}>
-            <div
-              style={{
-                position: "relative",
-                overflow: "hidden",
-                borderRadius: 14,
-                background: "#EFE9DC",
-              }}
-            >
+          <div style={{ position: "relative", marginTop: 16, paddingBottom: 22 }}>
+            <div style={{ position: "relative", margin: "0 -18px" }}>
+            <div style={{ position: "relative", overflow: "hidden", background: "#EFE9DC" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={open}
                 alt=""
                 draggable={false}
                 className="w-full select-none"
-                // 두루마리가 아래쪽에 있어 **소재를 3:4 로 구워 뒀다**. 페이드도 얕게 —
-                // 기본값(42%)이면 펼친 손과 종이가 통째로 씻긴다
-                style={{ aspectRatio: "3 / 4", objectFit: "cover", objectPosition: "center", display: "block" }}
+                style={{ aspectRatio: "2 / 3", objectFit: "cover", objectPosition: "center", display: "block" }}
               />
               <div
                 className="pointer-events-none absolute inset-x-0 bottom-0"
-                style={{ height: "14%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
+                style={{ height: "8%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
               />
             </div>
             {/* 격자 실측: 두루마리 x5~92 y45~92 가 아래 절반을 다 먹어 컷 안에 자리가 없다.
                 두루마리 **아래 모서리만** 스치도록 걸친다 — 펼친 손과 종이는 살린다 */}
-            <div style={{ position: "absolute", left: "46%", top: "84%", zIndex: 2 }}>
+            <div style={{ position: "absolute", left: "49%", top: "72%", zIndex: 2 }}>
               <Bubble lines={["오늘 밤 것부터,", "하나씩 펼쳐", "볼게요."]} size="lg" tail="bl" />
             </div>
             </div>
