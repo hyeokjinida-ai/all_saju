@@ -76,7 +76,7 @@ function Band({
    *  얼굴이나 연기 위에 떨어진다 — w2 는 오른쪽 절반이 빈 밤하늘인데 말풍선이 인물 위에
    *  얹혀 있었고, w7 은 말풍선이 달력(연기 그 자체)을 덮고 있었다(2026-08-28 격자 실측).
    *  값의 근거는 호출부에 컷별로 적는다. 자는 `python 직녀/tools/say-grid.py`. */
-  say?: { x: number; y: number; tail?: "bl" | "br" };
+  say?: { x: number; y: number; tail?: "bl" | "br" | "tl" | "tr" };
   /** 밴드 컷(3:2)은 높이가 짧아 lg(207px)면 컷보다 커진다 — 그런 자리는 md 로 */
   saySize?: "lg" | "md";
   /** 손글씨 방백 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(8/23 규격) */
@@ -189,7 +189,10 @@ function Band({
 const SAY_ART = {
   "lg-br": { src: "/products/jiknyeo/say-lg-br.png", ratio: 1.215, box: { x: 5.7, y: 6.1, w: 89.0, h: 65.9 } },
   "lg-bl": { src: "/products/jiknyeo/say-lg-bl.png", ratio: 1.213, box: { x: 5.4, y: 6.3, w: 89.1, h: 65.7 } },
+  "lg-tr": { src: "/products/jiknyeo/say-lg-tr.png", ratio: 1.215, box: { x: 5.7, y: 28.0, w: 89.0, h: 65.9 } },
+  "lg-tl": { src: "/products/jiknyeo/say-lg-tl.png", ratio: 1.213, box: { x: 5.4, y: 28.0, w: 89.1, h: 65.7 } },
   "md-bl": { src: "/products/jiknyeo/say-md-bl.png", ratio: 1.310, box: { x: 7.1, y: 9.3, w: 86.0, h: 76.1 } },
+  "md-tl": { src: "/products/jiknyeo/say-md-tl.png", ratio: 1.310, box: { x: 7.1, y: 14.6, w: 86.0, h: 76.1 } },
   none: { src: "/products/jiknyeo/say-none.png", ratio: 1.321, box: { x: 6.9, y: 9.6, w: 86.5, h: 76.4 } },
 } as const;
 
@@ -202,14 +205,25 @@ export function Bubble({
   lines: string[];
   /** lg = 본문 컷용 · md = 카드 묶음·章머리용 */
   size?: "lg" | "md";
-  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / 없음.
-   *  md 는 그림이 bl 한 장뿐이라 br 이 오면 좌우 반전해서 쓴다(글자는 안 뒤집는다). */
-  tail?: "bl" | "br" | "none";
+  /** 꼬리 방향 — **화자의 얼굴이 있는 쪽**을 고른다.
+   *  tl/tr(위) · bl/br(아래) · none.
+   *  ⚠ 「말풍선이 오른쪽이면 bl」 같은 규칙은 틀렸다(형님 지적 2026-08-29) — 우리 컷은 얼굴이
+   *  위쪽(y10~40)에 있어서 말풍선이 그 아래 앉으면 **꼬리가 위를 향해야** 한다.
+   *  md 는 tr/br 그림이 없어 좌우 반전해서 쓴다(글자는 안 뒤집는다). */
+  tail?: "bl" | "br" | "tl" | "tr" | "none";
 }) {
+  const up = tail === "tl" || tail === "tr";
+  const right = tail === "br" || tail === "tr";
   const key =
-    tail === "none" ? "none" : size === "lg" ? (tail === "br" ? "lg-br" : "lg-bl") : "md-bl";
+    tail === "none"
+      ? "none"
+      : size === "lg"
+        ? ((up ? "lg-t" : "lg-b") + (right ? "r" : "l")) as "lg-br" | "lg-bl" | "lg-tr" | "lg-tl"
+        : up
+          ? "md-tl"
+          : "md-bl";
   const art = SAY_ART[key];
-  const flip = size === "md" && tail === "br";
+  const flip = size === "md" && right;
 
   // 실측 폭비 51% 를 화면 폭과 무관하게 지킨다(청월당 원본 측정값). 높이는 그림 비율이 정한다.
   const w = size === "lg" ? "min(228px, 51vw)" : "min(190px, 43vw)";
@@ -324,7 +338,7 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
       // 달력(이 컷의 연기 그 자체)을 통째로 덮고 있었다
       // 원본 2:3 풀 프레임 실측 — 달력 x8~50 y33~63 · 가리키는 손가락 x38~48 y47~58 ·
       // 얼굴 x38~58 y10~32. 오른쪽 아래(창·배경)가 유일하게 다 비어 있다
-      say={{ x: 48, y: 66, tail: "bl" }}
+      say={{ x: 48, y: 66, tail: "tl" }}
     >
       {rows.slice(0, 3).map((r) => (
         <RowCard
@@ -399,7 +413,7 @@ export function SignalCards({ inyeon }: { inyeon: InyeonFacts }) {
       // 구간만 보여 줘서 손이 통째로 잘려 나갔다(실측). 4:5 로 키워야 대사와 그림이 같은 말을 한다
       // 은사를 든 손이 화면 왼쪽이라 오른쪽으로 비킨다
       // 은사 든 손 x20~42 y48~92 · 얼굴 x38~62 y10~40. 오른쪽(x76~100)이 배경
-      say={{ x: 48, y: 60, tail: "bl" }}
+      say={{ x: 48, y: 60, tail: "tl" }}
     >
       {list.map((s, i) => (
         <RowCard
@@ -618,7 +632,7 @@ export function CutSay({
   ratio = "2 / 3",
   pos = "center",
   fade = 8,
-  say = { x: 0, y: 74, tail: "br" },
+  say = { x: 0, y: 74, tail: "tr" },
 }: {
   id: string;
   lines: string[];
@@ -626,7 +640,7 @@ export function CutSay({
   pos?: string;
   fade?: number;
   /** 말풍선 자리 — 컷 폭·높이 기준 %. 자는 `python 직녀/tools/say-grid.py` */
-  say?: { x: number; y: number; tail?: "bl" | "br" };
+  say?: { x: number; y: number; tail?: "bl" | "br" | "tl" | "tr" };
 }) {
   const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
   if (!src) return null;
@@ -702,7 +716,7 @@ export function Prologue({
         if (!hero) {
           return (
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="bl" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="tl" />
             </div>
           );
         }
@@ -768,7 +782,7 @@ export function Prologue({
             {/* 격자 실측: 두루마리 x5~92 y45~92 가 아래 절반을 다 먹어 컷 안에 자리가 없다.
                 두루마리 **아래 모서리만** 스치도록 걸친다 — 펼친 손과 종이는 살린다 */}
             <div style={{ position: "absolute", left: "49%", top: "72%", zIndex: 2 }}>
-              <Bubble lines={["오늘 밤 것부터,", "하나씩 펼쳐", "볼게요."]} size="lg" tail="bl" />
+              <Bubble lines={["오늘 밤 것부터,", "하나씩 펼쳐", "볼게요."]} size="lg" tail="tl" />
             </div>
             </div>
           </div>
