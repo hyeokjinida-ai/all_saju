@@ -241,6 +241,53 @@ function FaceCard({
 /** 짝의 오행 → 「어떤 결의 사람인지」. 외모·직업은 넣지 않는다 —
  *  outline 이 "직업명·얼굴·지역 단정 금지"로 못박은 항목이라 표에서도 지킨다.
  *  (타이트는 외모·직업군까지 표로 단정하지만, 우리는 그 선을 안 넘기로 한 선택이다) */
+/** 만나는 자리 — 만세력 도화 해설 **원문**이 표에 그대로 실리던 것을 손님 말로 옮긴다.
+ *
+ *  2026-08-29 형님 검수: 「처음 마주치는 자리」 칸에 「도삽도화라고도 하며, 어려서부터 성숙한
+ *  감성을 가집니다…」가 통째로 찍히고 있었다. ①전문용어 ②합쇼체(다른 칸은 해요체)
+ *  ③「어디서 만나나」에 답을 안 함 — 결제 직후 첫 보상 화면이라 손상이 컸다.
+ *
+ *  ⚠ `partner-face.ts` 의 `placeFromHint` 를 그냥 쓸 수 없다 — 그건 **반말**로 맞춘다(산군 세계관).
+ *     직녀는 해요체다. 그리고 그 파일은 산군도 쓰므로 건드리면 산군까지 흔들린다.
+ *     그래서 **직녀 전용**으로 둔다. 원문에서 장소 낱말만 집어 같은 곳을 가리키게 하되(본문 LLM 도
+ *     같은 힌트를 근거로 쓴다) 문장은 우리 말로 새로 쓴다. */
+const PLACE_BY_WORD: Array<[RegExp, string]> = [
+  [/직장|조직|회사|업무|거래/, "일로 엮이는 자리예요 — 직장·거래처"],
+  [/소개/, "아는 사람의 소개로 이어져요"],
+  [/모임|동호회|동아리|취미/, "사람이 모이는 자리예요 — 모임·동호회"],
+  [/학교|학원|공부|스터디/, "배우는 자리예요 — 학교·학원"],
+  [/온라인|인터넷/, "화면 너머예요 — 온라인에서 먼저 말이 오가요"],
+  [/여행/, "길 위예요 — 여행지에서"],
+  [/물가/, "물가 가까운 곳이에요"],
+  [/종교|봉사/, "뜻이 같은 자리예요 — 종교·봉사"],
+];
+/** 공급사 해설은 장소와 **경고**를 한 절에 붙여 온다(「기혼자와 관계가 생길 수 있어 주의가 필요」).
+ *  그게 「운명의 짝」 칸에 실리면 상품이 무너진다 — 경고가 섞인 힌트는 통째로 버린다. */
+const PLACE_WARN = /기혼|유부|불륜|삼각|바람기|주의가 필요|조심|위험|경계/;
+const PLACE_BY_OH: Record<string, string> = {
+  목: "배우는 자리예요 — 학원·스터디·동호회",
+  화: "사람이 모이는 밝은 자리예요 — 모임·행사·소개",
+  토: "오래 머문 자리예요 — 직장·동네·아는 사람의 소개",
+  금: "일로 엮이는 자리예요 — 업무·거래처·전문 모임",
+  수: "물가나 늦은 시간, 또는 화면 너머예요",
+};
+function meetPlace(hint: string | undefined, ohKo: string): string {
+  const h = (hint ?? "").trim();
+  if (h && !PLACE_WARN.test(h)) {
+    for (const [re, label] of PLACE_BY_WORD) if (re.test(h)) return label;
+  }
+  return PLACE_BY_OH[ohKo] ?? PLACE_BY_OH.토;
+}
+
+/** 가까워지는 속도 — 십이운성 **이름을 노출하지 않는다.**
+ *  「병 — 천천히 깊어져요」에서 손님은 병(病)을 질병으로 읽는다(2026-08-29 형님 검수).
+ *  단계는 뜻으로만 말한다. */
+function meetSpeed(level: number): string {
+  if (level >= 9) return "빠르게 데워져요";
+  if (level >= 5) return "차근히 가까워져요";
+  return "천천히 깊어져요";
+}
+
 const OH_TRAIT: Record<string, { keul: string; how: string }> = {
   목: { keul: "곧고 자라는 결", how: "먼저 계획을 세워 오고, 약속을 미루지 않아요" },
   화: { keul: "밝고 퍼지는 결", how: "표현이 빠르고, 함께 있으면 분위기가 데워져요" },
@@ -286,7 +333,8 @@ export function JiknyeoResult({
         ohKo={f.ohKo}
         keul={OH_TRAIT[f.ohKo]?.keul ?? "오래 가는 결"}
         ageDir={f.ageDir}
-        place={f.place}
+        // 표와 **같은 값**을 써야 한 장부 안에서 두 곳을 가리키지 않는다(회수 카드가 표를 되짚는 자리다)
+        place={meetPlace(inyeon.meetHint, f.ohKo)}
       />
     );
   };
@@ -543,8 +591,8 @@ export function JiknyeoResult({
               ["태도", OH_TRAIT[inyeon.spouseOh]?.how ?? "서두르지 않고 꾸준해요"],
               ["인연의 성격", inyeon.spouseType === "정" ? "바르게 오래 가는 인연" : "강하게 끌리는 인연"],
               ["나이대", inyeon.ageDir],
-              ["처음 마주치는 자리", inyeon.meetHint || "사람을 통해 자연스럽게 이어져요"],
-              ["가까워지는 속도", `${inyeon.iljiFortune || "보통"} — ${inyeon.iljiLevel >= 7 ? "빠르게 데워져요" : "천천히 깊어져요"}`],
+              ["처음 마주치는 자리", meetPlace(inyeon.meetHint, inyeon.spouseOh || "토")],
+              ["가까워지는 속도", meetSpeed(inyeon.iljiLevel)],
               ["첫 달", top3[0] ? `${top3[0].year}년 ${top3[0].month}월` : "—"],
             ].map(([k, v], i) => (
               <div
