@@ -53,30 +53,35 @@ function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
     <div
       id={id}
       className="relative overflow-hidden rounded-[16px] px-4 py-5"
+      // 2026-08-29 형님 검수: 연보라 판은 **구 공용 템플릿 잔재**였다 — 직녀 세계(밤·한지·먹·금)와
+      // 남남이라 카드만 다른 상품처럼 떴다. 章 본문(hanjiCard)과 같은 한지로 맞춘다.
       style={{
-        background: "linear-gradient(168deg,#F7F4FB 0%,#EDE7F6 58%,#E2D9F0 100%)",
-        boxShadow: "0 0 0 1px rgba(217,199,232,.45), 0 18px 44px rgba(10,8,26,.55)",
+        backgroundColor: "#FCFAF4",
+        backgroundImage:
+          "linear-gradient(rgba(255,253,248,.6), rgba(255,253,248,.6)), url(/products/jiknyeo/hanji.png)",
+        backgroundSize: "auto, 360px 360px",
+        backgroundRepeat: "repeat",
+        boxShadow: "0 0 0 1px rgba(107,76,154,.22), 0 18px 44px rgba(10,8,26,.55)",
         scrollMarginTop: 14,
       }}
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-12"
-        style={{ background: "linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0))" }}
-      />
       {children}
     </div>
   );
 }
 
+/** 판 머리 — 章 간지와 **같은 붓**(매듭 + 좌우 선)을 쓰되 색만 판에 맞춘다.
+ *  간지는 밤 무대라 보라, 이 판은 한지라 금(낙관색)이다. 예전엔 보라 세로막대 두 개였는데
+ *  밝은 종이 위에서 구 템플릿 말투로 읽혔다(2026-08-29 형님 검수). */
 function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
   return (
     <>
-      <div className="flex items-center justify-center gap-2.5">
-        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
-        <p className="text-[17px] font-extrabold" style={{ color: "#1B1729" }}>{children}</p>
-        <i className="block h-5 w-[3px] flex-none" style={{ background: "#6B4C9A" }} />
+      <div className="flex items-center justify-center gap-3">
+        <i className="block h-px w-9 flex-none" style={{ background: "linear-gradient(90deg, rgba(168,132,44,0), rgba(168,132,44,.6))" }} />
+        <p className="font-myeongjo text-[19px] font-bold" style={{ color: "#1B1729", letterSpacing: "-0.01em" }}>{children}</p>
+        <i className="block h-px w-9 flex-none" style={{ background: "linear-gradient(90deg, rgba(168,132,44,.6), rgba(168,132,44,0))" }} />
       </div>
-      {sub ? <p className="mt-1.5 text-center text-[12px]" style={{ color: "#6C6483" }}>{sub}</p> : null}
+      {sub ? <p className="mt-2 text-center text-[13px]" style={{ color: "#6C6483" }}>{sub}</p> : null}
     </>
   );
 }
@@ -344,9 +349,12 @@ export function JiknyeoResult({
           인사 다음에 바로 목차였다. 청월당이 프롤로그 한 장을 통째로 서사에 쓰는 이유가 이것.
           j3 는 **인물이 작고 하늘이 주인공인 유일한 와이드 컷**인데 안 쓰고 있었다 —
           반신 컷만 이어지던 샷 리듬도 여기서 한 번 끊긴다. */}
+      {/* ⚠ 대사는 **직녀가 손님에게 직접 하는 말**만 쓴다 — 3인칭 설정 소개 금지(2026-08-29 형님).
+          예전 문장은 「직녀는 밤마다 여기 앉아…」였다. 화자가 갑자기 세계 밖 나레이터로 바뀌어
+          직녀와 마주 앉은 프레임이 깨지고, 손님 정보가 0이라 와닿지도 않았다(설정은 티저 설화가 이미 함). */}
       <CutInterlude
         id="j3"
-        say="직녀는 밤마다 여기 앉아, 사람과 사람 사이를 잇는 실을 짭니다."
+        say={who ? `${who}님 달력을 짜던 밤이에요.` : "그대의 달력을 짜던 밤이에요."}
         ratio="2 / 3"
         pos="center"
         sfx="탁, 탁—"
@@ -606,7 +614,8 @@ export function JiknyeoResult({
           // 「판이 바뀌는 해」에는 인물이 아니라 하늘이 맞다. w1(은하수)보다 **t3(까치다리가 놓인 밤)**이
           // 낫다 — 설화를 회수하고, 「건널 수 없던 것을 건너는 해」라는 뜻이 그림 자체에 있다.
           // (t2 는 같은 풍경의 어두운 판이라 한 쌍이다 — 대구가 필요해지면 조심할 달에 쓴다)
-          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="t3" say="일 년에 한 번, 건널 수 없던 곳에 다리가 놓여요." ratio="2 / 3" pos="center" sfx="푸드득—" />
+          // 설화 설명("일 년에 한 번 다리가 놓여요")이 아니라 **손님에게 짚어 주는 말**로 옮겼다
+          : /크게 바뀌는 해/.test(t) ? <CutInterlude id="t3" say={who ? `${who}님께 다리가 놓이는 해예요.` : "다리가 놓이는 해예요."} ratio="2 / 3" pos="center" sfx="푸드득—" />
           // 확답 장 뒤에 확신하는 얼굴. 말과 표정이 같은 자리에서 만나야 답이 무겁게 읽힌다.
           // 인물 컷은 **원본 2:3 그대로** — 3:2 로 자르면 얼굴만 남고 몰입이 안 산다(형님 8/28)
           : /고민|물음/.test(t) ? <CutInterlude id="w3" say="제가 아는 건 여기까지예요. 그리고 이건 확실해요." ratio="2 / 3" pos="center" />

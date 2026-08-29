@@ -153,15 +153,16 @@ function Band({
 
   // ── SD 문법 — 가벼운 자리(청월당도 반신과 SD 를 섞어 쓴다) ──
   //  ⚠ 예전엔 말풍선이 왼쪽·SD 가 오른쪽인데 꼬리가 bl(왼쪽 아래)이라 **SD 반대편 허공**을
-  //    가리켰다(2026-08-29 실측). 章머리(ChapterSay)와 같은 배치로 통일한다 —
-  //    SD 를 왼쪽에 세우고 말풍선을 오른쪽 위에, 꼬리 끝(left+0.088*190, 0.981*145 ≈ 17,142)이
-  //    SD 머리에 떨어지게 한다.
+  //    가리켰다(2026-08-29 실측). 章머리(ChapterSay)와 같은 배치·같은 규격으로 통일한다 —
+  //    lg 228px + SD 118px, 꼬리 끝(46+13, 185)이 SD 얼굴 중심(59)에 떨어진다.
+  //    좌표 근거는 ChapterSay 주석 참조(같은 자를 쓴다 — 여기만 md 로 두면 같은 화면에서
+  //    같은 화자의 목소리 크기가 16.5/18.8 로 갈린다).
   const face = assetSrc(`/products/jiknyeo/${sd}-cut.webp`) ?? assetSrc(`/products/jiknyeo/${sd}-cut.png`);
   return (
     <div style={{ margin: "20px 0 0" }}>
-      <div style={{ position: "relative", height: 240 }}>
-        <div style={{ position: "absolute", left: 30, top: 0 }}>
-          <Bubble lines={lines} size="md" tail="bl" />
+      <div style={{ position: "relative", height: 309 }}>
+        <div style={{ position: "absolute", left: 46, top: 0 }}>
+          <Bubble lines={lines} size="lg" tail="bl" />
         </div>
         {face ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -169,7 +170,7 @@ function Band({
             src={face}
             alt=""
             draggable={false}
-            style={{ position: "absolute", left: 0, top: 118, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
+            style={{ position: "absolute", left: 0, top: 155, width: 118, height: 154, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
           />
         ) : null}
       </div>
@@ -569,16 +570,10 @@ export function CutInterlude({
           className="w-full select-none object-cover"
           style={{ aspectRatio: ratio, objectPosition: pos, display: "block" }}
         />
-        {/* 위·아래를 페이지 바탕으로 녹인다 — 액자 대신 페이드로 잇는 게 청월당 문법이다 */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0"
-          // 위 페이드 22% 는 3:2 크롭 시절 값 — 원본 2:3 컷에서는 그림 머리를 너무 먹는다
-          style={{ height: "10%", background: "linear-gradient(180deg, #F7F3EA, rgba(247,243,234,0))" }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0"
-          style={{ height: "34%", background: "linear-gradient(180deg, rgba(247,243,234,0), rgba(247,243,234,.92) 82%, #F7F3EA)" }}
-        />
+        {/* ⚠ 페이드를 **걷어냈다**(2026-08-29 형님 검수: 「그림이 죽는다」).
+            청월당의 페이드 이음새는 **밝은 그림 → 밝은 종이**라서 성립한다. 우리 컷은 밤이라
+            같은 페이드가 회색 안개로 뜨고, 베틀·문살·달빛을 지웠다(아래 34%·위 10% 실측 확인).
+            대사를 컷 밖 한지 띠로 내렸으므로 받침도, 이음새도 필요 없다 — 컷은 컷답게 선명히 끝낸다. */}
         {sfx && (
           <span
             className="font-brush absolute"
@@ -595,14 +590,16 @@ export function CutInterlude({
             {sfx}
           </span>
         )}
-        <figcaption
-          className="font-myeongjo absolute inset-x-0 bottom-0 px-5 pb-4 text-center"
-          // 글자색은 **페이드가 끝나는 바탕색** 기준으로 정한다 — 크림 위 흰 글자는 안 보인다
-          style={{ fontSize: 15.5, lineHeight: 1.62, color: "#3A3350", fontWeight: 600 }}
-        >
-          {say}
-        </figcaption>
       </div>
+      {/* 대사는 **컷 밖 한지 띠**에 앉힌다. 그림 위에 얹으면 받치려고 안개를 깔게 되고,
+          그 안개가 그림을 절반 죽인다 — 청월당도 컷 대사는 컷 밖에 둔다.
+          `keep-all` 이 없으면 한글이 글자 단위로 꺾여 「실을 짭 / 니다」가 된다(실측). */}
+      <figcaption
+        className="font-myeongjo px-6 pt-3 text-center"
+        style={{ fontSize: 17, lineHeight: 1.62, color: "#3A3350", fontWeight: 600, wordBreak: "keep-all" }}
+      >
+        {say}
+      </figcaption>
     </figure>
   );
 }
@@ -643,12 +640,16 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
     // 말풍선을 오른쪽 위로 올리고 SD 를 그 꼬리 밑에 겹쳐 세운다(웹툰 기본 배치).
     // 청월당은 SD 를 세워만 두지 않는다 — **캐릭터에서 말풍선이 나오는 한 덩어리**로 그린다.
     // 이제 꼬리가 그림에 그려져 있으므로 **그 끝점에 SD 를 맞추기만** 하면 된다.
-    //   say-md-bl 실측: 477×364(비율 1.310) · 꼬리 끝 (8.8%, 98.1%)
-    //   폭 190px → 높이 145px · 꼬리 끝 = (17, 142). 말풍선을 left 30 에 두면 끝점 x=47.
-    //   SD 92px 의 얼굴 중심이 x≈46 이므로 SD 를 left 0 · top 118 에 세우면 꼬리가 머리에 닿는다.
-    <div style={{ position: "relative", marginBottom: 18, height: 240 }}>
-      <div style={{ position: "absolute", left: 30, top: 0 }}>
-        <Bubble lines={lines} size="md" tail="bl" />
+    //   2026-08-29 형님 검수: md(190px) + SD 92px 조합은 **덩어리가 빈 종이에 떠 보였다** —
+    //   말풍선만 크고 화자가 작아 균형이 깨지고, 오른쪽 절반이 통째로 비었다. 둘 다 한 단 키운다.
+    //   say-lg-bl 실측(bubble 알파 최하단): 616×508(비율 1.213) · 꼬리 끝 (5.7%, 98.6%)
+    //   폭 228px → 높이 188px · 꼬리 끝 = (13, 185).
+    //   SD 118px 의 얼굴 중심이 x≈59 이므로 말풍선을 left 46 에 두면 끝점 x=59 로 맞물린다.
+    //   SD top 은 「머리 꼭대기가 꼬리 끝보다 31px 위」(기존 24px 를 154/120 로 스케일).
+    //   글자도 16.5 → 18.8px 이 되어 대사 눈금(17~19)에 들어온다.
+    <div style={{ position: "relative", marginBottom: 18, height: 309 }}>
+      <div style={{ position: "absolute", left: 46, top: 0 }}>
+        <Bubble lines={lines} size="lg" tail="bl" />
       </div>
       {face ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -656,7 +657,7 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
           src={face}
           alt=""
           draggable={false}
-          style={{ position: "absolute", left: 0, top: 118, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
+          style={{ position: "absolute", left: 0, top: 155, width: 118, height: 154, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
         />
       ) : null}
     </div>
