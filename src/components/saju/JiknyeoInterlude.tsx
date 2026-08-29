@@ -559,7 +559,10 @@ export function CutInterlude({
   return (
     // 풀블리드 — 청월당은 테두리 컷과 **가장자리까지 꽉 찬 컷**을 번갈아 써서 리듬을 만든다
     // (해부 §3: 우리에게 없던 장치 3개 중 하나). 페이지 좌우 패딩(12px)을 음수 마진으로 상쇄한다.
-    <figure style={{ margin: "18px -12px 0" }}>
+    // ⚠ 앞 여백 18px 은 컷을 앞 문단에 붙여 놨다 — 웹툰 실측(칠흑 48·54화)에서 컷 앞뒤가
+    //   화면의 3분의 1까지 비고, 감정이 무거운 구간일수록 **여백이 넓어져 침묵이 된다.**
+    //   글 → (숨) → 그림 순서가 되게 벌린다. 아래는 페이드가 이미 다음 블록으로 이어 준다.
+    <figure style={{ margin: "44px -12px 0" }}>
       <div style={{ position: "relative", overflow: "hidden", background: "#EFE9DC" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -889,7 +892,10 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
   return (
     <div
       style={{
-        margin: "20px 0 0",
+        // 배웅 컷이 페이드로 스며 사라진 **뒤 한 박자**. 48화 엔딩은 컷을 끊지 않고 여백으로
+        // 여운을 남긴다(54화의 반전 절단과 정반대 문법 — 저쪽은 도발, 이쪽은 배웅).
+        // 산군은 절단, 직녀는 여운 — 상품 성격이 엔딩 문법을 가른다.
+        margin: "56px 0 0",
         padding: "22px 20px 24px",
         borderRadius: 16,
         backgroundColor: "#faf7f0",

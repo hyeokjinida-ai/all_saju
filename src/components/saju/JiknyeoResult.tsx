@@ -157,6 +157,35 @@ const hanjiCard: React.CSSProperties = {
   boxShadow: "0 18px 44px rgba(10,8,26,.55)",
 };
 
+/** 章별 무드 — **감정 온도계.**
+ *
+ *  카카오웹툰 「칠흑이 삼킨 여름」 두 회차를 같은 자로 재 보니(2026-08-29) 회차마다 톤이
+ *  통째로 달랐다: 54화(일상·대화) 밝음 61%·어둠 6%, **48화(감정 클라이맥스) 밝음 39%·
+ *  중간 47%·어둠 12%.** 48화는 감정이 무거운 구간에서 흰 여백을 버리고 **바탕 자체가
+ *  색을 가진다**(회녹). 밝기만 오르내리는 게 아니라 색조가 바뀐다.
+ *
+ *  우리 열 장은 전부 같은 아이보리라 열 장이 한 톤으로 읽혔다. 직녀의 감정은 파도다 —
+ *  놓친 이유(가라앉음) → 만나는 달(트임) → 조심할 달(가라앉음) → 크게 바뀌는 해(트임).
+ *  그 네 곳만 반의반 톤씩 흔든다. 진폭을 크게 주면 파도가 아니라 얼룩이 된다.
+ *  (산군은 열한 장 중 두 곳 — 저쪽은 「어두운 신당」이라 이미 대비가 있고, 직녀는 종이가
+ *   내내 밝아서 흔들 자리가 더 필요하다) */
+function chapterMood(title: string): React.CSSProperties {
+  const HANJI_URL = "url(/products/jiknyeo/hanji.png)";
+  // 가라앉음 — 지나간 것을 들여다보는 장. 흰 오버레이를 옅은 회보라로 바꾼다(채도만 내림)
+  if (/놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리/.test(title))
+    return {
+      backgroundColor: "#F4F1F7",
+      backgroundImage: `linear-gradient(rgba(240,236,247,.66), rgba(233,228,242,.66)), ${HANJI_URL}`,
+    };
+  // 트임 — 이 결과지를 산 이유가 적힌 장. 달빛 은청을 한 겹 얹어 종이가 환해진다
+  if (/만나는 달|들어오는 달|결혼하는 해|크게 바뀌는 해/.test(title))
+    return {
+      backgroundColor: "#FEFDFA",
+      backgroundImage: `linear-gradient(rgba(255,254,252,.74), rgba(250,252,255,.74)), ${HANJI_URL}`,
+    };
+  return {};
+}
+
 /* ── 본문 카드 — 밤 위 어두운 카드(요약부 등 章 밖에서 계속 쓴다) ── */
 const nightCard: React.CSSProperties = {
   borderRadius: 16,
@@ -607,7 +636,7 @@ export function JiknyeoResult({
           <Fragment key={i}>
             {before(t)}
             <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} />
-            <div id={`ch-body-${i}`} style={{ ...hanjiCard, marginTop: 0 }}>
+            <div id={`ch-body-${i}`} style={{ ...hanjiCard, ...chapterMood(t), marginTop: 0 }}>
               {/* 장 머리에서 직녀가 한마디 — 지금 무엇을 볼지 쉬운 말로 예고한다(청월당 밀도) */}
               <ChapterSay title={c.title} who={who} />
               <ResultBody markdown={c.body} tone="hanji" />
