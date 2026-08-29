@@ -21,24 +21,50 @@ const RED = "#8f2b1e";
 
 /** 산군의 공수 판 — 한지 쪽지에 붉은 낙관 배지.
  *  컷 위에 얹히기도 하고(ResultCut) 혼자 서기도 한다(SangunSay). 두 자리가 **같은 옷**이어야
- *  「같은 사람이 계속 말하고 있다」로 읽힌다 — 판이 갈리면 그 순간 화자가 둘이 된다. */
-export function SayPlate({ say, compact = false }: { say: string; compact?: boolean }) {
+ *  「같은 사람이 계속 말하고 있다」로 읽힌다 — 판이 갈리면 그 순간 화자가 둘이 된다.
+ *
+ *  `invert` = **반전 절단.** 카카오웹툰 「칠흑이 삼킨 여름」 54화 실측(2026-08-29): 회차 내내
+ *  흰 말풍선·먹 글자로 가다가 **마지막 대사 하나만 검정 판 + 흰 글자로 뒤집고 거기서 끊는다.**
+ *  같은 옷을 한 번 뒤집는 것만으로 「지금까지와 다른 말」이 된다 — 새 부품을 만드는 것보다 세다.
+ *  한 판에 **딱 한 번만** 쓴다. 두 번 쓰면 반전이 평상복이 되고 절단이 사라진다. */
+export function SayPlate({
+  say,
+  compact = false,
+  invert = false,
+}: {
+  say: string;
+  compact?: boolean;
+  invert?: boolean;
+}) {
   return (
     <div
       className={`relative rounded-[5px] ${compact ? "px-3.5 py-2" : "px-4 py-2.5"}`}
-      style={{
-        background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
-        border: "1px solid rgba(201,185,142,0.8)",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
-      }}
+      style={
+        invert
+          ? {
+              background: "linear-gradient(180deg,#14100a,#080605)",
+              border: `1px solid ${RED}`,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.75)",
+            }
+          : {
+              background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+              border: "1px solid rgba(201,185,142,0.8)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+            }
+      }
     >
       <span
         className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
-        style={{ background: RED, color: "#f3e6cf" }}
+        style={invert ? { background: "#f3e6cf", color: RED } : { background: RED, color: "#f3e6cf" }}
       >
         산군
       </span>
-      <p className="font-myeongjo text-[14.5px] font-semibold leading-[1.7] text-[#241d10]">{say}</p>
+      <p
+        className="font-myeongjo text-[14.5px] font-semibold leading-[1.7]"
+        style={{ color: invert ? "#f3e6cf" : "#241d10" }}
+      >
+        {say}
+      </p>
     </div>
   );
 }
@@ -46,10 +72,14 @@ export function SayPlate({ say, compact = false }: { say: string; compact?: bool
 /** 컷 없이 대사만 서는 자리 — 그림이 없는 장(올해·조심할 달·네 물음·마지막 당부)용.
  *
  *  그림을 새로 굽기 전에도 **11장 전부에서 산군이 말을 걸게** 하려는 부품이다.
- *  컷이 있는 장만 말을 걸면 나머지 장에서 화자가 사라져 「사람이 읽어 주는 물건」이 끊긴다. */
+ *  컷이 있는 장만 말을 걸면 나머지 장에서 화자가 사라져 「사람이 읽어 주는 물건」이 끊긴다.
+ *
+ *  ⚠ 여백이 연출이다 — 웹툰 실측(같은 회차)에서 **화면의 33%가 흰 여백**이었고, 말풍선이
+ *  그림 없이 여백에 혼자 앉는 자리가 계속 나온다. 우리는 28px 로 붙여 놔서 앞 블록에 묻혀
+ *  「끼워 넣은 캡션」으로 읽혔다. 위를 크게 벌려 **대사가 혼자 서는 자리**를 만든다. */
 export function SangunSay({ say }: { say: string }) {
   return (
-    <div className="mt-7">
+    <div className="mt-14">
       <SayPlate say={say} compact />
     </div>
   );
@@ -159,7 +189,7 @@ function withBold(text: string): React.ReactNode {
 
 export function SangunNote({ note }: { note: { title: string; lead: string; body: string[] } }) {
   return (
-    <aside className="mt-7" style={{ border: `1px solid ${GOLD_PALE}`, background: "rgba(232,201,106,0.035)" }}>
+    <aside className="mt-12" style={{ border: `1px solid ${GOLD_PALE}`, background: "rgba(232,201,106,0.035)" }}>
       <div
         className="flex items-baseline gap-2 px-4 py-2.5"
         style={{ background: "rgba(232,201,106,0.07)", borderBottom: `1px solid ${GOLD_PALE}` }}

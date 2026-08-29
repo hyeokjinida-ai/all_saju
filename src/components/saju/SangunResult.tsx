@@ -69,6 +69,30 @@ const HANJI_PAGE: React.CSSProperties = {
 /** 종이 판 위의 본문 — 먹빛 글자 + 붉은 형광(ResultBody 의 ink 톤). */
 const inkComponents = makeMarkdownComponents("ink");
 
+/** 장별 무드 — **감정 온도계.**
+ *
+ *  카카오웹툰 「칠흑이 삼킨 여름」 54화 실측(2026-08-29): 제목이 칠흑인데도 바탕은
+ *  **밝음 61% · 어둠 6%** 였다. 어둠을 배경으로 깔지 않고 **구두점처럼** 쓴다 —
+ *  장면이 가라앉을 때 종이째 서서히 어두워졌다가 다음 정점에서 도로 밝아진다(하드 컷 아님).
+ *
+ *  우리 종이는 열한 장이 전부 같은 밝기라 열한 장이 한 톤으로 읽혔다. **두 장만** 건드린다:
+ *   · 조심할 달 — 반 톤 가라앉힌다(겁주는 게 아니라 «숨을 낮추는» 자리)
+ *   · 크게 바뀌는 해 — 반 톤 올린다(가라앉은 바로 다음 장이라 대비로 정점이 선다)
+ *  나머지 아홉 장은 기본값. 세 장 이상 건드리면 «온도차»가 아니라 얼룩이 된다. */
+function pageMood(title: string): React.CSSProperties {
+  if (/조심할 달/.test(title))
+    return {
+      background:
+        "radial-gradient(120% 70% at 50% 0%, rgba(255,252,240,0.42), rgba(255,252,240,0) 62%), linear-gradient(180deg,#e3d7bd 0%,#d8caa9 100%)",
+    };
+  if (/크게 바뀌는 해/.test(title))
+    return {
+      background:
+        "radial-gradient(120% 70% at 50% 0%, rgba(255,253,246,0.95), rgba(255,253,246,0) 66%), linear-gradient(180deg,#f6eeda 0%,#eee3c8 100%)",
+    };
+  return {};
+}
+
 /** 표지 이미지 — cover.webp 가 오기 전엔 제단 그림으로 내려앉는다(화면이 비면 안 된다) */
 function coverSrc(): string {
   const p = path.join(process.cwd(), "public", "products", "sangun", "cover.webp");
@@ -93,11 +117,14 @@ function ResultCut({
   say,
   pos = "center",
   ratio = "4 / 5",
+  invert = false,
 }: {
   src: string;
   alt: string;
   say: string;
   pos?: string;
+  /** 공수를 검정 판·흰 글자로 뒤집는다 — **판 전체에서 딱 한 번**(맺음). SayPlate 주석 참고 */
+  invert?: boolean;
   /** 컷 액자 비율 — 기본은 **원본 그대로(4:5)**. 자르지 않는다.
    *
    *  예전엔 220px 가로 띠였다. 원본이 840×1050 인데 가운데 26% 구간만 보여 준 셈이라
@@ -112,7 +139,7 @@ function ResultCut({
   if (!ok) return null; // 아직 안 온 컷은 그 자리만 조용히 비운다
   return (
     // 본문 패딩(px-4=16)을 되물려 컬럼 끝까지 채운다 — 판 패딩을 바꾸면 이 값도 같이 바꿔야 한다.
-    <div className="relative -mx-4 mt-7 overflow-hidden" style={{ aspectRatio: ratio }}>
+    <div className="relative -mx-4 mt-12 overflow-hidden" style={{ aspectRatio: ratio }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={ok}
@@ -131,7 +158,7 @@ function ResultCut({
         style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.80) 0%,rgba(8,7,6,0.30) 46%,rgba(8,7,6,0) 100%)" }}
       />
       <div className="absolute inset-x-4 bottom-3.5 z-10">
-        <SayPlate say={say} />
+        <SayPlate say={say} invert={invert} />
       </div>
     </div>
   );
@@ -209,7 +236,7 @@ function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth
 function Ganji({ no, tag, line }: { no: string; tag?: string; line: string }) {
   return (
     <div
-      className="mt-8 px-4 pb-7 pt-7 text-center"
+      className="mt-16 px-4 pb-7 pt-7 text-center"
       style={{
         backgroundImage: "url(/products/sangun/ganji.webp)",
         backgroundSize: "cover",
@@ -512,7 +539,7 @@ export function SangunResult({
       // id 는 프롤로그 「장부의 차례」가 눌러 오는 자리 — 상단이 잘리지 않게 여백을 준다.
       <section key={idx} id={`jang-${idx}`} className={firstInJang ? "mt-6" : "mt-12"} style={{ scrollMarginTop: 14 }}>
         {/* 본문 패딩(px-4)을 되물려 종이가 판 끝까지 깔린다 — 읽는 폭을 한 뼘도 안 버린다 */}
-        <div className="-mx-4 px-4 pb-7 pt-6" style={HANJI_PAGE}>
+        <div className="-mx-4 px-4 pb-7 pt-6" style={{ ...HANJI_PAGE, ...pageMood(c.title) }}>
           <h3
             className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
             style={{ color: "#1a1309" }}
@@ -685,6 +712,8 @@ export function SangunResult({
           src="/products/sangun/close.webp"
           alt="장부의 마지막 장에 붉은 낙관을 찍는 손"
           say="여기까지가 네 장부다. 적어 준 달이 오거든 다시 열어봐라."
+          // 반전 절단 — 판 전체에서 흰 공수로 열두 번 말한 뒤 **마지막 한 번만** 검정으로 뒤집는다
+          invert
         />
 
         {/* 기록 완료 낙관 — 맺음 컷(낙관 찍는 손 사진) 바로 아래에 진짜 낙관이 찍힌다.
