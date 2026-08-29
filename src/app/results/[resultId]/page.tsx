@@ -252,6 +252,11 @@ export default async function ResultPage({
             prescription={rawAnalysis ? computePrescription(rawAnalysis) : null}
             reviewOrderId={ownerId ? result.order_id : null}
             recordedAt={result.created_at as string | null}
+            /* 손님이 적어 온 물음 — 프롤로그 차례에서 되비춘다(「내 고민 어디서 답하나」를 먼저 없앤다).
+               [프로필] 태그는 고민이 아니라 상황 정보(스토리 선택지 수집)라 걸러 낸다. */
+            concern={
+              (savedInput?.concerns ?? []).filter((c: string) => !c.startsWith("[프로필]")).join(", ") || null
+            }
           />
         ) : (
           <>

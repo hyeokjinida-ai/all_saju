@@ -12,12 +12,23 @@ import fs from "node:fs";
 import path from "node:path";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { markdownComponents } from "./ResultBody";
+import { makeMarkdownComponents, markdownComponents } from "./ResultBody";
 import { splitChapters } from "./ResultChapters";
 import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
+import {
+  BujeokCard,
+  ClosingLetter,
+  SangunNote,
+  SangunNudge,
+  SangunPrologue,
+  SangunSay,
+  SayPlate,
+  SANGUN_VOICE,
+} from "./SangunInterlude";
+import { DAEUN_NOTE, ilganNote } from "@/lib/saju/sangun-notes";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -30,6 +41,57 @@ const GOLD_SOFT = "rgba(232,201,106,0.75)";
 const GOLD_PALE = "rgba(232,201,106,0.25)";
 const HANJI = "#efe6d2";
 const RED = "#8f2b1e";
+
+/** 장부 한 장 — 어두운 신당 위에 놓인 종이.
+ *
+ *  왜 본문만 밝히나: 청월당·타이트 유료 결과지는 **간지만 어둡고 본문은 밝다.** 13,000자를
+ *  밤 판에 계속 얹으면 눈이 먼저 지친다. 그렇다고 직녀처럼 전부 밝히면(명:암 88:12) 신점의
+ *  어둠이 사라진다 — 산군의 답은 「어두운 신당 안, 촛불에 비친 밝은 장부 한 장」이다.
+ *  그래서 무대(표지·간지·컷·표)는 밤, **읽는 면만** 종이로 간다.
+ *
+ *  종이는 이미지 없이 만든다(자산 0바이트·요청 0건). 위가 촛불에 밝고 아래로 그늘진다. */
+const HANJI_PAGE: React.CSSProperties = {
+  background:
+    "radial-gradient(120% 70% at 50% 0%, rgba(255,252,240,0.78), rgba(255,252,240,0) 62%), linear-gradient(180deg,#efe5cd 0%,#e6dabd 100%)",
+  borderTop: "1px solid rgba(143,43,30,0.20)",
+  borderBottom: "1px solid rgba(143,43,30,0.20)",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+  // ⚠ 종이 위에서 금은 안 보인다(#e8c96a on #e6dabd = 대비 1.6). 공용 부품(불릿·구분선·인용
+  //   테두리)이 전부 var(--gold-*) 를 쓰므로, 카드 안에서만 **붉은 먹으로 갈아 끼운다.**
+  //   이러면 ResultBody 마크업을 한 줄도 안 고치고 종이 판에서 살아난다.
+  ["--gold" as string]: "#8f2b1e",
+  ["--gold-bright" as string]: "#7a2418",
+  ["--gold-soft" as string]: "#a4512f",
+  ["--gold-pale" as string]: "rgba(143,43,30,0.16)",
+  ["--gold-line" as string]: "rgba(143,43,30,0.28)",
+};
+
+/** 종이 판 위의 본문 — 먹빛 글자 + 붉은 형광(ResultBody 의 ink 톤). */
+const inkComponents = makeMarkdownComponents("ink");
+
+/** 장별 무드 — **감정 온도계.**
+ *
+ *  카카오웹툰 「칠흑이 삼킨 여름」 54화 실측(2026-08-29): 제목이 칠흑인데도 바탕은
+ *  **밝음 61% · 어둠 6%** 였다. 어둠을 배경으로 깔지 않고 **구두점처럼** 쓴다 —
+ *  장면이 가라앉을 때 종이째 서서히 어두워졌다가 다음 정점에서 도로 밝아진다(하드 컷 아님).
+ *
+ *  우리 종이는 열한 장이 전부 같은 밝기라 열한 장이 한 톤으로 읽혔다. **두 장만** 건드린다:
+ *   · 조심할 달 — 반 톤 가라앉힌다(겁주는 게 아니라 «숨을 낮추는» 자리)
+ *   · 크게 바뀌는 해 — 반 톤 올린다(가라앉은 바로 다음 장이라 대비로 정점이 선다)
+ *  나머지 아홉 장은 기본값. 세 장 이상 건드리면 «온도차»가 아니라 얼룩이 된다. */
+function pageMood(title: string): React.CSSProperties {
+  if (/조심할 달/.test(title))
+    return {
+      background:
+        "radial-gradient(120% 70% at 50% 0%, rgba(255,252,240,0.42), rgba(255,252,240,0) 62%), linear-gradient(180deg,#e3d7bd 0%,#d8caa9 100%)",
+    };
+  if (/크게 바뀌는 해/.test(title))
+    return {
+      background:
+        "radial-gradient(120% 70% at 50% 0%, rgba(255,253,246,0.95), rgba(255,253,246,0) 66%), linear-gradient(180deg,#f6eeda 0%,#eee3c8 100%)",
+    };
+  return {};
+}
 
 /** 표지 이미지 — cover.webp 가 오기 전엔 제단 그림으로 내려앉는다(화면이 비면 안 된다) */
 function coverSrc(): string {
@@ -49,12 +111,35 @@ function assetSrc(src: string): string | null {
  *  그들의 진짜 상품은 글이 아니라 조판이고, 14,000자를 끝까지 읽히게 하는 건 이 리듬이다.
  *  글 → 그림 → 표 → 글 로 숨을 끊어 줘야 긴 결과지가 벽으로 안 읽힌다.
  *  티저 컷과 같은 옷(한지 말풍선 + 붉은 「산군」 배지)이라 결제 전후 세계관이 이어진다. */
-function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: string; say: string; pos?: string }) {
+function ResultCut({
+  src,
+  alt,
+  say,
+  pos = "center",
+  ratio = "4 / 5",
+  invert = false,
+}: {
+  src: string;
+  alt: string;
+  say: string;
+  pos?: string;
+  /** 공수를 검정 판·흰 글자로 뒤집는다 — **판 전체에서 딱 한 번**(맺음). SayPlate 주석 참고 */
+  invert?: boolean;
+  /** 컷 액자 비율 — 기본은 **원본 그대로(4:5)**. 자르지 않는다.
+   *
+   *  예전엔 220px 가로 띠였다. 원본이 840×1050 인데 가운데 26% 구간만 보여 준 셈이라
+   *  갓도 손도 소품도 잘려 나가고, 그림이 「본문 속 삽화」 크기로 내려앉았다.
+   *  경쟁사 실측과 견줘 우리가 제일 약한 축이 그림이었는데(청월당 장당 7장·페이지의 76%가
+   *  이미지 / 타이트 챕터당 1~2장), **자산은 이미 세로로 구워져 있었다** —
+   *  새로 굽지 않고 코드 한 수로 220 → 487px(2.2배)이 되는 자리였다.
+   *  직녀도 같은 결정을 했다(3170986 「원본 그대로 화면에 꽉 채운다」). */
+  ratio?: string;
+}) {
   const ok = assetSrc(src);
-  if (!ok) return null; // 아직 안 온 컷(money·close)은 그 자리만 조용히 비운다
+  if (!ok) return null; // 아직 안 온 컷은 그 자리만 조용히 비운다
   return (
     // 본문 패딩(px-4=16)을 되물려 컬럼 끝까지 채운다 — 판 패딩을 바꾸면 이 값도 같이 바꿔야 한다.
-    <div className="relative -mx-4 mt-7 h-[220px] overflow-hidden">
+    <div className="relative -mx-4 mt-12 overflow-hidden" style={{ aspectRatio: ratio }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={ok}
@@ -64,44 +149,20 @@ function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: st
         draggable={false}
         style={{ objectPosition: pos }}
       />
+      {/* 말풍선이 앉을 자리만 어둡게 — 페이드를 크게 주면 **연기를 지운다.**
+          예전 값(아래 64%까지)을 풀블리드에 그대로 쓰면 487px 중 312px 가 덮여
+          장부를 짚은 손·엽전·붉은 실이 통째로 사라진다(직녀가 52→8 로 내린 것과 같은 병). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.66) 0%,rgba(8,7,6,0.15) 42%,rgba(8,7,6,0) 64%)" }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[26%]"
+        style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.80) 0%,rgba(8,7,6,0.30) 46%,rgba(8,7,6,0) 100%)" }}
       />
       <div className="absolute inset-x-4 bottom-3.5 z-10">
-        <div
-          className="relative rounded-[5px] px-4 py-2.5"
-          style={{
-            background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
-            border: "1px solid rgba(201,185,142,0.8)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
-          }}
-        >
-          <span
-            className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
-            style={{ background: RED, color: "#f3e6cf" }}
-          >
-            산군
-          </span>
-          <p className="font-myeongjo text-[14.5px] font-semibold leading-[1.7] text-[#241d10]">{say}</p>
-        </div>
+        <SayPlate say={say} invert={invert} />
       </div>
     </div>
   );
 }
-
-/** 장 제목 → 컷 배치표. 장 번호가 아니라 **제목**으로 매칭하므로 9장(구)·11장(신) 양쪽에서
- *  해당 장이 있는 자리에만 알아서 선다(없는 장은 자연 생략 — 하위호환 공짜). */
-const CHAPTER_CUTS: { match: RegExp; src: string; alt: string; say: string; pos?: string }[] = [
-  { match: /그릇부터/, src: "/products/sangun/t2-read.webp", alt: "탁자 너머로 고개를 숙이고 마주 앉은 산군", say: "네 본바탕부터 읽는다.", pos: "center 28%" },
-  { match: /걸어온 길/, src: "/products/sangun/t1-open.webp", alt: "옛 장부를 펴 든 손", say: "지나온 장부터 넘긴다." },
-  { match: /돈이 들어오는/, src: "/products/sangun/money.webp", alt: "엽전 꾸러미를 든 손과 펼친 장부", say: "돈 얘기다. 몇 월인지까지 적어 뒀다." },
-  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "움직일 때와 엎드릴 때가 갈린다." },
-  { match: /인연이 들어오는/, src: "/products/sangun/t5-thread.webp", alt: "손가락에 붉은 실을 감고 장부를 짚은 손", say: "네 짝이 적힌 자리다." },
-  { match: /크게 바뀌는 해/, src: "/products/sangun/t6-mark.webp", alt: "붉은 붓으로 장부의 한 해에 동그라미를 치는 손", say: "장부에 붉게 적힌 해가 있다." },
-  { match: /산군의 처방/, src: "/products/sangun/altar.webp", alt: "촛불 제단 앞에 선 박수의 뒷모습", say: "마지막으로, 네가 지니고 살 것들이다.", pos: "center 40%" },
-];
 
 /** 짝의 얼굴 — 결제 전 티저에서 흐리게 보여준 **그 장**을 여기서 연다.
  *
@@ -164,6 +225,9 @@ function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth
       <p className="font-myeongjo mt-3 text-center text-[10.5px] leading-[1.6] text-bone-faint">
         네 배우자 자리는 <span style={{ color: GOLD_SOFT }}>{face.ohKo}</span>의 결 — 그 결로 얼굴을 골랐다
       </p>
+      {/* 캡처 유도 — 타이트 실측에서 이 카드가 «스크린샷 찍어 공유하고 싶어지는 유일한 컷»이다.
+          웹 전용 자산이라 PDF 로는 못 가져간다 — 그러니 여기서 담아 가라고 말해 준다. */}
+      <SangunNudge>이 얼굴은 네 장부에만 있다. 화면째 담아 둬라.</SangunNudge>
     </div>
   );
 }
@@ -172,7 +236,7 @@ function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth
 function Ganji({ no, tag, line }: { no: string; tag?: string; line: string }) {
   return (
     <div
-      className="mt-8 px-4 pb-7 pt-7 text-center"
+      className="mt-16 px-4 pb-7 pt-7 text-center"
       style={{
         backgroundImage: "url(/products/sangun/ganji.webp)",
         backgroundSize: "cover",
@@ -208,9 +272,21 @@ function Ganji({ no, tag, line }: { no: string; tag?: string; line: string }) {
  *  달별 점수·대길/대흉 판정값은 내부 계산값이라 안 보여준다(결과지 문체 규칙과 동일).
  *  값은 프롬프트에 들어간 확정값과 같은 계산(computeWealthFacts/computeInyeonFacts)에서 온다 —
  *  본문과 표가 다른 달을 말하면 그 자리에서 신뢰가 끝난다. */
-function MonthTable({ title, score, rows }: { title: string; score: number; rows: { kind: string; label: string }[] }) {
+function MonthTable({
+  title,
+  score,
+  rows,
+  nudge,
+}: {
+  title: string;
+  score: number;
+  rows: { kind: string; label: string }[];
+  /** 표 아래 한마디 — 달을 «읽고 끝»이 아니라 «옮겨 적게» 만든다(재열람의 씨앗) */
+  nudge?: string;
+}) {
   if (!rows.length) return null;
   return (
+    <>
     <div className="mt-5" style={{ border: `1px solid ${GOLD_PALE}` }}>
       <div
         className="flex items-center justify-between px-3.5 py-2.5"
@@ -245,6 +321,8 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
         })()
       ))}
     </div>
+    {nudge && <SangunNudge>{nudge}</SangunNudge>}
+    </>
   );
 }
 
@@ -348,6 +426,7 @@ export function SangunResult({
   prescription,
   reviewOrderId = null,
   recordedAt = null,
+  concern = null,
 }: {
   view: ResultView;
   markdown: string;
@@ -366,6 +445,9 @@ export function SangunResult({
   reviewOrderId?: string | null;
   /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
   recordedAt?: string | null;
+  /** 손님이 적어 온 고민 원문 — 프롤로그 차례에 「네 물음 여기」 뱃지와 함께 되비춘다.
+   *  [프로필] 태그는 고민이 아니라 상황 정보라 호출부에서 걸러 넘긴다. */
+  concern?: string | null;
 }) {
   const { intro, chapters } = splitChapters(markdown);
   const who = plainName(name, "");
@@ -374,6 +456,58 @@ export function SangunResult({
   const jangIdx = (no: string, idx11: number[]) => (chapters.length === 11 ? idx11 : LEGACY_JANG_IDX[no] ?? idx11);
   // 표를 어느 장 앞에 세울지는 **챕터 제목**으로 찾는다 — 장 번호를 박으면 구/신 구성에서 어긋난다.
   const titleOf = (idx: number) => chapters[idx]?.title ?? "";
+
+  // 한자 장번호는 **화면에 서는 차례**로 매긴다.
+  // 章 그룹핑이 주제별이라(二=돈[3,5] · 三=인연[4,6]) 목차 인덱스를 그대로 쓰면
+  // 손님 눈에는 四 → 六 → 五 → 七 로 번호가 거꾸로 흐른다(2026-08-29 실측).
+  // 손님은 목차 번호를 모르고 읽는 순서만 보므로, 보이는 대로 다시 센다.
+  const readOrder = (useJang ? SANGUN_JANG.flatMap((j) => jangIdx(j.no, j.chapterIdx)) : chapters.map((_, i) => i))
+    .filter((idx) => chapters[idx]);
+  const displayNo = new Map<number, number>();
+  readOrder.forEach((idx, pos) => displayNo.set(idx, pos + 1));
+  const numOf = (idx: number) => CHAPTER_NUM[(displayNo.get(idx) ?? idx + 1) - 1] ?? "";
+
+  // 프롤로그 차례 — 읽는 순서 그대로. 제목 앞 「4. 」 번호는 한자 번호와 겹치므로 뗀다.
+  const tocEntries = readOrder.map((idx) => ({
+    idx,
+    no: numOf(idx),
+    title: chapters[idx].title.replace(/^\d+\.\s*/, ""),
+    isConcern: /물음|고민/.test(chapters[idx].title),
+  }));
+
+  // 물성 — **계산한 실값만** 적는다(타이트는 실측의 2~5배로 부풀렸다).
+  // 자수는 판매 카피와 같은 자로 센다: 헤딩을 뺀 본문의 **한글 음절**
+  // (SangunSalesBlocks 2026-08-17 정정 주석 — 렌더 화면 글자수를 세면 표·라벨까지 섞여 부풀려진다).
+  const charCount = markdown.replace(/^#{1,3}\s.*$/gm, "").replace(/[^가-힣]/g, "").length;
+  const monthCount = new Set(
+    [
+      ...(wealth?.top ?? []).map((m) => m.label),
+      ...(wealth?.bad ?? []).map((m) => m.label),
+      ...(inyeon?.top3 ?? []).map((m) => m.label),
+      ...(inyeon?.shaky ?? []).map((m) => m.label),
+    ].filter(Boolean),
+  ).size;
+
+  // 산군의 주석 — 손님의 일간 하나를 골라 1장 끝에 붙인다(LLM 0원 · 개인화는 «고르기»뿐).
+  const ilgan = ilganNote(view.pillars.find((p) => p.isDay)?.gan.char);
+
+  // 빈 액자 2장 — 파일이 없으면 그 자리는 조용히 비운다(다른 컷과 같은 방식).
+  const bujeokSrc = assetSrc("/products/sangun/frame-buchak.webp");
+  const letterSrc = assetSrc("/products/sangun/frame-seochal.webp");
+
+  // 편지에 박을 «가장 먼저 오는 달» — 돈·인연의 좋은 달 중 이르게 오는 것 하나.
+  // 확정값에서 그대로 집으므로 본문·표와 다른 달이 나올 수 없다(맺음 컷의 「적어 준 달」과 같은 달).
+  const nearMonth =
+    [...(wealth?.top ?? []), ...(inyeon?.top3 ?? [])]
+      .map((m) => m.label)
+      .filter(Boolean)
+      .sort((a, b) => {
+        const key = (t: string) => {
+          const m = t.match(/(\d{4})\D+(\d{1,2})/);
+          return m ? Number(m[1]) * 100 + Number(m[2]) : 999999;
+        };
+        return key(a) - key(b);
+      })[0] ?? null;
 
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
@@ -402,20 +536,26 @@ export function SangunResult({
     const c = chapters[idx];
     if (!c) return null;
     return (
-      <section key={idx} className={firstInJang ? "mt-6" : "mt-12"}>
-        <h3
-          className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
-          style={{ color: HANJI }}
-        >
-          <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
-            {CHAPTER_NUM[idx] ?? ""}
-          </span>
-          <span>{c.title}</span>
-        </h3>
-        <div className="font-myeongjo mt-1">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-            {c.body}
-          </ReactMarkdown>
+      // id 는 프롤로그 「장부의 차례」가 눌러 오는 자리 — 상단이 잘리지 않게 여백을 준다.
+      <section key={idx} id={`jang-${idx}`} className={firstInJang ? "mt-6" : "mt-12"} style={{ scrollMarginTop: 14 }}>
+        {/* 본문 패딩(px-4)을 되물려 종이가 판 끝까지 깔린다 — 읽는 폭을 한 뼘도 안 버린다 */}
+        <div className="-mx-4 px-4 pb-7 pt-6" style={{ ...HANJI_PAGE, ...pageMood(c.title) }}>
+          <h3
+            className="font-myeongjo flex items-baseline gap-2.5 text-[19px] font-semibold leading-snug"
+            style={{ color: "#1a1309" }}
+          >
+            <span className="font-brush shrink-0 text-[20px]" style={{ color: RED }}>
+              {numOf(idx)}
+            </span>
+            {/* 제목 앞 「6. 」은 목차 순서 번호다. 한자 번호를 읽는 차례로 다시 매긴 뒤로는
+                둘이 어긋나 보인다(실측: 「五 6. 일과 자리」 · 「六 5. 인연」) — 아라비아는 뗀다. */}
+            <span>{c.title.replace(/^\d+\.\s*/, "")}</span>
+          </h3>
+          <div className="font-myeongjo mt-1">
+            <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={inkComponents}>
+              {c.body}
+            </ReactMarkdown>
+          </div>
         </div>
       </section>
     );
@@ -460,6 +600,18 @@ export function SangunResult({
       </div>
 
       <div className="px-4 pb-8 pt-2">
+        {/* ── 개봉 의식 — 산군이 먼저 말을 걸고, 받은 물건의 크기를 적고, 차례를 편다.
+            여기가 없던 시절엔 표지 다음이 곧장 1장이라 «뭘 받았는지 모른 채» 읽기 시작했다. ── */}
+        {tocEntries.length > 0 && (
+          <SangunPrologue
+            who={who || null}
+            entries={tocEntries}
+            charCount={charCount}
+            monthCount={monthCount}
+            concern={concern}
+          />
+        )}
+
         {/* ── 원국 — 티저와 **같은 판**(PillarChart). 결제 전엔 십성·12운성이 붙어 있었는데
             결제 후에 한자만 남으면 돈 내고 정보가 줄어든 셈이 된다 — 같은 컴포넌트로 통일 ── */}
         {shown.length > 0 && (
@@ -473,7 +625,7 @@ export function SangunResult({
 
         {intro && (
           <div className="font-myeongjo mt-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} components={markdownComponents}>
               {intro}
             </ReactMarkdown>
           </div>
@@ -484,7 +636,14 @@ export function SangunResult({
             <div key={j.no}>
               <Ganji no={j.no} tag={j.tag} line={j.teaseResult} />
               {/* 달력 표는 해당 章 머리에 — 본문이 말하는 달과 같은 계산값이라 표가 예고, 본문이 해설이 된다 */}
-              {j.no === "二" && wealth && <MonthTable title="돈의 달력" score={wealth.score} rows={wealthRows} />}
+              {j.no === "二" && wealth && (
+                <MonthTable
+                  title="돈의 달력"
+                  score={wealth.score}
+                  rows={wealthRows}
+                  nudge="이 달들은 네 달력에 옮겨 적어 둬라. 그달이 오거든 이 장부를 다시 펴 보면 안다."
+                />
+              )}
               {/* 인연 章은 얼굴부터 — 티저에서 흐리게 본 카드가 여기서 열리는 게 결제의 회수다 */}
               {j.no === "三" && inyeon && (
                 <PartnerCard
@@ -493,18 +652,41 @@ export function SangunResult({
                   ageDir={inyeon.ageDir}
                 />
               )}
-              {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
+              {j.no === "三" && inyeon && (
+                <MonthTable
+                  title="인연의 달력"
+                  score={inyeon.score}
+                  rows={inyeonRows}
+                  nudge="붉게 적힌 달은 겁낼 게 아니라 미리 아는 달이다. 같이 적어 둬라."
+                />
+              )}
               {jangIdx(j.no, j.chapterIdx).map((idx, i) => {
                 // 타이트 8-2 리듬: 컷(그림+말) → 표(개인화 그래픽) → 본문. 그림이 먼저 와야
                 // 장이 바뀐 게 눈으로 먼저 읽힌다.
-                const cut = CHAPTER_CUTS.find((c) => c.match.test(titleOf(idx)));
+                // 컷이 없는 장(올해·조심할 달·네 물음·당부)에서도 산군이 말을 건다 —
+                // 말을 거는 장만 말을 걸면 나머지 장에서 화자가 사라져 동행 감각이 끊긴다.
+                const v = SANGUN_VOICE.find((c) => c.match.test(titleOf(idx)));
                 return (
                   <div key={idx}>
-                    {cut && <ResultCut src={cut.src} alt={cut.alt} say={cut.say} pos={cut.pos} />}
+                    {v?.src ? (
+                      <ResultCut src={v.src} alt={v.alt ?? ""} say={v.say} pos={v.pos} ratio={v.ratio} />
+                    ) : v ? (
+                      <SangunSay say={v.say} />
+                    ) : null}
                     {/* 장 전용 표는 챕터 제목으로 찾아 그 장 바로 앞에 — 9장(구) 결과지엔 이 장이 없어 자연히 안 선다 */}
                     {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
-                    {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
+                    {/산군의 처방/.test(titleOf(idx)) && prescription ? (
+                      <>
+                        <PrescriptionTable p={prescription} />
+                        {/* 표는 읽는 것, 부적은 담아 가는 것 — 빈 액자에 핵심 석 줄만 옮겨 적는다 */}
+                        {bujeokSrc && <BujeokCard src={bujeokSrc} yongKo={prescription.yongKo} rows={prescription.rows} />}
+                      </>
+                    ) : null}
                     {chapterBlock(idx, i === 0)}
+                    {/* 장 끝 읽을거리 — 청월당은 여기에 4,000px 짜리 상식란을 둔다.
+                        1장(그릇)엔 일간 주석, 2장(걸어온 길)엔 대운 주석. 둘 다 토큰 0. */}
+                    {/그릇부터/.test(titleOf(idx)) && ilgan ? <SangunNote note={ilgan} /> : null}
+                    {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <SangunNote note={DAEUN_NOTE} /> : null}
                   </div>
                 );
               })}
@@ -520,13 +702,18 @@ export function SangunResult({
           chapters.map((_, i) => chapterBlock(i))
         )}
 
+        {/* 마치며 편지 — 3사 공통 표준(마지막 장 = 캐릭터의 편지). 본문 다음, 맺음 컷 앞.
+            정적 템플릿 + 이름·가장 가까운 달 치환이라 LLM 토큰 0. */}
+        {letterSrc && <ClosingLetter src={letterSrc} who={who || null} nearMonth={nearMonth} />}
+
         {/* 맺음 컷 — 장부를 덮고 낙관을 찍는 손. "다시 열어라"가 재열람 루프의 씨앗이고,
             나중에 후기·추가질문 버튼이 이 자리 아래 붙는다. */}
         <ResultCut
           src="/products/sangun/close.webp"
           alt="장부의 마지막 장에 붉은 낙관을 찍는 손"
           say="여기까지가 네 장부다. 적어 준 달이 오거든 다시 열어봐라."
-          pos="center 45%"
+          // 반전 절단 — 판 전체에서 흰 공수로 열두 번 말한 뒤 **마지막 한 번만** 검정으로 뒤집는다
+          invert
         />
 
         {/* 기록 완료 낙관 — 맺음 컷(낙관 찍는 손 사진) 바로 아래에 진짜 낙관이 찍힌다.

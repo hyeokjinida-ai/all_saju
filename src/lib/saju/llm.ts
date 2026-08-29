@@ -6,6 +6,7 @@
 
 import { serverEnv } from "@/lib/env";
 import { findFamilyAssertions, stripFamilyAssertions } from "@/lib/saju/quality-gate";
+import { looksLikeDataRequest, PENDING_CHAPTER_NOTE } from "@/lib/saju/chapters";
 
 export type LlmRequest = {
   system: string;
@@ -18,6 +19,8 @@ export type LlmResponse = {
   model: string;
   successCount?: number; // 성공한 챕터 수 (generateByChapters 에서만 채움)
   totalCount?: number; // 전체 챕터 수
+  /** 끝내 못 채워 자리표시가 들어간 챕터 번호(0-based). 출고 게이트와 복구 크론이 이걸 본다. */
+  pendingIdx?: number[];
 };
 
 export type LlmProvider = "openai" | "deepseek" | "anthropic" | "gemini";
@@ -78,35 +81,119 @@ function demoteInnerHeadings(text: string): string {
   });
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** 한 챕터를 **쉬었다 다시** 던진다. 대기 간격은 동시 호출이 풀릴 시간을 주는 값이다.
+ *  전부 실패하면 null — 호출부가 그 장을 낙오로 표시하고 순차 단계에서 한 번 더 집는다.
+ *
+ *  대기에 흔들림(jitter)을 섞는 이유: 같은 라운드에서 함께 429 를 맞은 장들이 **같은 시각에**
+ *  깨어나면 그 순간 또 몰려 같은 벽을 다시 친다. 흔들림이 재시도를 흩어 준다. */
+async function genWithBackoff(
+  c: { system: string; user: string },
+  waits: number[] = [0, 1500, 4000],
+): Promise<LlmResponse | null> {
+  for (const w of waits) {
+    if (w) await sleep(w + Math.floor(Math.random() * 600));
+    try {
+      const r = await generateInterpretation(c);
+      // 되물음("자료를 보내주세요")은 200 으로 떨어지지만 본문이 아니다 — 여기서 실패로 보고
+      // 다시 던진다. 출고 직전에 걷어내는 것보다, 다시 뽑아 장을 채우는 쪽이 손님에게 낫다.
+      if (r.text.trim() && !looksLikeDataRequest(r.text)) return r;
+    } catch {
+      /* 다음 간격에서 다시 */
+    }
+  }
+  return null;
+}
+
+/** 챕터를 한꺼번에 몇 개까지 던질지.
+ *
+ *  11장을 동시에 쏘면 결과지 1건이 입력 ~20만 토큰을 **한 순간에** 밀어 넣는다. 결제가 겹치면
+ *  두 번째 손님부터 전 챕터가 429(분당 토큰 한도)로 즉시 거절된다(배치 검증 15명 중 14명).
+ *  나눠 던지면 순간 최대 토큰이 그만큼 준다.
+ *  대가는 시간이다 — 11장을 6씩 두 라운드면 평균 26초가 ~50초가 된다. 대기 화면이 그 시간을
+ *  받아 주고(confirm maxDuration 300s), 게이트·크론이 뒤를 받친다.
+ *  되돌리려면 LLM_CHAPTER_CONCURRENCY=99. */
+const CHAPTER_CONCURRENCY = Math.max(1, Number(process.env.LLM_CHAPTER_CONCURRENCY) || 6);
+
+/** 동시 실행 수를 제한한 map. 순서는 입력 순서 그대로 보존한다. */
+async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      out[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
 export async function generateByChapters(
   title: string,
-  chapters: { system: string; user: string }[],
+  chapters: { system: string; user: string; heading?: string }[],
 ): Promise<LlmResponse> {
   const genOne = async (c: { system: string; user: string }) => {
     try {
       // 챕터 하나가 죽으면 그 장이 결과지에서 조용히 사라진다 — 티저 목차가 약속한 장이라
-      // 빠지면 들통이다(실측: deepseek-v4-pro 9챕터 중 1장이 통째로 실패). 한 번은 다시 던진다.
-      let r = await generateInterpretation(c).catch(() => generateInterpretation(c));
-      if (!r.text.trim()) r = await generateInterpretation(c);
-      if (findFamilyAssertions(r.text).length > 0) {
+      // 빠지면 들통이다(실측: deepseek-v4-pro 9챕터 중 1장이 통째로 실패).
+      // ⚠ 즉시 재시도는 무력하다 — 죽는 이유가 '동시 호출이 몰려서'이면 다시 던져도 같은 벽이다
+      //   (2026-08-24 실측: 4장 연속 생성에서 10장 중 6장만 나왔고, 같은 장을 나중에 혼자
+      //    부르니 4/4 성공했다). 그래서 **쉬었다가** 던진다.
+      const r = await genWithBackoff(c);
+      if (!r) return { text: "", provider: "", model: "" };
+      let out = r;
+      if (findFamilyAssertions(out.text).length > 0) {
         try {
           const retry = await generateInterpretation({ system: c.system, user: c.user + FAMILY_RETRY_NOTE });
-          if (retry.text.trim()) r = retry;
+          if (retry.text.trim()) out = retry;
         } catch {
           /* 재시도 실패 시 원본 유지 → 아래에서 문장 제거 */
         }
-        if (findFamilyAssertions(r.text).length > 0) {
-          r = { ...r, text: stripFamilyAssertions(r.text) };
+        if (findFamilyAssertions(out.text).length > 0) {
+          out = { ...out, text: stripFamilyAssertions(out.text) };
         }
       }
-      return { text: demoteInnerHeadings(r.text), provider: r.provider, model: r.model };
+      return { text: demoteInnerHeadings(out.text), provider: out.provider, model: out.model };
     } catch {
       return { text: "", provider: "", model: "" };
     }
   };
 
-  const parts = await Promise.all(chapters.map(genOne));
-  const body = parts.map((p) => p.text.trim()).filter(Boolean).join("\n\n");
+  const parts = await mapWithLimit(chapters, CHAPTER_CONCURRENCY, genOne);
+
+  // 낙오분 마무리 — 병렬 라운드가 끝난 뒤라 호출이 몰리지 않는다. 여기서 한 장씩 순서대로 집는다.
+  // 티저가 약속한 목차를 지키는 마지막 관문이라, 느려지더라도 장 수를 채우는 쪽이 맞다.
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].text.trim()) continue;
+    const again = await genOne(chapters[i]);
+    if (again.text.trim()) parts[i] = again;
+  }
+
+  // 끝내 못 채운 장은 **빈칸으로 흘리지 않는다.** 그냥 빼면 결과지가 목차보다 소리 없이
+  // 짧아지고, 손님에겐 "돈 낸 만큼 안 왔다"만 남는다(티저가 약속한 목차라 들통이다).
+  // 자리표시를 박아 ①손님에게 "아직 쓰는 중"이라 말하고 ②복구 크론이 이어서 채우게 한다.
+  const pendingIdx: number[] = [];
+  const body = parts
+    .map((p, i) => {
+      const t = p.text.trim();
+      if (t) return t;
+      const heading = chapters[i].heading;
+      if (!heading) return ""; // 제목을 모르면 자리표시도 못 만든다(옛 호출부)
+      pendingIdx.push(i);
+      return `${heading}\n\n${PENDING_CHAPTER_NOTE}`;
+    })
+    .filter(Boolean)
+    .join("\n\n");
+
+  if (pendingIdx.length) {
+    console.warn(
+      `[generateByChapters] ${chapters.length}장 중 ${pendingIdx.length}장 미완(${pendingIdx.map((i) => i + 1).join(",")}) — 자리표시로 저장하고 크론이 이어 채운다`,
+    );
+  }
+
   const succeeded = parts.filter((p) => p.provider);
   const ok = succeeded[0];
 
@@ -116,6 +203,7 @@ export async function generateByChapters(
     model: ok?.model ?? "",
     successCount: succeeded.length,
     totalCount: chapters.length,
+    pendingIdx,
   };
 }
 
