@@ -125,6 +125,60 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
   { match: /마지막 당부|당부/, say: "여기까지다. 한 가지만 더 이르마." },
 ];
 
+/** 산군의 주석 — 장 끝에 붙는 **정적** 읽을거리(LLM 토큰 0).
+ *
+ *  청월당 실측(해부 §5): 각 장 맨 끝에 `saju_sense` 가 4,000~4,600px 씩 붙는다. 개인화가
+ *  0인 통짜 강의인데 ①체류시간 ②「이 회사 진짜 안다」 신뢰 ③**분량 +20%를 0원으로** 만든다.
+ *
+ *  조판은 일부러 본문 종이와 다르게 간다 — 여기는 손님 얘기가 아니라 **일반 지식**이라,
+ *  같은 종이에 얹으면 「내 풀이」와 섞여 읽힌다. 밤 무대 위 접힌 쪽지로 세워 결을 가른다. */
+/** 주석 본문의 `**굵게**` 만 살린다. 주석은 마크다운 파이프를 안 타므로(ReactMarkdown 을
+ *  이 한 조각 때문에 또 부르지 않는다) 별표가 글자로 새어 나온다 — 실측에서 「\*\*식힐 물과
+ *  담을 그릇\*\*이다」로 찍혔다. 문단마다 잡히는 구절 하나를 굵게 두는 건 우리 조판 규칙이라
+ *  표시를 없애는 대신 여기서 칠한다. */
+function withBold(text: string): React.ReactNode {
+  const parts = text.split("**");
+  if (parts.length < 3) return text;
+  return parts.map((s, i) => (i % 2 ? <strong key={i}>{s}</strong> : s));
+}
+
+export function SangunNote({ note }: { note: { title: string; lead: string; body: string[] } }) {
+  return (
+    <aside className="mt-7" style={{ border: `1px solid ${GOLD_PALE}`, background: "rgba(232,201,106,0.035)" }}>
+      <div
+        className="flex items-baseline gap-2 px-4 py-2.5"
+        style={{ background: "rgba(232,201,106,0.07)", borderBottom: `1px solid ${GOLD_PALE}` }}
+      >
+        <span className="font-brush shrink-0 text-[13px]" style={{ color: RED }}>
+          註
+        </span>
+        <span className="font-myeongjo text-[12px] tracking-[0.08em]" style={{ color: GOLD_SOFT }}>
+          산군의 주석
+        </span>
+      </div>
+      <div className="px-4 pb-5 pt-4">
+        <p className="font-myeongjo text-[15px] font-bold leading-snug" style={{ color: HANJI }}>
+          {note.title}
+        </p>
+        <p className="font-myeongjo mt-1.5 text-[13px] leading-[1.7]" style={{ color: GOLD_SOFT }}>
+          {note.lead}
+        </p>
+        {note.body.map((para, i) => (
+          <p key={i} className="font-myeongjo mt-3.5 text-[14px] leading-[1.85] text-bone-soft">
+            {withBold(para)}
+          </p>
+        ))}
+        {/* 개인화가 아니라는 걸 밝혀 둔다 — 「내 얘기인 줄 알았는데 남한테도 똑같더라」가
+            제일 나쁜 결말이다. 미리 말하면 상식란이고, 숨기면 들통이다. */}
+        <p className="font-myeongjo mt-4 text-[10.5px] leading-[1.6] text-bone-faint">
+          이 주석은 네 명식 풀이가 아니라 같은 일간을 쓰는 사람 모두에게 해당하는 이야기다.
+          네 얘기는 앞뒤 장에 적어 뒀다.
+        </p>
+      </div>
+    </aside>
+  );
+}
+
 /** ── 개봉 의식 ─────────────────────────────────────────
  *
  *  표지 다음, 본문 앞. 손님이 결제하고 처음 마주하는 자리다.

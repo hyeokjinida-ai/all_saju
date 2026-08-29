@@ -18,7 +18,8 @@ import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
-import { SangunNudge, SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
+import { SangunNote, SangunNudge, SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
+import { DAEUN_NOTE, ilganNote } from "@/lib/saju/sangun-notes";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -428,6 +429,9 @@ export function SangunResult({
     ].filter(Boolean),
   ).size;
 
+  // 산군의 주석 — 손님의 일간 하나를 골라 1장 끝에 붙인다(LLM 0원 · 개인화는 «고르기»뿐).
+  const ilgan = ilganNote(view.pillars.find((p) => p.isDay)?.gan.char);
+
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
 
@@ -596,6 +600,10 @@ export function SangunResult({
                     {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <DaeunTimelineTable rows={daeunTimeline} /> : null}
                     {/산군의 처방/.test(titleOf(idx)) && prescription ? <PrescriptionTable p={prescription} /> : null}
                     {chapterBlock(idx, i === 0)}
+                    {/* 장 끝 읽을거리 — 청월당은 여기에 4,000px 짜리 상식란을 둔다.
+                        1장(그릇)엔 일간 주석, 2장(걸어온 길)엔 대운 주석. 둘 다 토큰 0. */}
+                    {/그릇부터/.test(titleOf(idx)) && ilgan ? <SangunNote note={ilgan} /> : null}
+                    {/걸어온 길/.test(titleOf(idx)) && daeunTimeline?.length ? <SangunNote note={DAEUN_NOTE} /> : null}
                   </div>
                 );
               })}
