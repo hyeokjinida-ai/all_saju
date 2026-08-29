@@ -18,7 +18,7 @@ import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultReviewCTA } from "./ResultReviewCTA";
 import { ResultSealOff } from "./ResultSealOff";
 import { PillarChart } from "./PillarChart";
-import { SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
+import { SangunNudge, SangunPrologue, SangunSay, SayPlate, SANGUN_VOICE } from "./SangunInterlude";
 import { SANGUN_JANG, type ChartRow } from "@/lib/saju/teaser";
 import { plainName } from "@/lib/saju/display-name";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -165,6 +165,9 @@ function PartnerCard({ face, meetMonth, ageDir }: { face: PartnerFace; meetMonth
       <p className="font-myeongjo mt-3 text-center text-[10.5px] leading-[1.6] text-bone-faint">
         네 배우자 자리는 <span style={{ color: GOLD_SOFT }}>{face.ohKo}</span>의 결 — 그 결로 얼굴을 골랐다
       </p>
+      {/* 캡처 유도 — 타이트 실측에서 이 카드가 «스크린샷 찍어 공유하고 싶어지는 유일한 컷»이다.
+          웹 전용 자산이라 PDF 로는 못 가져간다 — 그러니 여기서 담아 가라고 말해 준다. */}
+      <SangunNudge>이 얼굴은 네 장부에만 있다. 화면째 담아 둬라.</SangunNudge>
     </div>
   );
 }
@@ -209,9 +212,21 @@ function Ganji({ no, tag, line }: { no: string; tag?: string; line: string }) {
  *  달별 점수·대길/대흉 판정값은 내부 계산값이라 안 보여준다(결과지 문체 규칙과 동일).
  *  값은 프롬프트에 들어간 확정값과 같은 계산(computeWealthFacts/computeInyeonFacts)에서 온다 —
  *  본문과 표가 다른 달을 말하면 그 자리에서 신뢰가 끝난다. */
-function MonthTable({ title, score, rows }: { title: string; score: number; rows: { kind: string; label: string }[] }) {
+function MonthTable({
+  title,
+  score,
+  rows,
+  nudge,
+}: {
+  title: string;
+  score: number;
+  rows: { kind: string; label: string }[];
+  /** 표 아래 한마디 — 달을 «읽고 끝»이 아니라 «옮겨 적게» 만든다(재열람의 씨앗) */
+  nudge?: string;
+}) {
   if (!rows.length) return null;
   return (
+    <>
     <div className="mt-5" style={{ border: `1px solid ${GOLD_PALE}` }}>
       <div
         className="flex items-center justify-between px-3.5 py-2.5"
@@ -246,6 +261,8 @@ function MonthTable({ title, score, rows }: { title: string; score: number; rows
         })()
       ))}
     </div>
+    {nudge && <SangunNudge>{nudge}</SangunNudge>}
+    </>
   );
 }
 
@@ -538,7 +555,14 @@ export function SangunResult({
             <div key={j.no}>
               <Ganji no={j.no} tag={j.tag} line={j.teaseResult} />
               {/* 달력 표는 해당 章 머리에 — 본문이 말하는 달과 같은 계산값이라 표가 예고, 본문이 해설이 된다 */}
-              {j.no === "二" && wealth && <MonthTable title="돈의 달력" score={wealth.score} rows={wealthRows} />}
+              {j.no === "二" && wealth && (
+                <MonthTable
+                  title="돈의 달력"
+                  score={wealth.score}
+                  rows={wealthRows}
+                  nudge="이 달들은 네 달력에 옮겨 적어 둬라. 그달이 오거든 이 장부를 다시 펴 보면 안다."
+                />
+              )}
               {/* 인연 章은 얼굴부터 — 티저에서 흐리게 본 카드가 여기서 열리는 게 결제의 회수다 */}
               {j.no === "三" && inyeon && (
                 <PartnerCard
@@ -547,7 +571,14 @@ export function SangunResult({
                   ageDir={inyeon.ageDir}
                 />
               )}
-              {j.no === "三" && inyeon && <MonthTable title="인연의 달력" score={inyeon.score} rows={inyeonRows} />}
+              {j.no === "三" && inyeon && (
+                <MonthTable
+                  title="인연의 달력"
+                  score={inyeon.score}
+                  rows={inyeonRows}
+                  nudge="붉게 적힌 달은 겁낼 게 아니라 미리 아는 달이다. 같이 적어 둬라."
+                />
+              )}
               {jangIdx(j.no, j.chapterIdx).map((idx, i) => {
                 // 타이트 8-2 리듬: 컷(그림+말) → 표(개인화 그래픽) → 본문. 그림이 먼저 와야
                 // 장이 바뀐 게 눈으로 먼저 읽힌다.

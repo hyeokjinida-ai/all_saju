@@ -55,6 +55,26 @@ export function SangunSay({ say }: { say: string }) {
   );
 }
 
+/** 표·카드 바로 아래에 붙는 산군의 한마디 — **손님이 다음에 할 행동**을 시킨다.
+ *
+ *  청월당·타이트가 결과지 안에서 캡처와 달력 저장을 유도하는 자리다. 둘 다 «읽고 끝»을
+ *  «가지고 나감»으로 바꾼다 — 캡처는 바이럴이고(타이트는 짝 얼굴이 유일한 캡처 컷이라 적었다),
+ *  달력은 재열람의 씨앗이다(적어 준 달이 오면 다시 열러 온다).
+ *  장식이 아니라 명령이라 산군의 반말로 쓴다. */
+export function SangunNudge({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className="font-myeongjo mt-2.5 flex items-baseline gap-1.5 text-[11.5px] leading-[1.7]"
+      style={{ color: GOLD_SOFT }}
+    >
+      <span aria-hidden style={{ color: RED }}>
+        ▪
+      </span>
+      <span>{children}</span>
+    </p>
+  );
+}
+
 /** 장 제목 → 산군의 공수(그리고 컷이 있으면 그 컷).
  *
  *  장 **번호가 아니라 제목**으로 맞춘다 — 9장(구)·11장(신) 결과지 양쪽에서 그 장이 있는
