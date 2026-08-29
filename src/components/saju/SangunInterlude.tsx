@@ -80,13 +80,12 @@ export function SangunNudge({ children }: { children: React.ReactNode }) {
  *  장 **번호가 아니라 제목**으로 맞춘다 — 9장(구)·11장(신) 결과지 양쪽에서 그 장이 있는
  *  자리에만 알아서 선다(없는 장은 자연 생략 = 하위호환 공짜).
  *  src 가 없는 줄은 대사만 선다(SangunSay). 나중에 컷이 오면 src 만 채우면 된다. */
-export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: string; pos?: string }[] = [
+export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: string; pos?: string; ratio?: string }[] = [
   {
     match: /그릇부터/,
     src: "/products/sangun/t2-read.webp",
     alt: "탁자 너머로 고개를 숙이고 마주 앉은 산군",
     say: "네 본바탕부터 읽는다.",
-    pos: "center 28%",
   },
   { match: /걸어온 길/, src: "/products/sangun/t1-open.webp", alt: "옛 장부를 펴 든 손", say: "지나온 장부터 넘긴다." },
   // 컷 없음 — 3장. 앞장(걸어온 길)에서 과거를 맞혔으니 여기서 올해로 넘어온다는 이음매를 준다.
@@ -119,7 +118,8 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
     src: "/products/sangun/altar.webp",
     alt: "촛불 제단 앞에 선 박수의 뒷모습",
     say: "마지막으로, 네가 지니고 살 것들이다.",
-    pos: "center 40%",
+    // 제단 컷만 세로가 길다(860×1528) — 원본 그대로 세운다
+    ratio: "860 / 1528",
   },
   // 컷 없음 — 11장. 맺음 컷(close.webp)은 판 맨 끝에 따로 서므로 여기선 대사만.
   { match: /마지막 당부|당부/, say: "여기까지다. 한 가지만 더 이르마." },
@@ -213,8 +213,11 @@ export function SangunPrologue({
 
   return (
     <div className="mt-6">
-      {/* 첫 공수 — 신당 문을 여는 컷 위에. 결제 직전 게이트에서 본 그 문이다. */}
-      <div className="relative -mx-4 h-[190px] overflow-hidden">
+      {/* 첫 공수 — 신당 문을 여는 컷 위에. 결제 직전 게이트에서 본 그 문이다.
+          정사각으로 세운다: 원본(860×1528)을 그대로 펴면 693px 인데 바로 위 표지가 이미
+          420px 라 글자에 닿기까지 1,100px 이 그림만 된다. 「문」은 통과하는 자리지 머무는
+          자리가 아니라 절반만 쓴다(190 → 390, 2배). 머무는 자리는 장 컷들이 맡는다. */}
+      <div className="relative -mx-4 aspect-square overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/products/sangun/gate.webp"

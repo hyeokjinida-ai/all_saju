@@ -78,12 +78,32 @@ function assetSrc(src: string): string | null {
  *  그들의 진짜 상품은 글이 아니라 조판이고, 14,000자를 끝까지 읽히게 하는 건 이 리듬이다.
  *  글 → 그림 → 표 → 글 로 숨을 끊어 줘야 긴 결과지가 벽으로 안 읽힌다.
  *  티저 컷과 같은 옷(한지 말풍선 + 붉은 「산군」 배지)이라 결제 전후 세계관이 이어진다. */
-function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: string; say: string; pos?: string }) {
+function ResultCut({
+  src,
+  alt,
+  say,
+  pos = "center",
+  ratio = "4 / 5",
+}: {
+  src: string;
+  alt: string;
+  say: string;
+  pos?: string;
+  /** 컷 액자 비율 — 기본은 **원본 그대로(4:5)**. 자르지 않는다.
+   *
+   *  예전엔 220px 가로 띠였다. 원본이 840×1050 인데 가운데 26% 구간만 보여 준 셈이라
+   *  갓도 손도 소품도 잘려 나가고, 그림이 「본문 속 삽화」 크기로 내려앉았다.
+   *  경쟁사 실측과 견줘 우리가 제일 약한 축이 그림이었는데(청월당 장당 7장·페이지의 76%가
+   *  이미지 / 타이트 챕터당 1~2장), **자산은 이미 세로로 구워져 있었다** —
+   *  새로 굽지 않고 코드 한 수로 220 → 487px(2.2배)이 되는 자리였다.
+   *  직녀도 같은 결정을 했다(3170986 「원본 그대로 화면에 꽉 채운다」). */
+  ratio?: string;
+}) {
   const ok = assetSrc(src);
-  if (!ok) return null; // 아직 안 온 컷(money·close)은 그 자리만 조용히 비운다
+  if (!ok) return null; // 아직 안 온 컷은 그 자리만 조용히 비운다
   return (
     // 본문 패딩(px-4=16)을 되물려 컬럼 끝까지 채운다 — 판 패딩을 바꾸면 이 값도 같이 바꿔야 한다.
-    <div className="relative -mx-4 mt-7 h-[220px] overflow-hidden">
+    <div className="relative -mx-4 mt-7 overflow-hidden" style={{ aspectRatio: ratio }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={ok}
@@ -93,10 +113,13 @@ function ResultCut({ src, alt, say, pos = "center 35%" }: { src: string; alt: st
         draggable={false}
         style={{ objectPosition: pos }}
       />
+      {/* 말풍선이 앉을 자리만 어둡게 — 페이드를 크게 주면 **연기를 지운다.**
+          예전 값(아래 64%까지)을 풀블리드에 그대로 쓰면 487px 중 312px 가 덮여
+          장부를 짚은 손·엽전·붉은 실이 통째로 사라진다(직녀가 52→8 로 내린 것과 같은 병). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.66) 0%,rgba(8,7,6,0.15) 42%,rgba(8,7,6,0) 64%)" }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[26%]"
+        style={{ background: "linear-gradient(0deg,rgba(8,7,6,0.80) 0%,rgba(8,7,6,0.30) 46%,rgba(8,7,6,0) 100%)" }}
       />
       <div className="absolute inset-x-4 bottom-3.5 z-10">
         <SayPlate say={say} />
@@ -592,7 +615,7 @@ export function SangunResult({
                 return (
                   <div key={idx}>
                     {v?.src ? (
-                      <ResultCut src={v.src} alt={v.alt ?? ""} say={v.say} pos={v.pos} />
+                      <ResultCut src={v.src} alt={v.alt ?? ""} say={v.say} pos={v.pos} ratio={v.ratio} />
                     ) : v ? (
                       <SangunSay say={v.say} />
                     ) : null}
@@ -625,7 +648,6 @@ export function SangunResult({
           src="/products/sangun/close.webp"
           alt="장부의 마지막 장에 붉은 낙관을 찍는 손"
           say="여기까지가 네 장부다. 적어 준 달이 오거든 다시 열어봐라."
-          pos="center 45%"
         />
 
         {/* 기록 완료 낙관 — 맺음 컷(낙관 찍는 손 사진) 바로 아래에 진짜 낙관이 찍힌다.
