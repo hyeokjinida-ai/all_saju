@@ -361,6 +361,120 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
   );
 }
 
+/* ── ①-B 열두 달 전부 — 4章 뒤(달 카드 다음) ─────────────── */
+
+/** 달마다 무엇을 하면 되는지 — **점수 구간에서 결정론으로 뽑는다(LLM 0회).**
+ *
+ *  청월당은 章마다 「사주상식」을 이미지로 구워 붙여 토큰 0 으로 분량을 만든다(해부 §0).
+ *  우리는 같은 값을 **계산 결과로** 만든다 — 손님마다 달라서 저쪽 교양 글보다 낫다.
+ *  재료는 이미 다 있었다: `inyeon.months` 가 **앞으로 열두 달 전부**를 태그·점수와 함께 들고 온다
+ *  (티저 12칸 달력이 쓰는 그 값). 결과지는 그중 TOP3 만 카드로 보여주고 나머지 아홉 달을 버리고 있었다. */
+const MONTH_ADVICE: { min: number; head: string; bodies: string[] }[] = [
+  {
+    min: 20,
+    head: "문이 열려요",
+    bodies: [
+      "약속을 미루지 말고 이 달 안에 잡으세요. 먼저 연락해도 어색하지 않은 달이에요.",
+      "망설이던 자리가 있으면 여기서 움직이세요. 이 달은 먼저 손 내미는 쪽이 이득이에요.",
+      "미뤄 둔 연락을 이 달에 꺼내세요. 답이 빨리 오는 달이에요.",
+    ],
+  },
+  {
+    min: 10,
+    head: "자리가 생겨요",
+    bodies: [
+      "사람이 모이는 자리에 한 번은 나가 보세요. 소개를 받아 두기 좋아요.",
+      "새 사람을 만날 통로가 열려요. 부르는 자리에 얼굴만 비쳐도 됩니다.",
+      "아는 사람 건너 아는 사람이 닿는 달이에요. 소개 얘기가 나오면 받아 두세요.",
+    ],
+  },
+  {
+    min: 3,
+    head: "천천히 흘러요",
+    bodies: [
+      "새로 벌이기보다 하던 걸 이어가세요. 연락이 뜸해도 식은 게 아니에요.",
+      "조용한 달이라 조바심이 나기 쉬워요. 그냥 지나가는 구간으로 두면 됩니다.",
+      "큰 결정은 다음 달로 미뤄도 늦지 않아요. 지금은 고르는 시기예요.",
+    ],
+  },
+  {
+    min: -100,
+    head: "숨을 고르세요",
+    bodies: [
+      "확답을 미루고, 참았던 말을 몰아서 꺼내지 마세요.",
+      "서운한 게 쌓이기 쉬운 달이에요. 말을 줄이면 그냥 지나갑니다.",
+      "판단을 서두르지 마세요. 이 달에 내린 결론은 다음 달에 달라 보여요.",
+    ],
+  },
+];
+
+/** 태그는 계산에서 나온 근거라 그대로 쓰되, 열두 줄이 다 같은 말이 되지 않게 앞의 둘만 쓴다 */
+function monthWhy(r: InyeonRow): string {
+  const t = (r.tags ?? []).filter(Boolean).slice(0, 2).join(" · ");
+  return humanize(t);
+}
+
+export function MonthLedger({ rows }: { rows: InyeonRow[] }) {
+  if (!rows?.length) return null;
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        padding: "16px 14px 18px",
+        borderRadius: 14,
+        background: "rgba(255,255,255,.55)",
+        border: "1px solid rgba(107,76,154,.20)",
+      }}
+    >
+      <p className="font-myeongjo" style={{ fontSize: 13, letterSpacing: "0.18em", color: "#6B4C9A", textAlign: "center", fontWeight: 700 }}>
+        열두 달 전부
+      </p>
+      <p style={{ marginTop: 6, textAlign: "center", fontSize: 12.5, color: "#6C6483" }}>
+        좋은 달만 세 개 골라 드렸지만, 나머지 달도 그냥 흘러가지는 않아요.
+      </p>
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 7 }}>
+        {rows.map((r) => {
+          const a = MONTH_ADVICE.find((x) => r.score >= x.min) ?? MONTH_ADVICE[MONTH_ADVICE.length - 1];
+          // 달 번호로 회전 — 같은 손님은 늘 같은 문장이고, 이웃한 달끼리는 서로 다른 문장이 걸린다
+          const body = a.bodies[(r.month + r.year) % a.bodies.length];
+          const why = monthWhy(r);
+          return (
+            <div
+              key={`${r.year}-${r.month}`}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                padding: "9px 11px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,.62)",
+                border: "1px solid rgba(107,76,154,.16)",
+              }}
+            >
+              <div style={{ flex: "none", paddingTop: 1 }}>
+                <Moon phase={phaseOfScore(r.score)} size={22} />
+              </div>
+              <div style={{ flex: "none", width: 62 }}>
+                <span className="font-myeongjo" style={{ fontSize: 15, fontWeight: 700, color: "#2A2434" }}>
+                  {r.month}월
+                </span>
+                <span style={{ marginLeft: 4, fontSize: 11, color: "#8A82A2" }}>{String(r.year).slice(2)}</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13.5, fontWeight: 700, color: "#5B3F8F", lineHeight: 1.45 }}>{a.head}</p>
+                <p style={{ marginTop: 2, fontSize: 12.5, lineHeight: 1.6, color: "#4A4360" }}>{body}</p>
+                {why ? (
+                  <p style={{ marginTop: 3, fontSize: 11.5, lineHeight: 1.55, color: "#8A82A2" }}>— {why}</p>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── ② 조심할 달 — 7章 뒤 ─────────────────────────────── */
 
 export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
@@ -474,6 +588,86 @@ export function CharmChips({ inyeon }: { inyeon: InyeonFacts }) {
         />
       ))}
     </Band>
+  );
+}
+
+/* ── ③-B 신살 풀이 — 1章 뒤(끌림 칩 다음) ────────────────── */
+
+/** 칩 한 줄로 끝내던 신살을 **문단으로 편다.** LLM 0회 — 값은 이미 확정값에 있다.
+ *
+ *  왜: 도화·천을귀인은 손님이 어디선가 들어 본 단어라 「나한테 그게 있대」가 힘이 세다.
+ *  그런데 우리는 열두 글자짜리 칩으로만 보여 주고 끝냈다. 저쪽(청월당)은 같은 자리를
+ *  교양 글로 몇 천 px 채운다 — 우리는 **그 사람 명식에서 나온 값**으로 채운다.
+ *  ⚠ 없는 신살은 아예 안 그린다(빈 자리를 보이면 「나는 없구나」가 된다). */
+const CHARM_LORE: Record<string, { what: string; mine: string; use: string }> = {
+  도화: {
+    what: "도화(桃花)는 사람 눈에 먼저 걸리는 자리예요. 옛 책은 이걸 「복숭아꽃」이라 불렀어요 — 피면 멀리서도 보이니까요.",
+    mine: "○○님 명식에 이 자리가 켜져 있어요. 애써 꾸미지 않아도 처음 보는 자리에서 한 번은 눈에 담기는 쪽이에요.",
+    use: "그러니 먼저 말을 걸기보다 **말을 걸어오게 두는 쪽**이 유리해요. 자리에 나가 있기만 해도 절반은 됩니다.",
+  },
+  홍염: {
+    what: "홍염(紅艶)은 첫인상보다 **두 번째·세 번째 만남에서 짙어지는** 매력을 말해요.",
+    mine: "○○님은 한 번 보고 끝나는 인상이 아니라, 볼수록 궁금해지는 결이에요.",
+    use: "그래서 짧은 소개팅 한 번으로 판단당하면 손해예요. **다시 만날 구실**을 만드는 게 이득입니다.",
+  },
+  천을귀인: {
+    what: "천을귀인(天乙貴人)은 열두 신살 중 가장 귀하게 치는 자리예요. 결정적인 순간에 **누가 다리를 놓아 주는** 흐름이에요.",
+    mine: "○○님에겐 이 자리가 있어요. 혼자 애쓰다 막힐 때 사람이 붙는 쪽이에요.",
+    use: "그러니 인연도 **아는 사람을 통해** 오는 쪽이 자연스러워요. 소개 얘기가 나오면 흘리지 마세요.",
+  },
+  금여성: {
+    what: "금여성(金輿星)은 「귀한 수레」라는 뜻이에요. 대접받는 자리에 앉는 흐름을 말합니다.",
+    mine: "○○님은 관계에서 함부로 대해지지 않는 결이에요. 상대가 알아서 조심하는 쪽이에요.",
+    use: "그러니 **맞춰 주는 쪽으로 먼저 굽히지 않아도** 됩니다. 기다리면 상대가 맞춰 오는 구조예요.",
+  },
+};
+
+export function CharmLore({ inyeon, who }: { inyeon: InyeonFacts; who: string }) {
+  const have: string[] = [];
+  if (inyeon.dohwaCount > 0) have.push("도화");
+  if (inyeon.hongyeomCount > 0) have.push("홍염");
+  if (inyeon.hasCheoneul) have.push("천을귀인");
+  if (inyeon.hasGeumyeo) have.push("금여성");
+  if (!have.length) return null;                 // 없는 사람에게 빈 자리를 보이지 않는다
+  const name = (who || "").trim() || "그대";
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        padding: "16px 15px 18px",
+        borderRadius: 14,
+        background: "rgba(255,255,255,.55)",
+        border: "1px solid rgba(107,76,154,.20)",
+      }}
+    >
+      <p className="font-myeongjo" style={{ fontSize: 13, letterSpacing: "0.18em", color: "#6B4C9A", textAlign: "center", fontWeight: 700 }}>
+        이 신호가 뭐냐면
+      </p>
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 14 }}>
+        {have.map((k) => {
+          const t = CHARM_LORE[k];
+          const fill = (x: string) => x.replace(/○○/g, name);
+          return (
+            <div key={k}>
+              <p className="font-myeongjo" style={{ fontSize: 15, fontWeight: 700, color: "#2A2434" }}>
+                {k}
+              </p>
+              <p style={{ marginTop: 5, fontSize: 13.5, lineHeight: 1.75, color: "#4A4360" }}>{t.what}</p>
+              <p style={{ marginTop: 6, fontSize: 13.5, lineHeight: 1.75, color: "#4A4360" }}>{fill(t.mine)}</p>
+              <p style={{ marginTop: 6, fontSize: 13.5, lineHeight: 1.75, color: "#4A4360" }}>
+                {fill(t.use).split("**").map((seg, i) =>
+                  i % 2 ? (
+                    <b key={i} style={{ color: "#5B3F8F" }}>{seg}</b>
+                  ) : (
+                    <span key={i}>{seg}</span>
+                  ),
+                )}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

@@ -45,7 +45,7 @@ import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
 import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
-import { MonthCards, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, CutSay, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
+import { MonthCards, MonthLedger, CharmLore, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, CutSay, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -680,8 +680,20 @@ export function JiknyeoResult({
         // (9장 → 10장 개편 같은 것) 전부 어긋난다. 린터가 같은 이유로 제목 매칭을 쓴다.
         const t = c.title;
         const after = !inyeon ? null
-          : /인연 그릇|결혼 그릇/.test(t) ? <CharmChips inyeon={inyeon} />
-          : /만나는 달|들어오는 달|결혼하는 해/.test(t) ? <MonthCards rows={inyeon.top3} />
+          : /인연 그릇|결혼 그릇/.test(t) ? (
+              <>
+                <CharmChips inyeon={inyeon} />
+                {/* 칩 한 줄로 끝내던 신살을 문단으로 편다 — 값은 확정값에 이미 있다(LLM 0회) */}
+                <CharmLore inyeon={inyeon} who={who} />
+              </>
+            )
+          : /만나는 달|들어오는 달|결혼하는 해/.test(t) ? (
+              <>
+                <MonthCards rows={inyeon.top3} />
+                {/* 좋은 달 셋만 주고 나머지 아홉 달을 버리고 있었다 — 값은 이미 계산돼 있다(LLM 0회) */}
+                <MonthLedger rows={inyeon.months} />
+              </>
+            )
           : /신호/.test(t) ? <SignalCards inyeon={inyeon} />
           : /조심할 달|피해야 할|흔들리/.test(t) ? <ShakyCards rows={inyeon.shaky} />
           // 컷 다음에 **검증**을 세운다 — 이 장만 손님이 채점할 수 있는 장이다(과거는 이미 살아 봤다).
