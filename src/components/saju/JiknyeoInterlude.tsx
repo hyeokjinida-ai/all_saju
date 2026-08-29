@@ -178,6 +178,21 @@ function Band({
  *    같은 도형이어도 「캐릭터의 말」이 아니라 「UI 라벨」로 읽힌다 — 그래서 실측으로 다시 세웠다.
  *
  *  줄바꿈은 **말맛대로 손으로 끊는다**(폭 맞춤 아님). 그래서 문자열이 아니라 줄 배열을 받는다. */
+/** 말풍선 자산 — **그림으로 굽고 글자만 얹는다**(청월당 공식, 해부 §2).
+ *
+ *  왜 PNG 인가: CSS `border-radius:50%` 는 **기계적으로 완벽한 타원**이라 웹툰으로 안 읽힌다.
+ *  실물 웹툰 말풍선은 손으로 그은 잉크선이라 미세하게 삐뚤고, 그 질감이 「웹툰 보는 느낌」의 일부다.
+ *  꼬리도 그림의 일부라 방향·좌표를 코드로 조준할 필요가 사라진다(그게 어색함의 주범이었다).
+ *
+ *  값은 실측이다 — 굽기·측정은 `python 직녀/tools/bubble-cut.py`.
+ *  textBox 는 잉크선 **안쪽**(꼬리를 뺀 몸통) 범위라, 여기 글자를 앉혀야 아래로 안 밀린다. */
+const SAY_ART = {
+  "lg-br": { src: "/products/jiknyeo/say-lg-br.png", ratio: 1.215, box: { x: 5.7, y: 6.1, w: 89.0, h: 65.9 } },
+  "lg-bl": { src: "/products/jiknyeo/say-lg-bl.png", ratio: 1.213, box: { x: 5.4, y: 6.3, w: 89.1, h: 65.7 } },
+  "md-bl": { src: "/products/jiknyeo/say-md-bl.png", ratio: 1.310, box: { x: 7.1, y: 9.3, w: 86.0, h: 76.1 } },
+  none: { src: "/products/jiknyeo/say-none.png", ratio: 1.321, box: { x: 6.9, y: 9.6, w: 86.5, h: 76.4 } },
+} as const;
+
 export function Bubble({
   lines,
   size = "lg",
@@ -185,33 +200,48 @@ export function Bubble({
 }: {
   /** 말맛대로 끊은 줄 배열 — 원본도 폭이 아니라 호흡으로 끊는다 */
   lines: string[];
-  /** lg = 실측값(228) · md = 카드 묶음용 축소판 */
+  /** lg = 본문 컷용 · md = 카드 묶음·章머리용 */
   size?: "lg" | "md";
-  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / **l(왼쪽 옆)** / 없음.
-   *  l 은 캐릭터가 말풍선 **옆**에 서는 배치용이다. 아래 꼬리만 있던 시절엔
-   *  SD 를 옆에 세우면 꼬리가 SD 를 비켜 가서 둘이 남남으로 보였다(형님 지적 2026-08-28). */
-  tail?: "bl" | "br" | "l" | "none";
+  /** 꼬리 방향 — bl(왼쪽 아래) / br(오른쪽 아래) / 없음.
+   *  md 는 그림이 bl 한 장뿐이라 br 이 오면 좌우 반전해서 쓴다(글자는 안 뒤집는다). */
+  tail?: "bl" | "br" | "none";
 }) {
-  // 실물 폭비 51% 를 화면 폭과 무관하게 지킨다. 448 에서는 228/190 그대로, 360 폰에서는 함께 줄어
-  // 글줄이 원을 뚫지 않는다(nowrap 이라 폭이 모자라면 글자가 삐져나온다).
+  const key =
+    tail === "none" ? "none" : size === "lg" ? (tail === "br" ? "lg-br" : "lg-bl") : "md-bl";
+  const art = SAY_ART[key];
+  const flip = size === "md" && tail === "br";
+
+  // 실측 폭비 51% 를 화면 폭과 무관하게 지킨다(청월당 원본 측정값). 높이는 그림 비율이 정한다.
   const w = size === "lg" ? "min(228px, 51vw)" : "min(190px, 43vw)";
-  const h = size === "lg" ? "min(207px, 46.4vw)" : "min(173px, 39vw)";
   const fs = size === "lg" ? "clamp(15px, 4.2vw, 19px)" : "clamp(13.5px, 3.7vw, 16.5px)";
   return (
-    <div style={{ position: "relative", width: w, height: h, flex: "none" }}>
-      <div
+    <div style={{ position: "relative", width: w, aspectRatio: String(art.ratio), flex: "none" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={art.src}
+        alt=""
+        draggable={false}
+        className="select-none"
         style={{
+          position: "absolute",
+          inset: 0,
           width: "100%",
           height: "100%",
-          borderRadius: "50%",
-          background: "#FFFFFF",
-          border: "2px solid #1B1729",
+          transform: flip ? "scaleX(-1)" : undefined,
+          filter: "drop-shadow(0 6px 18px rgba(10,8,26,.40))",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: `${art.box.x}%`,
+          top: `${art.box.y}%`,
+          width: `${art.box.w}%`,
+          height: `${art.box.h}%`,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 10%",
-          boxShadow: "0 6px 20px rgba(10,8,26,.45)",
         }}
       >
         {lines.map((t, i) => (
@@ -220,7 +250,7 @@ export function Bubble({
             className="font-myeongjo"
             style={{
               fontSize: fs,
-              lineHeight: 1.18,
+              lineHeight: 1.2,
               color: "#14111F",
               fontWeight: 700,
               whiteSpace: "nowrap",
@@ -231,36 +261,6 @@ export function Bubble({
           </span>
         ))}
       </div>
-      {tail === "l" ? (
-        // 옆 꼬리 — 왼쪽 가운데에서 왼쪽으로 뻗는다. 바로 옆에 선 캐릭터의 얼굴을 가리킨다
-        <svg
-          width="26"
-          height="30"
-          viewBox="0 0 26 30"
-          aria-hidden
-          style={{ position: "absolute", left: -13, top: "44%" }}
-        >
-          <path d="M24 3C12 8 5 15 2 25c1-9 5-18 11-24z" fill="#FFFFFF" stroke="#1B1729" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M23 5C14 9 8 15 5 23" stroke="#FFFFFF" strokeWidth="3" />
-        </svg>
-      ) : tail !== "none" ? (
-        // 꼬리는 원과 **한 덩어리**로 보여야 한다 — 흰 삼각을 원에 겹쳐 이음매를 지운다(8/23 규격)
-        <svg
-          width="30"
-          height="26"
-          viewBox="0 0 30 26"
-          aria-hidden
-          style={{
-            position: "absolute",
-            bottom: -14,
-            [tail === "bl" ? "left" : "right"]: "18%",
-            transform: tail === "br" ? "scaleX(-1)" : undefined,
-          }}
-        >
-          <path d="M27 2C22 14 12 21 2 24c9-1 18-5 25-11z" fill="#FFFFFF" stroke="#1B1729" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M25 3C21 12 13 18 5 22" stroke="#FFFFFF" strokeWidth="3" />
-        </svg>
-      ) : null}
     </div>
   );
 }
@@ -589,23 +589,23 @@ export function ChapterSay({ title, who }: { title: string; who: string }) {
     // 나란히 서 있고 꼬리는 SD 가 아니라 그 오른쪽 허공을 가리켰다 — 둘이 남남으로 보였다.
     // 말풍선을 오른쪽 위로 올리고 SD 를 그 꼬리 밑에 겹쳐 세운다(웹툰 기본 배치).
     // 청월당은 SD 를 세워만 두지 않는다 — **캐릭터에서 말풍선이 나오는 한 덩어리**로 그린다.
-    // 우리는 아래 꼬리밖에 없어서 SD 를 옆에 세우면 꼬리가 SD 를 비켜 갔다(형님 지적).
-    // 옆 꼬리(tail="l")를 만들어 **말풍선 왼쪽 44% 지점**이 SD 얼굴 높이에 오게 맞춘다.
-    //   말풍선 md 173px · 꼬리 y = 173*0.44 ≈ 76 → SD 얼굴(위에서 1/4 지점)이 y76 에 오도록
-    //   SD 를 top 44 에 세운다(96px 중 얼굴이 y44~76).
-    <div style={{ position: "relative", marginBottom: 18, height: 176 }}>
+    // 이제 꼬리가 그림에 그려져 있으므로 **그 끝점에 SD 를 맞추기만** 하면 된다.
+    //   say-md-bl 실측: 477×364(비율 1.310) · 꼬리 끝 (8.8%, 98.1%)
+    //   폭 190px → 높이 145px · 꼬리 끝 = (17, 142). 말풍선을 left 30 에 두면 끝점 x=47.
+    //   SD 92px 의 얼굴 중심이 x≈46 이므로 SD 를 left 0 · top 118 에 세우면 꼬리가 머리에 닿는다.
+    <div style={{ position: "relative", marginBottom: 18, height: 240 }}>
+      <div style={{ position: "absolute", left: 30, top: 0 }}>
+        <Bubble lines={lines} size="md" tail="bl" />
+      </div>
       {face ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={face}
           alt=""
           draggable={false}
-          style={{ position: "absolute", left: 0, top: 44, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
+          style={{ position: "absolute", left: 0, top: 118, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
         />
       ) : null}
-      <div style={{ position: "absolute", left: 100, top: 0 }}>
-        <Bubble lines={lines} size="md" tail="l" />
-      </div>
     </div>
   );
 }
