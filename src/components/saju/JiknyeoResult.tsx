@@ -208,7 +208,7 @@ function FaceCard({
 }) {
   return (
     <div className="mx-auto mt-1 w-full max-w-[300px]">
-      <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#6B4C9A" : "#8A6B6B" }}>
+      <p className="text-center text-[12px] font-bold" style={{ color: tone === "best" ? "#8A6A1E" : "#8A6B6B" }}>
         {title}
       </p>
       {/* 3:4 — 생성 규격(1086×1448)과 같은 비율. 여기서 비율이 어긋나면 얼굴이 눌린다.
@@ -380,12 +380,14 @@ export function JiknyeoResult({
                   key={`${m.year}-${m.month}`}
                   className="rounded-[9px] py-2 text-center"
                   style={{
-                    background: "#FCFAFE",
-                    border: `1px solid ${big ? "#6B4C9A" : "#DFD6EE"}`,
-                    boxShadow: big ? "0 0 0 2px rgba(107,76,154,.16)" : undefined,
+                    background: "#FDFAF1",
+                    // 열린 달의 표식은 **금**이다 — 보라 테두리는 구 템플릿 색이라 한지 위에서 떴다.
+                    // 달 그림 자체가 이미 금색이므로 테두리도 금이어야 한 덩어리로 읽힌다.
+                    border: `1px solid ${big ? "#C2A35C" : "#E2D8BF"}`,
+                    boxShadow: big ? "0 0 0 2px rgba(194,163,92,.22)" : undefined,
                   }}
                 >
-                  <p className="text-[12px] font-bold" style={{ color: big ? "#5B3F8F" : "#6C6483" }}>
+                  <p className="text-[12px] font-bold" style={{ color: big ? "#8A6A1E" : "#6C6483" }}>
                     {m.month}월
                   </p>
                   <div className="mt-1 flex justify-center"><Moon phase={p} /></div>
@@ -417,7 +419,7 @@ export function JiknyeoResult({
               <div
                 key={m.label}
                 className="rounded-[10px] px-3.5 py-3"
-                style={{ background: "#FCFAFE", border: "1px solid #DFD6EE" }}
+                style={{ background: "#FDFAF1", border: "1px solid #E2D8BF" }}
               >
                 <div className="flex items-baseline gap-2">
                   <Moon phase="full" size={20} />
@@ -432,7 +434,7 @@ export function JiknyeoResult({
                       <span
                         key={t}
                         className="rounded-full px-2 py-[3px] text-[11px]"
-                        style={{ background: "#E4DAF4", color: "#3F2E63" }}
+                        style={{ background: "#F2E8CF", color: "#6B5420" }}
                       >
                         {t}
                       </span>
@@ -518,7 +520,7 @@ export function JiknyeoResult({
                   title="이런 결의 사람이에요"
                   why={
                     <>
-                      배우자 자리가 <b style={{ color: "#6B4C9A" }}>{inyeon.spouseOh || "토"}</b>의 결 —
+                      배우자 자리가 <b style={{ color: "#8A6A1E" }}>{inyeon.spouseOh || "토"}</b>의 결 —
                       그 결을 그림으로 옮겼어요
                     </>
                   }
@@ -535,7 +537,7 @@ export function JiknyeoResult({
             );
           })()}
 
-          <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #DFD6EE" }}>
+          <div className="mt-4 overflow-hidden rounded-[10px]" style={{ border: "1px solid #E2D8BF" }}>
             {[
               ["어떤 결", OH_TRAIT[inyeon.spouseOh]?.keul ?? "고르게 섞인 결"],
               ["태도", OH_TRAIT[inyeon.spouseOh]?.how ?? "서두르지 않고 꾸준해요"],
@@ -548,9 +550,9 @@ export function JiknyeoResult({
               <div
                 key={k}
                 className="flex gap-3 px-3.5 py-2.5"
-                style={{ background: i % 2 ? "#FCFAFE" : "transparent", borderTop: i ? "1px solid #E9E2F4" : undefined }}
+                style={{ background: i % 2 ? "#FDFAF1" : "transparent", borderTop: i ? "1px solid #E8DFC8" : undefined }}
               >
-                <span className="w-[92px] flex-none text-[12px] font-bold" style={{ color: "#6B4C9A" }}>{k}</span>
+                <span className="w-[92px] flex-none text-[12px] font-bold" style={{ color: "#8A6A1E" }}>{k}</span>
                 <span className="flex-1 text-[13px] leading-relaxed" style={{ color: "#332C4A" }}>{v}</span>
               </div>
             ))}
@@ -569,7 +571,7 @@ export function JiknyeoResult({
             const src = assetSrc(w.src);
             if (!src) return null;
             return (
-              <div className="mt-6 border-t pt-5" style={{ borderColor: "#E9E2F4" }}>
+              <div className="mt-6 border-t pt-5" style={{ borderColor: "#E8DFC8" }}>
                 <FaceCard
                   src={src}
                   title="반대로, 멀리할 결이에요"
