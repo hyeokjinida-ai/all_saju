@@ -375,6 +375,15 @@ export function SangunResult({
   // 표를 어느 장 앞에 세울지는 **챕터 제목**으로 찾는다 — 장 번호를 박으면 구/신 구성에서 어긋난다.
   const titleOf = (idx: number) => chapters[idx]?.title ?? "";
 
+  // 한자 장번호는 **화면에 서는 차례**로 매긴다.
+  // 章 그룹핑이 주제별이라(二=돈[3,5] · 三=인연[4,6]) 목차 인덱스를 그대로 쓰면
+  // 손님 눈에는 四 → 六 → 五 → 七 로 번호가 거꾸로 흐른다(2026-08-29 실측).
+  // 손님은 목차 번호를 모르고 읽는 순서만 보므로, 보이는 대로 다시 센다.
+  const displayNo = new Map<number, number>();
+  (useJang ? SANGUN_JANG.flatMap((j) => jangIdx(j.no, j.chapterIdx)) : chapters.map((_, i) => i)).forEach(
+    (idx, pos) => displayNo.set(idx, pos + 1),
+  );
+
   // 년→월→일→시 읽기 순서. 시 모름이면 시주가 "?" 로 오므로 티저와 같은 조건으로 뺀다.
   const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
 
@@ -408,7 +417,7 @@ export function SangunResult({
           style={{ color: HANJI }}
         >
           <span className="font-brush shrink-0 text-[20px]" style={{ color: GOLD_SOFT }}>
-            {CHAPTER_NUM[idx] ?? ""}
+            {CHAPTER_NUM[(displayNo.get(idx) ?? idx + 1) - 1] ?? ""}
           </span>
           <span>{c.title}</span>
         </h3>

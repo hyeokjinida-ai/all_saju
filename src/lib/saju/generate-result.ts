@@ -12,7 +12,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
-import { buildChapterPrompts, buildExtraQuestionPrompt, outlineTitles, registerDbStyle } from "@/lib/saju/prompt";
+import {
+  buildChapterPrompts,
+  buildExtraQuestionPrompt,
+  coreChapterIndexes,
+  outlineTitles,
+  registerDbStyle,
+} from "@/lib/saju/prompt";
+import { countPendingChapters, hasRealInterpretation, mergeCompletedChapters } from "@/lib/saju/chapters";
 import {
   buildMonthPlan,
   generateBlueprint,
@@ -140,30 +147,16 @@ function toBirthInfo(input: SajuInputRow): BirthInfo {
   };
 }
 
-// 결과지 본문이 '실제로 채워졌는지' 판정.
-// generateByChapters 는 전 챕터 실패 시 "## 제목\n\n" 만 반환 → 미완성으로 본다.
-/**
- * 모델이 본문 대신 **자료를 달라고 되묻는** 장을 골라낸다.
- *
- * 챕터 호출은 성공(200)으로 떨어지므로 완성도 카운터는 이걸 성공으로 센다 — 그래서
- * 「### 4. 결혼하는 해」 자리에 "아래 세 가지만 보내주세요"가 박힌 결과지가 80% 게이트를
- * 통과해 손님에게 나갈 수 있다(2026-08-21 실측: 결혼사주 1·4장에서 재현).
- * 값이 실제로 프롬프트에 있어도 모델이 못 찾았다고 판단하면 이 문장이 나오므로,
- * 프롬프트를 고치는 것과 별개로 **출고 직전에 한 번 더 막는다.**
- */
-/** 챕터 경계(### 앞 줄바꿈) — 정규식 리터럴을 인라인으로 쓰면 편집 중 깨져서 상수로 뽑았다. */
-const SECTION_SPLIT = new RegExp(String.fromCharCode(10) + "(?=###\s)");
-
-export function looksLikeDataRequest(md: string | null | undefined): boolean {
-  if (!md) return false;
-  return /(보내\s?주세요|보내주시면|값이 오면|자료만 보내|작성할 수 없)/.test(md);
-}
-
-export function hasRealInterpretation(md: string | null | undefined): boolean {
-  if (!md) return false;
-  const body = md.replace(/^#{1,3}\s.*$/gm, "").trim(); // 헤딩 줄 제거 후 본문만
-  return body.length >= 40;
-}
+// 결과지 본문이 '실제로 채워졌는지' 판정하는 자들은 `lib/saju/chapters` 한 곳에 산다 —
+// 화면(조판)과 서버(출고 검사)가 같은 파서를 써야 한다.
+//
+// ⚠ 2026-08-29 수리: 여기 있던 챕터 경계 상수가
+//   `new RegExp(String.fromCharCode(10) + "(?=###\s)")` 였다. 문자열 리터럴 안의 `\s` 는
+//   이스케이프가 벗겨져 **`s` 글자**가 되므로 실제 정규식은 `/\n(?=###s)/` — 한 번도 안 맞았다.
+//   되묻는 장이 몇 개든 asked 가 0~1 로만 세여, 되물음 3장짜리 결과지도 80% 게이트를 통과했다.
+//   이제 되물음은 **생성 단계에서 실패로 취급**해 다시 뽑고(llm.ts genWithBackoff),
+//   끝내 안 되면 자리표시가 박혀 크론이 이어 채운다.
+export { looksLikeDataRequest, hasRealInterpretation } from "@/lib/saju/chapters";
 
 export type GenerateReason =
   | "no_order"
@@ -177,7 +170,14 @@ export type GenerateReason =
   | "no_parent"; // 추가질문의 원 결과지를 못 찾았다
 
 export type GenerateOutcome =
-  | { ok: true; resultId: string; reused: boolean }
+  | {
+      ok: true;
+      resultId: string;
+      reused: boolean;
+      /** 저장은 됐지만 아직 자리표시로 남은 장 수. 0 이 아니면 **끝난 게 아니다** —
+       *  복구 크론이 이어서 채워야 한다(안 세면 미완 결과지가 완료로 잡혀 영영 안 채워진다). */
+      pending?: number;
+    }
   | { ok: false; reason: GenerateReason; detail?: string };
 
 // 결과지가 아니라 '답변 한 장'을 파는 상품 — 아래 분기가 이 slug 만 특별 취급한다.
@@ -279,7 +279,12 @@ export async function generateResultForOrder(
     .eq("order_id", orderUuid);
   const done = new Map<string, string>();
   for (const r of existingRows ?? []) {
-    if (hasRealInterpretation(r.interpretation_md)) done.set(r.product_slug, r.id);
+    if (!hasRealInterpretation(r.interpretation_md)) continue;
+    // 자리표시가 남은 판은 **완성이 아니다** — done 에 넣지 않아 아래에서 다시 만든다.
+    // 여기서 완성으로 세면 그 장은 영영 안 채워진다(본문 길이만 보던 옛 판정의 구멍:
+    // 1장짜리 부분 저장도 '있음'으로 잡혀 복구 큐에서 빠졌다).
+    if (countPendingChapters(r.interpretation_md)) continue;
+    done.set(r.product_slug, r.id);
   }
   if (targets.every((s) => done.has(s))) {
     return { ok: true, resultId: done.get(targets[0])!, reused: true };
@@ -321,34 +326,46 @@ export async function generateResultForOrder(
     /* product_styles 가 아직 없다 — 코드 표로 간다 */
   }
 
-  // 4. 구성품별 생성 — **병렬**. 순차로 돌리면 결제 후 폴링 창(64초)을 뚫는다(생성 평균 26초).
-  const outcomes = await Promise.all(
-    targets.map(async (slug) => {
-      if (done.has(slug)) return { slug, ok: true as const, resultId: done.get(slug)! };
-      const r = await buildAndSaveOne({
-        service,
-        orderUuid,
-        slug,
-        productName: nameBySlug.get(slug) ?? product.name,
-        input: input as SajuInputRow,
-        chart,
-        allowPartial: opts?.allowPartial,
-      });
-      return { slug, ...r };
-    }),
-  );
+  // 4. 구성품별 생성 — **순차**.
+  //    예전엔 병렬이었다(결제 후 폴링 창 64초를 아끼려고). 그런데 구성품 하나가 이미 챕터를
+  //    나눠 던지는 마당에 구성품까지 겹치면 순간 토큰이 그만큼 배가 되어, 429 로 **둘 다** 죽는다.
+  //    confirm 은 300초까지 동기로 기다리고 대기 화면이 그 시간을 받아 준다(폴링은 폴백일 뿐).
+  //    번들은 드물고, 늦게 받는 것보다 못 받는 게 나쁘다.
+  const outcomes: { slug: string; ok: boolean; resultId?: string; reason?: GenerateReason; detail?: string; pending?: number }[] = [];
+  for (const slug of targets) {
+    if (done.has(slug)) {
+      outcomes.push({ slug, ok: true, resultId: done.get(slug)! });
+      continue;
+    }
+    const r = await buildAndSaveOne({
+      service,
+      orderUuid,
+      slug,
+      productName: nameBySlug.get(slug) ?? product.name,
+      input: input as SajuInputRow,
+      chart,
+      allowPartial: opts?.allowPartial,
+    });
+    outcomes.push({ slug, ...r });
+  }
 
   const failed = outcomes.find((o) => !o.ok);
-  if (failed && !failed.ok) return { ok: false, reason: failed.reason, detail: `${failed.slug}: ${failed.detail ?? ""}` };
+  if (failed && !failed.ok) {
+    return { ok: false, reason: failed.reason ?? "llm", detail: `${failed.slug}: ${failed.detail ?? ""}` };
+  }
 
   const primary = outcomes.find((o) => o.slug === targets[0]);
-  if (!primary || !primary.ok) return { ok: false, reason: "save", detail: "primary missing" };
+  if (!primary || !primary.ok || !primary.resultId) return { ok: false, reason: "save", detail: "primary missing" };
+  // 구성품 중 하나라도 미완이면 주문 전체가 미완이다 — 크론이 계속 잡아야 한다.
+  const pending = outcomes.reduce((n, o) => n + (o.pending ?? 0), 0);
 
   // 비회원: 결과 링크를 이메일로 발송(베스트 에포트 — 실패해도 결과는 이미 저장됨).
   // 회원은 마이페이지/결제완료 화면에서 바로 확인하므로 메일 생략.
   // 패키지는 대표 결과지 링크 하나만 보낸다 — 그 화면에서 나머지 장부로 넘어갈 수 있다.
+  // 아직 채우는 중인 장이 있으면 **부르지 않는다** — 「결과지가 나왔어요」 메일을 받고 들어와
+  // 「준비 중」 자리표시를 보면 그게 첫인상이 된다. 다 채워진 뒤 크론이 같은 자리에서 보낸다.
   const guestEmail = (order as { guest_email?: string | null }).guest_email;
-  if (guestEmail) {
+  if (guestEmail && !pending) {
     try {
       await sendResultEmail({ to: guestEmail, resultId: primary.resultId, productName: product.name });
     } catch {
@@ -356,7 +373,7 @@ export async function generateResultForOrder(
     }
   }
 
-  return { ok: true, resultId: primary.resultId, reused: false };
+  return { ok: true, resultId: primary.resultId, reused: false, pending };
 }
 
 /** 구성품 1개 몫의 결과지를 만들어 저장한다. 명식은 호출자가 한 번 받아 넘긴다. */
@@ -368,7 +385,9 @@ async function buildAndSaveOne(args: {
   input: SajuInputRow;
   chart: Chart;
   allowPartial?: boolean;
-}): Promise<{ ok: true; resultId: string } | { ok: false; reason: GenerateReason; detail?: string }> {
+}): Promise<
+  { ok: true; resultId: string; pending?: number } | { ok: false; reason: GenerateReason; detail?: string }
+> {
   const { service, orderUuid, slug, productName, input, chart } = args;
   const keyFacts = keyFactsFor(slug, chart, input);
 
@@ -404,18 +423,38 @@ async function buildAndSaveOne(args: {
   llm.text = norm.text;
 
   // 완성도 검증 — 빈/부분 결과지를 저장하면 멱등 재시도/복구 큐에서 영구 제외되어
-  // 유료 고객이 잘린 풀이를 받는다. 기본은 80% 이상 챕터 성공을 요구하고,
-  // 부분이라도 저장해야 하는 최후 상황(allowPartial)에선 본문만 있으면 통과.
+  // 유료 고객이 잘린 풀이를 받는다.
+  //
+  // 하한이 둘이다:
+  //  ① **장 수** — 기본 80%. 최후 상황(allowPartial)에서도 70% 는 지킨다.
+  //     ⚠ 2026-08-29 이전에는 allowPartial 이 minOk=1 이었다. 6회 실패한 주문은
+  //       **1장짜리 결과지도 저장·출고**됐고, 저장되는 순간 크론 대상에서 빠져 영구히 그 상태였다.
+  //  ② **핵심 장** — 티저가 판 장(★·물음)이 비면 장 수를 채워도 안 나간다. 다른 물건이 된다.
   const total = llm.totalCount ?? 1;
-  const success = llm.successCount ?? (llm.provider ? 1 : 0);
-  const minOk = args.allowPartial ? 1 : Math.ceil(total * 0.8);
-  // 「자료를 보내주세요」로 끝난 장은 200 으로 떨어져 성공에 섞인다 — 여기서 걷어낸다.
-  const asked = llm.text.split(SECTION_SPLIT).filter((c) => looksLikeDataRequest(c)).length;
-  const realSuccess = Math.max(0, success - asked);
-  if (asked) console.warn(`[generate] 되묻는 장 ${asked}개 발견(${slug}) — 성공에서 제외`);
-  if (!llm.provider || !hasRealInterpretation(llm.text) || realSuccess < minOk) {
-    return { ok: false, reason: "llm", detail: `완성도 ${realSuccess}/${total}${asked ? ` (되묻는 장 ${asked})` : ""}` };
+  const pendingIdx = llm.pendingIdx ?? [];
+  const realSuccess = llm.successCount ?? (llm.provider ? 1 : 0);
+  const minOk = Math.ceil(total * (args.allowPartial ? 0.7 : 0.8));
+  const coreMissing = coreChapterIndexes(slug).filter((i) => pendingIdx.includes(i));
+  if (pendingIdx.length) {
+    console.warn(`[generate] 미완 장 ${pendingIdx.length}개(${slug}) — ${pendingIdx.map((i) => i + 1).join(",")}`);
   }
+  if (!llm.provider || !hasRealInterpretation(llm.text) || realSuccess < minOk || coreMissing.length) {
+    const why = coreMissing.length ? ` (핵심 장 ${coreMissing.map((i) => i + 1).join(",")} 미완)` : "";
+    return { ok: false, reason: "llm", detail: `완성도 ${realSuccess}/${total}${why}` };
+  }
+
+  // 재생성이 이전 판보다 나빠지지 않게 — 이번에 못 채운 장은 **저장돼 있던 좋은 판**을 남긴다.
+  // (미완 장이 없으면 이 함수는 본문을 손대지 않고 그대로 돌려준다)
+  if (pendingIdx.length) {
+    const { data: prev } = await service
+      .from("saju_results")
+      .select("interpretation_md")
+      .eq("order_id", orderUuid)
+      .eq("product_slug", slug)
+      .maybeSingle();
+    llm.text = mergeCompletedChapters(prev?.interpretation_md as string | null, llm.text);
+  }
+  const stillPending = countPendingChapters(llm.text);
 
   // 저장(멱등 upsert — 미완성 행이 있었다면 덮어쓴다).
   // 충돌 키가 (order_id, product_slug) 라 패키지 주문 한 건에 구성품별 행이 나란히 선다.
@@ -437,7 +476,7 @@ async function buildAndSaveOne(args: {
     .single();
 
   if (saveErr || !result) return { ok: false, reason: "save", detail: saveErr?.message };
-  return { ok: true, resultId: result.id };
+  return { ok: true, resultId: result.id, pending: stillPending };
 }
 
 /** 추가질문권 — 원 결과지의 명식으로 물어온 것 하나에만 답하고, 원 결과지 id 를 돌려준다. */
