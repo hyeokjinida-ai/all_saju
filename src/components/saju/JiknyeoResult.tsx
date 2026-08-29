@@ -23,6 +23,7 @@ import { ResultBody } from "./ResultBody";
 import { ResultCrossSell } from "./ResultCrossSell";
 import { ResultSealOff } from "./ResultSealOff";
 import { ResultReviewCTA } from "./ResultReviewCTA";
+import { PastCheck } from "./PastCheck";
 import { gradeMonths } from "@/lib/saju/teaser";
 import { buildPartnerFace, buildWorstFace } from "@/lib/saju/partner-face";
 
@@ -591,7 +592,14 @@ export function JiknyeoResult({
           : /만나는 달|들어오는 달|결혼하는 해/.test(t) ? <MonthCards rows={inyeon.top3} />
           : /신호/.test(t) ? <SignalCards inyeon={inyeon} />
           : /조심할 달|피해야 할|흔들리/.test(t) ? <ShakyCards rows={inyeon.shaky} />
-          : /걸어온 길/.test(t) ? <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." sfx="사락—" />
+          // 컷 다음에 **검증**을 세운다 — 이 장만 손님이 채점할 수 있는 장이다(과거는 이미 살아 봤다).
+          // 결과지 전체에서 유일한 인터랙션이라, 순서는 「직녀가 한마디 → 손님이 대답」이어야 한다.
+          : /걸어온 길/.test(t) ? (
+            <>
+              <CutInterlude id="w6" say="몰라서 지나갔을 뿐이에요." sfx="사락—" />
+              <PastCheck who={who} />
+            </>
+          )
           // 놓치는 패턴 장은 컷이 없었다. j2 는 **유일한 옆모습**(종이를 내려다보는 조용한 얼굴)이라
           // 「지나간 것을 들여다본다」와 맞고, 정면 반신만 이어지던 감정도 한 번 갈린다
           : /놓치는 패턴|늦어지는 이유/.test(t) ? <CutInterlude id="j2" say="여기까지가 지나온 자리예요." ratio="2 / 3" pos="center" />
