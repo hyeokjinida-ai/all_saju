@@ -55,6 +55,7 @@ function Band({
   say,
   saySize = "lg",
   sfx,
+  sfxAt = { top: 9, right: 6 },
 }: {
   /** 직녀의 대사 — 말맛대로 끊은 줄 배열 */
   lines: string[];
@@ -81,6 +82,9 @@ function Band({
   saySize?: "lg" | "md";
   /** 손글씨 방백 — 원본은 그림에 구워 넣지만 우리는 코드로 얹는다(8/23 규격) */
   sfx?: string;
+  /** 방백 자리(컷 기준 %). **그 행동 옆**에 놓아야 의미가 산다 — 기본값(오른쪽 위)은
+   *  가리키는 손이 화면 한가운데인 컷에서 서로 상관없어 보였다. */
+  sfxAt?: { top: number; right: number };
 }) {
   const cutSrc = cut
     ? assetSrc(`/products/jiknyeo/${cut}.webp`) ?? assetSrc(`/products/jiknyeo/${cut}.png`)
@@ -117,8 +121,8 @@ function Band({
               <span
                 className="font-brush absolute"
                 style={{
-                  top: "11%",
-                  right: "5%",
+                  top: `${sfxAt.top}%`,
+                  right: `${sfxAt.right}%`,
                   fontSize: 21,
                   color: "#F0E3B8",
                   transform: "rotate(8deg)",
@@ -148,19 +152,24 @@ function Band({
   }
 
   // ── SD 문법 — 가벼운 자리(청월당도 반신과 SD 를 섞어 쓴다) ──
+  //  ⚠ 예전엔 말풍선이 왼쪽·SD 가 오른쪽인데 꼬리가 bl(왼쪽 아래)이라 **SD 반대편 허공**을
+  //    가리켰다(2026-08-29 실측). 章머리(ChapterSay)와 같은 배치로 통일한다 —
+  //    SD 를 왼쪽에 세우고 말풍선을 오른쪽 위에, 꼬리 끝(left+0.088*190, 0.981*145 ≈ 17,142)이
+  //    SD 머리에 떨어지게 한다.
   const face = assetSrc(`/products/jiknyeo/${sd}-cut.webp`) ?? assetSrc(`/products/jiknyeo/${sd}-cut.png`);
   return (
     <div style={{ margin: "20px 0 0" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
-        <Bubble lines={lines} size="md" tail="bl" />
+      <div style={{ position: "relative", height: 240 }}>
+        <div style={{ position: "absolute", left: 30, top: 0 }}>
+          <Bubble lines={lines} size="md" tail="bl" />
+        </div>
         {face ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={face}
             alt=""
             draggable={false}
-            className="flex-none select-none"
-            style={{ width: 74, height: 96, objectFit: "contain", objectPosition: "bottom", marginBottom: -6, marginLeft: -8 }}
+            style={{ position: "absolute", left: 0, top: 118, width: 92, height: 120, objectFit: "contain", objectPosition: "bottom", zIndex: 2 }}
           />
         ) : null}
       </div>
@@ -169,15 +178,6 @@ function Band({
   );
 }
 
-/** 말풍선 — **청월당 실물 실측을 그대로 옮긴 규격**(2026-08-25 PIL 측정).
- *
- *  원본 750px 폭 기준: 386×352px · 폭비 51% · 종횡 1.10 · 글자높이 33px · 줄높이 54px(lh 1.18)
- *  → 448px 기둥 환산: 폭 228 · 높이 207 · font 27px · lh 1.18
- *
- *  ⚠ 이전 판(2026-08-24)은 실물을 안 보고 만든 높이 40px 짜리 알약이었다. 크기가 5배 틀리면
- *    같은 도형이어도 「캐릭터의 말」이 아니라 「UI 라벨」로 읽힌다 — 그래서 실측으로 다시 세웠다.
- *
- *  줄바꿈은 **말맛대로 손으로 끊는다**(폭 맞춤 아님). 그래서 문자열이 아니라 줄 배열을 받는다. */
 /** 말풍선 자산 — **그림으로 굽고 글자만 얹는다**(청월당 공식, 해부 §2).
  *
  *  왜 PNG 인가: CSS `border-radius:50%` 는 **기계적으로 완벽한 타원**이라 웹툰으로 안 읽힌다.
@@ -334,6 +334,9 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
       lines={["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]}
       cut="w7"
       sfx="콕—"
+      // 가리키는 손가락이 x38~48 y47~58 — 방백을 그 바로 오른쪽에 붙인다.
+      // 기본값(오른쪽 위 구석)이면 방백과 행동이 서로 상관없어 보인다
+      sfxAt={{ top: 46, right: 40 }}
       // 달력 x13~52 · 가리키는 손가락 x40~48 y82~95 를 피해 오른쪽으로. 예전 좌하단은
       // 달력(이 컷의 연기 그 자체)을 통째로 덮고 있었다
       // 원본 2:3 풀 프레임 실측 — 달력 x8~50 y33~63 · 가리키는 손가락 x38~48 y47~58 ·
@@ -773,11 +776,10 @@ export function Prologue({
                 style={{ height: "8%", background: "linear-gradient(180deg, rgba(250,247,240,0), rgba(250,247,240,.92) 76%, #faf7f0)" }}
               />
             </div>
-            {/* 격자 실측(say-grid): 얼굴 x25~60 y8~45 · 손 x25~45 y48~78 · 땋은머리 x62~80.
-                손 반대쪽(오른쪽) 아래에 걸친다 — 예전엔 컷 **밖** 좌하단이라 대사가 아니라
-                그림 밑 캡션으로 읽혔다 */}
+            {/* 격자 실측: 얼굴 x30~62 y10~40 · 손 x28~48 y50~72 · 땋은머리 x62~78.
+                손 반대쪽(오른쪽)에 앉히고, 꼬리는 **얼굴이 있는 위쪽**으로. */}
             <div style={{ position: "absolute", left: "48%", top: "56%", zIndex: 2 }}>
-              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="bl" />
+              <Bubble lines={[`${name}님, 왜`, "이제 오셨어요!"]} size="lg" tail="tl" />
             </div>
             </div>
           </div>
