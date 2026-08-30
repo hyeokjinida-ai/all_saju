@@ -139,65 +139,76 @@ export default async function ProductDetailPage({
   let dbPitch: unknown = null;
 
   if (isSupabaseConfigured()) {
+    // ⚡ 여기 조회는 **단계마다 한 번에 모아서** 친다(2026-08-30 실측 뒤 개편).
+    //
+    // 왜: 이 파일이 Supabase 를 순차로 7번 + getCurrentUser 1번, 총 여덟 왕복을 돌고 있었다.
+    // 유입 100% 가 메타 모바일이라 그 지연이 **광고 클릭마다 그대로 붙는다** —
+    // 운영 실측 TTFB `/products/sangun-sinjeom` 2.17~3.58초 · `/products/inyeon-saju` 1.96~2.45초
+    // (DB 를 안 쓰는 `/jiknyeo` 는 0.29~0.42초. 차이가 전부 이 왕복이었다.)
+    //
+    // 왕복을 못 줄이는 자리는 딱 둘뿐이다: ① 상품 행이 있어야 id 를 알고 ② 번들을 받아야
+    // 구성품 slug 를 안다. 나머지는 서로 안 물리므로 한 뭉치로 묶는다. 8왕복 → 3단계.
+    //
+    // ⚠ 조회를 **합치지는 않았다.** upsell(0010)·builder(0011) 는 마이그레이션 전이면 error 로
+    //    떨어져 조용히 null 이 되는 게 설계다 — 한 select 로 합치면 컬럼 하나가 없을 때
+    //    상품 행 전체가 같이 죽는다. 병렬이라 어차피 왕복 비용은 하나다.
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      // 0010 컬럼(compare_at_price·is_addon)은 여기서 안 읽는다 —
-      // 마이그레이션 전 배포에서도 **상품 페이지만은 반드시 살아 있어야** 하기 때문이다.
-      // 업셀 정보는 아래에서 따로, 실패해도 조용히 비는 방식으로 읽는다.
-      .select("id, slug, name, description, price")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .maybeSingle();
+    // 로그인 조회는 상품과 아무 상관이 없다 → 첫 왕복에 같이 태운다.
+    const [{ data }, currentUser] = await Promise.all([
+      supabase
+        .from("products")
+        // 0010 컬럼(compare_at_price·is_addon)은 여기서 안 읽는다 —
+        // 마이그레이션 전 배포에서도 **상품 페이지만은 반드시 살아 있어야** 하기 때문이다.
+        // 업셀 정보는 아래에서 따로, 실패해도 조용히 비는 방식으로 읽는다.
+        .select("id, slug, name, description, price")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle(),
+      getCurrentUser(),
+    ]);
     product = data;
+    user = currentUser;
 
     if (product) {
-      // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
-      const { data: upsell } = await supabase
-        .from("products")
-        .select("compare_at_price, is_addon")
-        .eq("id", product.id)
-        .maybeSingle();
-      // 상품 빌더(0011)로 채운 랜딩 카피 — 없으면(마이그레이션 전이거나 코드 상품이면)
-      // 조용히 null 이 되고 아래에서 PRODUCT_PITCH 코드 표로 내려앉는다.
-      const { data: builder } = await supabase
-        .from("products")
-        .select("pitch")
-        .eq("id", product.id)
-        .maybeSingle();
+      const [{ data: upsell }, { data: builder }, { data: r }, { data: wt }, { data: bundleRows }] =
+        await Promise.all([
+          // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
+          supabase.from("products").select("compare_at_price, is_addon").eq("id", product.id).maybeSingle(),
+          // 상품 빌더(0011)로 채운 랜딩 카피 — 없으면(마이그레이션 전이거나 코드 상품이면)
+          // 조용히 null 이 되고 아래에서 PRODUCT_PITCH 코드 표로 내려앉는다.
+          supabase.from("products").select("pitch").eq("id", product.id).maybeSingle(),
+          supabase
+            .from("reviews")
+            .select("id, rating, content, created_at")
+            .eq("product_id", product.id)
+            .eq("is_public", true)
+            .order("created_at", { ascending: false })
+            .limit(5),
+          // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
+          // (webtoon_pages 는 읽기 공개 RLS라 anon 클라이언트로 충분)
+          supabase
+            .from("webtoon_pages")
+            .select("cuts")
+            .eq("product_id", product.id)
+            .eq("kind", "teaser")
+            .eq("is_published", true)
+            .maybeSingle(),
+          // 결제 시트에 함께 세울 패키지 — 이 상품을 구성품으로 포함하는 번들만.
+          // 구성품 이름은 카드에 "산군 + 인연"처럼 그대로 찍힌다.
+          supabase
+            .from("products")
+            .select("id, slug, name, price, compare_at_price, bundle_slugs")
+            .eq("is_active", true)
+            .contains("bundle_slugs", [product.slug])
+            .order("display_order", { ascending: true }),
+        ]);
+
       dbPitch = (builder as { pitch?: unknown } | null)?.pitch ?? null;
       // 번들·추가질문권엔 상세 랜딩이 없다 → 없는 페이지로 돌린다.
       if ((upsell as { is_addon?: boolean } | null)?.is_addon) notFound();
       product.compare_at_price = (upsell as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
-
-      const { data: r } = await supabase
-        .from("reviews")
-        .select("id, rating, content, created_at")
-        .eq("product_id", product.id)
-        .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .limit(5);
       reviews = r;
-
-      // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
-      // (webtoon_pages 는 읽기 공개 RLS라 anon 클라이언트로 충분)
-      const { data: wt } = await supabase
-        .from("webtoon_pages")
-        .select("cuts")
-        .eq("product_id", product.id)
-        .eq("kind", "teaser")
-        .eq("is_published", true)
-        .maybeSingle();
       if (Array.isArray(wt?.cuts)) webtoonCuts = wt.cuts as WebtoonCutData[];
-
-      // 결제 시트에 함께 세울 패키지 — 이 상품을 구성품으로 포함하는 번들만.
-      // 구성품 이름은 카드에 "산군 + 인연"처럼 그대로 찍힌다.
-      const { data: bundleRows } = await supabase
-        .from("products")
-        .select("id, slug, name, price, compare_at_price, bundle_slugs")
-        .eq("is_active", true)
-        .contains("bundle_slugs", [product.slug])
-        .order("display_order", { ascending: true });
 
       const memberSlugs = [...new Set((bundleRows ?? []).flatMap((b) => b.bundle_slugs ?? []))];
       const { data: memberRows } = memberSlugs.length
@@ -214,7 +225,6 @@ export default async function ProductDetailPage({
         includes: ((b.bundle_slugs as string[] | null) ?? []).map((s) => memberName.get(s) ?? s),
       }));
     }
-    user = await getCurrentUser();
   } else {
     const seed = productsSeed.find((p) => p.slug === slug && p.is_active);
     product = seed ? { id: seed.slug, ...seed } : null;
