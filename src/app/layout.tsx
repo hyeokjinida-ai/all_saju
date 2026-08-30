@@ -29,19 +29,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ko" className={fontVariables}>
       <head>
-        {/* Pretendard·Wanted Sans 는 Google Fonts 에 없어 next/font 로 못 옮긴다.
+        {/* Pretendard 는 Google Fonts 에 없어 next/font 로 못 옮긴다.
             대신 globals.css 의 @import(요청이 3단으로 밀림)에서 꺼내 여기로 올렸다 —
             HTML 파싱 즉시 요청이 나가고, preconnect 로 TLS 왕복까지 미리 끝낸다.
             Pretendard 는 통짜(static)에서 dynamic-subset 으로 바꿨다: 한글을 유니코드
-            블록별로 쪼개 실제 쓰는 조각만 내려온다. */}
+            블록별로 쪼개 실제 쓰는 조각만 내려온다.
+
+            ⚠ Wanted Sans 는 걷어냈다(2026-08-30). `src/` 전체에서 이 글씨체를 font-family 로
+            부르는 규칙이 **0곳**이었다 — 어느 글자도 이걸로 안 그려지는데 **렌더를 막는
+            크로스오리진 스타일시트**를 매 페이지 받고 있었다(실측 11.8KB + 왕복 1회).
+            되살릴 일이 생기면 어딘가의 font-family 스택에 먼저 넣고 링크를 붙일 것. */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css"
         />
       </head>
       <body suppressHydrationWarning>
