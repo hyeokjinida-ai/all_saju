@@ -49,6 +49,38 @@ export function BgMedia({
     void el.play().catch(() => {});
   }, [video]);
 
+  // 관찰 콜백이 phase 를 stale 하게 잡지 않도록 거울을 둔다(옵저버는 video 가 바뀔 때만 다시 만든다).
+  const phaseRef = useRef(phase);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  // 화면 밖이면 멈춘다 — 안 멈추면 **한 페이지에서 다섯 편이 동시에 돈다**.
+  // (2026-08-30 운영 실측 `/jiknyeo`: j3·w1·w2·w4·w7 전부 paused=false·readyState=4.
+  //  폰의 발열·버벅임·데이터가 전부 여기서 온다. 스토리·게이트처럼 늘 화면 안인 자리는 변화 없음.)
+  // rootMargin 을 200px 두어 스크롤로 들어오기 직전에 이미 돌고 있게 한다 — 검은 칸이 안 보인다.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const shown = entries[0]?.isIntersecting ?? true;
+        const lv = loopRef.current;
+        if (shown) {
+          // 루프로 넘어간 뒤라면 되살릴 대상은 루프 쪽이다(인트로를 다시 틀면 그림이 되감긴다).
+          if (phaseRef.current === "loop" && lv) void lv.play().catch(() => {});
+          else void el.play().catch(() => {});
+        } else {
+          el.pause();
+          lv?.pause();
+        }
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [video]);
+
   if (fallback) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={img} alt={alt} width={860} height={1471} className={className} />;
