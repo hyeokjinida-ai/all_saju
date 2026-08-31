@@ -281,9 +281,28 @@ export const RULES: Rule[] = [
     what: "닫는 ** 앞에 공백 — 볼드가 안 닫혀 별표가 손님 화면에 그대로 찍힘",
     why:
       "CommonMark 는 `**문장. **` 을 강조로 안 잡는다(닫는 표 앞 공백). ReactMarkdown 실측: 별표가" +
-      " 원문 그대로 렌더된다. 2026-08-29 전수: 15/15 표본 47곳 — 유료 손님이 제일 먼저 보는 급의 결함.",
+      " 원문 그대로 렌더된다. 유료 손님이 제일 먼저 보는 급의 결함.",
     severity: "FAIL",
-    find: (t) => [...t.matchAll(/\*\*[^*\n]+?\s\*\*/g)].map((m) => `${m[0].slice(0, 30)}…`),
+    // ⚠ 정규식 하나로는 못 잡는다(2026-08-31 수리). `/\*\*[^*\n]+?\s\*\*/` 는
+    //   **소제목**  7~16세 **무오 대운** 처럼 **볼드 두 개 사이의 텍스트**를 통째로 먹어
+    //   "닫는 표 앞 공백"으로 오해한다. 정규식은 여는 표와 닫는 표를 구분할 수 없다.
+    //   (그 규칙으로 재던 표본 2장이 FAIL 7건이었는데 토큰 쌍으로 다시 세니 **진짜는 0건**이었다.)
+    //   → 줄마다 `**` 를 순서대로 훑어 홀수=여는·짝수=닫는 으로 쌍을 맞추고, 그 **안쪽**
+    //     문자열의 양 끝 공백만 본다. 안 닫힌 볼드(개수가 홀수)도 같이 잡는다.
+    find: (t) => {
+      const bad: string[] = [];
+      for (const line of t.split("\n")) {
+        const at: number[] = [];
+        for (let i = line.indexOf("**"); i >= 0; i = line.indexOf("**", i + 2)) at.push(i);
+        for (let k = 0; k + 1 < at.length; k += 2) {
+          const inner = line.slice(at[k] + 2, at[k + 1]);
+          if (!inner.trim()) continue;
+          if (inner !== inner.trim()) bad.push(`${line.slice(at[k], at[k + 1] + 2).slice(0, 30)}…`);
+        }
+        if (at.length % 2 === 1) bad.push(`안 닫힌 볼드: ${line.slice(at[at.length - 1], at[at.length - 1] + 28)}…`);
+      }
+      return bad;
+    },
   },
   {
     id: "상투어도배",
