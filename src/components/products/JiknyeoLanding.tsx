@@ -3,6 +3,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-assets";
 import { SLOTS } from "@/lib/jiknyeo-assets";
 import { ForecastBoard, ChartEvidence } from "@/components/products/JiknyeoForecast";
+import { StoryFooter } from "@/components/products/StoryFooter";
 
 // 직녀 스크롤 랜딩 (/jiknyeo · noindex · 사이트맵 제외 · 어디에도 링크하지 않는다).
 //
@@ -142,7 +143,15 @@ function SilverThread() {
   );
 }
 
-function Cta({ label = "무료로 먼저 보기" }: { label?: string }) {
+// note 분기 — 무료 버튼 밑에 결제 보증이 붙으면 "무료야 유료야"부터 계산하게 된다(8/24 처음눈 검수).
+// 결제 문구는 가격을 본 다음인 마지막 CTA 에만 붙인다.
+function Cta({
+  label = "무료로 먼저 보기",
+  note = "결제 없이 볼 수 있어요 · 생일만 있으면 돼요",
+}: {
+  label?: string;
+  note?: string;
+}) {
   return (
     <div className="px-5">
       <Link
@@ -153,7 +162,7 @@ function Cta({ label = "무료로 먼저 보기" }: { label?: string }) {
         {label}
       </Link>
       <p className="mt-2.5 text-center text-[12px]" style={{ color: SUB }}>
-        토스페이먼츠 안전결제 · 결과지가 제대로 안 나오면 전액 돌려드려요
+        {note}
       </p>
     </div>
   );
@@ -170,8 +179,8 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
             직설만 쓴다 — 다시 읽게 만드는 문장 금지. 날실·씨실·무늬·천 어휘는 전면 폐기했다. */}
         <Cut id="j3" assets={assets} minH={520} priority>
           <div className="absolute inset-x-0 top-7 text-center">
-            <p className="font-brush text-[15px] tracking-[0.34em]" style={{ color: SILVER, opacity: 0.9 }}>
-              織 女
+            <p className="font-brush text-[16px] tracking-[0.34em]" style={{ color: SILVER, opacity: 0.9 }}>
+              직 녀
             </p>
           </div>
           <Say>
@@ -212,7 +221,7 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
           <div>
             <Cut id="t2" assets={assets} minH={220} />
             <p className="mt-2 text-center text-[13px] leading-relaxed" style={{ color: SUB }}>
-              아무 다리도 없는 밤
+              까치 다리가 없는 밤
               <br />
               <span style={{ color: BONE }}>이런 달이 대부분이에요</span>
             </p>
@@ -220,7 +229,7 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
           <div>
             <Cut id="t3" assets={assets} minH={220} />
             <p className="mt-2 text-center text-[13px] leading-relaxed" style={{ color: SUB }}>
-              다리가 놓이는 밤
+              까치가 다리를 놓는 밤
               <br />
               <span style={{ color: BONE }}>올해도 몇 번, 있어요</span>
             </p>
@@ -387,7 +396,7 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
             ))}
             <li className="flex gap-2.5 text-[15px]" style={{ color: BONE }}>
               <span style={{ color: MOON }}>·</span>
-              <b>애매한 위로 말고, 날짜를 원하는 분</b>
+              <b>애매한 위로 말고, 몇 월인지를 원하는 분</b>
             </li>
           </ul>
         </div>
@@ -403,7 +412,7 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
             {[
               [
                 "그냥 AI가 쓴 두루뭉술한 글 아닌가요?",
-                "아니에요. 먼저 명식을 코드로 직접 계산해 신강·신약과 용신, 대운 시작 나이까지 확정한 뒤, 그 근거 위에서만 풀이를 써요. 누구에게나 맞는 말은 처음부터 안 넣어요.",
+                "아니에요. 누구에게나 맞는 말은 처음부터 안 넣어요. 생일로 명식을 코드로 직접 계산해 확정한 다음, 그 근거 위에서만 풀이를 써요 — 신강·신약, 용신, 대운 시작 나이까지요.",
               ],
               [
                 "다른 사주 사이트랑 뭐가 다른가요?",
@@ -436,8 +445,14 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
         </Cut>
 
         <div className="pt-8">
-          <Cta label="내 달 보러 가기" />
+          <Cta label="내 달 보러 가기" note="토스페이먼츠 안전결제 · 결과지가 제대로 안 나오면 전액 돌려드려요" />
         </div>
+
+        {/* 법정 표기 — ChromeGate 가 이 라우트를 bare 로 돌린 것과 **같은 커밋**에서 세운다.
+            사이트 푸터를 떼는 이유(광고 트래픽에 헤더·푸터 링크가 새면 안 된다)는 옳지만,
+            떼기만 하면 사업자 정보·약관·개인정보·환불정책이 이 페이지에서 통째로 사라진다.
+            산군·돈·인연 구판은 셋 다 자체 StoryFooter 를 그리고 있었고 직녀 랜딩만 없었다. */}
+        <StoryFooter />
       </div>
     </div>
   );
