@@ -20,6 +20,7 @@ import * as React from "react";
 import fs from "node:fs";
 import path from "node:path";
 import { Moon, phaseOfScore } from "./JiknyeoMoon";
+import { senseFor } from "@/lib/saju/saju-sense";
 import type { InyeonFacts, InyeonRow } from "@/lib/saju/saju-api";
 
 /** 서버에서 파일 존재를 확인한다(클라이언트 onError 를 못 쓰는 서버 컴포넌트라서). */
@@ -727,6 +728,60 @@ export function PartnerRecall({
         </p>
       </div>
     </div>
+  );
+}
+
+/* ── ④-B 사주상식 — 章 끝마다 ──────────────────────────── */
+
+/** 청월당은 章마다 「사주상식」을 붙여 **토큰 0으로 분량을 만든다**(해부 §0: 章당 4,000~4,700px).
+ *  우리는 같은 수를 쓰되 **글로** 쓴다 — 이미지로 구우면 확대·복사·검색이 다 죽는다.
+ *  본문은 `src/lib/saju/saju-sense.ts`(제목으로 매칭, 章 수가 바뀌어도 따라온다).
+ *
+ *  ⚠ 본문(개인화)과 **눈에 띄게 갈라야** 한다 — 안 그러면 손님이 「내 얘기」인 줄 알고 읽다가
+ *    일반론이라는 걸 깨닫는 순간 신뢰가 깎인다. 그래서 머리에 「사주 상식」을 박고 판을 눕힌다. */
+export function SajuSense({ title }: { title: string }) {
+  const s = senseFor(title);
+  if (!s) return null;
+  return (
+    <section
+      style={{
+        margin: "18px 0 0",
+        padding: "18px 17px 20px",
+        borderRadius: 14,
+        background: "rgba(107,76,154,.055)",
+        border: "1px solid rgba(107,76,154,.18)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <span style={{ width: 16, height: 1, background: "rgba(107,76,154,.45)" }} />
+        <span
+          className="font-myeongjo"
+          style={{ fontSize: 11.5, letterSpacing: "0.22em", color: "#6B4C9A", fontWeight: 700 }}
+        >
+          사주 상식
+        </span>
+        <span style={{ width: 16, height: 1, background: "rgba(107,76,154,.45)" }} />
+      </div>
+      <h4
+        className="font-myeongjo"
+        style={{ marginTop: 9, fontSize: 16.5, fontWeight: 700, color: "#2A2434", textAlign: "center", lineHeight: 1.5 }}
+      >
+        {s.title}
+      </h4>
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 11 }}>
+        {s.body.map((para, i) => (
+          <p key={i} style={{ fontSize: 13.5, lineHeight: 1.85, color: "#4A4360" }}>
+            {para.split("**").map((seg, j) =>
+              j % 2 ? (
+                <b key={j} style={{ color: "#3A2E5C" }}>{seg}</b>
+              ) : (
+                <span key={j}>{seg}</span>
+              ),
+            )}
+          </p>
+        ))}
+      </div>
+    </section>
   );
 }
 

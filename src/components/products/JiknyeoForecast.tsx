@@ -171,7 +171,7 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
   return (
     <div className="px-4 py-6">
       <Plate>
-        <PlateTitle sub="앞으로 열두 달 · 만세력 계산 결과">인연 예보</PlateTitle>
+        <PlateTitle sub="예시 화면 — 생일을 넣으면 내 열두 달로 바뀌어요">인연 예보</PlateTitle>
 
         <div className="mt-5 grid grid-cols-4 gap-2">
           {months.map(({ m, p }) => {
@@ -214,12 +214,21 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
         </div>
       </Plate>
 
-      {/* 잠금 — 계산은 다 보여줬으니, 가리는 건 명사 하나뿐이다 */}
-      <div className="mt-6 space-y-3">
+      {/* 경계 문장 — 무료(계산)/유료(읽기)의 선을 긋는 유일한 문장이라 잠금 **위**에 세운다.
+          잠금 밑에 두면 손님이 가려진 줄부터 만나 "무료야 유료야"를 스스로 풀어야 했다(8/24 처음눈 검수 ②). */}
+      <p className="mt-6 text-center font-myeongjo text-[15px] leading-relaxed" style={{ color: BONE }}>
+        계산은 다 보여드렸어요.
+        <br />
+        읽어 드리는 건, 여기서부터예요.
+      </p>
+
+      {/* 잠금 — 계산은 다 보여줬으니, 가리는 건 명사 하나뿐이다.
+          ⚠ 뼈대는 읽혀야 한다: 「██살」이 나이로 읽히던 3번 줄을 신살이 보이게 폈다(원문은 직녀/티저_12블록_전문.md). */}
+      <div className="mt-5 space-y-3">
         {[
           <>크게 열리는 달은 <b style={{ color: BONE }}>세 번</b>, 첫 달은 <Mask w={78} /></>,
           <>그 사람은 <Mask w={56} />에서 처음 마주쳐요</>,
-          <><Mask w={30} />살, 그게 매번 같은 자리를 끊어요</>,
+          <>자꾸 어긋났던 이유 — 명식에 「<Mask w={34} />살」이 하나 있어요</>,
         ].map((line, i) => (
           <p key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed" style={{ color: "#d8d2e8" }}>
             <i className="mt-2 block h-[5px] w-[5px] flex-none rounded-full" style={{ background: "#8B6FC4" }} />
@@ -227,12 +236,6 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
           </p>
         ))}
       </div>
-
-      <p className="mt-6 text-center font-myeongjo text-[14px] leading-relaxed" style={{ color: SUB }}>
-        계산은 다 보여드렸어요.
-        <br />
-        읽어 드리는 건, 여기서부터예요.
-      </p>
     </div>
   );
 }
