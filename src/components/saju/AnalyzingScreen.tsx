@@ -84,11 +84,11 @@ export function AnalyzingScreen({
         <>
           {/* 직녀 — 은하수 아래 베틀의 직녀가 멀리서 실을 잣는 앰비언트 루프.
               "풀이를 짜는 중"을 그림으로 말한다. 산군이 face.webp 로 세계관을 잇듯 직녀도 게이트 장면을 잇는다.
-              파일이 없거나 못 틀면 BgMedia 가 j3.png 로 내려앉는다. */}
+              파일이 없거나 못 틀면 BgMedia 가 j3.webp 로 내려앉는다. */}
           <div className="pointer-events-none absolute inset-0 z-0" style={{ opacity: 0.62 }}>
             <BgMedia
               video="/products/jiknyeo/loading.mp4"
-              img="/products/jiknyeo/j3.png"
+              img="/products/jiknyeo/j3.webp"
               alt="은하수 아래 베틀에 앉은 직녀"
               className="absolute inset-0 h-full w-full object-cover"
             />

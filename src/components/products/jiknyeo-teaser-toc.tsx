@@ -16,6 +16,7 @@ import {
   BrushHead,
   Rule,
   T,
+  Em,
   Cap,
   HanjiCard,
   TocChapter,
@@ -119,11 +120,9 @@ export function JiknyeoTeaserToc({
         />
       </div>
       <Rule />
-      <T>
-        &lsquo;이런 것까지 알려줘요?&rsquo;
-        <br />
-        열 장을 다 펴서 보여드릴게요.
-      </T>
+      {/* 손님 속말은 본문, 우리 약속이 정점 — 바로 아래 한지 카드(열 장)의 예고이자 근거다. */}
+      <T>&lsquo;이런 것까지 알려줘요?&rsquo;</T>
+      <Em>열 장을 다 펴서 보여드릴게요.</Em>
 
       <div className="mt-7">
         <HanjiCard>
@@ -140,7 +139,8 @@ export function JiknyeoTeaserToc({
           </div>
 
           {rows.map((c, i) => (
-            <div key={c.title}>
+            // 간격을 여기서 준다 — 장 끝 코멘트(SdSay)까지 한 덩어리로 묶고 다음 장을 떼어 놓는다.
+            <div key={c.title} className={i > 0 ? "mt-10" : undefined}>
               <TocChapter title={c.title} items={c.items} />
               {/* 장 사이 개인화 코멘트 — 좌우 번갈아. 손님 문장이 있는 만큼만 */}
               {/* 원본은 장이 끝날 때마다 캐릭터가 한 마디씩 얹고 좌우를 번갈아 앉힌다.

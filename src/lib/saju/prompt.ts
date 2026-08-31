@@ -420,6 +420,16 @@ export function outlineTitles(productSlug: string): string[] {
   return style.outline.map((s) => s.replace(/^★\s*/, "").split(" — ")[0]);
 }
 
+/** **티저가 약속한 핵심 장**의 번호(0-based) — ★ 표시 장과 고민/물음 장.
+ *  이 장들이 빠진 결과지는 티저에서 판 물건과 다른 물건이다. 출고 게이트가 여기를 본다:
+ *  나머지 장이 몇 개 비는 건 크론이 이어 채우면 되지만, 핵심 장이 빈 채로는 안 나간다. */
+export function coreChapterIndexes(productSlug: string): number[] {
+  return resolveStyle(productSlug)
+    .outline.map((title, i) => ({ title, i }))
+    .filter(({ title }) => title.startsWith("★") || /고민|물음/.test(title))
+    .map(({ i }) => i);
+}
+
 export function buildChapterPrompts(input: PromptInput): {
   title: string;
   chapters: ChapterPrompt[];

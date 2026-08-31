@@ -40,7 +40,7 @@ const RX: Record<
     avoidNote: "감정 과열·욱해서 지르는 결정",
   },
   토: {
-    dir: "지금 자리(중앙) — 멀리 옮기지 않는 것",
+    dir: "지금 자리(중앙)",
     color: "노랑·황토·베이지",
     item: "도자기·흙 소재 소품, 원석",
     place: "오래 쌓는 판 — 운영·관리·부동산처럼 버티는 일",
@@ -80,7 +80,7 @@ export function computePrescription(analysis: SajuAnalysisResponse): Prescriptio
   // avoid 열은 기신 오행의 생활 코드 — 기신이 없으면 "과한 것"이 없다는 뜻이라 빈 문구 대신
   // 용신 반대 결의 일반 경계를 깐다(표에 빈칸이 서면 계산이 덜 된 것처럼 보인다).
   const rows: PrescriptionRow[] = [
-    { label: "방향", do_: `${yong.dir} 쪽에 앉고, 머물 곳도 그쪽을 본다`, avoid: gi ? `${gi.dir} 쪽 과열` : "정처 없이 옮겨 다니는 것" },
+    { label: "방향", do_: `${yong.dir}에 앉고, 머물 곳도 그쪽을 본다`, avoid: gi ? `${gi.dir} 쏠림` : "정처 없이 옮겨 다니는 것" },
     { label: "색", do_: yong.color + (RX[heeKo] ? ` (곁들이면 ${RX[heeKo].color})` : ""), avoid: gi ? gi.color : "튀는 원색 도배" },
     { label: "곁에 둘 것", do_: yong.item, avoid: gi ? gi.item : "쓰지 않는 물건 쌓아두기" },
     { label: "맞는 판", do_: yong.place, avoid: gi ? gi.place : "결이 안 맞는 자리에 오래 버티기" },

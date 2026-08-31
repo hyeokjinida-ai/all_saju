@@ -17,6 +17,7 @@
 // 숫자 「9」가 튀는 이유도 30px 이라서가 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다.
 
 import { HANJI_BG } from "@/components/products/jiknyeo-comic-kit";
+import { NeonMask } from "@/components/products/jiknyeo-ui";
 
 // ⚠ 2026-08-22 — 색을 하드코딩에서 **CSS 변수 참조**로 바꿨다.
 // 티저 스킨(.teaser-light 달빛 / .teaser-pink 옛 분홍)이 한 곳에서 갈리게 하려면
@@ -64,14 +65,43 @@ export function BrushHead({
 /** POINT 배지 — 알약, 테두리만 핑크. 배경은 비운다. */
 export function PointBadge({ n }: { n: number }) {
   return (
+    // ⚠ 예전엔 얇은 테두리 + 연한 글자였다. POINT 가 다섯 번 이어지는데 배지가 그렇게 약하면
+    // 섹션이 바뀐 걸 알아볼 표시가 화면에 하나도 안 남는다(형님 지적 — 스크롤하면 다 같은 판).
+    // 배지를 채워서 **섹션의 시작점**이 눈에 박히게 한다.
     <p className="text-center">
       <span
-        className="inline-block rounded-full px-4 py-1 text-[13px]"
-        style={{ border: `1px solid ${PINK}`, color: PINK, fontWeight: 500 }}
+        className="inline-block rounded-full px-4 py-[5px] text-[12px]"
+        style={{ background: PINK, color: "#ffffff", fontWeight: 700, letterSpacing: "0.1em" }}
       >
         POINT {n}
       </span>
     </p>
+  );
+}
+
+/**
+ * POINT 판 — 섹션 하나를 **한 장**으로 묶는다.
+ *
+ * 티저는 밝은 달빛 판 하나 위에 POINT 1~5 가 연달아 서는 구조인데, 전부 같은 바탕에 같은
+ * 조판이라 스크롤하는 손님 눈에는 끝없는 한 덩어리로 보였다. 섹션마다 바탕을 한 톤 내리고
+ * 테두리를 둘러 **경계**를 만든다 — 안에 드는 근거 카드(흰색)는 그 위에서 오히려 더 뜬다.
+ */
+export function PointCard({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <section
+      className="mt-12 rounded-[16px] px-4 py-7"
+      style={{
+        // 각도는 판(teaser-light, 168deg)과 같이 간다 — 다른 각도로 깔면 두 그라데가 서로 어긋나
+        // 판 안에서 사각형이 떠 보인다. 위(배지)가 짙고 가운데가 열렸다가 아래에서 다시 달빛으로.
+        background:
+          "linear-gradient(168deg, rgba(91,63,143,0.13) 0%, rgba(91,63,143,0.035) 52%, rgba(139,110,190,0.11) 100%)",
+        border: `1px solid ${LINE}`,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+      }}
+    >
+      <PointBadge n={n} />
+      {children}
+    </section>
   );
 }
 
@@ -87,10 +117,35 @@ export function T({ children, center = true }: { children: React.ReactNode; cent
   );
 }
 
-/** 캡션·각주 — 12/#a1a1a1. 자간만 normal 로 되돌린다(원본도 여기서만 normal). */
+/**
+ * 정점 한 줄 — 섹션마다 **하나만**.
+ *
+ * 왜 필요한가(2026-08-25 실측): 본문 덩어리 174블록 중 **42% 가 이미 굵은 글씨**였다.
+ * 열 줄 중 넉 줄이 볼드면 볼드는 강조가 아니라 배경이 된다 — 그래서 섹션마다 「사는 이유」
+ * 한 줄이 나머지와 똑같은 옷을 입고 묻혀 있었다. 색 강조는 5% 뿐이었다.
+ *
+ * 규칙(형님 조판 규칙 그대로): **컷마다 정점 한 줄, 1.5~2배 + 색, 나머지는 400.**
+ *   · 22px = 본문 15~16 대비 약 1.4~1.5배. 헤드(24 서예체)와는 **글씨체가 달라** 안 겹친다.
+ *   · ⚠ 한 섹션에 두 번 쓰면 둘 다 죽는다. 이미 40px 숫자(연도·가격)가 정점인 섹션에는 쓰지 않는다.
+ */
+export function Em({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-2.5 text-center text-[22px] leading-[32px]" style={{ color: PINK, fontWeight: 700 }}>
+      {children}
+    </p>
+  );
+}
+
+/** 캡션·각주 — 13/MUTE. 자간만 normal 로 되돌린다(원본도 여기서만 normal).
+ *
+ * ⚠ 원래 `#a1a1a1` 하드코딩이었다 — 청월당 원본(바탕 #f3f2ef)에서 뜬 값인데, 우리 판은
+ *   달빛(#EDE7F6)이라 같은 회색이 대비 2.14 로 깔렸다(실측 2026-08-24, 기준선 4.5).
+ *   이 파일 머리의 규칙(값은 스킨 토큰에만 둔다)을 이 한 줄이 어기고 있었다 → MUTE 로 되돌린다.
+ *   크기도 12 → 13: 여기 걸리는 문장 중엔 각주가 아닌 것이 섞여 있다
+ *   (「A4 여덟 장 · 다 읽는 데 열다섯 분」은 분량을 파는 값이다). */
 export function Cap({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-center text-[12px] leading-[16px]" style={{ color: "#a1a1a1", letterSpacing: "normal" }}>
+    <p className="text-center text-[13px] leading-[19px]" style={{ color: MUTE, letterSpacing: "normal" }}>
       {children}
     </p>
   );
@@ -132,16 +187,96 @@ export function Val({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 잠금 줄 — 행간을 24 가 아니라 **16** 으로 조인다(원본 실측). 값은 DOM 에 넣지 않는다. */
-export function LockRow({ label, mask = "████" }: { label: string; mask?: string }) {
+/**
+ * 잠금 줄 — 값은 DOM 에 넣지 않는다(흐리게만 하면 소스에서 그대로 읽힌다).
+ *
+ * ⚠ 원래 `████` 글리프를 회색(#c9c9c9)으로 찍었다. 실측 대비 **1.4** — 안 읽히는 건 의도지만,
+ *   진짜 문제는 **모양이 스켈레톤(로딩 자리표시자)과 같다**는 것이었다. 손님은 「아직 안 뜬 화면」
+ *   으로 읽고 기다리다 나간다. 잠금이 팔리려면 「값이 이미 적혀 있는데 가려졌을 뿐」로 보여야 한다.
+ *   → 같은 화면의 열린 달 카드(OpenMonthCard)·금기 카드가 이미 쓰는 문법으로 통일한다:
+ *     **발광 테두리 + 흐린 더미 글자**(NeonMask). 가려 놓은 자리가 오히려 눈에 띈다.
+ *   낙서(scribble)는 끈다 — 다섯 줄이 연달아 서는 자리라 줄마다 밑줄이 들어가면 판이 시끄럽다.
+ */
+export function LockRow({ label, mask = "○○○○" }: { label: string; mask?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2" style={{ borderBottom: `1px solid ${LINE}` }}>
-      <span className="text-[16px] leading-[16px]" style={{ color: BODY }}>
+    <div className="flex items-center justify-between gap-3 py-2.5" style={{ borderBottom: `1px solid ${LINE}` }}>
+      <span className="text-[15px] leading-[21px]" style={{ color: BODY }}>
         {label}
       </span>
-      <span className="text-[16px] leading-[16px] select-none" style={{ color: "#c9c9c9", letterSpacing: "0.05em" }}>
-        {mask}
+      <span className="shrink-0">
+        <NeonMask text={mask} scribble={false} />
       </span>
+    </div>
+  );
+}
+
+/**
+ * 열린 달 카드 — 티저에서 **유일하게 날짜가 붙은 공짜 답**을 왕으로 세우는 자리.
+ *
+ * 왜 카드인가: 예전엔 열린 달과 잠긴 달이 같은 15px 목록체로 나란히 서 있어서, 이 화면의
+ * 결론(「가장 가까운 달이 언제다」)이 잠금 줄과 구분이 안 됐다. 장식은 정작 곁가지(2030년
+ * 붓 동그라미)가 다 가져가고 있었다. 조판 규칙대로 **정점 한 줄만** 키우고 색을 준다.
+ *
+ * 여백 규칙(형님 지시 2026-08-24): 왕은 혼자 있어야 왕이다.
+ *   · 카드 안 패딩을 넉넉히(px-5 pt-7 pb-6) — 비좁으면 보물이 아니라 표가 된다
+ *   · 「달」과 아래 잠금 덩어리 사이(mt-7)를 잠금 줄끼리 간격(mt-3)의 2배 이상으로
+ *   · 카드 자체도 위(mt-9)를 크게 비워 앞 문단에서 떼어 놓는다
+ *
+ * 달 그림은 **위 격자에서 쓴 것과 같은 부품**이다 — 같은 기호가 두 번 나와야 손님이
+ * 「10월 = 저 보름달」을 설명 없이 잇는다.
+ */
+export function OpenMonthCard({
+  year,
+  month,
+  desc,
+  note,
+  moon,
+  locks,
+}: {
+  year: number;
+  month: number;
+  desc: string;
+  /** 카드 밑에 까는 한 줄 — 「여기까지 무료」를 말이 아니라 자리로 알린다 */
+  note?: string;
+  moon?: React.ReactNode;
+  /** 잠긴 달들 — 값이 아니라 **가려진 자리의 개수와 모양**이 정보다 */
+  locks?: { label: string }[];
+}) {
+  return (
+    <div
+      className="mt-9 bg-white px-5 pb-6 pt-7"
+      style={{ borderRadius: 14, border: `1px solid ${LINE}`, boxShadow: "0 10px 26px rgba(20,12,40,0.10)" }}
+    >
+      <p className="flex items-center gap-2.5">
+        {moon}
+        <span className="font-myeongjo text-[17px]" style={{ color: INK, fontWeight: 700 }}>
+          {year}년{" "}
+          {/* 이 화면의 정점 — 크기·색은 여기 한 곳에만 준다 */}
+          <span className="text-[34px] leading-[1.1] tracking-[-0.02em]" style={{ color: PINK, fontWeight: 800 }}>
+            {month}월
+          </span>
+        </span>
+      </p>
+      <p className="mt-2.5 text-[17px] leading-[26px]" style={{ color: INK, fontWeight: 700 }}>
+        {desc}
+      </p>
+      {note && (
+        <p className="mt-1.5 text-[13px] leading-[20px]" style={{ color: MUTE }}>
+          {note}
+        </p>
+      )}
+      {locks && locks.length > 0 && (
+        <div className="mt-7 space-y-3 border-t pt-5" style={{ borderColor: "#EFE9F8" }}>
+          {locks.map((l, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <NeonMask text="20○○년 ○월" scribble={false} />
+              <span className="text-[15px] leading-[22px]" style={{ color: BODY }}>
+                {l.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -195,16 +330,23 @@ export function HanjiCard({ children }: { children: React.ReactNode }) {
 /** 장 제목 + 풀이 줄들 — 목차 카드 안에 반복해서 쌓는다. */
 export function TocChapter({ title, items }: { title: string; items: string[] }) {
   return (
-    // 장과 장 사이는 크게 벌린다 — 원본 대조에서 우리 쪽이 붙어 보였다(풀이 마지막 줄과 다음 장 제목이 붙음).
-    <div className="mt-10 first:mt-0">
+    // ⚠ 장 사이 간격은 **호출부**가 준다. 여기 `mt-10 first:mt-0` 을 걸어 뒀더니, 호출부가 장마다
+    // `<div>` 로 감싸는 구조라 모든 장이 각자 first 가 되어 mt-10 이 한 번도 안 먹었다 —
+    // 장 끝 코멘트와 다음 장 제목이 간격 0 으로 붙어, 코멘트가 다음 장에 달린 말로 읽혔다(운영 실측).
+    <div>
       <p className="flex items-center gap-2.5 text-[17px]" style={{ color: INK, fontWeight: 700 }}>
         <span className="inline-block h-[16px] w-[3px]" style={{ background: PINK }} />
         {title}
       </p>
       <ul className="mt-2">
         {items.map((it, i) => (
-          <li key={it} className="py-3 text-[15px] leading-[22px]" style={{ color: BODY, borderBottom: `1px solid ${LINE}` }}>
-            <span style={{ fontWeight: 700 }}>풀이 {i + 1}.</span> {it}
+          // 강조가 거꾸로 걸려 있었다(2026-08-25 실측): 아무 뜻도 없는 「풀이 N.」 이 굵고,
+          // 정작 사는 이유인 질문 문장이 400 이었다. 목차 한 장에 10줄 × 10장 = 볼드 30개가
+          // 여기서 나왔고, 그게 페이지 전체의 볼드 예산을 먹어 다른 강조까지 죽였다.
+          // → 번호는 배경으로 물리고(작게·연하게) 질문을 값 색(INK)으로 올린다. 굵기는 **둘 다 안 쓴다** —
+          //   질문 30줄을 굵히면 인플레만 자리를 옮긴 꼴이 된다. 대비는 색과 크기로만 만든다.
+          <li key={it} className="py-3 text-[15px] leading-[24px]" style={{ color: INK, borderBottom: `1px solid ${LINE}` }}>
+            <span className="text-[13px]" style={{ color: MUTE }}>풀이 {i + 1}.</span> {it}
           </li>
         ))}
       </ul>

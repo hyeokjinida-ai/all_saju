@@ -6,33 +6,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { HeadingIcon, markdownComponents, ResultBody } from "./ResultBody";
 
-export type Chapter = { title: string; body: string };
-
-// ## 대제목은 버리고, ### 단위로 챕터를 가른다. 첫 ### 이전 글은 intro.
-// (산군 결과지(SangunResult)도 같은 파서를 쓴다 — 따로 만들면 챕터 경계가 어긋난다)
-export function splitChapters(md: string): { intro: string; chapters: Chapter[] } {
-  const chapters: Chapter[] = [];
-  const intro: string[] = [];
-  let cur: { title: string; body: string[] } | null = null;
-  // CRLF 내성: 윈도우에서 저장·복사된 md 는 줄끝에 \r 이 남는다. \r 이 있으면 `(.*)$` 가
-  // 통째로 안 걸려 챕터 0개 → 결과지 전체가 intro 로 뭉개진다(회귀 테스트에서 실측).
-  for (const rawLine of md.split("\n")) {
-    const line = rawLine.replace(/\r$/, "");
-    const h3 = line.match(/^###\s+(.*)$/);
-    if (h3) {
-      if (cur) chapters.push({ title: cur.title, body: cur.body.join("\n").trim() });
-      cur = { title: h3[1].trim(), body: [] };
-    } else if (/^##\s+/.test(line)) {
-      continue; // 전체 제목 줄은 버림(상단에서 이미 노출)
-    } else if (cur) {
-      cur.body.push(line);
-    } else {
-      intro.push(line);
-    }
-  }
-  if (cur) chapters.push({ title: cur.title, body: cur.body.join("\n").trim() });
-  return { intro: intro.join("\n").trim(), chapters };
-}
+// 파서는 `lib/saju/chapters` 한 곳에만 산다 — 출고 검사(서버)가 같은 자를 써야 하기 때문이다.
+// 여기서 다시 내보내는 건 기존 호출부(JiknyeoResult·SangunResult·verify-money-path) 호환용.
+export type { Chapter } from "@/lib/saju/chapters";
+export { splitChapters } from "@/lib/saju/chapters";
+import { splitChapters } from "@/lib/saju/chapters";
 
 const cardStyle: React.CSSProperties = {
   borderRadius: 18,

@@ -27,13 +27,14 @@ import { PillarChart } from "@/components/saju/PillarChart";
 import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
-import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
-import { MoonGrid, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
+import { MoonGrid, Moon, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
+import { SayEditPanel } from "@/components/products/jiknyeo-say-edit";
+import { SAY_BOX_DEFAULT } from "@/lib/jiknyeo-say-box";
 import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
-import { InkFade } from "@/components/products/jiknyeo-comic-kit";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -700,7 +701,10 @@ export function SajuWizard({
       )}
 
       {/* 상단: 이전 + 진행률 + N/7 (몰입형은 스테이지 상단 바 아래로 여백 확보) */}
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : "pt-5"}`}>
+      {/* 직녀는 무대(JiknyeoStory)가 브랜드 줄을 **화면 상단에 고정**으로 얹는다(top 16~36).
+          위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
+          무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
+      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isJiknyeoWorld ? "pt-12" : "pt-5"}`}>
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -1201,7 +1205,7 @@ export function SajuWizard({
                         </span>
                         <span className="shrink-0 text-right">
                           {o.compareAtPrice && o.compareAtPrice > o.price && (
-                            <span className="mr-1.5 text-[11px] line-through" style={{ color: "var(--bone-faint)" }}>
+                            <span className="mr-1.5 text-[12px] line-through" style={{ color: "var(--bone-faint)" }}>
                               {formatKRW(o.compareAtPrice)}
                             </span>
                           )}
@@ -1214,9 +1218,11 @@ export function SajuWizard({
                         </span>
                       </div>
                       {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
+                      {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
+                          문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
                       {pct != null && (
                         <p
-                          className="mt-1 text-[11px]"
+                          className="mt-1 text-[13px]"
                           style={{ color: pct >= 40 && !isInyeon ? "#d8563f" : "var(--bone-faint)" }}
                         >
                           {pct}% 할인
@@ -1292,7 +1298,9 @@ export function SajuWizard({
                 "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
                 19,900 보다 할인가 18,000 을 먼저 누른다 = 결제 의사가 가장 높은 사람만 골라
                 에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
-            <p className="text-[11px] text-bone-faint text-center">
+            {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
+                안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
+            <p className="text-[13px] text-bone-faint text-center">
               {imm
                 ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
                 : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
@@ -1753,9 +1761,10 @@ function TeaserStep({
         <InyeonCut
           id="j1"
           assets={jiknyeoAssets}
-          sayAt="top"
+          // 좌하단 치마 위 — 얼굴(y8~40)과 세로로 완전히 갈린다. 꼬리는 위쪽 얼굴을 가리킨다.
+          sayBox={SAY_BOX_DEFAULT.j1}
           say={
-            <ComicSay side="left" tail="down">
+            <ComicSay tail="up" point="right">
               <span>{name ? `${name}님 사주,` : "사주,"}</span>
               <span>방금 다 읽었어요.</span>
             </ComicSay>
@@ -1794,7 +1803,9 @@ function TeaserStep({
         >
           {birthDate && (
             <p
-              className="font-myeongjo text-center text-[11px] tracking-[0.06em]"
+              // 11 → 13px. 표의 머리글인데 표 안 어떤 글자보다도 작았다 — 「내 생일로 계산했다」를
+              // 증명하는 유일한 줄이라, 증거 화면에서 이게 제일 작으면 증거가 안 선다.
+              className="font-myeongjo text-center text-[13px] tracking-[0.06em]"
               // 이 줄은 표의 머리글 역할(어느 날짜에서 나온 글자인지)인데 가장 흐린 색이었다.
               style={imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
             >
@@ -1824,7 +1835,9 @@ function TeaserStep({
               13px 로 키우고, 무엇의 목록인지 한 줄 얹는다(타이트는 이걸 표 맨 아랫줄에 넣는다). */}
           {teaser && teaser.sinsal.length > 0 && (
             <div className="mt-3">
-              <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 라벨 11 → 13px. 바로 아래 배지가 17px 인데 「무엇의 목록인지」를 말하는 줄이
+                  11px 이면, 손님은 배지만 보고 이게 뭔지 모른 채 지나간다(실측 대비도 3.0 이었다). */}
+              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
               </p>
               {/* 배지 13 → 17px (형님: "살 부분이 더 크게 보이면 좋겠어").
@@ -1851,10 +1864,12 @@ function TeaserStep({
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
           {teaser && teaser.chartRows.length > 0 && (
-            // 11 → 13px. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야 기능한다 —
-            // 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 11 → 13 → **15px**. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야
+            // 기능한다 — 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 13px 도 여전히 본문(15) 아래였다. 이건 각주가 아니라 **아래 콜드리딩 전체의 근거 선언**이라
+            // 본문과 같은 눈금에 세운다.
             <p
-              className="font-myeongjo mt-2.5 text-center text-[13px] leading-[1.75]"
+              className="font-myeongjo mt-2.5 text-center text-[15px] leading-[1.75]"
               style={imm ? { color: "rgba(215,206,188,0.78)" } : undefined}
             >
               {/* 「장부」는 산군의 물건이다 — 직녀 화면에서 이 단어를 쓰면 다른 캐릭터의 말이 된다.
@@ -1947,7 +1962,9 @@ function TeaserStep({
                   </p>
                 ))}
               </div>
-              <p className="mt-2.5 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+              {/* 11 → 13px. 각주 지위는 유지하되(별표 그대로) 읽을 수는 있어야 한다 —
+                  콜드리딩 세 줄이 맞았을 때 「어떻게 알았지」의 답이 여기 있다. */}
+              <p className="mt-2.5 text-center text-[13px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
                 * 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 {name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.
               </p>
             </div>
@@ -1995,9 +2012,11 @@ function TeaserStep({
             <InyeonCut
               id="w3"
               assets={jiknyeoAssets}
-              sayAt="top"
+              // 클로즈업이라 빈 모서리가 없다 — 유일하게 눈·입이 없는 **턱 아래**로 내린다.
+              // 여기 있던 좌상단 자리가 왼쪽 눈을 정통으로 덮고 있었다(운영 실측).
+              sayBox={SAY_BOX_DEFAULT.w3}
               say={
-                <ComicSay side="left" tail="down">
+                <ComicSay tail="up" point="right">
                   {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
                   {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
                     <span key={i} className="block">
@@ -2019,15 +2038,20 @@ function TeaserStep({
               「글 블록 두 개를 연달아 쌓지 않는다」는 우리 조판 규칙을 정면으로 어긴 화면이었다(형님 지적).
               j2 = 직녀가 **달력을 내려다보는 옆모습**. 대사가 "아래 달력"을 가리키므로 시선이 맞물린다. */}
           {productSlug === "inyeon-saju" && (
-            <div className="mt-6">
+            // ⚠ 여기에 mt-* 를 주면 **밝은 판(teaser-light)이 그 틈으로 드러나 흰 가로 띠**가 된다.
+            //    컷은 자기 밤 배경을 갖고 있으므로 간격은 컷 **안쪽**(InyeonCut 의 padTop)에서 준다.
+            <div>
               {/* 말풍선은 **2줄**까지만(청월당 실측). 넘치면 원이 깨지고 자막이 된다.
                   j2 는 직녀가 왼쪽에서 달력을 내려다보는 옆모습 → 말풍선은 오른쪽 빈 자리, 꼬리는 아래로. */}
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
-                sayAt="top"
+                padTop={24}
+                // 우하단 옷자락 — 왼쪽 아래 두루마리(대사가 가리키는 「아래 달력」)를 살린다.
+                // 꼬리는 왼쪽 위 옆얼굴을 가리킨다.
+                sayBox={SAY_BOX_DEFAULT.j2}
                 say={
-                  <ComicSay side="right" tail="down">
+                  <ComicSay tail="up" point="left">
                     <span>인연이 없진 않아요.</span>
                     <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
@@ -2039,8 +2063,13 @@ function TeaserStep({
                   className="font-myeongjo mt-2 px-1 text-[15.5px] leading-[1.8]"
                   style={{ color: "var(--bone-soft)" }}
                 >
-                  자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —{" "}
-                  <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  {/* 대시에서 줄을 끊는다. 예전엔 이어 흘려서 「— 아래」까지 앞줄에 걸리고
+                      하이라이트가 두 줄로 꺾였다 — 강조 상자가 반 토막 나면 강조가 아니라 사고로 보인다.
+                      block 두 개로 갈라 **하이라이트가 자기 줄을 통째로** 쓰게 한다. */}
+                  <span className="block">자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —</span>
+                  <span className="mt-1.5 block">
+                    <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  </span>
                 </p>
               )}
             </div>
@@ -2138,8 +2167,9 @@ function TeaserStep({
           }
         >
           {/* 직녀 화면엔 산군의 장부도, 빨강도 없다(형님 확정 금기). 같은 연출을 은사 색으로만 옮긴다. */}
+          {/* 라벨 11 → 13px. 이 카드의 40px 숫자가 무엇의 연도인지 말하는 유일한 줄이다. */}
           <p
-            className="font-myeongjo text-[11px] tracking-[0.15em]"
+            className="font-myeongjo text-[13px] tracking-[0.15em]"
             style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
           >
             {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
@@ -2208,7 +2238,9 @@ function TeaserStep({
               <path d={INK_STROKE} fill="url(#ink-tone)" mask="url(#ink-reveal)" />
             </svg>
           </span>
-          <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
+          {/* 13 → 15px. 40px 붓글씨 연도의 **뜻**을 말하는 줄(「37세에 한 번 크게 갈리세요」)인데
+              각주 크기였다 — 카드의 펀치라인이라 본문 눈금에 세운다. */}
+          <p className="font-myeongjo mt-3 text-[15px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
         </div>
       )}
 
@@ -2333,8 +2365,10 @@ function TeaserStep({
                   : teaser.locked
               ).map((row, i) =>
                 isJiknyeoWorld ? (
-                  // 밝은 티저의 잠금 — 원본은 어두운 네온 박스가 아니라 **얇은 줄 + ████** 이다.
-                  // 행간을 24 가 아니라 16 으로 조이는 것까지 실측값이다.
+                  // 밝은 티저의 잠금 — 얇은 줄 + 가려진 값.
+                  // ⚠ 가리개는 회색 ████ 이 아니라 NeonMask 다(LockRow 주석 참조):
+                  //    회색 막대는 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다(2026-08-25 실측 대비 1.4).
+                  //    바로 위 열린 달 카드가 쓰는 가리개와 같은 것이라, 한 화면에서 잠금 문법이 하나로 선다.
                   <LockRow key={i} label={row.label} />
                 ) : (
                   <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
@@ -2354,7 +2388,7 @@ function TeaserStep({
               우리는 마지막 한 번뿐이었다. 분량을 먼저 세우고(리본) 값을 말하는 순서까지 원본 그대로. */}
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
-              title={productSlug === "marriage-saju" ? "정통 결혼운 사주풀이" : "정통 연애운 사주풀이"}
+              title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}
               volume="A4 여덟 장 분량! + 내 고민 맞춤 답변"
               bullets={
                 productSlug === "marriage-saju"
@@ -2395,7 +2429,7 @@ function TeaserStep({
           {isJiknyeoWorld && (
             <>
               {/* 세계관 한 컷 — 조판이 길게 이어지는 구간이라 그림으로 한 번 끊는다(글·사진 교차). */}
-              <div className="mt-14">
+              <div>
                 <InyeonCut id="t06" assets={jiknyeoAssets} />
               </div>
 
@@ -2406,7 +2440,14 @@ function TeaserStep({
               <InyeonCut
                 id="t14"
                 assets={jiknyeoAssets}
-                say={<ComicSay>{productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}</ComicSay>}
+                // 좌상단 은하수 — 이 컷의 전부인 **내민 손**(y72~95)에서 최대한 멀리 띄운다.
+                // 아래쪽에 있던 자리가 손을 통째로 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.t14}
+                say={
+                  <ComicSay tail="down" point="right">
+                    {productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}
+                  </ComicSay>
+                }
               />
 
               {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
@@ -2418,11 +2459,10 @@ function TeaserStep({
               {/* 배웅 — 값을 다 말한 뒤 마지막 한 컷. 원본도 맨 끝을 캐릭터로 닫는다. */}
               <InyeonCut id="t15" assets={jiknyeoAssets} />
 
-              {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
-                  원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
-              <div className="mt-14">
-                <InkFade from="#E2D9F0" to="#0b0f1a" height={80} />
-              </div>
+              {/* ⚠ 여기 있던 「밝은 판 → 검은 결제」 먹 번짐(InkFade)을 걷어냈다.
+                  이 자리는 판의 끝이 아니다 — 뒤에 금기 카드·배웅 컷·마감 펀치가 **아직 밝은 판 안에서**
+                  이어진다. 그래서 그라데가 판 한가운데 보라→검정 띠로 박혀 있었다(운영 실측).
+                  판은 둥근 모서리로 자기 끝을 이미 말하고 있으므로 녹일 것이 없다. */}
             </>
           )}
 
@@ -2462,7 +2502,9 @@ function TeaserStep({
               // 토큰으로 그려 어두운 무대·밝은 티저 양쪽에서 같은 역할을 하게 한다.
               style={{ background: "var(--gold-pale)", border: "1px solid var(--gold-line)" }}
             >
-              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 제목 13 → 15px. 아래 목록이 15px 인데 제목이 13px 이라 위계가 뒤집혀 있었다
+                  (제목이 본문보다 작으면 카드가 아니라 각주 뭉치로 읽힌다). */}
+              <p className="font-myeongjo text-center text-[15px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 지금 이것만은 하지 마세요
               </p>
               <ol className="mt-4 space-y-3.5">
@@ -2497,8 +2539,11 @@ function TeaserStep({
               <InyeonCut
                 id="w7"
                 assets={jiknyeoAssets}
+                // 좌상단 달·창 — 달력 짚는 손가락(y45~57)과 얼굴(x55~80)을 둘 다 피한다.
+                // 우상단에 있던 자리가 그 손가락과 공책 모서리를 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.w7}
                 say={
-                  <ComicSay side="right" tail="up">
+                  <ComicSay tail="down" point="right">
                     <span>{name ? `${name}님 달력,` : "달력,"}</span>
                     <span>여기까지 폈어요.</span>
                   </ComicSay>
@@ -2509,16 +2554,21 @@ function TeaserStep({
                   <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
                     계산은 끝났어요
                   </p>
+                  {/* ⚠ 여기 `text-moonlit`(흰→달빛 그라데 글자)이 걸려 있었다. 그건 **검은 무대**용이라
+                      밝은 달빛 판 위에서는 흰 글자가 판에 묻혀 첫 줄이 통째로 안 보였다(운영 실측).
+                      마감 펀치는 이 페이지에서 손님이 마지막으로 읽는 두 줄이다 — 토큰 먹색으로 세운다. */}
                   <p
-                    className="font-gothic text-moonlit mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
-                    style={{ fontWeight: 900 }}
+                    className="font-gothic mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
+                    style={{ color: "var(--bone)", fontWeight: 900 }}
                   >
                     달 이름만,
                   </p>
                   <p className="mt-2">
                     <span
                       className="font-gothic inline-block rounded-[6px] px-3 py-1 text-[30px] leading-[1.25] tracking-[-0.02em]"
-                      style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
+                      // 밝은 판에서 --gold-bright 는 진보라(#6B4C9A)로 뒤집힌다. 먹색 글자를 얹으면
+                      // 대비가 2.6:1 까지 떨어져 강조가 아니라 얼룩이 된다 — 흰 글자로 받는다.
+                      style={{ background: "var(--gold-bright)", color: "#ffffff", fontWeight: 900 }}
                     >
                       아직이에요
                     </span>
@@ -2543,6 +2593,8 @@ function TeaserStep({
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
     {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
     {isJiknyeoWorld && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
+    {/* 말풍선 자리 편집 — `?edit=say` 에서만 뜬다(손님 화면엔 없다) */}
+    {isJiknyeoWorld && <SayEditPanel />}
     </>
   );
 }
@@ -2599,6 +2651,10 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
   // ★ 숫자가 튀는 건 크기 때문이 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다(실측 판독).
   //   그래서 이 블록에서 핑크는 숫자 하나뿐이다. 여기저기 칠하면 그 효과가 사라진다.
   const { ref, inView } = useInView<HTMLDivElement>();
+  // 격자에 **실제로 그려진 것**을 센다. openCount(●+◎ 합)를 그대로 쓰면 노란 보름달 개수와
+  // 어긋나 손님이 세어 봤을 때 틀린 숫자가 된다.
+  const fullCount = data.calendar.filter((c) => c.grade === "●").length;
+  const halfCount = data.calendar.filter((c) => c.grade === "◎").length;
   return (
     <div className="mt-8">
       {/* 12칸 예보 격자 — 열두 달 등급을 **하나도 가리지 않고** 편다.
@@ -2611,53 +2667,74 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         />
       </div>
 
+      {/* 집계 = 이 구간의 표지이자 정보다.
+          ⚠ 예전엔 붓 헤드가 「이 달들을 놓치지 마세요!」(정보 0 인 명령)였고, 그 아래 「나의 인연
+             기회: 5회」가 따로 있었다. 그 5 는 **보름(●) + 반달(◎)** 합인데 화면에서 세면 노란
+             보름달은 3 개뿐이라, 읽는 법을 못 박는 순간 숫자가 거짓말로 보인다. 그래서 등급별로
+             갈라 적는다 — 세는 것과 보이는 것이 일치해야 증거가 증거로 산다.
+          느낌표를 뺀 것도 의도다(직녀 보이스 1번: 재촉하지 않는다, 대신 달을 못 박는다). */}
       <div ref={ref} className="text-center">
-        <T>앞으로 열두 달,</T>
+        <T>앞으로 열두 달</T>
         <div
-          className="mt-1"
+          className="mt-2"
           style={{
             opacity: inView ? 1 : 0,
             transform: inView ? "translateY(0)" : "translateY(6px)",
             transition: "opacity .5s ease, transform .5s ease",
           }}
         >
-          <BrushHead lines={["이 달들을 놓치지 마세요!"]} />
+          <BrushHead lines={[`크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount}`]} />
         </div>
-        <p className="mt-5 flex items-center justify-center gap-1.5">
-          <span className="text-[18px] leading-[27px]" style={{ color: BODY, fontWeight: 500 }}>
-            나의 인연 기회:
-          </span>
-          <BigNum value={data.openCount} unit="회" />
-        </p>
+        {halfCount > 0 && (
+          <p className="mt-3 text-[15.5px] leading-[24px]" style={{ color: BODY }}>
+            자리가 생기는 달 {KO_NUM[halfCount] ?? halfCount}
+          </p>
+        )}
       </div>
 
-      {/* 연월 목록 — 가장 가까운 하나만 열고 나머지는 잠근다.
-          ⚠ 잠긴 줄에 실값을 넣지 않는다. 흐리게만 하면 소스에서 그대로 읽힌다 —
-          openList 에 애초에 공개분만 담겨 온다. */}
-      <div className="mt-6">
-        {data.openList.map((m, i) => (
-          <div key={i} className="py-3" style={{ borderBottom: `1px solid ${LINE}` }}>
-            <Val>
-              {m.year}년 {m.month}월
-            </Val>
-            <p className="mt-1 text-[16px] leading-[24px]" style={{ color: BODY }}>
-              {m.desc}
-            </p>
-          </div>
-        ))}
-        {Array.from({ length: data.restOpen }, (_, i) => (
-          <LockRow key={`lock-${i}`} label="○○○○년 ○월" mask="████████" />
-        ))}
-      </div>
+      {/* 열린 달 = 이 화면의 결론. 잠긴 달은 **그 카드 안에** 붙여 「같은 종류의 값이 몇 개 더
+          가려져 있다」로 읽히게 한다.
+          ⚠ 잠긴 줄에 실값을 넣지 않는다 — openList 에 애초에 공개분만 담겨 온다.
+          ⚠ 회색 막대(LockRow)를 여기서 걷어냈다. 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다 —
+             잠금은 금기 카드와 같은 NeonMask(발광 테두리 + 흐린 글자)로 통일한다. 다만
+             **맨 아래 항목 목록의 회색 막대는 그대로 둔다**: 발광이 일곱 개면 아무것도 안 빛난다. */}
+      {data.openList.map((m, i) => (
+        <OpenMonthCard
+          key={i}
+          year={m.year}
+          month={m.month}
+          desc={m.desc}
+          note={
+            i === 0
+              // 「여기까지 무료」는 판 맨 위 「여기까지는 무료예요」와 겹치고, 붙이면 대시에서
+              // 줄이 꺾여 「여기까지 무료」만 다음 줄에 떨어진다. 한 줄에 드는 만큼만 적는다.
+              ? `크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount} 중 가장 가까운 달이에요`
+              : undefined
+          }
+          moon={<Moon phase="full" size={30} />}
+          locks={
+            i === 0
+              ? Array.from({ length: data.restOpen }, (_, k) => ({
+                  // 라벨은 위 격자 범례에서 쓰는 말 그대로다 — 새 약속을 만들지 않는다.
+                  label: k === 0 ? "두 번째로 큰 달" : "자리가 생기는 달",
+                }))
+              : undefined
+          }
+        />
+      ))}
 
       {data.restOpen > 0 && (
-        <p className="mt-4 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
-          + 이런 풀이를 더 해드려요!
+        <p className="mt-8 text-center text-[17px] leading-[26px]" style={{ color: INK, fontWeight: 700 }}>
+          이런 풀이를 더 해드려요
         </p>
       )}
     </div>
   );
 }
+
+/** 개수를 **말로** 적는다 — 「3」은 표의 숫자고 「셋」은 사람이 하는 말이다.
+ *  이 화면에서 아라비아 숫자는 정점(카드의 「10월」) 하나만 쓴다: 숫자가 둘이면 둘 다 안 크다. */
+const KO_NUM: Record<number, string> = { 0: "없어요", 1: "하나", 2: "둘", 3: "셋", 4: "넷", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟" };
 
 /**
  * 로딩 체크리스트 — 항목은 **실제로 도는 계산**만 적는다(안 하는 걸 적으면 그게 거짓말이 된다).
@@ -2726,8 +2803,11 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
   //   연출은 공용이라 못 건드리므로 바만 포털로 꺼낸다.
   return (
     <>
-    {/* 고정바가 마지막 줄(환불 안내)을 덮지 않게 그만큼 바닥을 띄운다 */}
-    <div aria-hidden style={{ height: barH }} />
+    {/* 바닥 여백도 **포털로 body 끝에** 붙인다.
+        ⚠ 예전엔 이 자리(티저 컴포넌트 안)에 그냥 뒀는데, 티저 **뒤에** 결제 시트가 이어지므로
+        여백이 시트 앞에 끼어 아무 일도 안 했다 — 맨 끝의 결제 버튼과 「한 번만 결제돼요」가
+        고정바에 그대로 덮여 있었다(운영 실측). body 마지막 자식이어야 문서 끝이 밀린다. */}
+    {createPortal(<div aria-hidden style={{ height: barH }} />, document.body)}
     {createPortal(
     <div
       ref={(el) => { if (el) setBarH(el.offsetHeight); }}
