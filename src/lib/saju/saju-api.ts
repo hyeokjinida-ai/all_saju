@@ -838,9 +838,13 @@ export function buildInyeonFactsBlock(
   const fmt = (r: InyeonRow) => `${r.label}(${r.tags.slice(0, 2).join(" + ")} / 인연점수 ${r.score})`;
   const lines = [
     `- ${scoreLabel}: ${f.score}점 (100점 만점) — 결과지 전체에서 이 점수 하나만 사용`,
-    `- 계산 근거: 짝을 뜻하는 자리 ${f.spouseCount}개 · 눈에 띄는 신호 ${f.dohwaCount ? "도화 있음" : "도화 없음"}${f.hongyeomCount ? "·홍염 있음" : ""} · 배우자 자리 활력 ${f.iljiLevel}/12${iljuHurtNote(f.iljiHurt)}`,
+    // ⚠ 「n/12」 를 주지 않는다 — 모델이 그 분수를 본문에 그대로 옮긴다
+    //   (2026-08-31 표본 실측: 「배우자 자리의 활력은 5/12로,」). 손님에게 12분율은 뜻 없는
+    //   기계 숫자라 「돌린 것」으로 읽히고, 린터의 내부점수노출(FAIL)에도 걸린다.
+    //   등급 이름(제왕·병 …)만 주면 모델이 말로 풀어 쓴다 — 판정은 그대로고 표기만 감춘다.
+    `- 계산 근거: 짝을 뜻하는 자리 ${f.spouseCount}개 · 눈에 띄는 신호 ${f.dohwaCount ? "도화 있음" : "도화 없음"}${f.hongyeomCount ? "·홍염 있음" : ""} · 배우자 자리 활력 ${f.iljiFortune || "보통"}${iljuHurtNote(f.iljiHurt)}`,
     `- 타고난 끌림 신호: ${[f.dohwaCount ? `도화 ${f.dohwaCount}개` : "", f.hongyeomCount ? `홍염 ${f.hongyeomCount}개` : "", f.hasCheoneul ? "천을귀인" : "", f.hasGeumyeo ? "금여성" : ""].filter(Boolean).join(" · ") || "은은한 편(꾸준함이 무기)"}`,
-    `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}(${f.iljiLevel}/12)` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
+    `- 배우자 자리(일지): ${f.ilji}${f.iljiFortune ? ` · 활력 ${f.iljiFortune}` : ""}${f.iljiHurt ? " · 원국에서 흔들림 있음" : ""}`,
     // 짝의 결과 내 용신은 다른 값이다. 예전엔 용신 하나를 "만날 사람의 결"로 줬는데,
     // 그러면 결제 전 얼굴 카드(배우자성 오행)와 본문이 다른 사람을 그리게 된다 — 갈라놓는다.
     // "정/편"은 내부 판정값이다 — 글자를 그대로 주면 본문에 "정(바르게 오래 가는 인연)"처럼
