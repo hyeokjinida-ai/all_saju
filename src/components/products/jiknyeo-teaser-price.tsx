@@ -33,12 +33,12 @@ export function JiknyeoTeaserPrice({
       </div>
 
       {/* 가로 스크롤 카드열 — 좁은 화면에서 줄바꿈으로 뭉개지지 않게 옆으로 흘린다(원본도 잘려 나간다) */}
-      <div className="-mx-5 mt-6 overflow-x-auto px-5">
-        <div className="flex w-max gap-3">
-          <VsCard label="철학관·점집 대면" from="5만원" to="30만원" />
-          <VsCard label="전화 상담" from="3만원" to="10만원" />
-          <VsCard label="사주 앱 구독" from="월 9천원" to="월 3만원" />
-        </div>
+      {/* ⚠ 「사주 앱 구독(월 9천원~)」을 뺐다(형님 지시 2026-08-24). 우리 값(17,900원)보다 싼
+          숫자를 앵커 옆에 세우면 비교표가 **우리를 비싸 보이게** 만든다. 대면·전화만 남기면
+          세 칸이 두 칸이 되어 가로 스크롤도 사라진다(잘려 보이던 세 번째 카드 문제도 같이 해결). */}
+      <div className="mt-6 flex justify-center gap-3">
+        <VsCard label="철학관·점집 대면" from="10만원" to="30만원" />
+        <VsCard label="전화 상담" from="3만원" to="10만원" />
       </div>
 
       <p className="mt-8 text-center">

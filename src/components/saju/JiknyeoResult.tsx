@@ -45,7 +45,7 @@ import type { InyeonFacts } from "@/lib/saju/saju-api";
 import type { ChartRow } from "@/lib/saju/teaser";
 import type { ResultView } from "@/lib/saju/result-view";
 import { Moon, GRADE_TO_PHASE } from "./JiknyeoMoon";
-import { MonthCards, MonthLedger, CharmLore, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, CutSay, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
+import { MonthCards, MonthLedger, CharmLore, SajuSense, ShakyCards, SignalCards, CharmChips, PartnerRecall, CutInterlude, CutSay, Prologue, ClosingLetter, ChapterSay } from "./JiknyeoInterlude";
 
 /** 밤 위에 뜬 달빛 판 — 티저와 같은 형태. 정보 밀도 높은 구간만 이렇게 띄운다. */
 function Plate({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -726,6 +726,8 @@ export function JiknyeoResult({
               <ResultBody markdown={c.body} tone="hanji" />
             </div>
             {after}
+            {/* 사주상식 — 章 끝마다. 청월당이 토큰 0으로 분량을 만드는 그 자리다(해부 §0) */}
+            <SajuSense title={t} />
             {/* 크로스셀 2회 — 청월당은 연애 장 안에 두 개를 넣는다. 5章(짝 얘기) 직후가 관심 최고점 */}
             {(i === crossAt || /내게 올 사람|함께할 사람/.test(t)) && <ResultCrossSell to="sangun" />}
           </Fragment>

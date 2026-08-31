@@ -60,6 +60,18 @@
         "--no-browser"
       ],
       "port": 8777
+    },
+    {
+      "name": "shopping-factory",
+      "runtimeExecutable": "C:\\Users\\HP\\AppData\\Local\\Microsoft\\WinGet\\Packages\\OpenJS.NodeJS.LTS_Microsoft.Winget.Source_8wekyb3d8bbwe\\node-v24.16.0-win-x64\\node.exe",
+      "runtimeArgs": [
+        "C:/Users/HP/OneDrive/Desktop/shopping-factory/node_modules/next/dist/bin/next",
+        "dev",
+        "C:/Users/HP/OneDrive/Desktop/shopping-factory",
+        "-p",
+        "3200"
+      ],
+      "port": 3200
     }
   ]
 }

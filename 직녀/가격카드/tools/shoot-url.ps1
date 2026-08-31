@@ -16,7 +16,8 @@ param(
   [int]$W = 448,
   [int]$H = 3000,
   [int]$Col = 0,
-  [int]$Wait = 3500
+  [int]$Wait = 3500,
+  [int]$Scale = 1
 )
 
 $SP = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -34,7 +35,7 @@ if (Test-Path $raw) { Remove-Item $raw -Force }
 $ua = "Mozilla/5.0 (Linux; Android 13; SM-S918N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
 & $chrome --headless=new --disable-gpu --no-sandbox --hide-scrollbars `
-  --force-device-scale-factor=1 --user-agent="$ua" `
+  --force-device-scale-factor=$Scale --user-agent="$ua" `
   --virtual-time-budget=$Wait --screenshot="$raw" --window-size=$shotW,$H $Url 2>&1 | Out-Null
 
 if (-not (Test-Path $raw)) { Write-Output "SHOOT FAILED: $Url"; exit 1 }

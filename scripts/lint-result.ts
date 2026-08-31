@@ -277,6 +277,61 @@ export const RULES: Rule[] = [
     },
   },
   {
+    id: "깨진볼드",
+    what: "닫는 ** 앞에 공백 — 볼드가 안 닫혀 별표가 손님 화면에 그대로 찍힘",
+    why:
+      "CommonMark 는 `**문장. **` 을 강조로 안 잡는다(닫는 표 앞 공백). ReactMarkdown 실측: 별표가" +
+      " 원문 그대로 렌더된다. 2026-08-29 전수: 15/15 표본 47곳 — 유료 손님이 제일 먼저 보는 급의 결함.",
+    severity: "FAIL",
+    find: (t) => [...t.matchAll(/\*\*[^*\n]+?\s\*\*/g)].map((m) => `${m[0].slice(0, 30)}…`),
+  },
+  {
+    id: "상투어도배",
+    what: "같은 관용구가 결과지 전체에 도배됨 (장부 메타포·'장면'·'아니라')",
+    why:
+      "한 번은 연출이고 여덟 번은 기계 박자다. 2026-08-29 전수(15표본 평균): 「장부를 펼쳐 보니」류" +
+      " 5.4회 · 「장면」 9.9회 · 「~가 아니라」 16.2회. '장면'은 프롬프트 지시어(실제 장면으로 쓰라)가" +
+      " 본문으로 샌 것이라 특히 티가 난다.",
+    severity: "WARN",
+    find: (t) => {
+      const out: string[] = [];
+      const count = (re: RegExp) => (t.match(re) ?? []).length;
+      const ledger = count(/장부를 펼쳐 보니|장부에는? .{0,6}적혀/g);
+      const scene = count(/장면[이을은]/g);
+      const notBut = count(/[가이] 아니라/g);
+      if (ledger > 3) out.push(`장부 메타포 ${ledger}회(상한 3)`);
+      if (scene > 6) out.push(`「장면」 ${scene}회(상한 6)`);
+      if (notBut > 12) out.push(`「~가 아니라」 ${notBut}회(상한 12)`);
+      return out;
+    },
+  },
+  {
+    id: "볼드위생",
+    what: "본문 인라인 볼드가 너무 길거나(문장 통째) 한 문단에 몰림",
+    why:
+      "굵은 게 절반이면 굵은 건 강조가 아니라 배경이다. 형님이 티저에서 볼드 43%→28% 로 내린 것과 같은 병이" +
+      " 결과지에 남아 있었다(2026-08-29 실측: 문단 128개 중 48% 가 볼드 보유, 인라인 54곳, 한 구절이 문장 하나 길이).",
+    severity: "WARN",
+    find: (t) => {
+      const bad: string[] = [];
+      for (const rawLine of t.split("\n")) {
+        const line = rawLine.trim();
+        // 표는 셀마다 굵히는 게 정상이고, 제목 줄(###)은 볼드 예산 밖이다
+        if (!line || line.startsWith("|") || line.startsWith("#")) continue;
+        const bolds = [...line.matchAll(/\*\*([^*]+)\*\*/g)].map((m) => m[1].trim());
+        if (!bolds.length) continue;
+        // 줄 전체가 하나의 볼드면 소제목이다 — prompt.ts 가 그렇게 시킨다(정상)
+        if (bolds.length === 1 && line === `**${bolds[0]}**`) continue;
+        for (const b of bolds) {
+          // 20자 넘는 볼드는 「짧은 구절에만」(prompt.ts:49) 위반 — 문장을 통째로 굵힌 것이다
+          if (b.length > 20) bad.push(`긴 볼드 ${b.length}자: ${b.slice(0, 28)}…`);
+        }
+        if (bolds.length > 2) bad.push(`한 문단 ${bolds.length}곳: ${line.slice(0, 30)}…`);
+      }
+      return bad;
+    },
+  },
+  {
     id: "한자병기",
     what: "본문에 한자 병기",
     why: "읽는 사람이 한자를 모른다는 전제다. 괄호 한자는 읽기를 끊는다",
@@ -291,6 +346,8 @@ export const RULES: Rule[] = [
     find: (t) => [
       ...[...t.matchAll(/(대길|대흉)/g)].map((m) => m[0]),
       ...[...t.matchAll(/-\d{2,3}\s*점/g)].map((m) => m[0]),
+      // 「활력 3/12」 같은 내부 지표 분수 — 손님에게는 뜻 없는 기계 숫자다(2026-08-29 실측 3건)
+      ...[...t.matchAll(/[가-힣]{1,4}\s?\d{1,2}\/1[02]/g)].map((m) => m[0]),
     ],
   },
   {

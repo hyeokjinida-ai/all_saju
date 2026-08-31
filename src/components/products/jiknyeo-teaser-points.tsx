@@ -12,7 +12,7 @@
 //
 // ⚠ 원본 11.png 의 「누적 고객 457,953명 / 팝업 방문자 13,745명 / 후기 19,793개」 금색 월계관 블록은
 //    **안 가져온다**. 우리한테 없는 숫자다. 자리를 비우는 게 지어내는 것보다 낫다.
-import { PointBadge, BrushHead, Rule, T, Cap, LINE, PINK, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { PointCard, BrushHead, Rule, T, Cap, LINE, PINK, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 
 /** 근거 줄 — 좌측에 얇은 핑크 바를 둔 흰 판. POINT 아래 증거를 얹는 규격. */
 function Proof({ head, body }: { head: string; body: string }) {
@@ -34,8 +34,7 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
   return (
     <>
       {/* POINT 1 — 원본: 「내 연애 이야기가 재미있는 웹툰으로?」(줄글 지루함을 때린다) */}
-      <section className="mt-14">
-        <PointBadge n={1} />
+      <PointCard n={1}>
         <div className="mt-3">
           <BrushHead lines={[`내 ${subject} 이야기를`, "그림으로 읽어요"]} accent={1} />
         </div>
@@ -45,11 +44,10 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
           <br />
           직녀가 그림과 함께 짚어 드려요.
         </T>
-      </section>
+      </PointCard>
 
       {/* POINT 2 — 원본: 「다른 연애운 사주와 얼마든지 비교해 보세요」 */}
-      <section className="mt-14">
-        <PointBadge n={2} />
+      <PointCard n={2}>
         <div className="mt-3">
           <BrushHead lines={["다른 사주풀이와", "얼마든지 비교해 보세요"]} accent={1} />
         </div>
@@ -71,11 +69,10 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
           head="지나간 일로 먼저 검증해요"
           body="앞일을 말하기 전에 지난 몇 해에 있었던 일을 먼저 짚어요. 그게 맞아야 나머지도 믿을 수 있으니까요."
         />
-      </section>
+      </PointCard>
 
       {/* POINT 3 — 원본은 챗GPT 저격. 우리는 저격 대신 **경계를 밝힌다**(우리도 AI 를 쓴다). */}
-      <section className="mt-14">
-        <PointBadge n={3} />
+      <PointCard n={3}>
         <div className="mt-3">
           <BrushHead lines={["어디까지가 계산이고", "어디부터가 풀이인지"]} accent={1} />
         </div>
@@ -96,7 +93,7 @@ export function JiknyeoTeaserPoints({ isMarriage }: { isMarriage?: boolean }) {
         <div className="mt-4">
           <Cap>* 결과지에는 계산에 쓰인 원국(여덟 글자)을 그대로 실어 드려요.</Cap>
         </div>
-      </section>
+      </PointCard>
     </>
   );
 }

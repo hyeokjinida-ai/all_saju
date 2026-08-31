@@ -140,7 +140,8 @@ export function JiknyeoTeaserToc({
           </div>
 
           {rows.map((c, i) => (
-            <div key={c.title}>
+            // 간격을 여기서 준다 — 장 끝 코멘트(SdSay)까지 한 덩어리로 묶고 다음 장을 떼어 놓는다.
+            <div key={c.title} className={i > 0 ? "mt-10" : undefined}>
               <TocChapter title={c.title} items={c.items} />
               {/* 장 사이 개인화 코멘트 — 좌우 번갈아. 손님 문장이 있는 만큼만 */}
               {/* 원본은 장이 끝날 때마다 캐릭터가 한 마디씩 얹고 좌우를 번갈아 앉힌다.
