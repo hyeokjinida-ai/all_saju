@@ -149,8 +149,11 @@ export function SangunBuyCard({
   onBuy: () => void;
 }) {
   return (
+    // mt-5 → mt-16(64px): 판 전체의 전환 정점인데 목차에 20px 로 붙어 있었다(실측).
+    // 칠흑 판독 — 정점 앞 큰 숨이 다섯 번뿐이라 정점이 선다. 이 카드가 그 「최대 정점」이라
+    // 결과지 간지급 눈금(64px)을 쓴다. 검은 배경이라 여백 자체가 어둠의 숨이 된다.
     <div
-      className="mt-5 rounded-md p-6"
+      className="mt-16 rounded-md p-6"
       style={{ background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
     >
       {/* 카피는 쉬운 말만(형님 지시 2026-09-02) — 멋 부린 문장 금지, 운세위키의

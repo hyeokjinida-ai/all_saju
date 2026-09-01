@@ -174,7 +174,10 @@ export function JiknyeoTeaserToc({
           경쟁 2사가 같은 자리에서 결과지 스크린샷을 쓴다(청월당 12구간 · 타이트 공통부품 ③).
           그림을 새로 그리지 않았다 — /dev/jiknyeo-result 표본을 폰 390 으로 그대로 찍었다.
           아래는 잘라 페이드로 닫는다: 한 쪽이 다 보이면 「이게 전부」로 읽힌다. */}
-      <div className="mt-5">
+      {/* 20px → 44px: 목차 각주에 붙어 「목차 스택의 연장」으로 읽혔다.
+          실물은 목차와 다른 물건(증거)이니 한 숨 쉬고 등장한다(칠흑 여백 번역, 컷 눈금 44).
+          인라인인 이유: mt-11 은 dev Tailwind 가 생성을 놓친다(SajuWizard 같은 자리 주석). */}
+      <div style={{ marginTop: 44 }}>
         <div className="relative overflow-hidden rounded-[12px]" style={{ height: 320, border: "1px solid var(--gold-line)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

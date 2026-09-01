@@ -2195,7 +2195,10 @@ function TeaserStep({
       {teaser?.turningYear && (
         <div
           ref={inkRef}
-          className="mb-9 mt-9 px-4 py-7 text-center"
+          // mt-9 → mt-14(56px): 칠흑 판독의 「정점 앞 큰 숨」을 티저에 번역(2026-09-02 형님
+          // 「여백 활용을 못한다」 지적). 실측 36px 로 앞 컷에 붙어 있어 붉은 해가 묻혔다.
+          // 눈금은 결과지에서 이미 검증한 사다리(기본 24 · 정점 56 · 최대 64)를 그대로 쓴다.
+          className="mb-9 mt-14 px-4 py-7 text-center"
           style={
             isInyeon
               ? { background: "rgba(217,199,232,0.08)", border: "1px solid var(--gold-line)", borderRadius: 6 }
@@ -2315,7 +2318,11 @@ function TeaserStep({
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
                배경은 형님이 뽑은 먹 한지 + 붉은 잉크판 텍스처(ganji.webp) — 타이트의 붉은 잉크판 대응. */
-            <div className="mt-4">
+            /* 16px → 44px: 복채 선언 컷에 붙어 「말 끝나기도 전에 진열」이었다.
+               선언 뒤 한 박자 쉬고 목차가 펼쳐져야 보여주는 동작이 된다(칠흑 여백 번역).
+               인라인인 이유: mt-11 은 이 리포 최초 사용이라 dev 의 Tailwind 가 생성을
+               놓쳤다(실측 0px — min-h-[44px]와 같은 병). 재야 하는 값은 인라인으로 박는다. */
+            <div style={{ marginTop: 44 }}>
               <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.15em]">
                 네 장부의 차례
               </p>
@@ -2543,7 +2550,9 @@ function TeaserStep({
               박는다")의 집 어휘다. "날짜"는 타이트가 구조적으로 못 하는 차별점이라 유지
               (그들 26,198자 중 달 언급 1회). */}
           {productSlug === "sangun-sinjeom" && (
-            <div className="mt-5 text-center">
+            /* mt-5 → mt-14(56px): 마지막 한마디는 판을 닫는 정점인데 구매 카드에 20px 로
+               붙어 「카드의 각주」로 읽혔다. 한 숨 쉬고 낮은 목소리로 닫는다. */
+            <div className="mt-14 text-center">
               <p className="font-myeongjo text-[13px] leading-[1.75]" style={{ color: "var(--bone-faint)" }}>
                 눈앞에 펼쳐 놓고 말해주마
               </p>
@@ -2563,7 +2572,9 @@ function TeaserStep({
           {/* B8 하지 말 것 — 잠금 줄 바로 위. 두 개는 지금 쓸 수 있게 주고 세 번째만 잠근다. */}
           {isInyeon && teaser.inyeon && (
             <div
-              className="mt-6 rounded-md px-4 py-5"
+              // mt-6 → mt-14(56px): 금기 카드는 「읽어 주다 멈추는」 정점인데 24px 로 붙어
+              // 있었다. 밝은 판 위 여백 = 종이의 침묵(칠흑 번역 눈금 56).
+              className="mt-14 rounded-md px-4 py-5"
               // 검은 판을 하드코딩해 뒀더니 밝은 티저 안에서 이 판만 딴 페이지가 됐다(실측 1건).
               // 토큰으로 그려 어두운 무대·밝은 티저 양쪽에서 같은 역할을 하게 한다.
               style={{ background: "var(--gold-pale)", border: "1px solid var(--gold-line)" }}
@@ -2605,6 +2616,9 @@ function TeaserStep({
               <InyeonCut
                 id="w7"
                 assets={jiknyeoAssets}
+                // 배웅 정점인데 금기 카드에 0px 로 붙어 있었다(실측). 간격은 밤 배경 안에서
+                // 준다 — 바깥 margin 은 밝은 판이 드러나 흰 띠가 된다(padTop 주석 참조).
+                padTop={48}
                 // 좌상단 달·창 — 달력 짚는 손가락(y45~57)과 얼굴(x55~80)을 둘 다 피한다.
                 // 우상단에 있던 자리가 그 손가락과 공책 모서리를 덮고 있었다(운영 실측).
                 sayBox={SAY_BOX_DEFAULT.w7}
