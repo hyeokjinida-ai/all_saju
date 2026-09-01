@@ -2083,7 +2083,18 @@ function TeaserStep({
                   {/* 대시에서 줄을 끊는다. 예전엔 이어 흘려서 「— 아래」까지 앞줄에 걸리고
                       하이라이트가 두 줄로 꺾였다 — 강조 상자가 반 토막 나면 강조가 아니라 사고로 보인다.
                       block 두 개로 갈라 **하이라이트가 자기 줄을 통째로** 쓰게 한다. */}
-                  <span className="block">자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —</span>
+                  {/* 죄책감 해제 3단 — 4사가 예외 없이 쓰는 블록인데 우리는 마지막 단(「자책은
+                      여기서」)만 갖고 있었다. 앞의 두 단이 없으면 그 말이 위로가 아니라 훈수가 된다:
+                      ① 네 탓이 아니다 → ② 원인은 명식의 구간이다 → ③ 그러니 여기서 끝내라.
+                      ②의 연도는 지어내지 않는다 — 과거 검증에 실제로 잡힌 해(pastYear)를 그대로 쓰고,
+                      없으면 그 줄을 통째로 안 그린다. */}
+                  <span className="block">지금 인연이 안 닿는 건 부족해서가 아니에요.</span>
+                  <span className="mt-1.5 block">
+                    {teaser.pastYear
+                      ? `${teaser.pastYear}년부터 들어온 흐름이 눌러 놓은 구간이라 그래요.`
+                      : "타고난 흐름이 눌러 놓은 구간이라 그래요."}
+                  </span>
+                  <span className="mt-3 block">자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —</span>
                   <span className="mt-1.5 block">
                     <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
                   </span>
@@ -2977,7 +2988,10 @@ function ConfirmStep({
               <button
                 type="button"
                 onClick={() => onEdit(s)}
-                className="ml-2.5 font-myeongjo text-[11px] text-gold tracking-[0.15em] underline underline-offset-2"
+                // 글자는 11px 그대로 두고 **누를 면적만** 넓힌다(실측 23×17 → 44 이상).
+                // 값을 고치려고 온 손님이 제일 놓치기 쉬운 자리인데 화면에서 가장 작았다.
+                // -my-3 로 늘어난 높이를 도로 먹여 줄 간격은 그대로 유지한다.
+                className="-my-3 ml-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center font-myeongjo text-[11px] text-gold tracking-[0.15em] underline underline-offset-2"
               >
                 수정
               </button>

@@ -170,6 +170,36 @@ export function JiknyeoTeaserToc({
         </HanjiCard>
       </div>
 
+      {/* 실물 한 쪽 — 목차로 「열 장이 있다」고 말한 바로 뒤에 그 장이 어떻게 생겼는지 보여준다.
+          경쟁 2사가 같은 자리에서 결과지 스크린샷을 쓴다(청월당 12구간 · 타이트 공통부품 ③).
+          그림을 새로 그리지 않았다 — /dev/jiknyeo-result 표본을 폰 390 으로 그대로 찍었다.
+          아래는 잘라 페이드로 닫는다: 한 쪽이 다 보이면 「이게 전부」로 읽힌다. */}
+      <div className="mt-5">
+        <div className="relative overflow-hidden rounded-[12px]" style={{ height: 320, border: "1px solid var(--gold-line)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/products/jiknyeo/sample-page.webp"
+            alt="직녀 결과지 한 쪽 — 짝 카드와 첫 장 본문"
+            width={780}
+            height={2300}
+            loading="lazy"
+            draggable={false}
+            className="w-full select-none object-cover object-top"
+            style={{ height: 320 }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-20"
+            style={{ background: "linear-gradient(180deg, rgba(247,244,251,0) 0%, rgba(247,244,251,0.94) 88%)" }}
+          />
+        </div>
+        {/* 면책 — 값이 든 화면을 예시로 쓰는 자리엔 반드시 붙인다(청월당도 샘플 블록마다 붙인다).
+            안 붙이면 「저 얼굴이 내 짝」으로 읽힐 수 있다. */}
+        <div className="mt-2">
+          <Cap>* 예시 화면이에요. 얼굴도 풀이도 결제 후 내 사주에서 다시 나와요.</Cap>
+        </div>
+      </div>
+
       <div className="mt-4">
         <Cap>A4 여덟 쪽 · 다 읽는 데 열다섯 분 · 마이페이지에 계속 보관돼요</Cap>
       </div>
