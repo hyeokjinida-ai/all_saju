@@ -377,7 +377,7 @@ export function SangunPrologue({
   monthCount: number;
   concern: string | null;
 }) {
-  // A4 한 장 ≈ 1,050자(본문 실측 7,905~8,836자가 판매 카피의 「A4 여덟 장」과 맞는 눈금).
+  // A4 한 장 ≈ 1,050자(본문 실측 7,905~8,836자가 판매 카피의 「A4 여덟 쪽」과 맞는 눈금).
   // 저쪽처럼 부풀리지 않는다 — 손님이 세어 볼 수 있는 숫자다.
   const pages = Math.max(1, Math.round(charCount / 1050));
   const facts = [

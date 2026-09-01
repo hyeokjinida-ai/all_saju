@@ -95,13 +95,13 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
 // ⚠ 숫자 근거(2026-08-17 정정). 처음엔 "A4 열 장"이라 적었는데 그 근거였던 9,835자는
 //    /dev/sangun-result **렌더 화면**의 글자수(명식표·카드·UI 라벨 포함)였다.
 //    손님이 값으로 치는 건 풀이 본문이고, 본문 실측은 한글 7,905~8,836자다(11장, 같은 모델 3회).
-//    A4 환산은 리포 관례(prompt.ts: 1,000자 ≈ A4 1장) → **여덟 장**, 500자/분이면 **열다섯 분**.
+//    A4 환산은 리포 관례(prompt.ts: 1,000자 ≈ A4 1장) → **여덟 쪽**, 500자/분이면 **열다섯 분**.
 //    최저값으로 적는다 — 분량은 밑으로 약속하고 위로 지키는 쪽이 안전하다.
 function LengthAnchorLine() {
   return (
     <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
       <p className="text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-        A4 <b style={{ color: "var(--gold)" }}>여덟 장</b> · 다 읽는 데{" "}
+        A4 <b style={{ color: "var(--gold)" }}>여덟 쪽</b> · 다 읽는 데{" "}
         <b style={{ color: "var(--gold)" }}>열다섯 분</b>
         <br />
         백 장을 던져 주는 자들도 있다만, 나는 네가 끝까지 읽기를 바란다.

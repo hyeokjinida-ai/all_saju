@@ -792,7 +792,9 @@ export function SajuWizard({
             autoFocus
             className="ap-input text-center"
             type="text"
-            placeholder="홍길동"
+            // 「홍길동」은 서식 예시의 말이라 이 화면에서 손님이 자기를 대입할 이름이 아니다.
+            // 유입은 100% 3040 여성이다(메타) — 그 자리에 그들의 이름을 둔다.
+            placeholder="김지은"
             value={form.name}
             onChange={(e) => up("name", e.target.value)}
             style={{ fontSize: 19 }}
@@ -1325,7 +1327,7 @@ export function SajuWizard({
           </>
         )}
         {imm && (
-          <p className="mt-3 text-center text-[11px]" style={{ color: "#5b6274" }}>
+          <p className="mt-3 text-center text-[11px]" style={{ color: "#7a8296" }}>
             토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
           </p>
         )}
@@ -2419,7 +2421,7 @@ function TeaserStep({
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
               title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}
-              volume="A4 여덟 장 분량! + 내 고민 맞춤 답변"
+              volume="A4 여덟 쪽 분량! + 내 고민 맞춤 답변"
               bullets={
                 productSlug === "marriage-saju"
                   ? [
@@ -2621,8 +2623,33 @@ function TeaserStep({
         바꾸면서 손님 동선에서 빠졌다 — 그래서 여기로 옮겼다(2026-08-11).
         장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
-    {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
-    {isJiknyeoWorld && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
+    {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다.
+        2026-09-01: 값만 말하고 살 수는 없던 자리에 버튼을 같이 태웠다(위 StickyBuyBar 주석). */}
+    {isJiknyeoWorld && teaser?.inyeon?.nearest && (
+      <StickyBuyBar
+        note={
+          <>
+            가장 가까운 열리는 달,{" "}
+            <b className="font-bold" style={{ color: "var(--gold-bright)" }}>
+              {teaser.inyeon.nearest.month}월
+            </b>{" "}
+            — 지나가면 빠져요
+          </>
+        }
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
+    {/* 산군은 이 바가 아예 없어 16.4화면 동안 살 자리가 없었다. 마감으로 재촉하지는 않는다 —
+        가짜 타이머 대신 「이미 다 적혀 있다」는 사실만 말하고 버튼을 붙인다. */}
+    {imm && !isJiknyeoWorld && teaser && (
+      <StickyBuyBar
+        dark
+        note={<>네 장부, 章 열하나가 이미 다 적혀 있다</>}
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
     {/* 말풍선 자리 편집 — `?edit=say` 에서만 뜬다(손님 화면엔 없다) */}
     {isJiknyeoWorld && <SayEditPanel />}
     </>
@@ -2820,7 +2847,27 @@ function LoadingChecklist() {
  *  ③ 우리에겐 **진짜 마감**이 이미 있다. 만세력 월운 창이 매달 미끄러져서 지나간 달은 다음 계산에서
  *     실제로 빠진다(상세페이지에 이미 박아 둔 확정 카피와 같은 말). 사실이고 그 손님 달력에서 나온 값이다.
  */
-function NearestMonthBar({ nearest }: { nearest: { year: number; month: number } }) {
+/**
+ * 하단 고정바 — **값을 말하면서 동시에 살 수 있는 자리**.
+ *
+ * 여기 있던 30분 카운트다운을 걷어낸 판단은 그대로다(가짜 마감은 안 쓴다). 다만 걷어내면서
+ * 바가 「정보만」 남아, 티저 내내 눌러서 살 곳이 없어졌다 — 실측(2026-09-01): 직녀는 중반 CTA
+ * 와 결제 시트 사이가 7,700px(9.2화면), 산군은 바 자체가 없어 16.4화면이 비어 있었다.
+ * 경쟁 4사가 예외 없이 하단 고정 CTA 를 쓰는 자리이기도 하다.
+ *
+ * 그래서 **진짜 마감(월운 창은 실제로 미끄러진다)을 말하면서 버튼을 같이 태운다.**
+ */
+function StickyBuyBar({
+  note,
+  buyLabel,
+  dark,
+  onBuy,
+}: {
+  note: React.ReactNode;
+  buyLabel: string;
+  dark?: boolean;
+  onBuy: () => void;
+}) {
   // createPortal 은 SSR 에 document 가 없다 — 마운트 후에만 그린다.
   const [mounted, setMounted] = useState(false);
   // 바닥 여백은 **재서** 맞춘다. 375px 에서 이 문장은 두 줄로 감겨 69px 가 되는데 고정값 46px 을
@@ -2847,17 +2894,33 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
       // teaser-light 를 같이 붙여 토큰(값=먹색·강조=핑크)이 안에서 그대로 먹게 한다.
       // mx-auto+max-w-md: 포털이 body 로 나가 ChromeGate 폰 기둥 밖이므로 폭을 스스로 죈다
       // (fixed 는 뷰포트 기준 — 안 죄면 PC 에서 이 바만 모니터 전폭으로 뻗는다). 홈 고정 헤더와 같은 공식.
-      className="world-jiknyeo teaser-light fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md px-4 py-2.5 text-center"
-      style={{ background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }}
+      className={`${dark ? "world-sangun" : "world-jiknyeo teaser-light"} fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-md items-center gap-2.5 px-3 py-2.5`}
+      style={
+        dark
+          ? { background: "rgba(10,9,14,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.5)" }
+          : { background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }
+      }
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
-      <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>
-        가장 가까운 열리는 달,{" "}
-        <span className="font-bold" style={{ color: "var(--gold-bright)" }}>
-          {nearest.month}월
-        </span>{" "}
-        — 지나가면 다음 계산에서 빠져요
+      <span
+        className="font-myeongjo min-w-0 flex-1 text-left text-[13px] leading-[1.45]"
+        style={{ color: "var(--bone-soft)" }}
+      >
+        {note}
       </span>
+      <button
+        type="button"
+        onClick={onBuy}
+        // 탭 타깃 44px — 이 바는 스크롤 중에 엄지로 누르는 자리라 제일 놓치기 쉽다.
+        className="min-h-[44px] shrink-0 whitespace-nowrap px-3.5 text-[13px] font-bold"
+        style={{
+          fontFamily: "var(--font-serif-kr), serif",
+          background: "var(--gold-bright)",
+          color: dark ? "#17120c" : "#ffffff",
+        }}
+      >
+        {buyLabel}
+      </button>
     </div>,
     document.body,
     )}

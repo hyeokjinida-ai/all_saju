@@ -227,9 +227,9 @@ function TocCard({ priceLabel, compareLabel }: { priceLabel: string; compareLabe
       </ul>
       {/* 분량 앵커 — 산군 카드(SangunSalesBlocks.LengthAnchorLine)와 같은 자리, 다른 말.
           같은 결제 시트에 두 상품이 나란히 서므로 문구가 겹치면 재탕으로 읽힌다.
-          숫자 근거: 10장 개편 후 실측 한글 7,805자(산군 7,905자와 동급) → A4 여덟 장·열다섯 분. */}
+          숫자 근거: 10장 개편 후 실측 한글 7,805자(산군 7,905자와 동급) → A4 여덟 쪽·열다섯 분. */}
       <p className="mt-4 border-t pt-4 text-center text-[13px] leading-[1.75]" style={{ borderColor: "rgba(217,199,232,0.2)", color: "#cfd0d8" }}>
-        A4 <b style={{ color: MOON }}>여덟 장</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
+        A4 <b style={{ color: MOON }}>여덟 쪽</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
         <br />
         길게 늘리지 않았어요. 끝까지 읽고 달을 챙기시라고 이만큼만 썼어요.
       </p>
@@ -280,7 +280,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "뭘 얼마나 받나요?",
-    "10개 챕터, A4 여덟 장 분량이에요. 점수 / 걸어온 길 / 반복되는 패턴 / 만나는 달 세 개 / 내게 올 사람 / 알아보는 신호 셋 / 조심할 달 / 크게 바뀌는 해 / 내 고민 답 / 이번 주에 할 것 3가지. 위 목차에 그대로 적어뒀어요.",
+    "10개 챕터, A4 여덟 쪽 분량이에요. 점수 / 걸어온 길 / 반복되는 패턴 / 만나는 달 세 개 / 내게 올 사람 / 알아보는 신호 셋 / 조심할 달 / 크게 바뀌는 해 / 내 고민 답 / 이번 주에 할 것 3가지. 위 목차에 그대로 적어뒀어요.",
   ],
   [
     "태어난 시각을 몰라요. 음력 생일만 알아요.",

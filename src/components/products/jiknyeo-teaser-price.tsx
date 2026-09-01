@@ -73,7 +73,7 @@ export function JiknyeoTeaserPrice({
             {isMarriage ? "결혼하는 해와 그 해의 달까지!" : "인연이 열리는 달과 만나는 자리까지!"}
           </>,
           <>
-            읽어도 읽어도 끝이 없는 <span style={{ color: PINK, fontWeight: 700 }}>A4 여덟 장 분량</span>
+            읽어도 읽어도 끝이 없는 <span style={{ color: PINK, fontWeight: 700 }}>A4 여덟 쪽 분량</span>
           </>,
           <>
             한 번 사면 <span style={{ color: PINK, fontWeight: 700 }}>마이페이지에 계속 보관</span>

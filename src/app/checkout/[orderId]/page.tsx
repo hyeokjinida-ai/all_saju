@@ -109,8 +109,8 @@ export default async function CheckoutPage({
   // 한 줄 설명 — 티저·랜딩이 쓰는 분량 표기와 같은 말. 없는 상품은 비운다.
   const desc: Record<string, string> = {
     "sangun-sinjeom": "장부 열한 장 · 앞으로 12개월",
-    "inyeon-saju": "열두 달 예보 · 여덟 장",
-    "marriage-saju": "결혼하는 해와 달 · 여덟 장",
+    "inyeon-saju": "열두 달 예보 · 여덟 쪽",
+    "marriage-saju": "결혼하는 해와 달 · 여덟 쪽",
   };
 
   const Row = ({ k, v, sub, strong }: { k: React.ReactNode; v: React.ReactNode; sub?: string; strong?: boolean }) => (

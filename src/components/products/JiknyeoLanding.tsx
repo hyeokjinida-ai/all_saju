@@ -358,14 +358,17 @@ export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
                 className="inline-block rounded-full px-3.5 py-1 font-myeongjo text-[13px]"
                 style={{ background: "rgba(217,199,232,0.12)", border: `1px solid ${LINE}`, color: MOON }}
               >
-                + 8,000자
+                {/* 실측 10,291자(2026-08-29, 실물 결과지)인데 8,000 이라 적어 우리 분량을
+                    자진해서 작게 보이고 있었다. 경쟁은 20,000(타이트)·23,000(청월당)으로 판다.
+                    「밑으로 약속하고 위로 지킨다」는 관례는 지키되, 실측보다 2,000 낮게 적을 이유는 없다. */}
+                + 10,000자
               </span>
             </p>
 
             {/* L8 앵커 2종 — 분량(정직한 실측) + 가격(30대 타깃이라 점심값 유지) */}
             <div className="mt-4 border-t pt-4" style={{ borderColor: LINE }}>
               <p className="text-center text-[13px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
-                A4 <b style={{ color: MOON }}>여덟 장</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
+                A4 <b style={{ color: MOON }}>여덟 쪽</b> · 다 읽는 데 <b style={{ color: MOON }}>열다섯 분</b>
                 <br />
                 끝까지 읽으시라고 이만큼만 썼어요.
               </p>

@@ -246,7 +246,7 @@ export function JiknyeoDetail({
                 color: "var(--gold-bright)",
               }}
             >
-              A4 여덟 장 · 다 읽는 데 열다섯 분
+              A4 여덟 쪽 · 다 읽는 데 열다섯 분
             </span>
           </p>
         </section>
