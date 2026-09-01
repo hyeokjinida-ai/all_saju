@@ -2911,12 +2911,15 @@ function StickyBuyBar({
       <button
         type="button"
         onClick={onBuy}
-        // 탭 타깃 44px — 이 바는 스크롤 중에 엄지로 누르는 자리라 제일 놓치기 쉽다.
-        className="min-h-[44px] shrink-0 whitespace-nowrap px-3.5 text-[13px] font-bold"
+        className="shrink-0 whitespace-nowrap px-3.5 text-[13px] font-bold"
         style={{
           fontFamily: "var(--font-serif-kr), serif",
           background: "var(--gold-bright)",
           color: dark ? "#17120c" : "#ffffff",
+          // 탭 타깃 44px — 스크롤 중에 엄지로 누르는 자리라 제일 놓치기 쉽다.
+          // 인라인으로 두는 이유: 유틸리티 클래스(min-h-[44px])는 이 버튼에서 실측 20px 로
+          // 떨어졌다(2026-09-02 DOM 실측 minHeight:auto). 값이 확실히 서야 하는 자리다.
+          minHeight: 44,
         }}
       >
         {buyLabel}

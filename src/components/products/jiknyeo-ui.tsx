@@ -124,15 +124,19 @@ export function SlotCut({
           // 좌표 배치 — 폭은 이 상자가 정하므로 안에 든 말풍선의 자기 폭(46%)을 덮어쓴다.
           // 글씨 크기는 CSS 변수로 흘려보낸다(ComicSay 가 저장소를 몰라도 되게).
           <div
-            // ⚠ `first-child` 로 좁힌다 — `[&>*]` 로 두면 편집 모드의 크기 손잡이(span)까지
-            //    폭 100% 를 먹어 동그라미가 가로로 늘어난 알약이 된다(실측).
-            className={`absolute [&>*:first-child]:!w-full ${edit ? "cursor-move touch-none" : "pointer-events-none"}`}
+            // 폭은 아래 `--say-w` 로만 넘긴다. 예전엔 `[&>*:first-child]:!w-full` 로 넘겼는데
+            // 그 클래스가 실제로 안 먹어(2026-09-02 실측) 말풍선이 46% 로 남아 글자가 터졌다.
+            // 변수로 주면 편집 모드의 크기 손잡이(span)도 영향을 안 받는다 — 그게 first-child 로
+            // 좁혔던 원래 이유였다(손잡이까지 100% 를 먹으면 원이 알약으로 늘어난다).
+            className={`absolute ${edit ? "cursor-move touch-none" : "pointer-events-none"}`}
             style={
               {
                 left: `${box.x}%`,
                 top: `${box.y}%`,
                 width: `${box.w}%`,
                 "--say-font": `${font}px`,
+                // 말풍선이 이 상자를 꽉 채우게 한다(자기 기본 폭 46% 를 덮어쓰는 통로).
+                "--say-w": "100%",
                 ...(edit ? { outline: "1.5px dashed rgba(255,224,122,0.9)", outlineOffset: 2 } : null),
               } as React.CSSProperties
             }
@@ -302,7 +306,12 @@ export function ComicSay({
     // 폭은 sayBox 가 있으면 부모가 덮어쓴다 — 컷마다 인물이 다른 자리에 서 있어서
     // 말풍선이 스스로 모서리를 고르면 반드시 어딘가에서 얼굴·손 위에 떨어진다(실측 5컷 중 3컷).
     // 여기 46% 는 좌표를 안 주는 자리(상품 상세)용 기본값이다.
-    <div className="relative w-[46%]" style={{ aspectRatio: `100 / ${H}` }}>
+    //
+    // ⚠ 부모가 폭을 넘기는 통로를 유틸리티(`[&>*:first-child]:!w-full`)에서 **변수로 바꿨다**.
+    //    그 클래스가 실제로는 적용되지 않아(2026-09-02 실측: 부모 161px 인데 자식이 46% = 74px)
+    //    말풍선이 원 크기보다 큰 글자를 물고 있었다 — w3 컷에서 대사가 원 밖으로 29px 삐져나가
+    //    화면 왼쪽 끝을 넘었다(가로 넘침 3건). 변수는 `--say-font` 와 같은 통로라 규칙이 하나로 선다.
+    <div className="relative" style={{ width: "var(--say-w, 46%)", aspectRatio: `100 / ${H}` }}>
       <svg
         viewBox={`0 0 100 ${H}`}
         className="absolute inset-0 h-full w-full"
