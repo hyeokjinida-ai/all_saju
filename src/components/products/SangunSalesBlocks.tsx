@@ -104,34 +104,15 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
           </li>
         ))}
       </ul>
-      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
     </div>
   );
 }
 
-// 분량 앵커 — 시장 1위(타이트 MZ범산도령)가 티저에서 "5만 자 · 100페이지 · 읽는데 2시간"으로
-// 미는 자리다. 우리는 그 수를 못 이긴다. 그런데 그건 사고가 아니라 설계다 — prompt.ts 의
-// 산군 규격이 "3040 모바일 완독선"을 노리고 타이트 플래그십의 절반으로 일부러 잡았다.
-// 그래서 같은 자리에서 '양'이 아니라 '완독'으로 싸운다.
-//
-// ⚠ 숫자 근거(2026-08-17 정정). 처음엔 "A4 열 장"이라 적었는데 그 근거였던 9,835자는
-//    /dev/sangun-result **렌더 화면**의 글자수(명식표·카드·UI 라벨 포함)였다.
-//    손님이 값으로 치는 건 풀이 본문이고, 본문 실측은 한글 7,905~8,836자다(11장, 같은 모델 3회).
-//    A4 환산은 리포 관례(prompt.ts: 1,000자 ≈ A4 1장) → **여덟 쪽**, 500자/분이면 **열다섯 분**.
-//    최저값으로 적는다 — 분량은 밑으로 약속하고 위로 지키는 쪽이 안전하다.
-function LengthAnchorLine() {
-  return (
-    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
-      <p className="text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-        A4 <b style={{ color: "var(--gold)" }}>여덟 쪽</b> · 다 읽는 데{" "}
-        <b style={{ color: "var(--gold)" }}>열다섯 분</b>
-        <br />
-        백 장을 던져 주는 자들도 있다만, 나는 네가 끝까지 읽기를 바란다.
-      </p>
-    </div>
-  );
-}
+// 분량 앵커(A4 몇 쪽·몇 자·몇 분)는 형님 지시로 통째로 걷어냈다(2026-09-02).
+// 경쟁사는 이 자리를 2~5만 자로 파는데 우리 실측은 8천 자대다 — 숫자를 꺼내는 순간
+// 지는 싸움이고, 「일부러 짧게 썼다」는 변명은 파는 문장이 아니다. 분량은 말하지 않고
+// 내용물(章·확답·거를 사람)과 실물 스크린샷으로만 판다.
 
 // 상향 앵커 — "점심 한 번 값"은 뺐다(4050 에게 '싸다'는 '부실하다'로 읽힌다, 모의구매 3/3 이 거슬려 함).
 // 같은 리포의 재물 랜딩(WealthWebtoon.tsx:269)처럼 철학관 가격으로 위에서 눌러 준다.
@@ -169,23 +150,21 @@ export function SangunBuyCard({
       className="mt-5 rounded-md p-6"
       style={{ background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
     >
-      {/* 무료/유료 경계는 잠금 **위**에서 말한다 — 손님이 가려진 줄을 먼저 만나
-          「무료야 유료야」를 스스로 풀지 않게(2026-08-30 판독에서 옳다고 확인된 원칙). */}
+      {/* 카피는 쉬운 말만(형님 지시 2026-09-02) — 멋 부린 문장 금지, 운세위키의
+          「여기까지가 맛보기 / 진짜 풀이는 지금부터」 문법을 산군 반말로 옮긴 것.
+          (「여기까지가 공짜다」는 아래 마감 펀치가 같은 말을 쓰므로 여기선 피한다) */}
       <p className="text-center font-myeongjo text-[19px] font-bold leading-[1.5]" style={{ color: "var(--bone)" }}>
-        여기까지가 공짜다.
+        지금까지는 맛보기다.
       </p>
       <p className="mt-2 text-center text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-        네 장부는 이미 다 적혀 있다. 남은 건 펴는 일뿐이다.
+        진짜 풀이는 지금부터다. 몇 분이면 네 장부가 나온다.
       </p>
-      <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
-        <p className="text-center font-myeongjo text-[15px] font-bold leading-[1.6]" style={{ color: "var(--bone)" }}>
-          받는 것 — 章 열하나 · 확답 일곱 이상
-          <br />
-          앞으로 열두 달 전부
-        </p>
-      </div>
+      {/* ⚠ 「받는 것 — 11장 · 확답 일곱…」은 여기 쓰지 않는다. 꼬리의 ValueSpecCard 가 같은 말을
+          하고 있어서, 넣으면 한 페이지에서 같은 문장을 두 번 읽게 된다(실측으로 확인하고 걷어냈다).
+          본문 카드의 일은 **지금 살 수 있게 하는 것**이고, 무엇을 받는지는 바로 위 4章 카드가
+          이미 章별로 펴 놓았다. */}
       {/* 값 — 40px 숫자 하나가 정점이다. 옆에 취소선·할인율을 붙여 「지금 값」이 어느 것인지 못 박는다. */}
-      <div className="mt-5 flex items-end justify-center gap-2.5">
+      <div className="mt-6 flex items-end justify-center gap-2.5">
         {compareLabel && (
           <span className="pb-1.5 text-[15px] line-through" style={{ color: "var(--bone-faint)" }}>
             {compareLabel}
@@ -203,8 +182,7 @@ export function SangunBuyCard({
           </span>
         )}
       </div>
-      {/* 「맞으면 나머지를 열어라」는 판 중간(stand 컷)에서 이미 한 말이다 —
-          그 말을 버튼으로 회수해 서사와 행동을 같은 문장으로 잇는다. */}
+      {/* 버튼 문구는 결제 시트의 확정 문구(「장부 전체 열기」)와 같은 말 — 새 말을 만들지 않는다. */}
       <button
         type="button"
         onClick={onBuy}
@@ -215,7 +193,7 @@ export function SangunBuyCard({
           color: "#17120c",
         }}
       >
-        나머지를 열어라 →
+        내 장부 전체 열기 →
       </button>
       <p className="mt-3 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         한 번만 받는다. 다달이 빠져나가는 것이 아니다.
@@ -234,7 +212,6 @@ export function ValueSpecCard({ priceLabel }: { priceLabel: string }) {
         <br />
         앞으로 12개월 전부
       </p>
-      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
     </div>
   );

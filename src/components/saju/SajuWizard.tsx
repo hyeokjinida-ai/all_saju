@@ -2290,7 +2290,17 @@ function TeaserStep({
               pos="center 42%"
               size="md"
               sayAt="top"
-              say={<>이제 복채 얘기를 하자.</>}
+              // 「이제 복채 얘기를 하자」는 요구가 먼저 오는 문장이었다 — 모의구매 5/6이 결제
+              // 시트의 「복채」를 「갖다 바치는 느낌」이라 했던 그 결이 여기서 시작된다(:1289 주석).
+              // 「복채」 자체는 캐릭터의 값이라 지키고, 순서만 뒤집는다: 요구 앞에 제안을 세운다.
+              // 바로 아래 4章 카드가 그 「값어치」고, 그다음 카드가 「값을 말하마」로 받는다.
+              say={
+                <>
+                  복채 얘기를 하자.
+                  <br />
+                  뭘 주는지 먼저 보여주마.
+                </>
+              }
             />
           )}
           {teaser.chapters.length > 0 ? (
@@ -2432,7 +2442,9 @@ function TeaserStep({
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
               title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}
-              volume="A4 여덟 쪽 분량! + 내 고민 맞춤 답변"
+              // 분량 리본(A4 몇 쪽)은 형님 지시로 걷어냈다(2026-09-02) — 리본은 받는 것의
+              // 정점 하나만 말한다. 열두 달 전량 공개가 우리 차별점(경쟁은 5개만 열고 잠근다).
+              volume="열두 달 전부 + 내 고민 맞춤 답변"
               bullets={
                 productSlug === "marriage-saju"
                   ? [
@@ -2656,7 +2668,7 @@ function TeaserStep({
     {imm && !isJiknyeoWorld && teaser && (
       <StickyBuyBar
         dark
-        note={<>네 장부, 章 열하나가 이미 다 적혀 있다</>}
+        note={<>네 장부 11장, 이미 다 적혀 있다</>}
         buyLabel={`${formatKRW(price)} 열기`}
         onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
       />

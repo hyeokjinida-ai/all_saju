@@ -201,7 +201,8 @@ export function JiknyeoTeaserToc({
       </div>
 
       <div className="mt-4">
-        <Cap>A4 여덟 쪽 · 다 읽는 데 열다섯 분 · 마이페이지에 계속 보관돼요</Cap>
+        {/* 분량(A4·분)은 형님 지시로 걷어냄(2026-09-02) — 보관·재열람만 남긴다. */}
+        <Cap>마이페이지에 계속 보관돼요 · 언제든 다시 열어볼 수 있어요</Cap>
       </div>
     </section>
   );

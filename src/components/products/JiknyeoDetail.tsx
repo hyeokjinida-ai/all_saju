@@ -237,18 +237,8 @@ export function JiknyeoDetail({
               </li>
             ))}
           </ul>
-          <p className="mt-5 text-center">
-            <span
-              className="font-myeongjo inline-block rounded-full px-4 py-1.5 text-[13px]"
-              style={{
-                background: "rgba(217,199,232,0.12)",
-                border: "1px solid var(--gold-line)",
-                color: "var(--gold-bright)",
-              }}
-            >
-              A4 여덟 쪽 · 다 읽는 데 열다섯 분
-            </span>
-          </p>
+          {/* 분량 배지(A4 몇 쪽·몇 분)는 형님 지시로 걷어냈다(2026-09-02) —
+              경쟁사가 2~5만 자로 파는 앵커라 우리 숫자를 꺼내는 순간 지는 싸움이다. */}
         </section>
 
         <SilverThread />

@@ -72,8 +72,11 @@ export function JiknyeoTeaserPrice({
             내 사주풀이에 <span style={{ color: PINK, fontWeight: 700 }}>+</span>{" "}
             {isMarriage ? "결혼하는 해와 그 해의 달까지!" : "인연이 열리는 달과 만나는 자리까지!"}
           </>,
+          // 분량 앵커(A4 몇 쪽·몇 자)는 형님 지시로 걷어냈다(2026-09-02) —
+          // 경쟁사는 2~5만 자로 파는 자리라 우리 숫자를 꺼내는 순간 지는 싸움이다.
+          // 대신 결과지에 실제로 있는 장(6장 신호 셋)을 세운다 — 목차에 없는 걸 적으면 들통난다.
           <>
-            읽어도 읽어도 끝이 없는 <span style={{ color: PINK, fontWeight: 700 }}>A4 여덟 쪽 분량</span>
+            그 사람을 <span style={{ color: PINK, fontWeight: 700 }}>알아보는 신호 셋</span>까지 같이
           </>,
           <>
             한 번 사면 <span style={{ color: PINK, fontWeight: 700 }}>마이페이지에 계속 보관</span>
