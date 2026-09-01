@@ -131,7 +131,8 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
     alt: "엽전 꾸러미를 든 손과 펼친 장부",
     say: "돈 얘기다. 몇 월인지까지 적어 뒀다.",
   },
-  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "움직일 때와 엎드릴 때가 갈린다." },
+  // 「엎드릴 때」는 사극 말(형님 지적 2026-09-02) — 티저·목차와 같은 말로 통일.
+  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "밀어붙일 때와 기다릴 때가 갈린다." },
   {
     match: /인연이 들어오는/,
     src: "/products/sangun/t5-thread.webp",
