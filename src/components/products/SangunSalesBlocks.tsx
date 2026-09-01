@@ -138,11 +138,14 @@ export function SangunBuyCard({
   priceLabel,
   compareLabel,
   discountPct,
+  bundleLine,
   onBuy,
 }: {
   priceLabel: string;
   compareLabel?: string;
   discountPct?: number;
+  /** 번들 예고 한 줄(청월당 잠금 목록 끝 문법) — 없으면 안 그린다 */
+  bundleLine?: string;
   onBuy: () => void;
 }) {
   return (
@@ -198,6 +201,11 @@ export function SangunBuyCard({
       <p className="mt-3 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         한 번만 받는다. 다달이 빠져나가는 것이 아니다.
       </p>
+      {bundleLine && (
+        <p className="mt-2 text-center text-[13px]" style={{ color: "var(--bone-soft)" }}>
+          {bundleLine}
+        </p>
+      )}
     </div>
   );
 }

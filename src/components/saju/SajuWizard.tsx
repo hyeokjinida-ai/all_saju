@@ -1139,6 +1139,12 @@ export function SajuWizard({
             productSlug={productSlug}
             price={price}
             compareAtPrice={compareAtPrice}
+            // 번들 예고 한 줄 — 추천 번들은 이 컴포넌트(부모)만 아니까 문장으로 만들어 내린다.
+            bundleLine={
+              recommended && recommended.includes.length > 1
+                ? `직녀 연애사주까지 묶으면 ${formatKRW(recommended.price)} — 결제할 때 고를 수 있다`
+                : undefined
+            }
             jiknyeoAssets={jiknyeoAssets}
           />
         )}
@@ -1662,6 +1668,7 @@ function TeaserStep({
   productSlug,
   price,
   compareAtPrice,
+  bundleLine,
   jiknyeoAssets,
 }: {
   teaser: SajuTeaser | null;
@@ -1675,6 +1682,7 @@ function TeaserStep({
   productSlug: string;
   price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
   compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
+  bundleLine?: string; // 번들 예고 한 줄 — 추천 번들 값은 부모가 만들어 내린다
   jiknyeoAssets?: AssetMap;
 }) {
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
@@ -2435,6 +2443,9 @@ function TeaserStep({
                   ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
                   : undefined
               }
+              // 다음 상품 떡밥 한 줄(청월당이 잠금 목록 끝에 쓰는 문법) — 값은 결제 시트의
+              // 추천 번들에서 그대로 받는다. 번들이 없으면 줄 자체가 안 나온다.
+              bundleLine={bundleLine}
               onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
             />
           )}
