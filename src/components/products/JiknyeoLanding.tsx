@@ -4,6 +4,8 @@ import type { AssetMap, SlotId } from "@/lib/jiknyeo-assets";
 import { SLOTS } from "@/lib/jiknyeo-assets";
 import { ForecastBoard, ChartEvidence } from "@/components/products/JiknyeoForecast";
 import { StoryFooter } from "@/components/products/StoryFooter";
+import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
+import { ScrollDepth } from "@/components/analytics/ScrollDepth";
 
 // 직녀 스크롤 랜딩 (/jiknyeo · noindex · 사이트맵 제외 · 어디에도 링크하지 않는다).
 //
@@ -41,23 +43,41 @@ function Cut({
   id,
   assets,
   minH = 420,
+  /** 화면 높이의 몇 %까지만 차지할지. 첫 컷에만 준다 — 아래 CTA 를 폴드 안으로 끌어올리는 값이다. */
+  maxVh,
   priority,
   children,
 }: {
   id: SlotId;
   assets: AssetMap;
   minH?: number;
+  maxVh?: number;
   priority?: boolean;
   children?: React.ReactNode;
 }) {
   const a = assets[id];
   const meta = SLOTS.find((s) => s.id === id)!;
+  const capped = Boolean(maxVh) && Boolean(a?.img || a?.video);
   return (
-    <div className="relative w-full overflow-hidden" style={a?.img || a?.video ? undefined : { minHeight: minH }}>
+    <div
+      className="relative w-full overflow-hidden"
+      style={
+        capped
+          ? { height: `${maxVh}svh` }
+          : a?.img || a?.video
+            ? undefined
+            : { minHeight: minH }
+      }
+    >
       {/* BgMedia 는 포스터(img)를 필수로 받는다 — 영상만 넣고 webp 를 빠뜨리면 폴백할 그림이 없다.
           그 경우엔 영상 승격을 포기하고 아래 플레이스홀더로 내려앉힌다(빈 검은 칸보다 낫다). */}
       {a?.video && a.img ? (
-        <BgMedia video={a.video} img={a.img} alt={meta.label} className="block w-full" />
+        <BgMedia
+          video={a.video}
+          img={a.img}
+          alt={meta.label}
+          className={capped ? "block h-full w-full object-cover" : "block w-full"}
+        />
       ) : a?.img ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -65,7 +85,13 @@ function Cut({
           alt={meta.label}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
-          className="block w-full"
+          // 치수를 준다 — 없으면 로드 전 높이가 0 이라 페이지가 읽는 도중에 자란다.
+          // 실측(2026-08-30): 로드 직후 7,585px → 이미지 7장이 뜨고 나면 10,779px(+42%).
+          // 컷 하나가 585px 이니 읽던 문단이 한 화면 가까이 밀린다. lazy 라 스크롤 내내 튄다.
+          // 같은 파일의 <video> 는 이미 치수가 있어 안 튀었다 — 값은 컷 원본 비율(1024×1536).
+          width={1024}
+          height={1536}
+          className={capped ? "block h-full w-full object-cover" : "block h-auto w-full"}
         />
       ) : (
         <div
@@ -173,11 +199,18 @@ function Cta({
 export function JiknyeoLanding({ assets }: { assets: AssetMap }) {
   return (
     <div style={{ background: INK }}>
+      {/* 계측 — 이 랜딩은 게이트가 없어 「페이지 로드 = 상품 열람」이다(비콘 주석의 그 조건).
+          그리고 12화면짜리라 어디서 잃는지 볼 자가 필요하다(판독 A10). */}
+      <ProductViewBeacon slug="inyeon-saju" />
+      <ScrollDepth slug="jiknyeo-landing" />
       <div className="mx-auto w-full max-w-[520px] pb-28">
         {/* L1 히어로 — 가장 깊은 불안("있긴 한가")에 먼저 답하고, 상품("몇 월")으로 꺾는다.
             카피 원칙(2026-08-17 형님 확정): 이야기는 은유를 써도 되지만, 상품을 말하는 순간부터는
             직설만 쓴다 — 다시 읽게 만드는 문장 금지. 날실·씨실·무늬·천 어휘는 전면 폐기했다. */}
-        <Cut id="j3" assets={assets} minH={520} priority>
+        {/* 히어로 높이를 62svh 로 죈다 — 실측(360×640, 2026-09-02): 컷이 640px = 폴드 전체를
+            먹어 첫 CTA 가 y=668 로 화면 밖 28px 에 있었다. 첫 화면에 누를 것이 하나도 없는 랜딩이
+            된다(실제 폰은 브라우저 하단 바가 80~110px 을 더 먹으므로 390 폰에서도 잘린다). */}
+        <Cut id="j3" assets={assets} minH={520} maxVh={62} priority>
           <div className="absolute inset-x-0 top-7 text-center">
             <p className="font-brush text-[16px] tracking-[0.34em]" style={{ color: SILVER, opacity: 0.9 }}>
               직 녀

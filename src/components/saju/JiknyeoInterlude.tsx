@@ -319,7 +319,7 @@ function RowCard({
           <span className="font-myeongjo" style={{ fontSize: 25, fontWeight: 700, color: bigColor, lineHeight: 1.1 }}>
             {big}
           </span>
-          {small ? <span style={{ fontSize: 11.5, color: "#8A82A2" }}>{small}</span> : null}
+          {small ? <span style={{ fontSize: 11.5, color: "#756E8A" }}>{small}</span> : null}
         </div>
         <p style={{ marginTop: 5, fontSize: 13, lineHeight: 1.62, color: "#5B5470" }}>{body}</p>
       </div>
@@ -355,7 +355,7 @@ export function MonthCards({ rows }: { rows: InyeonRow[] }) {
         />
       ))}
       {/* 3사 중 우리만 「달」을 준다. 손님 폰에 남겨야 그 값이 산다 */}
-      <p style={{ marginTop: 2, textAlign: "center", fontSize: 11.5, color: "#8A82A2" }}>
+      <p style={{ marginTop: 2, textAlign: "center", fontSize: 11.5, color: "#756E8A" }}>
         폰 달력에 적어 두면 그 달에 알림이 와요
       </p>
     </Band>
@@ -459,13 +459,13 @@ export function MonthLedger({ rows }: { rows: InyeonRow[] }) {
                 <span className="font-myeongjo" style={{ fontSize: 15, fontWeight: 700, color: "#2A2434" }}>
                   {r.month}월
                 </span>
-                <span style={{ marginLeft: 4, fontSize: 11, color: "#8A82A2" }}>{String(r.year).slice(2)}</span>
+                <span style={{ marginLeft: 4, fontSize: 11, color: "#756E8A" }}>{String(r.year).slice(2)}</span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 13.5, fontWeight: 700, color: "#5B3F8F", lineHeight: 1.45 }}>{a.head}</p>
                 <p style={{ marginTop: 2, fontSize: 12.5, lineHeight: 1.6, color: "#4A4360" }}>{body}</p>
                 {why ? (
-                  <p style={{ marginTop: 3, fontSize: 11.5, lineHeight: 1.55, color: "#8A82A2" }}>— {why}</p>
+                  <p style={{ marginTop: 3, fontSize: 11.5, lineHeight: 1.55, color: "#756E8A" }}>— {why}</p>
                 ) : null}
               </div>
             </div>

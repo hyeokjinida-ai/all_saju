@@ -260,7 +260,7 @@ function FaceCard({
           <img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" />
         </div>
       </div>
-      <p className="mt-2 text-center text-[11px] leading-[1.6]" style={{ color: "#8A82A2" }}>
+      <p className="mt-2 text-center text-[11px] leading-[1.6]" style={{ color: "#756E8A" }}>
         {why}
       </p>
     </div>
@@ -503,7 +503,7 @@ export function JiknyeoResult({
                   <p className="text-[16px] font-extrabold" style={{ color: "#1B1729" }}>
                     {m.year}년 {m.month}월
                   </p>
-                  <span className="ml-auto text-[11px]" style={{ color: "#8A82A2" }}>{m.age}세</span>
+                  <span className="ml-auto text-[11px]" style={{ color: "#756E8A" }}>{m.age}세</span>
                 </div>
                 {m.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -562,7 +562,7 @@ export function JiknyeoResult({
             <div className="mt-3 space-y-1">
               {chartRows.map((r) => (
                 <div key={r.pos} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-10 flex-none font-bold" style={{ color: "#8A82A2" }}>{r.pos}</span>
+                  <span className="w-10 flex-none font-bold" style={{ color: "#756E8A" }}>{r.pos}</span>
                   <span style={{ color: "#332C4A" }}>
                     {[r.ganSip, r.jiSip, r.fortune].filter(Boolean).join(" · ")}
                   </span>
@@ -605,7 +605,7 @@ export function JiknyeoResult({
                 />
                 {/* 공유각 1순위 자산인데 유도가 없었다. 캡처가 단톡방에 돌면 낙관이 곧 광고다 */}
                 <div className="mt-2 flex items-center justify-center gap-1.5">
-                  <span style={{ fontSize: 11.5, color: "#8A82A2" }}>이 카드, 캡처해서 간직하세요</span>
+                  <span style={{ fontSize: 11.5, color: "#756E8A" }}>이 카드, 캡처해서 간직하세요</span>
                   <span className="font-brush" style={{ fontSize: 11, color: "#A8842C", letterSpacing: "0.14em" }}>
                     · 명운록
                   </span>
@@ -634,7 +634,7 @@ export function JiknyeoResult({
               </div>
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px]" style={{ color: "#8A82A2" }}>
+          <p className="mt-3 text-center text-[11px]" style={{ color: "#756E8A" }}>
             얼굴은 단정이 아니라 <b>명식의 결을 그린 것</b>이에요. 키·직업·사는 곳은 적지 않습니다 —
             명식으로 단정할 수 없는 건 쓰지 않아요.
           </p>
