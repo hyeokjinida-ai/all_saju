@@ -94,6 +94,58 @@ function fixDanglingEmphasis(t: string): string {
     .join("\n");
 }
 
+/** 인라인 볼드의 상한(자). 넘으면 「짧은 구절」이 아니라 문장이다.
+ *  ⚠ 세 곳이 같은 수를 봐야 한다 — prompt.ts 의 「20자 이내」 · lint-result.ts 의 「20자 넘는 볼드」 · 여기.
+ *     하나만 다르면 프롬프트를 지킨 글이 린터에 걸리거나, 후처리를 통과한 글이 린터에 걸린다. */
+const BOLD_MAX = 20;
+
+/** 줄 하나에서 상한을 넘는 인라인 볼드를 센다(집계·검사 공용). */
+function longBoldsIn(line: string): number {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith("|") || trimmed.startsWith("#")) return 0;
+  const parts = line.split("**");
+  if (parts.length < 3 || parts.length % 2 === 0) return 0;
+  // 줄 전체가 볼드 하나면 소제목이다 — prompt.ts 가 그렇게 시킨다(예산 밖)
+  if (parts.length === 3 && !parts[0].trim() && !parts[2].trim()) return 0;
+  let n = 0;
+  for (let i = 1; i < parts.length; i += 2) if (parts[i].trim().length > BOLD_MAX) n++;
+  return n;
+}
+
+export function countLongBolds(t: string): number {
+  return t.split("\n").reduce((n, line) => n + longBoldsIn(line), 0);
+}
+
+/**
+ * 문장을 통째로 굵힌 것에서 **굵기만 벗긴다.**
+ *
+ * 굵은 게 절반이면 굵은 건 강조가 아니라 배경이다(형님이 티저에서 볼드 43%→28% 로 내린 것과 같은 병).
+ * 프롬프트가 「짧은 구절에만」이라고만 말해서 모델이 그걸 문장 단위로 읽었다 —
+ * 2026-08-31 표본 실측: 긴 볼드 23건, **최장 53자**. 한 문단 개수(1~2곳)는 지키는데 길이만 샜다.
+ *
+ * 길이는 기계가 잴 수 있으니 여기서 걷는다. 다만 **어디를 남길지는 판단이라 못 한다** —
+ * 그래서 줄이지 않고 벗긴다. 문장은 그대로 남고 굵기만 빠지므로 뜻이 안 상한다.
+ *
+ * ⚠ 손대지 않는 자리: 표(셀마다 굵히는 게 정상) · 제목 줄 · **줄 전체가 볼드 하나인 소제목** ·
+ *   `**` 개수가 홀수인 줄(짝이 안 맞으면 건드리다 깨뜨린다 — fixDanglingEmphasis 와 같은 방어).
+ */
+function unboldLongRuns(t: string): string {
+  return t
+    .split("\n")
+    .map((line) => {
+      if (!longBoldsIn(line)) return line;
+      const parts = line.split("**");
+      let out = parts[0];
+      for (let i = 1; i < parts.length; i += 2) {
+        const inner = parts[i];
+        out += inner.trim().length > BOLD_MAX ? inner : `**${inner}**`;
+        out += parts[i + 1] ?? "";
+      }
+      return out;
+    })
+    .join("\n");
+}
+
 /** 강조 안쪽에 공백이 물린 곳의 개수 - 계측용(치환과 같은 잣대로 센다).
  *  정규식으로 세면 「닫는 별표 ~ 다음 여는 별표」 사이를 오탐한다(2026-08-24 실측 6건). */
 export function countDanglingEmphasis(t: string): number {
@@ -271,6 +323,7 @@ export function normalizeResultVoice(
     .reduce((n, c) => n + Math.max(0, (c.match(/==[^=]+==/g) ?? []).length - 1), 0);
   note("형광펜 과다", extraMarks);
   note("소제목 번호", countSubheadingNumbers(md));
+  note("긴 볼드", countLongBolds(md));
 
   let out = fixImperatives(md);
   out = stripHanjaParens(out);
@@ -278,6 +331,8 @@ export function normalizeResultVoice(
   out = stripInternalTerms(out);
   out = stripAlienChars(out);
   out = fixDanglingEmphasis(out);
+  // 볼드 벗기기는 **짝을 맞춘 뒤에** 한다 — 짝이 어긋난 줄은 위에서 먼저 고쳐 놓아야 안전하다
+  out = unboldLongRuns(out);
   out = keepOneHighlightPerChapter(out);
   out = stripSubheadingNumbers(out);
   if (opts.banmal) out = fixSecondPerson(out, opts.name);
