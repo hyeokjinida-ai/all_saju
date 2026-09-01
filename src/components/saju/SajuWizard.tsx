@@ -24,7 +24,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
-import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
+import { SangunBuyCard, TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
 import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
@@ -601,6 +601,21 @@ export function SajuWizard({
 
   const cur = steps[step];
 
+  // 배경(영상 + 그라데이션 + 유리판)을 담는 홀더.
+  //
+  // 입력 단계에서는 껍데기가 한 화면(100svh)이라 `absolute inset-0` 이 곧 화면이었다.
+  // 그런데 **티저 단계에서 껍데기가 14,000px 로 자라면 배경도 같이 자란다** — 실측(2026-09-01):
+  // 산군 w=390 에 video 가 390×14,007 로 그려져, 프레임 가로의 4%만 10배로 늘어난 색 얼룩이 됐다.
+  // 인물이 안 보이니 연출은 이미 소멸했고 GPU 로 흐리는 비용만 남는다(직녀도 같은 병, 12,670px).
+  //
+  // 그래서 티저에서만 홀더를 **화면에 고정**한다. 폰 기둥(ChromeGate 의 max-w-md) 안에 머물도록
+  // 가로를 같은 값으로 묶는다 — `fixed inset-0` 로 두면 PC 에서 배경만 화면 전체로 퍼진다.
+  // (조상에 transform 이 없어야 fixed 가 뷰포트 기준으로 선다 — 껍데기는 flex/overflow 뿐이라 안전)
+  const bgHolderCls =
+    step === TEASER_STEP
+      ? "pointer-events-none fixed left-1/2 top-0 z-0 h-[100svh] w-full max-w-md -translate-x-1/2 overflow-hidden"
+      : "contents";
+
   return (
     <div
       // world-sangun: 공용 --gold-*/--bone-* 토큰이 자수정 보라값이라, 이 클래스로 신당 색을 덮는다.
@@ -627,7 +642,7 @@ export function SajuWizard({
       }
     >
       {imm ? (
-        <>
+        <div className={bgHolderCls}>
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
               지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
               배경 그림이 스토리 3·4장면과 같은 face 라 영상도 face.mp4 를 같이 쓴다(영상 한 편 절약). */}
@@ -649,9 +664,9 @@ export function SajuWizard({
                 "linear-gradient(180deg, rgba(7,6,9,0.58) 0%, rgba(7,6,9,0.22) 36%, rgba(7,6,9,0.90) 74%, rgba(7,6,9,0.96) 100%)",
             }}
           />
-        </>
+        </div>
       ) : isJiknyeoWorld ? (
-        <>
+        <div className={bgHolderCls}>
           {/* 시장 1위 실측(#44·#46) — 캐릭터를 배경에 블러로 세워 두고 한 항목씩 묻는다.
               폼 화면으로 넘어가지 않아 이탈이 줄고, **자유 고민 화면에서만 블러가 풀린다**
               (「이제 진짜 듣는다」 연출).
@@ -695,7 +710,7 @@ export function SajuWizard({
                 "linear-gradient(180deg, rgba(11,15,26,0.74) 0%, rgba(11,15,26,0.5) 32%, rgba(11,15,26,0.88) 72%, rgba(11,15,26,0.97) 100%)",
             }}
           />
-        </>
+        </div>
       ) : (
         <div className="starfield opacity-30" />
       )}
@@ -2386,6 +2401,21 @@ function TeaserStep({
               다 보여줘야 분량이 믿기고, 잠글 것은 값이지 목차가 아니다. */}
           {/* 가격 1타 — 원본은 티저 **중반**에서 한 번 치고 맨 끝에서 또 친다.
               우리는 마지막 한 번뿐이었다. 분량을 먼저 세우고(리본) 값을 말하는 순서까지 원본 그대로. */}
+          {/* 산군 본문 가격 1타 — 직녀와 같은 자리(목차 뒤)에 세운다.
+              여기가 없어서 산군은 16.4화면 동안 살 자리가 없었다(2026-09-01 실측). */}
+          {imm && !isJiknyeoWorld && (
+            <SangunBuyCard
+              priceLabel={formatKRW(price)}
+              compareLabel={compareAtPrice && compareAtPrice > price ? formatKRW(compareAtPrice) : undefined}
+              discountPct={
+                compareAtPrice && compareAtPrice > price
+                  ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+                  : undefined
+              }
+              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            />
+          )}
+
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
               title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}

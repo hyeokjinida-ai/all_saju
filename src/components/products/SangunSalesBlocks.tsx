@@ -121,6 +121,86 @@ function PriceAnchorLine({ priceLabel }: { priceLabel: string }) {
   );
 }
 
+// 티저 **본문** 구매 카드 — 4章 카드 바로 뒤, 판 한가운데.
+//
+// 왜 세웠나(2026-09-01 실측): 산군 티저는 14,007px(16.6화면)인데 클릭 가능한 구매 버튼이
+// y=13,865 **딱 하나**였다. 즉 16.4화면을 내려오는 동안 사고 싶어져도 살 자리가 없었다.
+// 직녀는 같은 자리에 중반 카드(JiknyeoBuyCard, y=4,629)가 있어 두 번 친다 — 산군만 없었다.
+//
+// 앵커는 **내부만** 쓴다(정가 취소선 → 지금 값). 외부 앵커(신당 복채 5만~20만)는 꼬리의
+// ValueSpecCard 가 이미 들고 있어서, 여기서 또 꺼내면 한 화면에 숫자가 셋(5만·20만·19,900)이
+// 겹쳐 어느 것이 값인지 흐려진다. 본문=내부 앵커, 꼬리=외부 앵커로 갈라 둔다.
+export function SangunBuyCard({
+  priceLabel,
+  compareLabel,
+  discountPct,
+  onBuy,
+}: {
+  priceLabel: string;
+  compareLabel?: string;
+  discountPct?: number;
+  onBuy: () => void;
+}) {
+  return (
+    <div
+      className="mt-5 rounded-md p-6"
+      style={{ background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
+    >
+      {/* 무료/유료 경계는 잠금 **위**에서 말한다 — 손님이 가려진 줄을 먼저 만나
+          「무료야 유료야」를 스스로 풀지 않게(2026-08-30 판독에서 옳다고 확인된 원칙). */}
+      <p className="text-center font-myeongjo text-[19px] font-bold leading-[1.5]" style={{ color: "var(--bone)" }}>
+        여기까지가 공짜다.
+      </p>
+      <p className="mt-2 text-center text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
+        네 장부는 이미 다 적혀 있다. 남은 건 펴는 일뿐이다.
+      </p>
+      <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
+        <p className="text-center font-myeongjo text-[15px] font-bold leading-[1.6]" style={{ color: "var(--bone)" }}>
+          받는 것 — 章 열하나 · 확답 일곱 이상
+          <br />
+          앞으로 열두 달 전부
+        </p>
+      </div>
+      {/* 값 — 40px 숫자 하나가 정점이다. 옆에 취소선·할인율을 붙여 「지금 값」이 어느 것인지 못 박는다. */}
+      <div className="mt-5 flex items-end justify-center gap-2.5">
+        {compareLabel && (
+          <span className="pb-1.5 text-[15px] line-through" style={{ color: "var(--bone-faint)" }}>
+            {compareLabel}
+          </span>
+        )}
+        <span className="font-myeongjo text-[40px] font-bold leading-none" style={{ color: "var(--gold-bright)" }}>
+          {priceLabel}
+        </span>
+        {typeof discountPct === "number" && discountPct > 0 && (
+          <span
+            className="mb-1.5 px-2 py-1 text-[13px] font-bold"
+            style={{ background: "#7a2317", color: "#f3e6cf" }}
+          >
+            {discountPct}% 할인
+          </span>
+        )}
+      </div>
+      {/* 「맞으면 나머지를 열어라」는 판 중간(stand 컷)에서 이미 한 말이다 —
+          그 말을 버튼으로 회수해 서사와 행동을 같은 문장으로 잇는다. */}
+      <button
+        type="button"
+        onClick={onBuy}
+        className="mt-5 w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.12em]"
+        style={{
+          fontFamily: "var(--font-serif-kr), serif",
+          background: "var(--gold-bright)",
+          color: "#17120c",
+        }}
+      >
+        나머지를 열어라 →
+      </button>
+      <p className="mt-3 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
+        한 번만 받는다. 다달이 빠져나가는 것이 아니다.
+      </p>
+    </div>
+  );
+}
+
 // 티저용 — 목차는 이미 위에 4章 카드로 있으므로 분량 스펙과 가격 앵커만 세운다.
 // (같은 화면에 11줄 목차를 또 깔면 방금 본 4章 카드의 재탕이 된다)
 export function ValueSpecCard({ priceLabel }: { priceLabel: string }) {
