@@ -382,7 +382,10 @@ export function SangunPrologue({
   const pages = Math.max(1, Math.round(charCount / 1050));
   const facts = [
     { v: `${entries.length}장`, k: "장부의 장" },
-    { v: `A4 ${pages}장`, k: "적힌 분량" },
+    // 단위를 「쪽」으로 — 바로 왼쪽 칸이 章 수를 「장」으로 세고 있어 같은 줄에서 '장'이
+    // 두 뜻(챕터 / A4 쪽수)으로 쓰였다. 파는 화면(티저·랜딩)도 같은 날 「여덟 쪽」으로 옮겼다 —
+    // 파는 말과 받은 물건의 단위가 다르면 결제 직후 그 자리에서 어긋난다.
+    { v: `A4 ${pages}쪽`, k: "적힌 분량" },
     { v: `${monthCount}개`, k: "짚어 둔 달" },
   ];
 

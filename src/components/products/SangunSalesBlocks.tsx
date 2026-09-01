@@ -22,6 +22,29 @@ export function SampleCard({ noTitle }: { noTitle?: boolean } = {}) {
       <p className="mb-4 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         예시 · 1993년생 여성의 실제 결과지에서
       </p>
+      {/* 실물 한 쪽 — 텍스트 발췌만으로는 「분량과 조판」이 안 보인다.
+          경쟁 2사가 티저에서 결과지 **스크린샷**을 쓰는 자리다(청월당 12구간·타이트 ③).
+          우리는 그림을 새로 그리지 않고 /dev/sangun-result 표본을 그대로 찍어 쓴다 —
+          손님이 결제 후 받는 화면과 **같은 픽셀**이라 과장이 성립하지 않는다.
+          아래를 잘라 페이드로 닫는다: 한 쪽이 다 보이면 「이게 전부」로 읽힌다. */}
+      <div className="relative mb-4 overflow-hidden" style={{ height: 300, border: "1px solid var(--gold-pale)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/products/sangun/sample-page.webp"
+          alt="산군 장부 본문 한 쪽 — 한지에 적힌 풀이와 붉은 표시"
+          width={780}
+          height={2300}
+          loading="lazy"
+          draggable={false}
+          className="w-full select-none object-cover object-top"
+          style={{ height: 300 }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+          style={{ background: "linear-gradient(180deg, rgba(7,6,9,0) 0%, rgba(7,6,9,0.92) 88%)" }}
+        />
+      </div>
       <div className="space-y-3 text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
         <p className="font-myeongjo text-[15px] font-bold" style={{ color: "var(--gold)" }}>
           3. 돈이 들어오는 달
