@@ -39,7 +39,7 @@ export type SajuTeaser = {
   chapters: TeaserChapter[];
   /** 직녀(인연) 티저 전용 구조물 — 열두 달 달력·기회 카운트·하지 말 것. 다른 상품은 안 읽는다. */
   inyeon: InyeonTeaser | null;
-  /** 직녀(재회) 티저 전용 구조물 — 재회 확정값을 받았을 때만 찬다. 다른 상품은 안 읽는다. */
+  /** 견우(재회) 티저 전용 구조물 — 재회 확정값을 받았을 때만 찬다. 다른 상품은 안 읽는다. */
   reunion: ReunionTeaser | null;
   note: string;
 };
@@ -107,7 +107,8 @@ export type InyeonTeaser = {
 };
 
 /**
- * 재회 티저가 쓸 값 — 화면은 다음 사람이 만든다. 여기는 **무엇을 열고 무엇을 잠글지**까지만 정한다.
+ * 재회 티저(화자 견우)가 쓸 값 — 화면은 다음 사람이 만든다.
+ * 여기는 **무엇을 열고 무엇을 잠글지**까지만 정한다.
  *
  * 잠금 원칙 하나: **「연락해도 되는 달」은 절대 안 연다.** 그 달이 곧 이 상품이다.
  * 대신 「먼저 연락하면 안 되는 달」 하나를 공짜로 준다 — 계산했다는 증거는 그대로 서고,
@@ -118,7 +119,7 @@ export type ReunionTeaser = {
   calendar: { year: number; month: number; kind: ReunionMonthKind; locked: boolean }[];
   /** 공짜로 여는 한 칸 — 「먼저 연락하면 안 되는 달」 중 가장 가까운 것. 없으면 null. */
   revealed: { year: number; month: number; kind: ReunionMonthKind; desc: string } | null;
-  /** 잠긴 칸 수 · 잠긴 「다시 잇는 달」 수 — 「나머지 ○개」처럼 수를 말할 때 쓴다(지어내지 않는다) */
+  /** 잠긴 칸 수 · 잠긴 「다리가 놓이는 달」 수 — 「나머지 ○개」처럼 수를 말할 때 쓴다(지어내지 않는다) */
   lockedCount: number;
   reconnectCount: number;
   contactOkCount: number;
@@ -194,14 +195,15 @@ export function buildReunionTeaser(f: ReunionFacts): ReunionTeaser {
       turningYear: ty && ty.year ? { year: ty.year, age: ty.age } : null,
     },
     // 「▓▓월」 — 연도까지 가리면 무엇이 가려졌는지가 안 읽힌다. 달 하나만 가린다.
-    cut: { lead: "연락해도 되는 달은", mask: "▓▓월", tail: "여기까지만 짰어요." },
+    // 문구는 견우 존댓말이다(「짰어요」는 직녀의 베틀 말이라 이 화자의 것이 아니다).
+    cut: { lead: "다리가 놓이는 달은", mask: "▓▓월", tail: "여기까지만 보여드립니다." },
     oddsMask: "▓▓",
     locked: [
-      { label: "다시 잇는 달", mask: "▓▓년 ▓▓월" },
+      { label: "다리가 놓이는 달", mask: "▓▓년 ▓▓월" },
       { label: "연락해도 되는 달", mask: "▓▓년 ▓▓월" },
       { label: "재회 가능성 — 높음·보통·낮음 중 어디인지", mask: "▓▓" },
       { label: "그 사람에게 보낼 첫 줄", mask: "▓▓▓▓▓▓▓▓" },
-      { label: "잇지 않는다면 다음에 올 사람", mask: "▓▓▓▓▓▓" },
+      { label: "강을 건너지 않는다면 다음에 올 사람", mask: "▓▓▓▓▓▓" },
     ],
   };
 }

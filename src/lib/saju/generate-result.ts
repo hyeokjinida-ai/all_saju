@@ -282,8 +282,8 @@ function keyFactsFor(
       buildInyeonFactsBlock(analysis, input.gender, partnerSex, slug === "marriage-saju" ? "결혼 그릇 점수" : "인연 그릇 점수"),
     );
   }
-  // "직녀의 재회예보": **인연 확정값을 얹지 않는다.** 같은 열두 달을 두 이름으로 주면
-  //   모델이 「인연이 들어오는 달」과 「다시 잇는 달」을 다른 달로 착각해 둘 다 쓴다.
+  // "견우의 재회예보": **인연 확정값을 얹지 않는다.** 같은 열두 달을 두 이름으로 주면
+  //   모델이 「인연이 들어오는 달」과 「다리가 놓이는 달」을 다른 달로 착각해 둘 다 쓴다.
   //   9장이 쓸 새 인연 값(짝의 결·나이대·얼굴 카드·크게 바뀌는 해)은 재회 블록이 이미 들고 있다.
   if (slug === REUNION_SLUG && reunionFacts) extra.push(buildReunionFactsBlock(reunionFacts));
   // "박수무당 사주"(포괄 확장): 재물+인연 확정값을 함께 — 총운인데 달·해까지 확언하는 차별화
