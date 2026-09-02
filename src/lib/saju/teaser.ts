@@ -9,6 +9,8 @@
 //    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
 import { computeInyeonFacts, computeDaeunTimeline, type SajuAnalysisResponse, type InyeonFacts } from "./saju-api";
 import { buildPartnerFace, type PartnerFace } from "./partner-face";
+// 타입만 가져온다 — reunion.ts 가 이 파일의 gradeMonths 를 쓰므로, 값을 가져오면 런타임 순환이 된다.
+import type { ReunionFacts, ReunionMonthKind } from "./reunion";
 
 export type TeaserVoice = "sangun" | "polite"; // 산군=반말 신점 / 그 외=해요체
 
@@ -37,6 +39,8 @@ export type SajuTeaser = {
   chapters: TeaserChapter[];
   /** 직녀(인연) 티저 전용 구조물 — 열두 달 달력·기회 카운트·하지 말 것. 다른 상품은 안 읽는다. */
   inyeon: InyeonTeaser | null;
+  /** 직녀(재회) 티저 전용 구조물 — 재회 확정값을 받았을 때만 찬다. 다른 상품은 안 읽는다. */
+  reunion: ReunionTeaser | null;
   note: string;
 };
 
@@ -101,6 +105,106 @@ export type InyeonTeaser = {
    *  바로 위 열두 달 달력과 같은 말이라 두 번 읽힌다. 달력이 못 하는 것만 남긴다. */
   locked: { label: string; mask: string }[];
 };
+
+/**
+ * 재회 티저가 쓸 값 — 화면은 다음 사람이 만든다. 여기는 **무엇을 열고 무엇을 잠글지**까지만 정한다.
+ *
+ * 잠금 원칙 하나: **「연락해도 되는 달」은 절대 안 연다.** 그 달이 곧 이 상품이다.
+ * 대신 「먼저 연락하면 안 되는 달」 하나를 공짜로 준다 — 계산했다는 증거는 그대로 서고,
+ * 손님이 오늘 밤 하려던 일(연락)을 한 번 멈추게 만들어서 티저가 실제로 일을 한다.
+ */
+export type ReunionTeaser = {
+  /** T1 오프닝 = 달력. 열두 칸 전부. locked 인 칸의 kind 는 화면에 글자로 쓰면 안 된다. */
+  calendar: { year: number; month: number; kind: ReunionMonthKind; locked: boolean }[];
+  /** 공짜로 여는 한 칸 — 「먼저 연락하면 안 되는 달」 중 가장 가까운 것. 없으면 null. */
+  revealed: { year: number; month: number; kind: ReunionMonthKind; desc: string } | null;
+  /** 잠긴 칸 수 · 잠긴 「다시 잇는 달」 수 — 「나머지 ○개」처럼 수를 말할 때 쓴다(지어내지 않는다) */
+  lockedCount: number;
+  reconnectCount: number;
+  contactOkCount: number;
+  /** T2 이별 무렵 채점 — 손님이 O/X 로 판정하는 자리. 이별 시기를 안 받았으면 null. */
+  breakupCheck: { year: number; month: number | null; bent: boolean; line: string; marks: string[] } | null;
+  /** T3 연적 블록 — **항상 뜬다.** basis 로 화면이 수위를 가른다(상대 명식이 있으면 달까지 나온다). */
+  rival: {
+    basis: "상대" | "나";
+    strength: "강" | "중" | "약";
+    lines: string[];
+    when: { year: number; month: number } | null;
+  };
+  /** T4 환승 블록 — 9장(잇지 않는다면)을 반 발만 보여준다 */
+  moveOn: {
+    look: string;
+    nature: string;
+    place: string;
+    ageDir: string;
+    turningYear: { year: number; age: number } | null;
+  };
+  /** T5 반전 절단 — 판 전체에서 딱 한 번 쓰는 검정 절단. 세 조각을 화면이 이어 붙인다. */
+  cut: { lead: string; mask: string; tail: string };
+  /** 재회 가능성 등급은 잠근다 — 4장이 파는 것이라 티저에서 열면 그 장이 안 팔린다 */
+  oddsMask: string;
+  /** 잠긴 줄 — 재회판. 공용 목록은 「돈이 들어오는 달」이 섞여 있어 안 쓴다. */
+  locked: { label: string; mask: string }[];
+};
+
+/** 재회 확정값 → 티저 값. 등급·달의 출처는 computeReunionFacts 하나뿐이다(여기서 다시 안 센다). */
+export function buildReunionTeaser(f: ReunionFacts): ReunionTeaser {
+  // 공짜로 여는 칸 — 가장 가까운 「먼저 연락하면 안 되는 달」.
+  const openable = f.contactNo[0] ?? null;
+  const openKey = openable ? `${openable.row.year}-${openable.row.month}` : "";
+  const calendar = f.months.map((m) => ({
+    year: m.row.year,
+    month: m.row.month,
+    kind: m.kind,
+    locked: `${m.row.year}-${m.row.month}` !== openKey,
+  }));
+
+  const face = buildPartnerFace(f.inyeon);
+  const ty = f.inyeon.topYears[0];
+
+  return {
+    calendar,
+    revealed: openable
+      ? {
+          year: openable.row.year,
+          month: openable.row.month,
+          kind: openable.kind,
+          // 태그는 rowOf 가 붙인 사람 말이고 결과지와 같은 근거다(LLM 0회).
+          desc: openable.row.tags[0] ?? `전체 흐름이 ${openable.row.verdict}`,
+        }
+      : null,
+    lockedCount: calendar.filter((c) => c.locked).length,
+    reconnectCount: f.reconnect.length,
+    contactOkCount: f.contactOk.length,
+    breakupCheck: f.breakup
+      ? {
+          year: f.breakup.year,
+          month: f.breakup.month,
+          bent: f.breakup.bent,
+          line: f.breakup.line,
+          marks: f.breakup.marks,
+        }
+      : null,
+    rival: { basis: f.rival.basis, strength: f.rival.strength, lines: f.rival.lines, when: f.rival.when },
+    moveOn: {
+      look: face.look,
+      nature: face.nature,
+      place: face.place,
+      ageDir: f.inyeon.ageDir,
+      turningYear: ty && ty.year ? { year: ty.year, age: ty.age } : null,
+    },
+    // 「▓▓월」 — 연도까지 가리면 무엇이 가려졌는지가 안 읽힌다. 달 하나만 가린다.
+    cut: { lead: "연락해도 되는 달은", mask: "▓▓월", tail: "여기까지만 짰어요." },
+    oddsMask: "▓▓",
+    locked: [
+      { label: "다시 잇는 달", mask: "▓▓년 ▓▓월" },
+      { label: "연락해도 되는 달", mask: "▓▓년 ▓▓월" },
+      { label: "재회 가능성 — 높음·보통·낮음 중 어디인지", mask: "▓▓" },
+      { label: "그 사람에게 보낼 첫 줄", mask: "▓▓▓▓▓▓▓▓" },
+      { label: "잇지 않는다면 다음에 올 사람", mask: "▓▓▓▓▓▓" },
+    ],
+  };
+}
 
 /**
  * 목차 한 장(章) — 타이트 목차 실측(2026-08-03)을 따른 **카드** 단위다.
@@ -367,6 +471,8 @@ export function buildTeaser(
   voice: TeaserVoice,
   /** 인연 상대의 성별 — 유료 결과지와 **같은 값**을 넣어야 티저와 결과지가 같은 해를 말한다 */
   partnerSex?: "male" | "female",
+  /** 재회 확정값 — 재회 상품일 때만 온다. 상대 명식은 호출자가 비동기로 받아 넣는다. */
+  reunionFacts?: ReunionFacts | null,
 ): SajuTeaser | null {
   const day = rec(rec(analysis.ganji).day);
   const ganRaw = str(day.gan).trim();
@@ -570,6 +676,9 @@ export function buildTeaser(
     partnerFace: buildPartnerFace(facts),
     locked,
     inyeon,
+    // 재회는 인연 12칸을 **재라벨한 같은 달**을 쓴다 — 위 inyeon 블록과 같이 뜨면 손님이
+    // 같은 달력을 두 번 읽는다. 화면은 둘 중 하나만 그린다(재회 상품이면 이쪽).
+    reunion: reunionFacts ? buildReunionTeaser(reunionFacts) : null,
     note:
       voice === "sangun"
         ? "여기까지는 공짜다. 나머지는 장부를 열어야 나온다."
