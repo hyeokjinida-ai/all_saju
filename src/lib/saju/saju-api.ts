@@ -475,7 +475,9 @@ const JIJI_PA: [string, string][] = [["자", "유"], ["축", "진"], ["인", "�
 const JIJI_HYEONG: [string, string][] = [["인", "사"], ["사", "신"], ["인", "신"], ["축", "술"], ["술", "미"], ["축", "미"], ["자", "묘"]];
 
 // 두 지지의 관계 — 합이 우선(인·해처럼 합과 파가 겹치면 합으로 본다)
-function jijiRel(a: string, b: string): { score: number; tag: string } | null {
+// export: 재회예보가 **나↔상대 일지 대조**에 같은 자를 쓴다(reunion.ts). 표를 따로 만들면
+// 「합이라던 달」과 「두 사람이 합」이 서로 다른 기준으로 갈린다.
+export function jijiRel(a: string, b: string): { score: number; tag: string } | null {
   if (!a || !b || a === b) return null;
   if (JIJI_YUKHAP[a] === b) return { score: 14, tag: "배우자 자리와 찰떡 합" };
   if (JIJI_CHUNG[a] === b) return { score: -18, tag: "배우자 자리 흔들림" };
