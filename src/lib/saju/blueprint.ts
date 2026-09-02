@@ -16,6 +16,7 @@
 import { z } from "zod";
 import type { LlmProvider } from "./llm";
 import type { WealthFacts, InyeonFacts } from "./saju-api";
+import type { ReunionFacts } from "./reunion";
 
 // ── ① 달 배정표 (LLM 0회) ────────────────────────────
 
@@ -44,6 +45,8 @@ export function buildMonthPlan(
   inyeon: InyeonFacts | null,
   /** 크게 벌리는 해(computeWealthYears) — 인연 topYears 와 함께 '크게 바뀌는 해' 장이 독점한다 */
   wealthYears?: { label: string }[] | null,
+  /** 재회 확정값 — 같은 열두 달을 재회의 말로 다시 부른 것. 있으면 재회 배정표로 간다. */
+  reunion?: ReunionFacts | null,
 ): MonthAssignment[] {
   const plan: MonthAssignment[] = chapterTitles.map(() => ({ allow: [], ownsYears: false }));
   const set = (i: number, allow: string[], ownsYears = false) => {
@@ -94,6 +97,31 @@ export function buildMonthPlan(
     // 고민 장은 시기로 답해야 한다 — 달을 금지하면 지어낸다(산군에서 확인된 환각). TOP1 재인용 허용.
     set(findIdx(chapterTitles, /고민/), [iTop[0]]);
     set(findIdx(chapterTitles, /이번 주에 할 것/), soonestOf(iTop) ? [soonestOf(iTop)!] : []);
+    return plan;
+  }
+
+  // ── 재회(10장) — 축이 셋이다: 과거(이별 무렵) · 다시 잇는 달 · 연락의 달 ──
+  // 5장과 6장이 **같은 열두 달을 다른 이름으로** 부른다. 배정을 안 하면 두 장이 같은 달을
+  // 두 번 말한다(인연에서 이미 확인된 병). 「다시 잇는 달」은 5장이 독점하고,
+  // 6장은 그 밖의 「연락해도 되는 달」과 「먼저 연락하면 안 되는 달」만 든다.
+  if (reunion && chapterTitles.some((t) => /다시 잇는 달/.test(t))) {
+    const reconnect = reunion.reconnect.map((m) => m.row.label);
+    const reconnectSet = new Set(reconnect);
+    const contactOnly = reunion.contactOk.map((m) => m.row.label).filter((l) => !reconnectSet.has(l));
+    const noContact = reunion.contactNo.map((m) => m.row.label);
+    set(findIdx(chapterTitles, /다시 잇는 달/), reconnect);
+    set(findIdx(chapterTitles, /연락의 달/), [...contactOnly, ...noContact]);
+    // 판정 장은 시기로 답해야 한다 — 달을 금지하면 지어낸다(산군에서 확인된 환각).
+    // 가장 가까운 「다시 잇는 달」 하나만 재인용을 허용한다.
+    const soonestReconnect = soonestOf(reconnect);
+    set(findIdx(chapterTitles, /아직 이어진 올/), soonestReconnect ? [soonestReconnect] : []);
+    // 9장은 새 인연 — 달이 아니라 **해**가 주인공이다(크게 바뀌는 해를 여기가 독점한다).
+    set(findIdx(chapterTitles, /잇지 않는다면/), [], true);
+    // 배웅은 '가장 가까운 연락해도 되는 달' 하나와만 잇는다.
+    const soonestOk = soonestOf(reunion.contactOk.map((m) => m.row.label));
+    set(findIdx(chapterTitles, /배웅/), soonestOk ? [soonestOk] : []);
+    // 나머지(두 사람의 결·왜 하필 그때·그 사람의 지금·하면 안 되는 것·다시 갖고 싶은 사람으로)는
+    // 달을 말하지 않는다 — 초기값이 이미 빈 배열이라 손대지 않는다.
     return plan;
   }
 

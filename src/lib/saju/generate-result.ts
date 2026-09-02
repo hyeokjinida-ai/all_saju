@@ -46,6 +46,13 @@ import {
 } from "@/lib/saju/saju-api";
 import { computePrescription, buildPrescriptionBlock } from "@/lib/saju/prescription";
 import { buildPastBlock } from "@/lib/saju/teaser";
+import { buildReunionFactsBlock, computeReunionFacts, type ReunionFacts } from "@/lib/saju/reunion";
+import {
+  REUNION_SLUG,
+  hasPartnerChart,
+  parseReunionTags,
+  partnerBirthInfo,
+} from "@/lib/saju/reunion-input";
 
 type SajuInputRow = {
   name: string | null;
@@ -84,6 +91,8 @@ async function buildChapterPlan(
   rawAnalysis: unknown,
   input: SajuInputRow,
   keyFacts: string | undefined,
+  /** 재회 확정값(있으면) — 배정표가 5·6장에 다른 달을 나눠 주는 근거다 */
+  reunionFacts?: ReunionFacts | null,
 ): Promise<{
   blueprint: ResultBlueprint | null;
   monthPlan: MonthAssignment[] | null;
@@ -95,7 +104,9 @@ async function buildChapterPlan(
   // ⚠ 결혼사주도 태운다 — 인연과 **같은 계산**을 쓰는 상품이라 설계도·달 배정표가 똑같이 필요하다.
   //    여기서 빠뜨렸더니 결과지 1·2·4장이 통째로 사라지고, 모델이 「확정값을 보내주세요」라는
   //    안내문을 본문에 뱉었다(2026-08-21 실측). 4장이 「결혼하는 해」 — 이 상품의 핵심 장이다.
-  const usesPlan = isSangun || slug === "inyeon-saju" || slug === "marriage-saju";
+  // ⚠ 재회도 태운다 — 5장(다시 잇는 달)과 6장(연락의 달)이 **같은 열두 달을 다른 이름으로**
+  //    부르는 상품이라, 배정표가 없으면 두 장이 같은 달을 두 번 말한다.
+  const usesPlan = isSangun || slug === "inyeon-saju" || slug === "marriage-saju" || slug === REUNION_SLUG;
   if (!usesPlan || !rawAnalysis || !keyFacts) return none;
   const analysis = rawAnalysis as SajuAnalysisResponse;
   const titles = outlineTitles(slug);
@@ -111,6 +122,7 @@ async function buildChapterPlan(
       computeWealthFacts(analysis),
       computeInyeonFacts(analysis, input.gender, partnerSex),
       computeWealthYears(analysis),
+      reunionFacts ?? null,
     );
     pastBlock = buildPastBlock(analysis) || null;
     // 처방표는 산군 결과지에만 있는 장이다 — 인연에 주면 쓸 장이 없어 버려진다.
@@ -209,8 +221,48 @@ async function fetchChart(input: SajuInputRow): Promise<Chart | { error: string 
   }
 }
 
+/**
+ * 재회 확정값 — 상대 명식이 필요하면 만세력을 **한 번 더** 부른다(엔진 포크 없음, 같은 함수).
+ *
+ * 상대 생일을 안 받았으면 콜을 아예 안 한다(빈 콜 = 한도 낭비). 콜이 실패해도 null 로 내려앉지
+ * 않는다 — 상대 없이도 결과지가 성립하도록 **나 혼자 판**으로 계속 간다. 상대 명식 하나 때문에
+ * 결제한 손님의 결과지를 못 내보내는 게 훨씬 나쁜 일이다.
+ */
+async function fetchReunionFacts(chart: Chart, input: SajuInputRow): Promise<ReunionFacts | null> {
+  if (!chart.rawAnalysis) return null;
+  const analysis = chart.rawAnalysis as SajuAnalysisResponse;
+  const reunionInput = parseReunionTags(input.concerns);
+  const { partnerSex } = parseProfileTags(input.concerns);
+
+  let partnerAnalysis: SajuAnalysisResponse | null = null;
+  if (hasPartnerChart(reunionInput)) {
+    const bi = partnerBirthInfo(reunionInput, input.gender);
+    if (bi) {
+      try {
+        partnerAnalysis = await fetchSajuAnalysis(bi, [], { source: "confirm" });
+        if (!partnerAnalysis.ganji) partnerAnalysis = null; // 비정상 바디는 없는 것으로 친다
+      } catch (e) {
+        console.warn("[generate] 상대 명식 실패 — 나 혼자 판으로 간다:", e instanceof Error ? e.message : e);
+        partnerAnalysis = null;
+      }
+    }
+  }
+
+  try {
+    return computeReunionFacts(analysis, input.gender, reunionInput, { partnerAnalysis, partnerSex });
+  } catch {
+    return null; // 확정값이 없어도 결과지는 나가야 한다(예전 방식으로 쓴다)
+  }
+}
+
 /** 상품별 확정값 주입 — 챕터들이 병렬이라 서로 못 보는 값을 여기서 떠먹여 준다. */
-function keyFactsFor(slug: string, chart: Chart, input: SajuInputRow): string | undefined {
+function keyFactsFor(
+  slug: string,
+  chart: Chart,
+  input: SajuInputRow,
+  /** 재회 확정값 — 비동기(상대 만세력)라 호출자가 미리 받아 넘긴다 */
+  reunionFacts?: ReunionFacts | null,
+): string | undefined {
   const base = chart.baseKeyFacts;
   if (!base || !chart.rawAnalysis) return base;
   const analysis = chart.rawAnalysis as SajuAnalysisResponse;
@@ -230,6 +282,10 @@ function keyFactsFor(slug: string, chart: Chart, input: SajuInputRow): string | 
       buildInyeonFactsBlock(analysis, input.gender, partnerSex, slug === "marriage-saju" ? "결혼 그릇 점수" : "인연 그릇 점수"),
     );
   }
+  // "직녀의 재회예보": **인연 확정값을 얹지 않는다.** 같은 열두 달을 두 이름으로 주면
+  //   모델이 「인연이 들어오는 달」과 「다시 잇는 달」을 다른 달로 착각해 둘 다 쓴다.
+  //   9장이 쓸 새 인연 값(짝의 결·나이대·얼굴 카드·크게 바뀌는 해)은 재회 블록이 이미 들고 있다.
+  if (slug === REUNION_SLUG && reunionFacts) extra.push(buildReunionFactsBlock(reunionFacts));
   // "박수무당 사주"(포괄 확장): 재물+인연 확정값을 함께 — 총운인데 달·해까지 확언하는 차별화
   if (slug === "sangun-sinjeom") {
     extra.push(buildWealthFactsBlock(analysis), buildInyeonFactsBlock(analysis, input.gender, partnerSex));
@@ -389,11 +445,13 @@ async function buildAndSaveOne(args: {
   { ok: true; resultId: string; pending?: number } | { ok: false; reason: GenerateReason; detail?: string }
 > {
   const { service, orderUuid, slug, productName, input, chart } = args;
-  const keyFacts = keyFactsFor(slug, chart, input);
+  // 재회만 확정값이 비동기다(상대 명식 만세력 1콜). 다른 상품은 여기서 아무 일도 안 한다.
+  const reunionFacts = slug === REUNION_SLUG ? await fetchReunionFacts(chart, input) : null;
+  const keyFacts = keyFactsFor(slug, chart, input, reunionFacts);
 
   // 장부 설계도 + 달 배정표 — 챕터들이 병렬이라 서로 못 보는 걸 여기서 조율한다.
-  // 산군·인연만 태운다(확정값이 여러 장에 걸치는 상품). 설계도 실패는 결과지를 막지 않는다.
-  const plan = await buildChapterPlan(slug, chart.rawAnalysis, input, keyFacts);
+  // 산군·인연·결혼·재회만 태운다(확정값이 여러 장에 걸치는 상품). 설계도 실패는 결과지를 막지 않는다.
+  const plan = await buildChapterPlan(slug, chart.rawAnalysis, input, keyFacts, reunionFacts);
 
   const { title, chapters } = buildChapterPrompts({
     productSlug: slug,
@@ -523,7 +581,14 @@ async function answerExtraQuestion(service: SupabaseClient, orderUuid: string): 
     birthTime: input.birth_time,
     timeUnknown: input.time_unknown,
     gender: input.gender,
-    keyFacts: keyFactsFor(parent.product_slug, chart, input as SajuInputRow),
+    // 재회 결과지에 물어온 질문이면 재회 확정값도 같이 준다 — 안 주면 답변이 「연락의 달」을
+    // 모르는 채로 나가서, 방금 그 달을 산 손님에게 다른 달을 말하게 된다.
+    keyFacts: keyFactsFor(
+      parent.product_slug,
+      chart,
+      input as SajuInputRow,
+      parent.product_slug === REUNION_SLUG ? await fetchReunionFacts(chart, input as SajuInputRow) : null,
+    ),
   });
 
   let text = "";
