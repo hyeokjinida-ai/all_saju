@@ -1,0 +1,2403 @@
+{
+  "url": "https://m.comic.naver.com/webtoon/detail?titleId=822573&no=19",
+  "width": 390,
+  "screenH": 844,
+  "docH": 82031,
+  "unloadedImgs": 0,
+  "strip": {
+    "top": 0,
+    "bottom": 77349,
+    "h": 77349,
+    "screens": 91.6,
+    "tiles": 86
+  },
+  "tileHeights": [
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    904,
+    509
+  ],
+  "flatPct": 37,
+  "cutCount": 102,
+  "cutHeights": [
+    377,
+    466,
+    219,
+    222,
+    386,
+    501,
+    445,
+    498,
+    388,
+    539,
+    444,
+    653,
+    143,
+    304,
+    438,
+    371,
+    382,
+    451,
+    442,
+    476,
+    565,
+    438,
+    341,
+    356,
+    308,
+    224,
+    232,
+    469,
+    506,
+    26,
+    287,
+    643,
+    602,
+    540,
+    591,
+    411,
+    363,
+    356,
+    464,
+    562,
+    357,
+    727,
+    468,
+    490,
+    528,
+    240,
+    682,
+    786,
+    582,
+    487,
+    539,
+    582,
+    577,
+    656,
+    598,
+    619,
+    775,
+    589,
+    316,
+    574,
+    605,
+    551,
+    364,
+    469,
+    402,
+    1042,
+    593,
+    519,
+    538,
+    639,
+    650,
+    494,
+    571,
+    371,
+    676,
+    549,
+    568,
+    481,
+    654,
+    563,
+    632,
+    323,
+    515,
+    1170,
+    536,
+    411,
+    264,
+    317,
+    516,
+    585,
+    25,
+    442,
+    25,
+    264,
+    628,
+    551,
+    352,
+    430,
+    413,
+    375,
+    701,
+    133
+  ],
+  "cuts": [
+    {
+      "y": 152,
+      "h": 377
+    },
+    {
+      "y": 695,
+      "h": 466
+    },
+    {
+      "y": 1501,
+      "h": 219
+    },
+    {
+      "y": 1791,
+      "h": 222
+    },
+    {
+      "y": 2259,
+      "h": 386
+    },
+    {
+      "y": 2921,
+      "h": 501
+    },
+    {
+      "y": 3847,
+      "h": 445
+    },
+    {
+      "y": 4512,
+      "h": 498
+    },
+    {
+      "y": 5313,
+      "h": 388
+    },
+    {
+      "y": 6072,
+      "h": 539
+    },
+    {
+      "y": 6931,
+      "h": 444
+    },
+    {
+      "y": 7627,
+      "h": 653
+    },
+    {
+      "y": 8349,
+      "h": 143
+    },
+    {
+      "y": 8551,
+      "h": 304
+    },
+    {
+      "y": 9404,
+      "h": 438
+    },
+    {
+      "y": 10233,
+      "h": 371
+    },
+    {
+      "y": 10791,
+      "h": 382
+    },
+    {
+      "y": 11518,
+      "h": 451
+    },
+    {
+      "y": 12295,
+      "h": 442
+    },
+    {
+      "y": 12959,
+      "h": 476
+    },
+    {
+      "y": 13816,
+      "h": 565
+    },
+    {
+      "y": 14766,
+      "h": 438
+    },
+    {
+      "y": 15845,
+      "h": 341
+    },
+    {
+      "y": 16462,
+      "h": 356
+    },
+    {
+      "y": 17190,
+      "h": 308
+    },
+    {
+      "y": 17850,
+      "h": 224
+    },
+    {
+      "y": 18092,
+      "h": 232
+    },
+    {
+      "y": 18671,
+      "h": 469
+    },
+    {
+      "y": 19560,
+      "h": 506
+    },
+    {
+      "y": 20813,
+      "h": 26
+    },
+    {
+      "y": 20866,
+      "h": 287
+    },
+    {
+      "y": 21340,
+      "h": 643
+    },
+    {
+      "y": 22071,
+      "h": 602
+    },
+    {
+      "y": 22861,
+      "h": 540
+    },
+    {
+      "y": 23613,
+      "h": 591
+    },
+    {
+      "y": 24465,
+      "h": 411
+    },
+    {
+      "y": 25315,
+      "h": 363
+    },
+    {
+      "y": 26179,
+      "h": 356
+    },
+    {
+      "y": 26933,
+      "h": 464
+    },
+    {
+      "y": 27805,
+      "h": 562
+    },
+    {
+      "y": 28814,
+      "h": 357
+    },
+    {
+      "y": 29334,
+      "h": 727
+    },
+    {
+      "y": 30244,
+      "h": 468
+    },
+    {
+      "y": 30986,
+      "h": 490
+    },
+    {
+      "y": 31765,
+      "h": 528
+    },
+    {
+      "y": 32558,
+      "h": 240
+    },
+    {
+      "y": 33014,
+      "h": 682
+    },
+    {
+      "y": 33825,
+      "h": 786
+    },
+    {
+      "y": 34713,
+      "h": 582
+    },
+    {
+      "y": 35647,
+      "h": 487
+    },
+    {
+      "y": 36368,
+      "h": 539
+    },
+    {
+      "y": 37160,
+      "h": 582
+    },
+    {
+      "y": 37880,
+      "h": 577
+    },
+    {
+      "y": 38720,
+      "h": 656
+    },
+    {
+      "y": 39520,
+      "h": 598
+    },
+    {
+      "y": 40280,
+      "h": 619
+    },
+    {
+      "y": 41066,
+      "h": 775
+    },
+    {
+      "y": 42067,
+      "h": 589
+    },
+    {
+      "y": 43415,
+      "h": 316
+    },
+    {
+      "y": 43891,
+      "h": 574
+    },
+    {
+      "y": 44682,
+      "h": 605
+    },
+    {
+      "y": 45629,
+      "h": 551
+    },
+    {
+      "y": 46508,
+      "h": 364
+    },
+    {
+      "y": 46995,
+      "h": 469
+    },
+    {
+      "y": 47900,
+      "h": 402
+    },
+    {
+      "y": 48662,
+      "h": 1042
+    },
+    {
+      "y": 49944,
+      "h": 593
+    },
+    {
+      "y": 50919,
+      "h": 519
+    },
+    {
+      "y": 51737,
+      "h": 538
+    },
+    {
+      "y": 52353,
+      "h": 639
+    },
+    {
+      "y": 53267,
+      "h": 650
+    },
+    {
+      "y": 54119,
+      "h": 494
+    },
+    {
+      "y": 54945,
+      "h": 571
+    },
+    {
+      "y": 55844,
+      "h": 371
+    },
+    {
+      "y": 56256,
+      "h": 676
+    },
+    {
+      "y": 57195,
+      "h": 549
+    },
+    {
+      "y": 58236,
+      "h": 568
+    },
+    {
+      "y": 59093,
+      "h": 481
+    },
+    {
+      "y": 59828,
+      "h": 654
+    },
+    {
+      "y": 60853,
+      "h": 563
+    },
+    {
+      "y": 61775,
+      "h": 632
+    },
+    {
+      "y": 62746,
+      "h": 323
+    },
+    {
+      "y": 63157,
+      "h": 515
+    },
+    {
+      "y": 63978,
+      "h": 1170
+    },
+    {
+      "y": 65540,
+      "h": 536
+    },
+    {
+      "y": 66425,
+      "h": 411
+    },
+    {
+      "y": 67161,
+      "h": 264
+    },
+    {
+      "y": 67786,
+      "h": 317
+    },
+    {
+      "y": 68386,
+      "h": 516
+    },
+    {
+      "y": 69186,
+      "h": 585
+    },
+    {
+      "y": 70060,
+      "h": 25
+    },
+    {
+      "y": 70102,
+      "h": 442
+    },
+    {
+      "y": 70566,
+      "h": 25
+    },
+    {
+      "y": 71218,
+      "h": 264
+    },
+    {
+      "y": 71797,
+      "h": 628
+    },
+    {
+      "y": 72706,
+      "h": 551
+    },
+    {
+      "y": 73630,
+      "h": 352
+    },
+    {
+      "y": 74241,
+      "h": 430
+    },
+    {
+      "y": 75032,
+      "h": 413
+    },
+    {
+      "y": 75596,
+      "h": 375
+    },
+    {
+      "y": 76329,
+      "h": 701
+    },
+    {
+      "y": 77182,
+      "h": 133
+    }
+  ],
+  "flats": [
+    {
+      "y": 0,
+      "len": 152,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 529,
+      "len": 166,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 1161,
+      "len": 340,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 1720,
+      "len": 71,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 2013,
+      "len": 246,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 2645,
+      "len": 276,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 3422,
+      "len": 425,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 4292,
+      "len": 220,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 5010,
+      "len": 303,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 5701,
+      "len": 371,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 6611,
+      "len": 320,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 7375,
+      "len": 252,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 8280,
+      "len": 69,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 8492,
+      "len": 59,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 8855,
+      "len": 549,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 9842,
+      "len": 391,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 10604,
+      "len": 187,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 11173,
+      "len": 345,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 11969,
+      "len": 326,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 12737,
+      "len": 222,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 13435,
+      "len": 381,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 14381,
+      "len": 385,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 15204,
+      "len": 641,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 16186,
+      "len": 276,
+      "tone": 17,
+      "kind": "흑"
+    },
+    {
+      "y": 16818,
+      "len": 372,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 17498,
+      "len": 352,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 18074,
+      "len": 18,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 18324,
+      "len": 347,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 19140,
+      "len": 420,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 20066,
+      "len": 44,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 20128,
+      "len": 685,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 20839,
+      "len": 27,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 21153,
+      "len": 187,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 21983,
+      "len": 88,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 22673,
+      "len": 188,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 23401,
+      "len": 212,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 24204,
+      "len": 261,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 24876,
+      "len": 439,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 25678,
+      "len": 501,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 26535,
+      "len": 398,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 27397,
+      "len": 408,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 28367,
+      "len": 447,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 29171,
+      "len": 163,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 30061,
+      "len": 183,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 30712,
+      "len": 274,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 31476,
+      "len": 289,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 32293,
+      "len": 265,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 32798,
+      "len": 216,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 33696,
+      "len": 129,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 34611,
+      "len": 102,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 35295,
+      "len": 352,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 36134,
+      "len": 234,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 36907,
+      "len": 253,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 37742,
+      "len": 138,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 38457,
+      "len": 263,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 39376,
+      "len": 144,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 40118,
+      "len": 162,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 40899,
+      "len": 167,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 41841,
+      "len": 108,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 41954,
+      "len": 113,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 42656,
+      "len": 759,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 43731,
+      "len": 160,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 44465,
+      "len": 217,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 45287,
+      "len": 342,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 46180,
+      "len": 328,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 46872,
+      "len": 123,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 47464,
+      "len": 436,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 48302,
+      "len": 360,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 49704,
+      "len": 240,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 50537,
+      "len": 382,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 51438,
+      "len": 299,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 52275,
+      "len": 78,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 52992,
+      "len": 275,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 53917,
+      "len": 202,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 54613,
+      "len": 332,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 55516,
+      "len": 328,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 56215,
+      "len": 41,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 56932,
+      "len": 263,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 57744,
+      "len": 492,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 58804,
+      "len": 289,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 59574,
+      "len": 254,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 60482,
+      "len": 371,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 61416,
+      "len": 359,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 62407,
+      "len": 339,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 63069,
+      "len": 88,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 63672,
+      "len": 306,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 65148,
+      "len": 392,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 66076,
+      "len": 349,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 66836,
+      "len": 325,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 67425,
+      "len": 361,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 68103,
+      "len": 283,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 68902,
+      "len": 284,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 69771,
+      "len": 289,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 70085,
+      "len": 17,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 70544,
+      "len": 22,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 70591,
+      "len": 627,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 71482,
+      "len": 315,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 72425,
+      "len": 281,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 73257,
+      "len": 373,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 73982,
+      "len": 259,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 74671,
+      "len": 361,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 75445,
+      "len": 151,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 75971,
+      "len": 358,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 77030,
+      "len": 152,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 77315,
+      "len": 34,
+      "tone": 1,
+      "kind": "흑"
+    }
+  ],
+  "breaths": [
+    {
+      "atScreen": 0,
+      "len": 152,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 0.6,
+      "len": 166,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 1.4,
+      "len": 340,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 2,
+      "len": 71,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 2.4,
+      "len": 246,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 3.1,
+      "len": 276,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 4.1,
+      "len": 425,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 5.1,
+      "len": 220,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 5.9,
+      "len": 303,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 6.8,
+      "len": 371,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 7.8,
+      "len": 320,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 8.7,
+      "len": 252,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 9.8,
+      "len": 69,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 10.1,
+      "len": 59,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 10.5,
+      "len": 549,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 11.7,
+      "len": 391,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 12.6,
+      "len": 187,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 13.2,
+      "len": 345,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 14.2,
+      "len": 326,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 15.1,
+      "len": 222,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 15.9,
+      "len": 381,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 17,
+      "len": 385,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 18,
+      "len": 641,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 19.2,
+      "len": 276,
+      "kind": "흑",
+      "tone": 17
+    },
+    {
+      "atScreen": 19.9,
+      "len": 372,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 20.7,
+      "len": 352,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 21.7,
+      "len": 347,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 22.7,
+      "len": 420,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 23.8,
+      "len": 44,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 23.8,
+      "len": 685,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 25.1,
+      "len": 187,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 26,
+      "len": 88,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 26.9,
+      "len": 188,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 27.7,
+      "len": 212,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 28.7,
+      "len": 261,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 29.5,
+      "len": 439,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 30.4,
+      "len": 501,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 31.4,
+      "len": 398,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 32.5,
+      "len": 408,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 33.6,
+      "len": 447,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 34.6,
+      "len": 163,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 35.6,
+      "len": 183,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 36.4,
+      "len": 274,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 37.3,
+      "len": 289,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 38.3,
+      "len": 265,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 38.9,
+      "len": 216,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 39.9,
+      "len": 129,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 41,
+      "len": 102,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 41.8,
+      "len": 352,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 42.8,
+      "len": 234,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 43.7,
+      "len": 253,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 44.7,
+      "len": 138,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 45.6,
+      "len": 263,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 46.7,
+      "len": 144,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 47.5,
+      "len": 162,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 48.5,
+      "len": 167,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 49.6,
+      "len": 108,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 49.7,
+      "len": 113,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 50.5,
+      "len": 759,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 51.8,
+      "len": 160,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 52.7,
+      "len": 217,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 53.7,
+      "len": 342,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 54.7,
+      "len": 328,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 55.5,
+      "len": 123,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 56.2,
+      "len": 436,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 57.2,
+      "len": 360,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 58.9,
+      "len": 240,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 59.9,
+      "len": 382,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 60.9,
+      "len": 299,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 61.9,
+      "len": 78,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 62.8,
+      "len": 275,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 63.9,
+      "len": 202,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 64.7,
+      "len": 332,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 65.8,
+      "len": 328,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 67.5,
+      "len": 263,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 68.4,
+      "len": 492,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 69.7,
+      "len": 289,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 70.6,
+      "len": 254,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 71.7,
+      "len": 371,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 72.8,
+      "len": 359,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 73.9,
+      "len": 339,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 74.7,
+      "len": 88,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 75.4,
+      "len": 306,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 77.2,
+      "len": 392,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 78.3,
+      "len": 349,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 79.2,
+      "len": 325,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 79.9,
+      "len": 361,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 80.7,
+      "len": 283,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 81.6,
+      "len": 284,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 82.7,
+      "len": 289,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 83.6,
+      "len": 627,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 84.7,
+      "len": 315,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 85.8,
+      "len": 281,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 86.8,
+      "len": 373,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 87.7,
+      "len": 259,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 88.5,
+      "len": 361,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 89.4,
+      "len": 151,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 90,
+      "len": 358,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 91.3,
+      "len": 152,
+      "kind": "흑",
+      "tone": 1
+    }
+  ],
+  "tailFlat": 34,
+  "gapToNextSection": 3310,
+  "lastCutH": 133,
+  "lumCurve": [
+    {
+      "screen": 1,
+      "lum": 90,
+      "whitePct": 18,
+      "blackPct": 53
+    },
+    {
+      "screen": 2,
+      "lum": 72,
+      "whitePct": 2,
+      "blackPct": 46
+    },
+    {
+      "screen": 3,
+      "lum": 89,
+      "whitePct": 5,
+      "blackPct": 44
+    },
+    {
+      "screen": 4,
+      "lum": 70,
+      "whitePct": 13,
+      "blackPct": 52
+    },
+    {
+      "screen": 5,
+      "lum": 81,
+      "whitePct": 6,
+      "blackPct": 54
+    },
+    {
+      "screen": 6,
+      "lum": 74,
+      "whitePct": 14,
+      "blackPct": 55
+    },
+    {
+      "screen": 7,
+      "lum": 74,
+      "whitePct": 7,
+      "blackPct": 55
+    },
+    {
+      "screen": 8,
+      "lum": 85,
+      "whitePct": 14,
+      "blackPct": 50
+    },
+    {
+      "screen": 9,
+      "lum": 78,
+      "whitePct": 12,
+      "blackPct": 55
+    },
+    {
+      "screen": 10,
+      "lum": 129,
+      "whitePct": 22,
+      "blackPct": 32
+    },
+    {
+      "screen": 11,
+      "lum": 50,
+      "whitePct": 6,
+      "blackPct": 64
+    },
+    {
+      "screen": 12,
+      "lum": 91,
+      "whitePct": 11,
+      "blackPct": 51
+    },
+    {
+      "screen": 13,
+      "lum": 102,
+      "whitePct": 4,
+      "blackPct": 42
+    },
+    {
+      "screen": 14,
+      "lum": 78,
+      "whitePct": 6,
+      "blackPct": 50
+    },
+    {
+      "screen": 15,
+      "lum": 81,
+      "whitePct": 8,
+      "blackPct": 46
+    },
+    {
+      "screen": 16,
+      "lum": 108,
+      "whitePct": 17,
+      "blackPct": 47
+    },
+    {
+      "screen": 17,
+      "lum": 97,
+      "whitePct": 11,
+      "blackPct": 42
+    },
+    {
+      "screen": 18,
+      "lum": 89,
+      "whitePct": 4,
+      "blackPct": 49
+    },
+    {
+      "screen": 19,
+      "lum": 45,
+      "whitePct": 2,
+      "blackPct": 76
+    },
+    {
+      "screen": 20,
+      "lum": 74,
+      "whitePct": 1,
+      "blackPct": 51
+    },
+    {
+      "screen": 21,
+      "lum": 53,
+      "whitePct": 0,
+      "blackPct": 65
+    },
+    {
+      "screen": 22,
+      "lum": 67,
+      "whitePct": 0,
+      "blackPct": 48
+    },
+    {
+      "screen": 23,
+      "lum": 89,
+      "whitePct": 0,
+      "blackPct": 51
+    },
+    {
+      "screen": 24,
+      "lum": 13,
+      "whitePct": 0,
+      "blackPct": 92
+    },
+    {
+      "screen": 25,
+      "lum": 56,
+      "whitePct": 2,
+      "blackPct": 72
+    },
+    {
+      "screen": 26,
+      "lum": 126,
+      "whitePct": 22,
+      "blackPct": 36
+    },
+    {
+      "screen": 27,
+      "lum": 99,
+      "whitePct": 27,
+      "blackPct": 54
+    },
+    {
+      "screen": 28,
+      "lum": 65,
+      "whitePct": 10,
+      "blackPct": 53
+    },
+    {
+      "screen": 29,
+      "lum": 98,
+      "whitePct": 19,
+      "blackPct": 43
+    },
+    {
+      "screen": 30,
+      "lum": 76,
+      "whitePct": 9,
+      "blackPct": 59
+    },
+    {
+      "screen": 31,
+      "lum": 53,
+      "whitePct": 5,
+      "blackPct": 70
+    },
+    {
+      "screen": 32,
+      "lum": 84,
+      "whitePct": 4,
+      "blackPct": 50
+    },
+    {
+      "screen": 33,
+      "lum": 73,
+      "whitePct": 5,
+      "blackPct": 53
+    },
+    {
+      "screen": 34,
+      "lum": 95,
+      "whitePct": 7,
+      "blackPct": 51
+    },
+    {
+      "screen": 35,
+      "lum": 94,
+      "whitePct": 26,
+      "blackPct": 59
+    },
+    {
+      "screen": 36,
+      "lum": 115,
+      "whitePct": 24,
+      "blackPct": 44
+    },
+    {
+      "screen": 37,
+      "lum": 94,
+      "whitePct": 16,
+      "blackPct": 47
+    },
+    {
+      "screen": 38,
+      "lum": 103,
+      "whitePct": 14,
+      "blackPct": 45
+    },
+    {
+      "screen": 39,
+      "lum": 76,
+      "whitePct": 3,
+      "blackPct": 54
+    },
+    {
+      "screen": 40,
+      "lum": 99,
+      "whitePct": 25,
+      "blackPct": 47
+    },
+    {
+      "screen": 41,
+      "lum": 123,
+      "whitePct": 32,
+      "blackPct": 39
+    },
+    {
+      "screen": 42,
+      "lum": 104,
+      "whitePct": 19,
+      "blackPct": 51
+    },
+    {
+      "screen": 43,
+      "lum": 81,
+      "whitePct": 13,
+      "blackPct": 56
+    },
+    {
+      "screen": 44,
+      "lum": 92,
+      "whitePct": 18,
+      "blackPct": 53
+    },
+    {
+      "screen": 45,
+      "lum": 120,
+      "whitePct": 22,
+      "blackPct": 43
+    },
+    {
+      "screen": 46,
+      "lum": 85,
+      "whitePct": 15,
+      "blackPct": 52
+    },
+    {
+      "screen": 47,
+      "lum": 125,
+      "whitePct": 24,
+      "blackPct": 38
+    },
+    {
+      "screen": 48,
+      "lum": 111,
+      "whitePct": 28,
+      "blackPct": 43
+    },
+    {
+      "screen": 49,
+      "lum": 111,
+      "whitePct": 11,
+      "blackPct": 37
+    },
+    {
+      "screen": 50,
+      "lum": 93,
+      "whitePct": 13,
+      "blackPct": 54
+    },
+    {
+      "screen": 51,
+      "lum": 78,
+      "whitePct": 5,
+      "blackPct": 59
+    },
+    {
+      "screen": 52,
+      "lum": 14,
+      "whitePct": 0,
+      "blackPct": 74
+    },
+    {
+      "screen": 53,
+      "lum": 72,
+      "whitePct": 12,
+      "blackPct": 49
+    },
+    {
+      "screen": 54,
+      "lum": 67,
+      "whitePct": 8,
+      "blackPct": 49
+    },
+    {
+      "screen": 55,
+      "lum": 58,
+      "whitePct": 8,
+      "blackPct": 54
+    },
+    {
+      "screen": 56,
+      "lum": 72,
+      "whitePct": 3,
+      "blackPct": 35
+    },
+    {
+      "screen": 57,
+      "lum": 34,
+      "whitePct": 3,
+      "blackPct": 66
+    },
+    {
+      "screen": 58,
+      "lum": 33,
+      "whitePct": 1,
+      "blackPct": 62
+    },
+    {
+      "screen": 59,
+      "lum": 90,
+      "whitePct": 13,
+      "blackPct": 38
+    },
+    {
+      "screen": 60,
+      "lum": 69,
+      "whitePct": 12,
+      "blackPct": 47
+    },
+    {
+      "screen": 61,
+      "lum": 36,
+      "whitePct": 6,
+      "blackPct": 65
+    },
+    {
+      "screen": 62,
+      "lum": 59,
+      "whitePct": 8,
+      "blackPct": 55
+    },
+    {
+      "screen": 63,
+      "lum": 79,
+      "whitePct": 11,
+      "blackPct": 47
+    },
+    {
+      "screen": 64,
+      "lum": 77,
+      "whitePct": 9,
+      "blackPct": 41
+    },
+    {
+      "screen": 65,
+      "lum": 43,
+      "whitePct": 6,
+      "blackPct": 60
+    },
+    {
+      "screen": 66,
+      "lum": 68,
+      "whitePct": 6,
+      "blackPct": 51
+    },
+    {
+      "screen": 67,
+      "lum": 58,
+      "whitePct": 7,
+      "blackPct": 50
+    },
+    {
+      "screen": 68,
+      "lum": 75,
+      "whitePct": 6,
+      "blackPct": 45
+    },
+    {
+      "screen": 69,
+      "lum": 50,
+      "whitePct": 0,
+      "blackPct": 65
+    },
+    {
+      "screen": 70,
+      "lum": 56,
+      "whitePct": 8,
+      "blackPct": 54
+    },
+    {
+      "screen": 71,
+      "lum": 57,
+      "whitePct": 13,
+      "blackPct": 65
+    },
+    {
+      "screen": 72,
+      "lum": 58,
+      "whitePct": 7,
+      "blackPct": 51
+    },
+    {
+      "screen": 73,
+      "lum": 51,
+      "whitePct": 5,
+      "blackPct": 42
+    },
+    {
+      "screen": 74,
+      "lum": 72,
+      "whitePct": 11,
+      "blackPct": 44
+    },
+    {
+      "screen": 75,
+      "lum": 48,
+      "whitePct": 4,
+      "blackPct": 52
+    },
+    {
+      "screen": 76,
+      "lum": 42,
+      "whitePct": 4,
+      "blackPct": 53
+    },
+    {
+      "screen": 77,
+      "lum": 96,
+      "whitePct": 11,
+      "blackPct": 16
+    },
+    {
+      "screen": 78,
+      "lum": 48,
+      "whitePct": 10,
+      "blackPct": 66
+    },
+    {
+      "screen": 79,
+      "lum": 57,
+      "whitePct": 3,
+      "blackPct": 48
+    },
+    {
+      "screen": 80,
+      "lum": 38,
+      "whitePct": 0,
+      "blackPct": 73
+    },
+    {
+      "screen": 81,
+      "lum": 44,
+      "whitePct": 0,
+      "blackPct": 63
+    },
+    {
+      "screen": 82,
+      "lum": 52,
+      "whitePct": 5,
+      "blackPct": 49
+    },
+    {
+      "screen": 83,
+      "lum": 48,
+      "whitePct": 5,
+      "blackPct": 45
+    },
+    {
+      "screen": 84,
+      "lum": 47,
+      "whitePct": 0,
+      "blackPct": 49
+    },
+    {
+      "screen": 85,
+      "lum": 17,
+      "whitePct": 0,
+      "blackPct": 74
+    },
+    {
+      "screen": 86,
+      "lum": 62,
+      "whitePct": 11,
+      "blackPct": 56
+    },
+    {
+      "screen": 87,
+      "lum": 97,
+      "whitePct": 12,
+      "blackPct": 41
+    },
+    {
+      "screen": 88,
+      "lum": 28,
+      "whitePct": 1,
+      "blackPct": 73
+    },
+    {
+      "screen": 89,
+      "lum": 58,
+      "whitePct": 7,
+      "blackPct": 56
+    },
+    {
+      "screen": 90,
+      "lum": 78,
+      "whitePct": 4,
+      "blackPct": 33
+    },
+    {
+      "screen": 91,
+      "lum": 38,
+      "whitePct": 2,
+      "blackPct": 71
+    },
+    {
+      "screen": 92,
+      "lum": 59,
+      "whitePct": 4,
+      "blackPct": 64
+    }
+  ]
+}
