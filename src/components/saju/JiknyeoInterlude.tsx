@@ -57,6 +57,7 @@ function Band({
   saySize = "lg",
   sfx,
   sfxAt = { top: 9, right: 6 },
+  bare = false,
 }: {
   /** 직녀의 대사 — 말맛대로 끊은 줄 배열 */
   lines: string[];
@@ -86,7 +87,23 @@ function Band({
   /** 방백 자리(컷 기준 %). **그 행동 옆**에 놓아야 의미가 산다 — 기본값(오른쪽 위)은
    *  가리키는 손이 화면 한가운데인 컷에서 서로 상관없어 보였다. */
   sfxAt?: { top: number; right: number };
+  /** 그림 없이 대사만 — **컷 자산이 없는 화자**(견우)가 쓴다.
+   *  컷도 SD 도 직녀 얼굴이라, 재회 결과지에서는 둘 다 쓸 수 없다(다른 인물이다). */
+  bare?: boolean;
 }) {
+  if (bare) {
+    return (
+      <div style={{ margin: "22px 0 0" }}>
+        <p
+          className="font-myeongjo"
+          style={{ fontSize: 15, lineHeight: 1.85, color: "#4A4360", textAlign: "center" }}
+        >
+          {lines.join(" ")}
+        </p>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>
+      </div>
+    );
+  }
   const cutSrc = cut
     ? assetSrc(`/products/jiknyeo/${cut}.webp`) ?? assetSrc(`/products/jiknyeo/${cut}.png`)
     : null;
@@ -329,12 +346,18 @@ function RowCard({
 
 /* ── ① 만나는 달 3장 — 4章 뒤 ──────────────────────────── */
 
-export function MonthCards({ rows }: { rows: InyeonRow[] }) {
+export function MonthCards({ rows, voice = "jiknyeo" }: { rows: InyeonRow[]; voice?: "jiknyeo" | "gyeonu" }) {
   if (!rows?.length) return null;
+  const gyeonu = voice === "gyeonu";
   return (
     <Band
-      lines={["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]}
-      cut="w7"
+      bare={gyeonu}
+      lines={
+        gyeonu
+          ? ["잊기 전에, 그 달들만 다시 적어 둡니다."]
+          : ["잊어버리기 전에,", "방금 그 세 달만", "다시 적어 둘게요."]
+      }
+      cut={gyeonu ? undefined : "w7"}
       sfx="콕—"
       // 가리키는 손가락이 x38~48 y47~58 — 방백을 그 바로 오른쪽에 붙인다.
       // 기본값(오른쪽 위 구석)이면 방백과 행동이 서로 상관없어 보인다
@@ -478,12 +501,18 @@ export function MonthLedger({ rows }: { rows: InyeonRow[] }) {
 
 /* ── ② 조심할 달 — 7章 뒤 ─────────────────────────────── */
 
-export function ShakyCards({ rows }: { rows: InyeonRow[] }) {
+export function ShakyCards({ rows, voice = "jiknyeo" }: { rows: InyeonRow[]; voice?: "jiknyeo" | "gyeonu" }) {
   if (!rows?.length) return null;
+  const gyeonu = voice === "gyeonu";
   return (
     <Band
-      lines={["이 두 달은", "무서워하지 말아요.", "천천히 가면 돼요."]}
-      cut="w2"
+      bare={gyeonu}
+      lines={
+        gyeonu
+          ? ["이 달들은 겁내실 것 없습니다. 먼저 연락만 안 하면 됩니다."]
+          : ["이 두 달은", "무서워하지 말아요.", "천천히 가면 돼요."]
+      }
+      cut={gyeonu ? undefined : "w2"}
       // 인물은 왼쪽(x18~50)뿐이고 오른쪽 절반이 빈 밤하늘 — 여기만 말풍선이 컷 안에 다 들어간다.
       // 예전 좌하단 고정값은 인물 얼굴 위에 얹혀 있었다
       // 인물 x28~62 y28~100(측면). 인물이 **올려다보는 오른쪽 위** 밤하늘에 앉힌다 —
@@ -974,12 +1003,16 @@ export function CutSay({
 export function Prologue({
   who,
   chapters,
+  voice = "jiknyeo",
 }: {
   who: string;
   /** 장 제목 목록 — 목차 카드에 그대로 쓴다 */
   chapters: string[];
+  /** 화자 — 견우(재회)는 **직녀 컷을 한 장도 안 쓴다**(다른 인물이다). 컷 자리는 비우고 말만 바꾼다. */
+  voice?: "jiknyeo" | "gyeonu";
 }) {
   const name = who || "그대";
+  const gyeonu = voice === "gyeonu";
   // 고민에 답하는 장 — 제목으로 찾는다(장 수가 바뀌어도 따라오게)
   const askIdx = chapters.findIndex((t) => /고민|물음/.test(t));
   return (
@@ -999,6 +1032,9 @@ export function Prologue({
       {/* 인사 — **메인 캐릭터가 화면 크게** 나온다. 청월당 프롤로그도 SD 가 아니라 큰 일러다
           (SD 는 본문 중간 추임새 자리). j1 은 README 가 「직녀 소개·어서 와요」로 지정한 컷이다. */}
       {(() => {
+        // 견우 결과지에는 직녀 얼굴을 세우지 않는다 — 화자가 다른데 얼굴이 나오면 그게 사고다.
+        // 컷 슬롯은 비워 둔다(대사·글로 성립한다). 견우 컷이 나오면 여기에 꽂는다.
+        if (gyeonu) return null;
         // j-greet = 인사 전용 컷(2026-08-26 생성). j1 은 창가를 보는 옆모습이라 맞이하는 자리와 안 맞았다.
         //   생산법은 에셋_생산_프롬프트시트 ③ j-greet 행 — j1 첨부 + 고정블록 전문 + POSE MUST CHANGE.
         const hero =
@@ -1041,16 +1077,18 @@ export function Prologue({
 
       {/* 자기 증명 — 우리만 하는 것을 우리만 한다고 말한다.
           랜딩엔 있는 문구가 정작 결과지 안엔 없었다(손님은 비교 대상이 없어 유일함을 모른다) */}
-      <p style={{ marginTop: 10, textAlign: "center", fontSize: 12, lineHeight: 1.7, color: "#6C6483" }}>
+      <p style={{ marginTop: gyeonu ? 0 : 10, textAlign: "center", fontSize: 12, lineHeight: 1.7, color: "#6C6483" }}>
         여기 적힌 달은 지어낸 말이 아니라
         <br />
-        <b style={{ color: "#5B3F8F" }}>{name}님 만세력 계산에서 나온 값</b>이에요.
+        <b style={{ color: "#5B3F8F" }}>{name}님 만세력 계산에서 나온 값</b>
+        {gyeonu ? "입니다." : "이에요."}
       </p>
 
       {/* 두 번째 컷 — 인사 다음은 **여는 동작**이다. 컷 하나 + 말풍선 하나로 끝나면 삽화지만
           컷→말풍선→컷→말풍선이 되면 그때부터 웹툰으로 읽힌다(몰입 판독 §3 「컷 연쇄가 없다」).
           첫 컷과 좌우를 뒤집어 리듬을 만든다 — 오른쪽 컷 다음은 왼쪽 컷. */}
       {(() => {
+        if (gyeonu) return null; // 위와 같은 이유 — 직녀 컷은 재회 결과지에 안 나온다
         const open = assetSrc("/products/jiknyeo/N1.webp") ?? assetSrc("/products/jiknyeo/N1.png");
         if (!open) return null;
         return (
@@ -1137,8 +1175,18 @@ export function Prologue({
 
 /** 3사 공통 표준(청월당 14장 「마치며」·음양관·귀신사주). 후기·공유 직전의 감정을 정하는 자리다.
  *  청월당도 410자뿐 — 길 필요가 없다. 정적 템플릿 + 이름·가장 가까운 좋은 달만 치환(토큰 0). */
-export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year: number; month: number } | null }) {
+export function ClosingLetter({
+  who,
+  nearest,
+  voice = "jiknyeo",
+}: {
+  who: string;
+  nearest?: { year: number; month: number } | null;
+  /** 견우(재회)는 말도 낙관도 다르다 — 織女 서명이 그대로 찍히면 다른 사람이 쓴 편지가 된다. */
+  voice?: "jiknyeo" | "gyeonu";
+}) {
   const name = who || "그대";
+  const gyeonu = voice === "gyeonu";
   return (
     <div
       style={{
@@ -1162,11 +1210,13 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
         className="font-myeongjo"
         style={{ marginTop: 14, fontSize: 14.5, lineHeight: 2, color: "#2A2434", textAlign: "center" }}
       >
-        <p>여기까지 읽느라 고생했어요.</p>
+        <p>{gyeonu ? "여기까지 읽으시느라 고생하셨습니다." : "여기까지 읽느라 고생했어요."}</p>
         <p style={{ marginTop: 12 }}>
-          제가 알려 드린 건 <b style={{ color: "#5B3F8F" }}>날짜</b>예요.
+          {gyeonu ? "제가 적어 드린 건 " : "제가 알려 드린 건 "}
+          <b style={{ color: "#5B3F8F" }}>날짜</b>
+          {gyeonu ? "입니다." : "예요."}
           <br />
-          가는 건 {name}님이 하는 거고요.
+          {gyeonu ? `건너는 건 ${name}님이 하는 일이고요.` : `가는 건 ${name}님이 하는 거고요.`}
         </p>
         <p style={{ marginTop: 12 }}>
           {nearest ? (
@@ -1175,18 +1225,18 @@ export function ClosingLetter({ who, nearest }: { who: string; nearest?: { year:
               <b style={{ color: "#5B3F8F" }}>
                 {nearest.year}년 {nearest.month}월
               </b>
-              이에요.
+              {gyeonu ? "입니다." : "이에요."}
               <br />그때 이 종이를 다시 열어 보세요.
             </>
           ) : (
             <>그 달이 오면 이 종이를 다시 열어 보세요.</>
           )}
         </p>
-        <p style={{ marginTop: 12 }}>저는 여기 있을게요.</p>
+        <p style={{ marginTop: 12 }}>{gyeonu ? "저는 강 이쪽에서 기다리고 있겠습니다." : "저는 여기 있을게요."}</p>
         <p style={{ marginTop: 12, color: "#6C6483" }}>그때까지, 잘 지내고 계세요.</p>
       </div>
       <p className="font-brush" style={{ marginTop: 16, textAlign: "center", fontSize: 15, color: "#A8842C", letterSpacing: "0.3em" }}>
-        織 女
+        {gyeonu ? "牽 牛" : "織 女"}
       </p>
     </div>
   );

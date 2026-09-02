@@ -12,6 +12,8 @@ import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildResultView } from "@/lib/saju/result-view";
 import { buildChartRows } from "@/lib/saju/teaser";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
+import { REUNION_SLUG } from "@/lib/saju/reunion-input";
+import { REUNION_CHAPTER_BADGES } from "@/lib/saju/prompt";
 import {
   computeInyeonFacts,
   computeWealthFacts,
@@ -155,7 +157,9 @@ export default async function ResultPage({
   // 직녀(연애예보·결혼예보) — 산군처럼 **전용 결과지**로 간다.
   // 공용 템플릿은 보라 세계관에 재물·직업·건강까지 실어서, 밤하늘 티저에서 넘어온 손님에게
   // 다른 상품처럼 보였다(안 판 것을 보여주면 상품이 흐려진다).
-  const isJiknyeo = slug === "inyeon-saju" || slug === "marriage-saju";
+  // 재회(견우)도 같은 조판을 쓴다 — 직녀 얼굴이 나오는 요소만 컴포넌트 안에서 꺼진다(isReunion).
+  const isReunion = slug === REUNION_SLUG;
+  const isJiknyeo = slug === "inyeon-saju" || slug === "marriage-saju" || isReunion;
 
   return (
     <div
@@ -226,6 +230,9 @@ export default async function ResultPage({
                 : null
             }
             isMarriage={slug === "marriage-saju"}
+            isReunion={isReunion}
+            // 장 제목 옆 한자 근거 배지 — 재회 10장에만 단다(청월당 목차 공식).
+            badges={isReunion ? REUNION_CHAPTER_BADGES : undefined}
             reviewOrderId={ownerId ? result.order_id : null}
             recordedAt={result.created_at as string | null}
           />

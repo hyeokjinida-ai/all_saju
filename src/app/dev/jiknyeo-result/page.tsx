@@ -17,6 +17,7 @@ import { JiknyeoResult } from "@/components/saju/JiknyeoResult";
 import { buildResultView } from "@/lib/saju/result-view";
 import { buildChartRows } from "@/lib/saju/teaser";
 import { computeInyeonFacts, ganjiToMyeongsik, type SajuAnalysisResponse } from "@/lib/saju/saju-api";
+import { REUNION_CHAPTER_BADGES } from "@/lib/saju/prompt";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "직녀 결과지 미리보기 (dev)" };
@@ -33,6 +34,38 @@ const FALLBACK_MD = `### 내 인연 그릇
 ### 걸어온 길
 2019년부터 자리가 한 번 크게 바뀌었어요. 그 무렵 사람보다 일이 먼저였을 거예요.
 2023년에는 마음이 한 발 늦어 놓친 자리가 있었고요. 지나갔다고 없던 일이 되진 않아요.`;
+
+/** 재회 더미 본문 — **장 제목만** 실제 목차(prompt.ts reunion-saju outline)와 1:1 로 맞춘다.
+ *  조판 확인용이라 본문은 짧아도 되지만, 제목이 다르면 장 사이 부품·배지 자리가 거짓말이 된다. */
+const FALLBACK_MD_REUNION = `### 두 사람의 별
+저도 일 년에 하루, 강 건너를 바라보는 놈입니다. 기다리는 마음은 압니다. 그 사람 마음은, 장부를 열면 보입니다.
+
+### 강이 갈라진 날
+그날 강이 갈라진 건 모자라서가 아닙니다. 그 무렵 흐름이 같이 꺾여 있었습니다.
+
+### 그 사람의 지금
+연락을 미룰 때 하는 행동, 마음이 식었을 때 하는 행동으로만 적습니다.
+
+### 아직 이어져 있는 것
+재회 가능성은 보통입니다. 왜 그 등급이 나왔는지 근거부터 폅니다.
+
+### 다리가 놓이는 달
+다시 이어지는 달을 하나씩 별도 단락으로 적습니다.
+
+### 연락의 달
+연락해도 되는 달과 먼저 연락하면 안 되는 달을 갈라 적습니다.
+
+### 하면 안 되는 것
+매달릴 때 되풀이되는 행동 셋과, 대신 할 행동입니다.
+
+### 다시 보고 싶은 사람으로
+내 쪽에서 바꾸는 것 셋입니다.
+
+### 강을 건너지 않는다면
+그 사람이 아니어도 되는 이유와, 다음에 올 사람입니다.
+
+### 견우의 배웅
+이번 주에 할 것 셋으로 시작해 편지로 닫습니다.`;
 
 /** 샘플 손님 — 명식 캐시·본문·생일을 한 세트로 묶는다(따로 고르면 화면이 거짓말을 한다). */
 const WHO: Record<
@@ -60,11 +93,13 @@ const WHO: Record<
 export default async function DevJiknyeoResultPage({
   searchParams,
 }: {
-  searchParams: Promise<{ marriage?: string; who?: string }>;
+  searchParams: Promise<{ marriage?: string; who?: string; reunion?: string }>;
 }) {
   if (process.env.NODE_ENV !== "development") notFound();
-  const { marriage, who } = await searchParams;
-  const person = WHO[who ?? "지수"] ?? WHO["지수"];
+  const { marriage, who, reunion } = await searchParams;
+  // ?reunion=1 — 견우(재회) 조판. 같은 부품에 직녀 얼굴만 꺼지는지 눈으로 확인하는 문이다.
+  const isReunion = reunion === "1";
+  const person = WHO[who ?? (isReunion ? "서윤" : "지수")] ?? WHO["지수"];
 
   // sample-results.ts 가 tmp 에 남긴 것을 **파일명 규칙으로 찾는다**.
   // 규칙: 명식 `analysis-<생일>-<성별>-<시>.json` · 본문 `sample-<slug>-<이름>-<모델태그>.md`
@@ -79,7 +114,7 @@ export default async function DevJiknyeoResultPage({
       .sort((a, b) => b.t - a.t);
     return hits[0] ? path.join(tmp, hits[0].f) : null;
   };
-  const slug = marriage === "1" ? "marriage-saju" : "inyeon-saju";
+  const slug = isReunion ? "reunion-saju" : marriage === "1" ? "marriage-saju" : "inyeon-saju";
   const found = pick(`sample-${slug}-${person.name}${person.suffix ?? ""}-`, person.exclude);
   const mdPath = found ?? "";
   if (!fs.existsSync(anPath)) {
@@ -96,7 +131,9 @@ export default async function DevJiknyeoResultPage({
 
   const markdown = mdPath && fs.existsSync(mdPath)
     ? fs.readFileSync(mdPath, "utf8").replace(/^<!--[\s\S]*?-->\s*/, "")
-    : FALLBACK_MD;
+    : isReunion
+      ? FALLBACK_MD_REUNION
+      : FALLBACK_MD;
 
   const view = buildResultView({
     myeongsik,
@@ -134,6 +171,8 @@ export default async function DevJiknyeoResultPage({
           inyeon={computeInyeonFacts(analysis, "female", "male")}
           chartRows={buildChartRows(analysis)}
           isMarriage={marriage === "1"}
+          isReunion={isReunion}
+          badges={isReunion ? REUNION_CHAPTER_BADGES : undefined}
           // dev 확인용 더미 — 운영은 ownerId 있을 때만 값이 온다
           reviewOrderId="00000000-0000-0000-0000-000000000000"
         />

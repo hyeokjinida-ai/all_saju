@@ -91,7 +91,7 @@ function PlateTitle({ children, sub }: { children: React.ReactNode; sub?: string
    아래를 본문 배경색으로 페이드시켜 이음매를 지운다. 우리는 이미지를 굽지 않는다 —
    같은 그림을 DOM 으로 세우면 장 제목이 바뀌어도 다시 만들 필요가 없다.
    핵심은 두 가지: **번호와 제목 사이의 매듭 구분선**, 그리고 **아래쪽 페이드**. ── */
-function ChapterGate({ no, title, id }: { no: number; title: string; id?: string }) {
+function ChapterGate({ no, title, id, badge }: { no: number; title: string; id?: string; badge?: string }) {
   // LLM 이 제목에 "9. " 처럼 번호를 붙여 온다. 간지가 이미 「제 9 장」을 세우므로
   // 그대로 두면 번호가 두 번 나온다 — 여기서 한 번만 남긴다.
   const clean = title.replace(/^\s*\d+\s*[.·)]\s*/, "");
@@ -137,6 +137,27 @@ function ChapterGate({ no, title, id }: { no: number; title: string; id?: string
 
       <div className="font-myeongjo" style={{ fontSize: 21, fontWeight: 700, color: "#EFE7FA", lineHeight: 1.4 }}>
         {clean}
+        {/* 근거 배지 — 청월당 목차 공식(한자 근거를 **작게** 옆에, 손님 말은 크게).
+            제목보다 커지면 안 읽히는 글자가 제목을 이긴다. */}
+        {badge && (
+          <span
+            className="font-myeongjo"
+            style={{
+              marginLeft: 8,
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "0.12em",
+              color: "#A98BD9",
+              border: "1px solid rgba(169,139,217,.45)",
+              borderRadius: 4,
+              padding: "2px 6px",
+              whiteSpace: "nowrap",
+              verticalAlign: "middle",
+            }}
+          >
+            {badge}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -178,13 +199,13 @@ const hanjiCard: React.CSSProperties = {
 function chapterMood(title: string): React.CSSProperties {
   const HANJI_URL = "url(/products/jiknyeo/hanji.png)";
   // 가라앉음 — 지나간 것을 들여다보는 장. 흰 오버레이를 옅은 회보라로 바꾼다(채도만 내림)
-  if (/놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리/.test(title))
+  if (/놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리|강이 갈라진 날|하면 안 되는 것/.test(title))
     return {
       backgroundColor: "#F4F1F7",
       backgroundImage: `linear-gradient(rgba(240,236,247,.66), rgba(233,228,242,.66)), ${HANJI_URL}`,
     };
   // 트임 — 이 결과지를 산 이유가 적힌 장. 달빛 은청을 한 겹 얹어 종이가 환해진다
-  if (/만나는 달|들어오는 달|결혼하는 해|크게 바뀌는 해/.test(title))
+  if (/만나는 달|들어오는 달|결혼하는 해|크게 바뀌는 해|다리가 놓이는 달|연락의 달/.test(title))
     return {
       backgroundColor: "#FEFDFA",
       backgroundImage: `linear-gradient(rgba(255,254,252,.74), rgba(250,252,255,.74)), ${HANJI_URL}`,
@@ -325,270 +346,34 @@ const OH_TRAIT: Record<string, { keul: string; how: string }> = {
   수: { keul: "깊고 스미는 결", how: "먼저 듣고, 시간이 지날수록 편해져요" },
 };
 
-export function JiknyeoResult({
-  view,
-  markdown,
-  name,
+
+/**
+ * 짝 프로필 판 — 얼굴 카드 + 표. 인연은 결과지 **머리**에서 결제의 보상으로 열고,
+ * 재회는 **9장 「강을 건너지 않는다면」 바로 위**에서 「그 사람이 아니어도 되는 이유」의 물증으로 연다.
+ * (prompt.ts 의 그 장 지시가 「표가 바로 위에 떠 있다」를 전제로 쓰여 있다 — 자리를 옮기면 본문이 어긋난다)
+ */
+function PartnerProfilePlate({
   inyeon,
-  chartRows,
-  isMarriage = false,
-  reviewOrderId = null,
-  recordedAt = null,
+  firstMonth,
+  isReunion = false,
 }: {
-  view: ResultView;
-  markdown: string;
-  name: string | null;
-  inyeon: InyeonFacts | null;
-  chartRows?: ChartRow[];
-  /** 결혼예보 — 같은 부품에 강조만 「결혼하는 해」로 옮긴다 */
-  isMarriage?: boolean;
-  /** 후기 자격이 있을 때만 값이 온다(로그인 회원 주문). 게스트는 null — 눌러도 막히는 버튼은 안 세운다 */
-  reviewOrderId?: string | null;
-  /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
-  recordedAt?: string | null;
+  inyeon: InyeonFacts;
+  /** 표 마지막 줄 「첫 달」 — 호출부가 시간순 top3 의 첫 달을 넘긴다 */
+  firstMonth: { year: number; month: number } | null;
+  isReunion?: boolean;
 }) {
-  const { intro, chapters } = splitChapters(markdown);
-
-  // 5章 「내게 올 사람」 **직전**에 짝 카드를 작게 다시 세운다 — 회수 루프를 잇는 자리.
-  // 큰 카드는 결과지 머리(결제 직후 보상)에 그대로 두고, 여기서는 썸네일 + 세 값만 되짚는다.
-  // 결혼 라인에는 얼굴을 안 쓴다(기혼·약혼 독자에게 역효과 — outline 이 정한 규칙 그대로).
-  const before = (title: string) => {
-    if (!inyeon || isMarriage) return null;
-    if (!/내게 올 사람|함께할 사람/.test(title)) return null;
-    const f = buildPartnerFace(inyeon);
-    return (
-      <PartnerRecall
-        src={faceSrc(f.src, f.legacySrc)}
-        ohKo={f.ohKo}
-        keul={OH_TRAIT[f.ohKo]?.keul ?? "오래 가는 결"}
-        ageDir={f.ageDir}
-        // 표와 **같은 값**을 써야 한 장부 안에서 두 곳을 가리키지 않는다(회수 카드가 표를 되짚는 자리다)
-        place={meetPlace(inyeon.meetHint, f.ohKo)}
-      />
-    );
-  };
-  const who = (name ?? "").trim();
-  const months = inyeon ? gradeMonths(inyeon) : [];
-  // 점수순으로 오는 배열을 **읽는 순서(시간순)** 로 세운다 — 달력 아래에 붙는 목록이라 순서가 어긋나면 헷갈린다.
-  const byTime = <T extends { year: number; month: number }>(rows: T[]) =>
-    rows.slice().sort((a, b) => a.year - b.year || a.month - b.month);
-  const top3 = inyeon ? byTime(inyeon.top3) : [];
-  const shaky = inyeon ? byTime(inyeon.shaky) : [];
-  // 시 모름이면 시주가 "?" 로 온다 — 티저와 같은 조건으로 뺀다
-  const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
-
+  const top3 = firstMonth ? [firstMonth] : [];
   return (
-    <div className="space-y-5">
-      {/* ── 머리 ── */}
-      <div className="text-center">
-        <p className="font-brush text-[13px] tracking-[0.34em]" style={{ color: "#6B4C9A", opacity: 0.95 }}>
-          織 女
-        </p>
-        {(() => {
-          // 제목을 활자로 쓰던 자리 — 웹툰은 회차 제목을 **손으로 쓴 글씨**로 한 화면 세운다
-          // (칠흑 48화: 콜드오픈 뒤 붓글씨 제목이 통째로 한 판). 활자 제목은 「문서」가 되고
-          // 붓글씨는 「받은 물건」이 된다.
-          // ⚠ 옛 자산 lettering-yeonae-yebo.png 는 보라·형광 3D 게임 로고체라 먹빛 담채와
-          //   어긋나 붙였다 되돌렸다(2026-08-25). 2026-08-30 먹빛 붓글씨로 새로 구웠다 —
-          //   흰 배경을 알파로 빼고 획 색을 본문 먹빛(#2A2434)으로 통일해 판 위에 얹힌다.
-          // 연애예보 전용 자산이라 결혼판은 기존 활자 그대로 둔다(같은 글자가 아니다).
-          const lettering = isMarriage ? null : assetSrc("/products/jiknyeo/lettering-yeonae-brush.webp");
-          if (lettering) {
-            return (
-              <div className="mt-2">
-                {who ? (
-                  <p className="font-myeongjo text-[15px]" style={{ color: "#5B5470" }}>{who}님의</p>
-                ) : null}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {/* 활자 제목(24px)보다 크게 세운다 — 붓글씨는 획이 가늘어 활자만 한 크기로 두면
-                    존재감이 오히려 줄어든다. 아래 여백은 제목이 한 판을 쓰게 하는 숨이다(웹툰 타이틀 문법). */}
-                <img
-                  src={lettering}
-                  alt="연애예보"
-                  draggable={false}
-                  className="mx-auto mb-3 mt-2 select-none"
-                  style={{ width: "72%", maxWidth: 278, height: "auto" }}
-                />
-              </div>
-            );
-          }
-          return (
-            <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#2A2434" }}>
-              {who ? `${who}님의 ` : ""}
-              {isMarriage ? "결혼예보" : "연애예보"}
-            </h1>
-          );
-        })()}
-        <p className="mt-1.5 text-[12px]" style={{ color: "#6C6483" }}>
-          만세력 계산 · 앞으로 열두 달
-        </p>
-      </div>
+    <Plate id="sec-profile">
 
-      {/* ── ⓪ 프롤로그 — 인사·물성·목차. 결제 직후 1초는 정보가 아니라 환대를 원한다 ── */}
-      <Prologue who={who} chapters={chapters.map((c) => c.title)} />
-
-      {/* 서사 도입 — 티저는 설화 4씬으로 직녀의 밤을 보여주는데, 결제하고 들어온 손님은
-          인사 다음에 바로 목차였다. 청월당이 프롤로그 한 장을 통째로 서사에 쓰는 이유가 이것.
-          j3 는 **인물이 작고 하늘이 주인공인 유일한 와이드 컷**인데 안 쓰고 있었다 —
-          반신 컷만 이어지던 샷 리듬도 여기서 한 번 끊긴다. */}
-      {/* ⚠ 대사는 **직녀가 손님에게 직접 하는 말**만 쓴다 — 3인칭 설정 소개 금지(2026-08-29 형님).
-          예전 문장은 「직녀는 밤마다 여기 앉아…」였다. 화자가 갑자기 세계 밖 나레이터로 바뀌어
-          직녀와 마주 앉은 프레임이 깨지고, 손님 정보가 0이라 와닿지도 않았다(설정은 티저 설화가 이미 함). */}
-      {/* ⚠ 비율은 **컷마다 다르다** — 2:3 을 일괄로 쓰면 안 된다(2026-08-29 형님 검수).
-          j3 는 하단이 빈 마루라 원본 그대로 두면 컷 아래 1/6 이 볼 것 없는 검정으로 남는다.
-          실측(행별 디테일 std<6): **y=1276 = 83.1% 부터 죽은 공간.**
-          4/5 + top 정렬이면 위 83.3% 만 남아 딱 그 자리가 잘린다.
-          (같은 자로 전수 측정: w7 은 15% 가 죽었지만 그 자리를 말풍선이 덮어 실害 없음) */}
-      <CutInterlude
-        id="j3"
-        say={who ? `${who}님 달력을 짜던 밤이에요.` : "그대의 달력을 짜던 밤이에요."}
-        ratio="4 / 5"
-        pos="center top"
-        sfx="탁, 탁—"
-      />
-
-      {/* ── ① 예보판 — 티저에서 가렸던 달 이름을 전부 연다 ── */}
-      {months.length > 0 && (
-        <Plate id="sec-forecast">
-          <PlateTitle sub="티저에서 가렸던 달 이름을 전부 열었어요">
-            {isMarriage ? "결혼 예보" : "인연 예보"}
+          <PlateTitle sub={isReunion ? "강을 건너지 않는다면, 다음에 올 사람입니다" : "티저에서 가려 두었던 자리예요"}>
+            {isReunion ? "다음에 올 사람" : "내 앞에 나타날 사람"}
           </PlateTitle>
-          <div className="mt-4 grid grid-cols-4 gap-1.5">
-            {months.map((m) => {
-              const p = GRADE_TO_PHASE[m.grade] ?? "cres";
-              const big = p === "full";
-              return (
-                <div
-                  key={`${m.year}-${m.month}`}
-                  className="rounded-[9px] py-2 text-center"
-                  style={{
-                    background: "#FDFAF1",
-                    // 열린 달의 표식은 **금**이다 — 보라 테두리는 구 템플릿 색이라 한지 위에서 떴다.
-                    // 달 그림 자체가 이미 금색이므로 테두리도 금이어야 한 덩어리로 읽힌다.
-                    border: `1px solid ${big ? "#C2A35C" : "#E2D8BF"}`,
-                    boxShadow: big ? "0 0 0 2px rgba(194,163,92,.22)" : undefined,
-                  }}
-                >
-                  <p className="text-[12px] font-bold" style={{ color: big ? "#8A6A1E" : "#6C6483" }}>
-                    {m.month}월
-                  </p>
-                  <div className="mt-1 flex justify-center"><Moon phase={p} /></div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5">
-            {([["full", "크게 열리는 달"], ["half", "자리가 생기는 달"], ["cres", "평"], ["cloud", "결이 엉키는 달"]] as const).map(
-              ([p, label]) => (
-                <div key={p} className="flex items-center gap-1.5">
-                  <Moon phase={p} size={18} />
-                  <span className="text-[11px]" style={{ color: "#332C4A" }}>{label}</span>
-                </div>
-              ),
-            )}
-          </div>
-        </Plate>
-      )}
-
-      {/* ── ② 만나는 달 셋 — 티저에서 하나만 열었던 목록의 나머지 ── */}
-      {top3.length > 0 && (
-        <Plate id="sec-top3">
-          <PlateTitle sub="근거는 아래 명식에서 나왔어요">
-            {isMarriage ? "결혼하는 해와 달" : "만나는 달 셋"}
-          </PlateTitle>
-          <div className="mt-4 space-y-2.5">
-            {top3.map((m) => (
-              <div
-                key={m.label}
-                className="rounded-[10px] px-3.5 py-3"
-                style={{ background: "#FDFAF1", border: "1px solid #E2D8BF" }}
-              >
-                <div className="flex items-baseline gap-2">
-                  <Moon phase="full" size={20} />
-                  <p className="text-[16px] font-extrabold" style={{ color: "#1B1729" }}>
-                    {m.year}년 {m.month}월
-                  </p>
-                  <span className="ml-auto text-[11px]" style={{ color: "#756E8A" }}>{m.age}세</span>
-                </div>
-                {m.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {m.tags.slice(0, 3).map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full px-2 py-[3px] text-[11px]"
-                        style={{ background: "#F2E8CF", color: "#6B5420" }}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          {shaky.length > 0 && (
-            <p className="mt-3.5 flex items-center gap-2 text-[12px]" style={{ color: "#6C6483" }}>
-              <Moon phase="cloud" size={16} />
-              결이 엉키는 달 — {shaky.slice(0, 2).map((r) => `${r.year}년 ${r.month}월`).join(" · ")}
-            </p>
-          )}
-        </Plate>
-      )}
-
-      {/* ── ③ 명식 실물 — "직접 계산했다"의 증거. 티저에서 본 것과 같은 표 ── */}
-      {shown.length > 0 && (
-        <Plate id="sec-chart">
-          <PlateTitle sub={view.birthLine}>{who ? `${who}님 명식` : "명식"}</PlateTitle>
-          <div className="mt-4 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${shown.length},minmax(0,1fr))` }}>
-            {shown.map((p, i) => (
-              <div
-                key={`gan-${i}`}
-                className="rounded-[9px] py-2.5 text-center text-white"
-                style={{ background: EL_BG[p.gan.element] ?? EL_BG.water }}
-              >
-                <em className="block text-[24px] font-bold not-italic leading-none">{p.gan.char}</em>
-                <span className="mt-1 block text-[11px] opacity-90">{p.gan.read}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-1.5 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${shown.length},minmax(0,1fr))` }}>
-            {shown.map((p, i) => (
-              <div
-                key={`ji-${i}`}
-                className="rounded-[9px] py-2.5 text-center text-white"
-                style={{ background: EL_BG[p.ji.element] ?? EL_BG.water }}
-              >
-                <em className="block text-[24px] font-bold not-italic leading-none">{p.ji.char}</em>
-                <span className="mt-1 block text-[11px] opacity-90">{p.ji.read}</span>
-              </div>
-            ))}
-          </div>
-          {chartRows && chartRows.length > 0 && (
-            <div className="mt-3 space-y-1">
-              {chartRows.map((r) => (
-                <div key={r.pos} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-10 flex-none font-bold" style={{ color: "#756E8A" }}>{r.pos}</span>
-                  <span style={{ color: "#332C4A" }}>
-                    {[r.ganSip, r.jiSip, r.fortune].filter(Boolean).join(" · ")}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Plate>
-      )}
-
-      {/* ── ③-B 인연 프로필 표 ──
-          티저가 「그 사람은 ████ 에서 처음 마주쳐요」 로 가린 것의 **직접 보상**.
-          타이트 유료 결과지의 「[운명 카드] 내 앞에 나타날 진짜 인연 프로필」 자리인데,
-          걔넨 외모·직업군까지 단정하고 우리는 그 선을 안 넘는다 — 대신 근거 있는 항목만 표로 박는다. */}
-      {inyeon && !isMarriage && (
-        <Plate id="sec-profile">
-          <PlateTitle sub="티저에서 가려 두었던 자리예요">내 앞에 나타날 사람</PlateTitle>
 
           {/* 빈 액자를 들어 보이는 컷 → 바로 다음이 얼굴 카드다. 「들어갈 자리」를 먼저 보여 주고
               얼굴을 여는 순서라, 결제의 회수 지점이 한 박자 늦춰지면서 더 세게 열린다 */}
-          <CutSay id="N3" lines={["이 사람이에요.", "잘 봐 두세요."]} />
+          {/* 재회는 이 컷을 안 쓴다 — N3 는 직녀 컷이다(견우 컷이 나오면 그때 꽂는다) */}
+          {!isReunion && <CutSay id="N3" lines={["이 사람이에요.", "잘 봐 두세요."]} />}
 
           {/* 표보다 **얼굴이 먼저** 온다 — 티저가 흐리게 예고한 게 얼굴이라, 결제의 회수도 얼굴이어야 한다 */}
           {(() => {
@@ -599,11 +384,11 @@ export function JiknyeoResult({
               <div className="mt-4">
                 <FaceCard
                   src={src}
-                  title="이런 결의 사람이에요"
+                  title={isReunion ? "이런 결의 사람입니다" : "이런 결의 사람이에요"}
                   why={
                     <>
                       배우자 자리가 <b style={{ color: "#8A6A1E" }}>{inyeon.spouseOh || "토"}</b>의 결 —
-                      그 결을 그림으로 옮겼어요
+                      {isReunion ? " 그 결을 그림으로 옮겼습니다" : " 그 결을 그림으로 옮겼어요"}
                     </>
                   }
                   tone="best"
@@ -656,7 +441,7 @@ export function JiknyeoResult({
               <div className="mt-6 border-t pt-5" style={{ borderColor: "#E8DFC8" }}>
                 <FaceCard
                   src={src}
-                  title="반대로, 멀리할 결이에요"
+                  title={isReunion ? "반대로, 멀리할 결입니다" : "반대로, 멀리할 결이에요"}
                   why={
                     <>
                       {w.why} — {w.how}
@@ -668,6 +453,301 @@ export function JiknyeoResult({
             );
           })()}
         </Plate>
+  );
+}
+
+export function JiknyeoResult({
+  view,
+  markdown,
+  name,
+  inyeon,
+  chartRows,
+  isMarriage = false,
+  isReunion = false,
+  badges,
+  reviewOrderId = null,
+  recordedAt = null,
+}: {
+  view: ResultView;
+  markdown: string;
+  name: string | null;
+  inyeon: InyeonFacts | null;
+  chartRows?: ChartRow[];
+  /** 결혼예보 — 같은 부품에 강조만 「결혼하는 해」로 옮긴다 */
+  isMarriage?: boolean;
+  /**
+   * 재회예보(견우) — 조판은 그대로 쓰고 **직녀 얼굴이 나오는 것만 전부 끈다**.
+   *   끄는 것: 프롤로그 인사 컷 · 장 사이 컷(CutInterlude) · SD 추임새(ChapterSay) ·
+   *            붓글씨 「연애예보」 제목 · 織女 낙관 · 짝 카드 앞 컷(CutSay N3)
+   *   바꾸는 것: 제목 · 달 이름표(다리가 놓이는 달 / 연락해도 되는 달 / 먼저 연락하면 안 되는 달)
+   *   ⚠ 등급 계산은 여기서 손대지 않는다 — gradeMonths 한 곳에서만 나온다(티저와 어긋나면 끝난다).
+   *   컷 슬롯은 비워 둔다. 견우 컷이 나오면 그 자리에 꽂으면 된다.
+   */
+  isReunion?: boolean;
+  /** 장 제목 옆 한자 배지 — 재회 10장(REUNION_CHAPTER_BADGES). 안 주면 배지를 안 단다. */
+  badges?: readonly string[];
+  /** 후기 자격이 있을 때만 값이 온다(로그인 회원 주문). 게스트는 null — 눌러도 막히는 버튼은 안 세운다 */
+  reviewOrderId?: string | null;
+  /** 결과 생성일(ISO) — 맺음 낙관에 찍는다 */
+  recordedAt?: string | null;
+}) {
+  const { intro, chapters } = splitChapters(markdown);
+
+  // 5章 「내게 올 사람」 **직전**에 짝 카드를 작게 다시 세운다 — 회수 루프를 잇는 자리.
+  // 큰 카드는 결과지 머리(결제 직후 보상)에 그대로 두고, 여기서는 썸네일 + 세 값만 되짚는다.
+  // 결혼 라인에는 얼굴을 안 쓴다(기혼·약혼 독자에게 역효과 — outline 이 정한 규칙 그대로).
+  const before = (title: string) => {
+    if (!inyeon || isMarriage) return null;
+    if (!/내게 올 사람|함께할 사람/.test(title)) return null;
+    const f = buildPartnerFace(inyeon);
+    return (
+      <PartnerRecall
+        src={faceSrc(f.src, f.legacySrc)}
+        ohKo={f.ohKo}
+        keul={OH_TRAIT[f.ohKo]?.keul ?? "오래 가는 결"}
+        ageDir={f.ageDir}
+        // 표와 **같은 값**을 써야 한 장부 안에서 두 곳을 가리키지 않는다(회수 카드가 표를 되짚는 자리다)
+        place={meetPlace(inyeon.meetHint, f.ohKo)}
+      />
+    );
+  };
+  const who = (name ?? "").trim();
+  const months = inyeon ? gradeMonths(inyeon) : [];
+  // 점수순으로 오는 배열을 **읽는 순서(시간순)** 로 세운다 — 달력 아래에 붙는 목록이라 순서가 어긋나면 헷갈린다.
+  const byTime = <T extends { year: number; month: number }>(rows: T[]) =>
+    rows.slice().sort((a, b) => a.year - b.year || a.month - b.month);
+  const top3 = inyeon ? byTime(inyeon.top3) : [];
+  const shaky = inyeon ? byTime(inyeon.shaky) : [];
+  // 시 모름이면 시주가 "?" 로 온다 — 티저와 같은 조건으로 뺀다
+  const shown = view.pillars.slice().reverse().filter((p) => p.gan.char !== "?");
+
+  return (
+    <div className="space-y-5">
+      {/* ── 머리 ── */}
+      <div className="text-center">
+        <p className="font-brush text-[13px] tracking-[0.34em]" style={{ color: "#6B4C9A", opacity: 0.95 }}>
+          {isReunion ? "牽 牛" : "織 女"}
+        </p>
+        {(() => {
+          // 재회는 붓글씨 자산이 「연애예보」 하나뿐이다 — 그 글씨를 쓰면 다른 상품 이름이 뜬다.
+          // 견우 붓글씨가 나오기 전까지는 활자 제목으로 간다(제목은 prompt.ts title 과 같은 말).
+          if (isReunion) {
+            return (
+              <h1 className="mt-2 font-myeongjo text-[24px] font-bold leading-[1.4]" style={{ color: "#2A2434" }}>
+                {who ? `${who}님에게` : "당신에게"}
+                <br />
+                다리가 놓이는 달
+              </h1>
+            );
+          }
+          // 제목을 활자로 쓰던 자리 — 웹툰은 회차 제목을 **손으로 쓴 글씨**로 한 화면 세운다
+          // (칠흑 48화: 콜드오픈 뒤 붓글씨 제목이 통째로 한 판). 활자 제목은 「문서」가 되고
+          // 붓글씨는 「받은 물건」이 된다.
+          // ⚠ 옛 자산 lettering-yeonae-yebo.png 는 보라·형광 3D 게임 로고체라 먹빛 담채와
+          //   어긋나 붙였다 되돌렸다(2026-08-25). 2026-08-30 먹빛 붓글씨로 새로 구웠다 —
+          //   흰 배경을 알파로 빼고 획 색을 본문 먹빛(#2A2434)으로 통일해 판 위에 얹힌다.
+          // 연애예보 전용 자산이라 결혼판은 기존 활자 그대로 둔다(같은 글자가 아니다).
+          const lettering = isMarriage ? null : assetSrc("/products/jiknyeo/lettering-yeonae-brush.webp");
+          if (lettering) {
+            return (
+              <div className="mt-2">
+                {who ? (
+                  <p className="font-myeongjo text-[15px]" style={{ color: "#5B5470" }}>{who}님의</p>
+                ) : null}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* 활자 제목(24px)보다 크게 세운다 — 붓글씨는 획이 가늘어 활자만 한 크기로 두면
+                    존재감이 오히려 줄어든다. 아래 여백은 제목이 한 판을 쓰게 하는 숨이다(웹툰 타이틀 문법). */}
+                <img
+                  src={lettering}
+                  alt="연애예보"
+                  draggable={false}
+                  className="mx-auto mb-3 mt-2 select-none"
+                  style={{ width: "72%", maxWidth: 278, height: "auto" }}
+                />
+              </div>
+            );
+          }
+          return (
+            <h1 className="mt-2 font-myeongjo text-[24px] font-bold" style={{ color: "#2A2434" }}>
+              {who ? `${who}님의 ` : ""}
+              {isMarriage ? "결혼예보" : "연애예보"}
+            </h1>
+          );
+        })()}
+        <p className="mt-1.5 text-[12px]" style={{ color: "#6C6483" }}>
+          만세력 계산 · 앞으로 열두 달
+        </p>
+      </div>
+
+      {/* ── ⓪ 프롤로그 — 인사·물성·목차. 결제 직후 1초는 정보가 아니라 환대를 원한다 ── */}
+      <Prologue who={who} chapters={chapters.map((c) => c.title)} voice={isReunion ? "gyeonu" : "jiknyeo"} />
+
+      {/* 서사 도입 — 티저는 설화 4씬으로 직녀의 밤을 보여주는데, 결제하고 들어온 손님은
+          인사 다음에 바로 목차였다. 청월당이 프롤로그 한 장을 통째로 서사에 쓰는 이유가 이것.
+          j3 는 **인물이 작고 하늘이 주인공인 유일한 와이드 컷**인데 안 쓰고 있었다 —
+          반신 컷만 이어지던 샷 리듬도 여기서 한 번 끊긴다. */}
+      {/* ⚠ 대사는 **직녀가 손님에게 직접 하는 말**만 쓴다 — 3인칭 설정 소개 금지(2026-08-29 형님).
+          예전 문장은 「직녀는 밤마다 여기 앉아…」였다. 화자가 갑자기 세계 밖 나레이터로 바뀌어
+          직녀와 마주 앉은 프레임이 깨지고, 손님 정보가 0이라 와닿지도 않았다(설정은 티저 설화가 이미 함). */}
+      {/* ⚠ 비율은 **컷마다 다르다** — 2:3 을 일괄로 쓰면 안 된다(2026-08-29 형님 검수).
+          j3 는 하단이 빈 마루라 원본 그대로 두면 컷 아래 1/6 이 볼 것 없는 검정으로 남는다.
+          실측(행별 디테일 std<6): **y=1276 = 83.1% 부터 죽은 공간.**
+          4/5 + top 정렬이면 위 83.3% 만 남아 딱 그 자리가 잘린다.
+          (같은 자로 전수 측정: w7 은 15% 가 죽었지만 그 자리를 말풍선이 덮어 실害 없음) */}
+      {/* 재회는 이 자리를 비운다 — j3 는 직녀 컷이다(견우 컷이 나오면 그때 꽂는다). */}
+      {!isReunion && (
+        <CutInterlude
+          id="j3"
+          say={who ? `${who}님 달력을 짜던 밤이에요.` : "그대의 달력을 짜던 밤이에요."}
+          ratio="4 / 5"
+          pos="center top"
+          sfx="탁, 탁—"
+        />
+      )}
+
+      {/* ── ① 예보판 — 티저에서 가렸던 달 이름을 전부 연다 ── */}
+      {months.length > 0 && (
+        <Plate id="sec-forecast">
+          <PlateTitle sub={isReunion ? "티저에서 덮어 둔 열두 칸을 전부 열었습니다" : "티저에서 가렸던 달 이름을 전부 열었어요"}>
+            {isReunion ? "재회 예보" : isMarriage ? "결혼 예보" : "인연 예보"}
+          </PlateTitle>
+          <div className="mt-4 grid grid-cols-4 gap-1.5">
+            {months.map((m) => {
+              const p = GRADE_TO_PHASE[m.grade] ?? "cres";
+              const big = p === "full";
+              return (
+                <div
+                  key={`${m.year}-${m.month}`}
+                  className="rounded-[9px] py-2 text-center"
+                  style={{
+                    background: "#FDFAF1",
+                    // 열린 달의 표식은 **금**이다 — 보라 테두리는 구 템플릿 색이라 한지 위에서 떴다.
+                    // 달 그림 자체가 이미 금색이므로 테두리도 금이어야 한 덩어리로 읽힌다.
+                    border: `1px solid ${big ? "#C2A35C" : "#E2D8BF"}`,
+                    boxShadow: big ? "0 0 0 2px rgba(194,163,92,.22)" : undefined,
+                  }}
+                >
+                  <p className="text-[12px] font-bold" style={{ color: big ? "#8A6A1E" : "#6C6483" }}>
+                    {m.month}월
+                  </p>
+                  <div className="mt-1 flex justify-center"><Moon phase={p} /></div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5">
+            {(isReunion
+              ? ([["full", "다리가 놓이는 달"], ["half", "연락해도 되는 달"], ["cres", "그냥 지나가는 달"], ["cloud", "먼저 연락하면 안 되는 달"]] as const)
+              : ([["full", "크게 열리는 달"], ["half", "자리가 생기는 달"], ["cres", "평"], ["cloud", "결이 엉키는 달"]] as const)
+            ).map(
+              ([p, label]) => (
+                <div key={p} className="flex items-center gap-1.5">
+                  <Moon phase={p} size={18} />
+                  <span className="text-[11px]" style={{ color: "#332C4A" }}>{label}</span>
+                </div>
+              ),
+            )}
+          </div>
+        </Plate>
+      )}
+
+      {/* ── ② 만나는 달 셋 — 티저에서 하나만 열었던 목록의 나머지 ── */}
+      {top3.length > 0 && (
+        <Plate id="sec-top3">
+          <PlateTitle sub={isReunion ? "근거는 아래 명식에서 나왔습니다" : "근거는 아래 명식에서 나왔어요"}>
+            {isReunion ? "다리가 놓이는 달" : isMarriage ? "결혼하는 해와 달" : "만나는 달 셋"}
+          </PlateTitle>
+          <div className="mt-4 space-y-2.5">
+            {top3.map((m) => (
+              <div
+                key={m.label}
+                className="rounded-[10px] px-3.5 py-3"
+                style={{ background: "#FDFAF1", border: "1px solid #E2D8BF" }}
+              >
+                <div className="flex items-baseline gap-2">
+                  <Moon phase="full" size={20} />
+                  <p className="text-[16px] font-extrabold" style={{ color: "#1B1729" }}>
+                    {m.year}년 {m.month}월
+                  </p>
+                  <span className="ml-auto text-[11px]" style={{ color: "#756E8A" }}>{m.age}세</span>
+                </div>
+                {m.tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {m.tags.slice(0, 3).map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full px-2 py-[3px] text-[11px]"
+                        style={{ background: "#F2E8CF", color: "#6B5420" }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {shaky.length > 0 && (
+            <p className="mt-3.5 flex items-center gap-2 text-[12px]" style={{ color: "#6C6483" }}>
+              <Moon phase="cloud" size={16} />
+              {isReunion ? "먼저 연락하면 안 되는 달" : "결이 엉키는 달"} —{" "}
+              {shaky.slice(0, 2).map((r) => `${r.year}년 ${r.month}월`).join(" · ")}
+            </p>
+          )}
+        </Plate>
+      )}
+
+      {/* ── ③ 명식 실물 — "직접 계산했다"의 증거. 티저에서 본 것과 같은 표 ── */}
+      {shown.length > 0 && (
+        <Plate id="sec-chart">
+          <PlateTitle sub={view.birthLine}>{who ? `${who}님 명식` : "명식"}</PlateTitle>
+          <div className="mt-4 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${shown.length},minmax(0,1fr))` }}>
+            {shown.map((p, i) => (
+              <div
+                key={`gan-${i}`}
+                className="rounded-[9px] py-2.5 text-center text-white"
+                style={{ background: EL_BG[p.gan.element] ?? EL_BG.water }}
+              >
+                <em className="block text-[24px] font-bold not-italic leading-none">{p.gan.char}</em>
+                <span className="mt-1 block text-[11px] opacity-90">{p.gan.read}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-1.5 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${shown.length},minmax(0,1fr))` }}>
+            {shown.map((p, i) => (
+              <div
+                key={`ji-${i}`}
+                className="rounded-[9px] py-2.5 text-center text-white"
+                style={{ background: EL_BG[p.ji.element] ?? EL_BG.water }}
+              >
+                <em className="block text-[24px] font-bold not-italic leading-none">{p.ji.char}</em>
+                <span className="mt-1 block text-[11px] opacity-90">{p.ji.read}</span>
+              </div>
+            ))}
+          </div>
+          {chartRows && chartRows.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {chartRows.map((r) => (
+                <div key={r.pos} className="flex items-center gap-2 text-[11px]">
+                  <span className="w-10 flex-none font-bold" style={{ color: "#756E8A" }}>{r.pos}</span>
+                  <span style={{ color: "#332C4A" }}>
+                    {[r.ganSip, r.jiSip, r.fortune].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Plate>
+      )}
+
+      {/* ── ③-B 인연 프로필 표 ──
+          티저가 「그 사람은 ████ 에서 처음 마주쳐요」 로 가린 것의 **직접 보상**.
+          타이트 유료 결과지의 「[운명 카드] 내 앞에 나타날 진짜 인연 프로필」 자리인데,
+          걔넨 외모·직업군까지 단정하고 우리는 그 선을 안 넘는다 — 대신 근거 있는 항목만 표로 박는다. */}
+      {/* 짝 프로필 표 — 인연은 여기(머리), **재회는 9장 「강을 건너지 않는다면」 바로 위**에 선다.
+          prompt.ts 가 그 장에 「표가 바로 위에 떠 있다」고 못 박아 놨다 — 자리가 어긋나면 본문이 거짓말이 된다. */}
+      {inyeon && !isMarriage && !isReunion && (
+        <PartnerProfilePlate inyeon={inyeon} firstMonth={top3[0] ?? null} />
       )}
 
       {/* ── ④ 본문 10장 ── */}
@@ -684,7 +764,18 @@ export function JiknyeoResult({
         // 章 사이 부품 — **제목으로 자리를 찾는다.** 인덱스로 박으면 장 수가 바뀔 때
         // (9장 → 10장 개편 같은 것) 전부 어긋난다. 린터가 같은 이유로 제목 매칭을 쓴다.
         const t = c.title;
+        // 재회는 **직녀 컷이 들어가는 가지**를 통째로 안 탄다(제목도 안 겹치지만 이중 안전핀).
+        //   값 카드(MonthCards·ShakyCards 등)는 인물이 아니라 계산이라 그대로 써도 된다.
         const after = !inyeon ? null
+          : isReunion ? (
+              /다리가 놓이는 달/.test(t) ? (
+                <>
+                  <MonthCards rows={inyeon.top3} voice="gyeonu" />
+                  <MonthLedger rows={inyeon.months} />
+                </>
+              ) : /연락의 달|하면 안 되는 것/.test(t) ? <ShakyCards rows={inyeon.shaky} voice="gyeonu" />
+              : null
+            )
           : /인연 그릇|결혼 그릇/.test(t) ? (
               <>
                 <CharmChips inyeon={inyeon} />
@@ -724,10 +815,16 @@ export function JiknyeoResult({
         return (
           <Fragment key={i}>
             {before(t)}
-            <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} />
+            {/* 재회 9장 「강을 건너지 않는다면」 바로 위에 짝 프로필 표를 세운다 —
+                그 장 본문이 「표가 바로 위에 떠 있다」를 전제로 쓰인다(prompt.ts outline). */}
+            {isReunion && inyeon && /강을 건너지 않는다면|다음에 올 사람/.test(t) && (
+              <PartnerProfilePlate inyeon={inyeon} firstMonth={top3[0] ?? null} isReunion />
+            )}
+            <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} badge={badges?.[i] || undefined} />
             <div id={`ch-body-${i}`} style={{ ...hanjiCard, ...chapterMood(t), marginTop: 0 }}>
-              {/* 장 머리에서 직녀가 한마디 — 지금 무엇을 볼지 쉬운 말로 예고한다(청월당 밀도) */}
-              <ChapterSay title={c.title} who={who} />
+              {/* 장 머리에서 직녀가 한마디 — 지금 무엇을 볼지 쉬운 말로 예고한다(청월당 밀도).
+                  SD 는 직녀 그림이라 재회에서는 안 세운다(화자가 견우다). */}
+              {!isReunion && <ChapterSay title={c.title} who={who} />}
               <ResultBody markdown={c.body} tone="hanji" />
             </div>
             {after}
@@ -741,10 +838,10 @@ export function JiknyeoResult({
 
       {/* 배웅 — 편지 바로 앞. 돌아보며 눈을 맞추는 컷이라 「저는 여기 있을게요」와 붙는다.
           마지막 10초가 후기·공유 직전 감정이라 여기에 사람 얼굴이 있어야 한다 */}
-      <CutInterlude id="w5" say="여기까지 같이 왔네요." ratio="2 / 3" pos="center" />
+      {!isReunion && <CutInterlude id="w5" say="여기까지 같이 왔네요." ratio="2 / 3" pos="center" />}
 
       {/* 마치며 — 3사 공통 표준. 낙관(도장) 앞에 편지가 와야 순서가 맞다 */}
-      <ClosingLetter who={who} nearest={top3[0] ?? null} />
+      <ClosingLetter who={who} nearest={top3[0] ?? null} voice={isReunion ? "gyeonu" : "jiknyeo"} />
 
       {/* 기록 완료 낙관 — 본문 끝. 도장을 찍고 나서 후기를 묻는다 */}
       <ResultSealOff at={recordedAt} tone="night" />
