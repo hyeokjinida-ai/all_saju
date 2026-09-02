@@ -20,6 +20,23 @@ import {
   type ProfileOption,
   type OptionTone,
 } from "@/lib/saju/profile-tags";
+import {
+  REUNION_SLUG,
+  DATING_LENGTH_OPTIONS,
+  WHO_ENDED_OPTIONS,
+  BREAKUP_REASON_OPTIONS,
+  FEELING_OPTIONS,
+  reunionTags,
+  type ReunionInput,
+} from "@/lib/saju/reunion-input";
+import {
+  ReunionCalendar,
+  ReunionBreakupCheck,
+  ReunionRival,
+  ReunionMoveOn,
+  ReunionCut,
+  ReunionToc,
+} from "@/components/products/gyeonu-teaser";
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
@@ -118,6 +135,8 @@ type FormState = {
   job: string;          // 직업
   concerns: string[];
   concernText: string; // 직접 입력한 고민 한 줄(칩과 별개, 결과지에 정면 답변)
+  /** 재회(견우) 여섯 문항. 이 상품이 아니면 끝까지 빈 객체다 — reunionTags 가 빈 배열을 돌려준다. */
+  reunion: ReunionInput;
 };
 
 // 기본 고민 선택지 — 위저드 STEP 惑
@@ -144,6 +163,16 @@ const CONCERN_BY_SLUG: Record<string, string[]> = {
     "언제쯤 하게 될까 궁금해",
     "결혼 생각에 확신이 안 서",
     "준비를 언제 시작할지 궁금해",
+  ],
+  // 재회(견우) — 칩도 손님이 고르는 말이라 반말이다. 「지금 마음」 5지와 겹치지 않게
+  // **감정이 아니라 묻고 싶은 것**으로 채운다(감정은 心 단계가 이미 받는다).
+  "reunion-saju": [
+    "그 사람 마음이 궁금해",
+    "언제 연락해야 할지 모르겠어",
+    "내가 뭘 잘못했는지 알고 싶어",
+    "다시 만날 수 있을지 궁금해",
+    "이제 놓아야 하는지 모르겠어",
+    "다음 사람은 언제 오는지",
   ],
   // 산군(신점) — 반말 톤 유지
   "sangun-sinjeom": [
@@ -218,18 +247,75 @@ const STEPS_JIKNYEO: typeof STEPS = [
   { hanja: "兆", q: "사주를 먼저 읽어봤어요", help: "여기까지는 무료예요" },
 ];
 
+// 견우(재회) 전용 — 공통 여덟 칸(0~7)은 **자리를 그대로 두고**, 뒤에 재회 문항을 얹는다.
+// 자리를 안 건드리는 이유: PARTNER_STEP·CONCERN_STEP 같은 상수가 네 상품에서 같이 쓰이는데
+// 중간에 끼워 넣으면 그 상수들이 통째로 밀린다. 안 쓰는 칸(4·5·6·7)은 skipped 로 건너뛴다.
+// 말은 견우다 — 담백한 존댓말(~합니다/~요). 직녀의 「달력을 펴 볼게요」 어휘는 안 쓴다.
+const STEPS_GYEONU: typeof STEPS = [
+  { hanja: "名", q: "어떻게 불러드릴까요?", help: "결과지에 이 이름으로 적어 둡니다", optional: true },
+  { hanja: "生", q: "언제 태어나셨나요?", help: "양력인지 음력인지도 같이 골라주세요" },
+  { hanja: "時", q: "태어난 시각도 아시나요?", help: "알면 더 촘촘히 봅니다" },
+  { hanja: "性", q: "성별을 알려주세요", help: "운의 흐름을 읽는 방향이 달라서요" },
+  // 4·5·6·7 — 이 상품은 안 묻는다(skipped). 자리만 지킨다.
+  { hanja: "緣", q: "", help: "" },
+  { hanja: "伴", q: "", help: "" },
+  { hanja: "業", q: "", help: "" },
+  { hanja: "惑", q: "", help: "" },
+  // 여기서부터 재회 여섯 문항. 필수는 「지금 마음」 하나뿐이다.
+  {
+    hanja: "別",
+    q: "언제 헤어지셨나요?",
+    // 왜 묻는지를 그 화면에서 바로 답한다(타이트 실측 — 물음 옆에 이유가 붙으면 이탈이 준다).
+    help: "헤어진 무렵의 흐름을 그 사람 것과 비교해서, 원인까지 짚어드립니다",
+    optional: true,
+  },
+  { hanja: "際", q: "두 분은 얼마나 만나셨나요?", help: "쌓인 시간만큼 흐름을 길게 봅니다", optional: true },
+  { hanja: "告", q: "이별을 먼저 말한 쪽은 누구였나요?", help: "말을 꺼낸 쪽에 따라 다르게 읽습니다", optional: true },
+  { hanja: "因", q: "괜찮다면, 무엇 때문에 갈라졌는지도 알려주세요", help: "가장 가까운 하나만 골라주세요", optional: true },
+  { hanja: "彼", q: "괜찮다면, 그 사람 이야기도 들려주세요", help: "생일을 몰라도 볼 수 있어요", optional: true },
+  { hanja: "心", q: "지금 마음은 어느 쪽에 가까우세요?", help: "이 답으로 결과지가 갈립니다" },
+  { hanja: "問", q: "더 하고 싶은 말이 있으신가요?", help: "적어주시면 그 물음부터 정면으로 답합니다", optional: true },
+  // 감정을 쏟은 직후 한 박자 — 제작비 0 짜리 이탈 방지 장치(타이트 실측).
+  { hanja: "慰", q: "힘드셨을 텐데, 잘 적어 주셨습니다", help: "" },
+  { hanja: "覽", q: "이대로 장부를 펴 보겠습니다", help: "" },
+  { hanja: "兆", q: "사주를 먼저 읽어봤습니다", help: "여기까지는 무료입니다" },
+];
+
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
   "sangun-sinjeom": STEPS_SANGUN,
   // 인연·결혼은 같은 캐릭터(직녀)라 입력 대사를 공유한다 — 달력 세계관이 같다.
   "inyeon-saju": STEPS_JIKNYEO,
   "marriage-saju": STEPS_JIKNYEO,
+  // 재회는 화자가 견우라 대사를 공유하지 않는다(문항 수도 다르다).
+  "reunion-saju": STEPS_GYEONU,
 };
+
+/**
+ * 묶음 카드의 「몇 개 더 오는지」 — 숫자는 값(가격) 자리에만 쓰므로 수는 말로 적는다.
+ * ⚠ 하나일 때 문구는 **예전 그대로**다(2종 묶음을 파는 산군·인연 시트를 건드리지 않는다).
+ *   2026-09-02 번들 ③(3종)이 붙으면서 「하나 더」가 거짓말이 되는 카드가 생겨 수를 세게 됐다.
+ */
+const KO_COUNT: Record<number, string> = { 2: "두", 3: "세" };
+const moreLabel = (n: number, night: boolean) =>
+  n <= 1
+    ? night ? "결과지 하나 더" : "장부 한 권 더"
+    : night ? `결과지 ${KO_COUNT[n] ?? n} 개 더` : `장부 ${KO_COUNT[n] ?? n} 권 더`;
 
 const TOTAL = STEPS.length;
 const PARTNER_STEP = 4;      // 인연 방향 — 배우자 십성 계산이 여기서 갈린다
 const RELATIONSHIP_STEP = 5; // 연애 상태
 const JOB_STEP = 6;          // 직업
 const PROFILE_STEPS = [PARTNER_STEP, RELATIONSHIP_STEP, JOB_STEP];
+
+// 재회 전용 칸 번호 — STEPS_GYEONU 의 인덱스와 1:1. 다른 상품은 이 번호에 도달하지 않는다.
+const R_BREAKUP_STEP = 8;   // 이별 시기
+const R_DATING_STEP = 9;    // 연애 기간
+const R_WHO_STEP = 10;      // 이별 통보
+const R_REASON_STEP = 11;   // 이별 사유
+const R_PARTNER_STEP = 12;  // 그 사람
+const R_FEELING_STEP = 13;  // 지금 마음(유일한 필수)
+const R_CONCERN_STEP = 14;  // 자유 고민 — 공통 惑(7) 대신 이 자리에서 묻는다
+const R_COMFORT_STEP = 15;  // 위로 한 화면
 
 // 상품이 실제로 쓰는 질문만 묻는다. 안 쓰는 상품에 물으면 순수 마찰이고, 답을 받아놓고 버리는 셈이다.
 // 인연 계산(computeInyeonFacts)을 쓰는 상품은 generate-result.ts 기준 inyeon-saju · sangun-sinjeom 뿐이다.
@@ -242,9 +328,9 @@ const PROFILE_ASK_BY_SLUG: Record<string, number[]> = {
   "wealth-saju": [JOB_STEP],                            // 돈 상품은 하는 일만
   "monthly-luck": [JOB_STEP],
 };
-const CONCERN_STEP = 7;      // 고민
-const CONFIRM_STEP = 8;      // 입력 확인
-const TEASER_STEP = 9;       // 결제 전 무료 티저(개인화) = 결제 화면
+const CONCERN_STEP = 7;      // 고민 — 공통 판. 재회는 R_CONCERN_STEP 을 쓴다.
+// ⚠ 확인·티저 칸은 **상수로 박지 않는다.** 재회가 문항을 여덟 개 더 얹어 배열 길이가 상품마다
+//   다르다 — 두 칸은 언제나 배열의 마지막 둘이므로 길이에서 뽑는다(기존 네 상품은 8·9 그대로).
 /** 로딩 화면 최소 노출 시간 = ritual.mp4 길이(3.17초)에 맞춘다.
  *  실측: 만세력 캐시에 걸리면 응답이 1초대라 그냥 두면 영상이 한 동작도 못 보여주고 사라진다.
  *  영상보다 길게 잡으면 루프가 한 번 더 돌아 이음매(16.1)가 화면에 보인다 — 그래서 딱 맞춘다. */
@@ -289,6 +375,10 @@ export function SajuWizard({
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // 견우(재회) — **직녀 그림은 한 장도 안 쓴다**(다른 인물이다). 밤 무대·달빛 조판만 같이 쓴다.
+  const isReunion = productSlug === REUNION_SLUG;
+  /** 밤 무대 세 상품(인연·결혼·재회)이 공유하는 **껍데기**. 직녀 자산은 isJiknyeoWorld 로만 연다. */
+  const isNight = isJiknyeoWorld || isReunion;
   // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
   const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
   // 직녀 세계관 전체 — 인연·결혼 두 상품이 같은 캐릭터·같은 옷을 쓴다(청월당 백월아씨 방식).
@@ -297,23 +387,33 @@ export function SajuWizard({
   //   산군=금, 직녀=달빛, 그 외=기존 보라. 값은 각 세계관 랜딩의 CTA 와 같은 계열이다.
   const ctaFill = imm
     ? { on: "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)", off: "rgba(232,201,106,0.12)", ink: "#241a08", glow: "0 8px 26px rgba(201,162,39,0.35)" }
-    : isJiknyeoWorld
+    : isNight
       ? { on: "linear-gradient(180deg,#efeaf6,#d9c7e8)", off: "rgba(207,214,230,0.15)", ink: "var(--wine-deep)", glow: "0 8px 26px rgba(217,199,232,0.3)" }
       : { on: "linear-gradient(180deg,#ffffff,#f1eaff)", off: "rgba(150,90,255,0.15)", ink: "var(--wine-deep)", glow: "0 0 24px rgba(150,90,255,0.28)" };
   // 결제 시트 카드의 강조색(선택 테두리·가격·배지)
-  const sheetAccent = imm ? "#e8c96a" : isJiknyeoWorld ? "#d9c7e8" : "#c9a8ff";
+  const sheetAccent = imm ? "#e8c96a" : isNight ? "#d9c7e8" : "#c9a8ff";
   /** 선택지 버튼은 **손님이 말하는 자리**라 상품별 말투가 다르다.
-   *  산군=반말 하대(ban) · 직녀=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다. */
-  const optTone: OptionTone = imm ? "ban" : isJiknyeoWorld ? "jik" : "label";
+   *  산군=반말 하대(ban) · 직녀·견우=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다.
+   *  견우는 존댓말로 묻지만 버튼은 그대로 손님 반말이다 — 양쪽 다 존대면 손님이 을이 된다. */
+  const optTone: OptionTone = imm ? "ban" : isNight ? "jik" : "label";
   const optLabel = (o: ProfileOption) => displayOf([o], o.value, optTone);
   const router = useRouter();
   // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
   const [selectedId, setSelectedId] = useState(productId);
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
+  // 칸 번호는 **배열에서 뽑는다.** 재회가 문항을 여덟 개 더 얹어 길이가 상품마다 다르다.
+  // 확인·티저는 언제나 마지막 둘이라 기존 네 상품에서는 예전 값(8·9)과 똑같이 나온다.
+  const total = steps.length;
+  const confirmStep = total - 2;
+  const teaserStep = total - 1;
+  // 고민(자유 입력) 칸 — 재회만 뒤로 옮긴다(사연은 이별 얘기를 다 한 뒤에 나온다).
+  const concernStep = isReunion ? R_CONCERN_STEP : CONCERN_STEP;
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [birthRaw, setBirthRaw] = useState("");
+  // 그 사람 생년월일도 같은 8자리 마스크로 받는다(네이티브 date 는 연도 칸이 6자리까지 먹는다).
+  const [partnerBirthRaw, setPartnerBirthRaw] = useState("");
   const [teaser, setTeaser] = useState<SajuTeaser | null>(null);
   const [pillars, setPillars] = useState<Pillar[] | null>(null);
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
@@ -337,6 +437,8 @@ export function SajuWizard({
     job: demo?.job ?? "",
     concerns: (demo?.concerns ?? initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
     concernText: "",
+    // 재회 여섯 문항 — 다른 상품에서는 끝까지 빈 객체로 남고 태그도 안 만들어진다.
+    reunion: {},
   });
 
   // 로그인 왕복 후 복귀 시 입력 복원 (read-once: 복원하면 즉시 비움)
@@ -354,11 +456,12 @@ export function SajuWizard({
           partner: draft.form.partner ?? "",
           relationship: draft.form.relationship ?? "",
           job: draft.form.job ?? "",
+          reunion: draft.form.reunion ?? {},
         });
         if (draft.guestEmail) setGuestEmail(draft.guestEmail);
         // 티저 단계는 분석 결과가 있어야 성립 → 복귀는 확인 단계까지만
         setStep(
-          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), CONFIRM_STEP) : CONFIRM_STEP,
+          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), confirmStep) : confirmStep,
         );
       }
     } catch {
@@ -381,8 +484,8 @@ export function SajuWizard({
 
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
-    track("wizard_step", { step: step + 1, total: TOTAL, slug: productSlug });
-    if (step === TOTAL - 1 && !isLoggedIn) {
+    track("wizard_step", { step: step + 1, total, slug: productSlug });
+    if (step === total - 1 && !isLoggedIn) {
       track("checkout_login_wall", { slug: productSlug, value: price });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -391,11 +494,14 @@ export function SajuWizard({
   // 이 상품이 안 묻는 프로필 질문 — 화면에서 통째로 건너뛰고 진행 표시에서도 뺀다
   const skipped = useMemo(() => {
     const ask = PROFILE_ASK_BY_SLUG[productSlug] ?? [];
-    return new Set(PROFILE_STEPS.filter((s) => !ask.includes(s)));
-  }, [productSlug]);
+    const out = new Set(PROFILE_STEPS.filter((s) => !ask.includes(s)));
+    // 재회는 공통 惑(7) 자리를 안 쓴다 — 같은 질문을 R_CONCERN_STEP 에서 뒤늦게 묻는다.
+    if (isReunion) out.add(CONCERN_STEP);
+    return out;
+  }, [productSlug, isReunion]);
   const visibleSteps = useMemo(
-    () => Array.from({ length: TOTAL }, (_, i) => i).filter((i) => !skipped.has(i)),
-    [skipped],
+    () => Array.from({ length: total }, (_, i) => i).filter((i) => !skipped.has(i)),
+    [skipped, total],
   );
 
   const up = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -409,28 +515,49 @@ export function SajuWizard({
   const canNext = useCallback(() => {
     if (step === 1) return !!form.birthDate && !!form.calendar; // 달력을 이 화면이 흡수했다
     if (step === 3) return !!form.gender;
-    if (step === PARTNER_STEP) return !!form.partner; // "아직 모르겠다"도 답이므로 고르긴 해야 한다
+    if (step === PARTNER_STEP && !isReunion) return !!form.partner; // "아직 모르겠다"도 답이므로 고르긴 해야 한다
+    // 재회의 유일한 필수 — 「지금 마음」. 나머지 다섯은 전부 건너뛸 수 있다(청월당 실측).
+    if (isReunion && step === R_FEELING_STEP) return !!form.reunion.feeling;
     return true;
-  }, [step, form.birthDate, form.calendar, form.gender, form.partner]);
+  }, [step, isReunion, form.birthDate, form.calendar, form.gender, form.partner, form.reunion.feeling]);
+
+  /** 재회 여섯 문항 갱신 — 중첩 객체라 얕은 복사를 여기 한 곳에서만 한다. */
+  const upR = <K extends keyof ReunionInput>(k: K, v: ReunionInput[K]) =>
+    setForm((f) => ({ ...f, reunion: { ...f.reunion, [k]: v } }));
+  const upPartner = (patch: Partial<NonNullable<ReunionInput["partner"]>>) =>
+    setForm((f) => ({ ...f, reunion: { ...f.reunion, partner: { ...f.reunion.partner, ...patch } } }));
 
   // 확인 → 티저: 만세력 1콜(생일 캐시 공유 — 이 사람이 결제하면 추가 콜 없음)로
   // 명식 기반 콜드리딩 + "크게 갈리는 해"를 먼저 보여준다. 실패해도 결제는 그대로 진행.
   /** 결제 전에 받은 상황 답 — [프로필] 태그로 실어 보낸다. 티저와 결과지가 같은 값을 쓰게 하는 통로다.
    *  loadTeaser 가 의존하므로 반드시 그보다 위에 선언한다. */
-  const profileTags = useCallback(
-    () =>
-      [
-        form.partner && tag(PROFILE_KEYS.partner, form.partner),
-        form.relationship && tag(PROFILE_KEYS.relationship, form.relationship),
-        form.job && tag(PROFILE_KEYS.job, form.job),
-      ].filter(Boolean) as string[],
-    [form.partner, form.relationship, form.job],
+  const profileTags = useCallback(() => {
+    // 재회는 「인연 방향」을 따로 묻지 않는다 — 그 사람 성별을 이미 받았으므로 그걸 그대로 쓴다.
+    // 이 값이 배우자 십성(관성/재성) 계산을 가르므로 티저·결과지가 같은 값을 봐야 한다.
+    const partnerValue =
+      form.partner ||
+      (isReunion && form.reunion.partner?.gender
+        ? form.reunion.partner.gender === "male"
+          ? "남자"
+          : "여자"
+        : "");
+    return [
+      partnerValue && tag(PROFILE_KEYS.partner, partnerValue),
+      form.relationship && tag(PROFILE_KEYS.relationship, form.relationship),
+      form.job && tag(PROFILE_KEYS.job, form.job),
+    ].filter(Boolean) as string[];
+  }, [form.partner, form.relationship, form.job, isReunion, form.reunion.partner?.gender]);
+
+  /** 재회 여섯 문항 → [프로필] 태그. 다른 상품에서는 빈 배열이라 아무 데도 안 실린다. */
+  const reunionAnswerTags = useCallback(
+    () => (isReunion ? reunionTags(form.reunion) : []),
+    [isReunion, form.reunion],
   );
 
   const loadTeaser = useCallback(async () => {
     const startedAt = Date.now();
     setTeaserLoading(true);
-    setStep(TEASER_STEP);
+    setStep(teaserStep);
     try {
       const res = await fetch("/api/saju/chart", {
         method: "POST",
@@ -444,8 +571,9 @@ export function SajuWizard({
           timeUnknown: form.timeUnknown,
           gender: form.gender || "male",
           calendar: form.calendar || "solar",
-          // 인연 방향이 여기 실려야 티저와 결제 후 결과지가 같은 해를 말한다
-          concerns: profileTags(),
+          // 인연 방향이 여기 실려야 티저와 결제 후 결과지가 같은 해를 말한다.
+          // 재회 여섯 문항도 같은 길로 실린다 — slug 가 reunion-saju 면 서버가 teaser.reunion 을 채운다.
+          concerns: [...profileTags(), ...reunionAnswerTags()],
           slug: productSlug,
           teaser: true,
         }),
@@ -475,13 +603,13 @@ export function SajuWizard({
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
     // → 티저와 결제 후 결과지가 다른 해를 말한다. 반드시 의존성에 남겨둘 것.
-  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags]);
+  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags, reunionAnswerTags, teaserStep]);
 
   const next = useCallback(() => {
-    if (step === CONFIRM_STEP) {
-      // 직녀만 — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
+    if (step === confirmStep) {
+      // 밤 무대 상품(직녀·견우) — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
       // 결제까지 안 가는 손님도 여기서 남는다. 막지는 않는다 — 건너뛰면 그대로 티저로 간다.
-      if (isJiknyeoWorld && !emailGate && !emailSkipped) {
+      if (isNight && !emailGate && !emailSkipped) {
         setEmailGate(true);
         return;
       }
@@ -491,10 +619,10 @@ export function SajuWizard({
     }
     setStep((s) => {
       let n = s + 1;
-      while (n < TOTAL - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
-      return Math.min(n, TOTAL - 1);
+      while (n < total - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
+      return Math.min(n, total - 1);
     });
-  }, [step, loadTeaser, skipped, isJiknyeoWorld, emailGate, emailSkipped]);
+  }, [step, loadTeaser, skipped, isNight, emailGate, emailSkipped, confirmStep, total]);
   const prev = () =>
     setStep((s) => {
       let p = s - 1;
@@ -515,7 +643,7 @@ export function SajuWizard({
   // Enter 키로 다음
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && canNext() && step < TOTAL - 1) next();
+      if (e.key === "Enter" && canNext() && step < total - 1) next();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -524,6 +652,8 @@ export function SajuWizard({
   function payload() {
     const concerns = [
       ...profileTags(),
+      // 재회 답은 [프로필] 태그라 고민 키워드로 새지 않는다(prompt.ts 가 접두사를 안다).
+      ...reunionAnswerTags(),
       ...form.concerns,
       ...(form.concernText.trim() ? [form.concernText.trim()] : []),
     ];
@@ -558,10 +688,15 @@ export function SajuWizard({
   //   무조건 그것을 추천한다. 기혼에게도 어색하지 않다 — 산군 포괄에 인연 챕터가 이미 있고
   //   번들 카피가 "장부 한 권 더"라 세그먼트 중립이다.
   const wantsInyeon = form.relationship === "혼자" || form.relationship === "정리 중" || !form.relationship;
+  // ⚠ 2026-09-02 번들 ③(신점+인연+재회)이 붙으면서 산군·인연 시트의 번들이 **둘**이 됐다.
+  //   그전엔 「하나뿐이니 무조건 추천」이었는데, 둘이 되자 세그먼트가 안 맞는 손님(기혼·만나는
+  //   사람 있음)에게 추천 뱃지가 통째로 사라졌다 — 뱃지는 선택률 장치인데 절반이 못 보게 된다.
+  //   못 고르면 **맨 앞(display_order 가 가장 작은 것)** 으로 되돌린다. 기존 두 상품의 시트는
+  //   그대로 2종 묶음을 추천하고, ③은 추가 카드로만 선다.
   const recommended =
     bundles.length === 1
       ? bundles[0]
-      : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth")));
+      : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth"))) ?? bundles[0];
   const discountPct = (o: BundleOption) =>
     o.compareAtPrice && o.compareAtPrice > o.price
       ? Math.round((1 - o.price / o.compareAtPrice) * 100)
@@ -612,7 +747,7 @@ export function SajuWizard({
   // 가로를 같은 값으로 묶는다 — `fixed inset-0` 로 두면 PC 에서 배경만 화면 전체로 퍼진다.
   // (조상에 transform 이 없어야 fixed 가 뷰포트 기준으로 선다 — 껍데기는 flex/overflow 뿐이라 안전)
   const bgHolderCls =
-    step === TEASER_STEP
+    step === teaserStep
       ? "pointer-events-none fixed left-1/2 top-0 z-0 h-[100svh] w-full max-w-md -translate-x-1/2 overflow-hidden"
       : "contents";
 
@@ -631,12 +766,18 @@ export function SajuWizard({
             //    직녀 화면에 산군 색이 들어온다(실측: 「名」과 입력창 테두리가 금색으로 나옴).
             //    직녀 은사판은 `.world-jiknyeo .ap-input` 이 이미 갖고 있고, 그 클래스는 부모에 있다.
             ? "relative flex w-full flex-col overflow-hidden"
-            : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
+            : isReunion
+              // 견우도 같은 밤 무대(전체화면)로 선다. 다만 배경은 인물이 아니라 **강·밤하늘**이다 —
+              // 직녀 영상을 그대로 깔면 다른 인물이 화자인데 직녀 얼굴이 뜬다.
+              // world-jiknyeo 는 **색 토큰**(달빛·은사)이지 직녀 그림이 아니다. 재회 랜딩은 전용
+              // 껍데기가 없어 부모가 이 클래스를 안 붙여 준다 — 안 붙이면 공용 보라로 나온다.
+              ? "world-jiknyeo relative flex w-full flex-col overflow-hidden"
+              : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
       }
       style={
         imm
           ? { background: "#0a090e", minHeight: "100svh" }
-          : isJiknyeoWorld
+          : isNight
             ? { background: "#0b0f1a", minHeight: "100svh" }
             : undefined
       }
@@ -681,7 +822,7 @@ export function SajuWizard({
             style={{
               // 어둡게 하는 일은 **아래 그라데이션 한 곳**이 맡는다. 여기서 또 누르면
               // 두 겹이 겹쳐 인물이 통째로 사라진다(실측: 유리판 0.58 + 그라데이션 → 새까만 화면).
-              opacity: step === CONCERN_STEP ? 0.78 : 0.6,
+              opacity: step === concernStep ? 0.78 : 0.6,
               transition: "opacity .6s ease-out",
             }}
           >
@@ -697,8 +838,8 @@ export function SajuWizard({
             className="pointer-events-none absolute inset-0"
             style={{
               // 유리판은 **흐림만** 맡는다(배경색 없음) — 어둡게는 위 opacity + 아래 그라데이션이 한다
-              backdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
-              WebkitBackdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
+              backdropFilter: step === concernStep ? "blur(0px)" : "blur(7px)",
+              WebkitBackdropFilter: step === concernStep ? "blur(0px)" : "blur(7px)",
               transition: "backdrop-filter .6s ease-out",
             }}
           />
@@ -711,6 +852,31 @@ export function SajuWizard({
             }}
           />
         </div>
+      ) : isReunion ? (
+        <div className={bgHolderCls}>
+          {/* 견우 컷은 아직 없다 — 인물 자리에 **강 건너 밤하늘**만 세운다.
+              직녀 영상(w2.mp4)을 빌려 오면 화자가 견우인데 화면엔 직녀 얼굴이 뜬다.
+              그림 없이 성립하게 CSS 만으로 그린다: 별밭 + 은하수 한 줄 + 아래를 눌러 글자를 살린다. */}
+          <div className="starfield opacity-45" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0"
+            style={{
+              top: "34%",
+              height: 140,
+              background:
+                "linear-gradient(180deg, rgba(207,214,230,0) 0%, rgba(207,214,230,0.14) 48%, rgba(207,214,230,0) 100%)",
+              filter: "blur(10px)",
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(11,15,26,0.70) 0%, rgba(11,15,26,0.42) 34%, rgba(11,15,26,0.88) 74%, rgba(11,15,26,0.97) 100%)",
+            }}
+          />
+        </div>
       ) : (
         <div className="starfield opacity-30" />
       )}
@@ -719,7 +885,7 @@ export function SajuWizard({
       {/* 직녀는 무대(JiknyeoStory)가 브랜드 줄을 **화면 상단에 고정**으로 얹는다(top 16~36).
           위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
           무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isJiknyeoWorld ? "pt-12" : "pt-5"}`}>
+      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}>
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -730,25 +896,27 @@ export function SajuWizard({
           >
             ‹
           </button>
-          <div className="flex items-center gap-[7px]">
-            {steps.map((_, i) => (
+          {/* 점은 **실제로 걷는 칸만** 찍는다. steps 를 그대로 돌면 건너뛰는 칸까지 세어
+              오른쪽 「N/M」 과 개수가 어긋나고, 재회(18칸)에서는 폰 가로를 넘긴다. */}
+          <div className="flex items-center gap-[5px]">
+            {visibleSteps.map((s) => (
               <span
-                key={i}
+                key={s}
                 className="h-[7px] rounded-full transition-all duration-300"
                 style={{
-                  width: i === step ? 22 : 7,
+                  width: s === step ? 22 : 7,
                   background:
-                    i < step
+                    s < step
                       ? "var(--gold-soft)"
-                      : i === step
+                      : s === step
                         ? "var(--gold-bright)"
                         : imm
                           ? "rgba(232,201,106,0.18)"
-                          : isJiknyeoWorld
+                          : isNight
                             ? "rgba(207,214,230,0.2)"
                             : "rgba(150,90,255,0.2)",
                   // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
-                  boxShadow: i === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isJiknyeoWorld ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
+                  boxShadow: s === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isNight ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
                 }}
               />
             ))}
@@ -771,17 +939,21 @@ export function SajuWizard({
             </span>
           )}
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-[1.4]">
-            {step === TEASER_STEP && teaserLoading
+            {step === teaserStep && teaserLoading
               ? imm
                 ? "네 장부를 찾는 중이다"
-                : isJiknyeoWorld
-                  ? "만나는 달을 찾는 중이에요"
-                  : "명식을 계산하고 있어요"
+                : isReunion
+                  ? "다리가 놓이는 달을 찾는 중입니다"
+                  : isJiknyeoWorld
+                    ? "만나는 달을 찾는 중이에요"
+                    : "명식을 계산하고 있어요"
               : emailGate
-                ? "마지막으로 하나만요"
+                ? isReunion
+                  ? "마지막으로 하나만 여쭙습니다"
+                  : "마지막으로 하나만요"
                 : cur.q}
           </p>
-          {cur.help && !(step === TEASER_STEP && teaserLoading) && !emailGate && (
+          {cur.help && !(step === teaserStep && teaserLoading) && !emailGate && (
             <p className="font-myeongjo mt-3 text-[13px] text-bone-soft tracking-[0.06em]">{cur.help}</p>
           )}
         </div>
@@ -888,7 +1060,7 @@ export function SajuWizard({
                 {form.timeUnknown ? "✓" : ""}
               </span>
               {/* 이 버튼도 손님 대사다 — 직녀에서만 반말(입력대본 §3/9 원문) */}
-              {isJiknyeoWorld ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
+              {isNight ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
             </button>
             <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.06em] leading-[1.75]">
               시각을 몰라도 괜찮아요. 시(時) 기둥만 빼고 나머지 흐름을 봐드립니다.
@@ -998,8 +1170,244 @@ export function SajuWizard({
           </div>
         )}
 
+        {/* ── 재회 여섯 문항(8~13) — 이 상품에서만 도달한다 ── */}
+
+        {/* 8 別 — 이별 시기(년·월). 왜 묻는지는 화면 위 help 가 이미 말한다. */}
+        {isReunion && step === R_BREAKUP_STEP && (
+          <div>
+            <input
+              autoFocus
+              className="ap-input text-center"
+              type="text"
+              inputMode="numeric"
+              placeholder="2026"
+              maxLength={4}
+              value={form.reunion.breakupYear ? String(form.reunion.breakupYear) : ""}
+              onChange={(e) => {
+                const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+                upR("breakupYear", d.length === 4 ? Number(d) : undefined);
+              }}
+              style={{ fontSize: 19, letterSpacing: "0.08em" }}
+            />
+            <p className="mt-2 text-center text-[13px] text-bone-faint">헤어진 해를 네 자리로 적어주세요</p>
+            <div className="mt-5 grid grid-cols-6 gap-1.5">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                const on = form.reunion.breakupMonth === m;
+                return (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => upR("breakupMonth", on ? undefined : m)}
+                    className={`py-3 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[13px] text-bone ${on ? "font-bold" : ""}`}>{m}월</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-[13px] text-bone-faint leading-[1.75]">
+              달까지 알면 그 달 하나만 떼어 봅니다. 기억이 흐리면 해만 적으셔도 됩니다.
+            </p>
+          </div>
+        )}
+
+        {/* 9 際 — 연애 기간. 설문 느낌을 지우는 **빈칸 문장형**(청월당 실측 번안).
+            버튼은 값만 짧게 — 고른 값이 위 문장의 빈칸으로 그대로 들어간다. */}
+        {isReunion && step === R_DATING_STEP && (
+          <div>
+            <p className="font-myeongjo text-center text-[19px] leading-[1.7]" style={{ color: "var(--bone)" }}>
+              연애 기간은{" "}
+              <span
+                className="mx-1 inline-block px-2"
+                style={{
+                  borderBottom: "1.5px solid var(--gold)",
+                  color: form.reunion.datingLength ? "var(--gold-bright)" : "var(--bone-faint)",
+                  fontWeight: 700,
+                  minWidth: 92,
+                }}
+              >
+                {form.reunion.datingLength || "     "}
+              </span>{" "}
+              이에요.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
+              {DATING_LENGTH_OPTIONS.map((o) => {
+                const on = form.reunion.datingLength === o.value;
+                return (
+                  <button
+                    type="button"
+                    key={o.value}
+                    onClick={() => {
+                      upR("datingLength", on ? undefined : o.value);
+                      if (!on) setTimeout(next, 220);
+                    }}
+                    className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                      {o.value}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 10 告 — 이별 통보. 버튼은 손님이 말하는 자리라 반말이다. */}
+        {isReunion && step === R_WHO_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {WHO_ENDED_OPTIONS.map((o) => {
+              const on = form.reunion.whoEnded === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("whoEnded", on ? undefined : o.value);
+                    if (!on) setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 11 因 — 이별 사유 5지. 선택지에서부터 「네 탓 아님」을 깔아 둔다(그 사람의 ~ 프레임 둘). */}
+        {isReunion && step === R_REASON_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {BREAKUP_REASON_OPTIONS.map((o) => {
+              const on = form.reunion.reason === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("reason", on ? undefined : o.value);
+                    if (!on) setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-4 text-left ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 12 彼 — 그 사람. **전부 건너뛸 수 있다.** 생일이 없어도 내 명식 중심으로 결과지가 성립한다. */}
+        {isReunion && step === R_PARTNER_STEP && (
+          <div>
+            <input
+              className="ap-input text-center"
+              type="text"
+              maxLength={12}
+              placeholder="부를 이름 (예: 준호)"
+              value={form.reunion.partner?.name ?? ""}
+              onChange={(e) => upPartner({ name: e.target.value })}
+              style={{ fontSize: 17 }}
+            />
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              {([["male", "남자"], ["female", "여자"]] as const).map(([g, ko]) => {
+                const on = form.reunion.partner?.gender === g;
+                return (
+                  <button
+                    type="button"
+                    key={g}
+                    onClick={() => upPartner({ gender: on ? undefined : g })}
+                    className={`py-4 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[15px] text-bone tracking-[0.15em] ${on ? "font-bold" : ""}`}>
+                      {ko}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              className="ap-input mt-3 text-center"
+              type="text"
+              inputMode="numeric"
+              placeholder="생년월일 8자리 (19920315)"
+              maxLength={10}
+              value={fmtBirth(partnerBirthRaw)}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                setPartnerBirthRaw(digits);
+                upPartner({
+                  birthDate:
+                    digits.length === 8 && isValidBirth(digits)
+                      ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+                      : undefined,
+                });
+              }}
+              style={{ fontSize: 17, letterSpacing: "0.08em" }}
+            />
+            {/* 시각은 생일을 받은 뒤에만 묻는다 — 생일이 없으면 시주 하나만 있어도 쓸 데가 없다. */}
+            {form.reunion.partner?.birthDate && (
+              <input
+                className="ap-input mt-3 text-center"
+                type="time"
+                value={form.reunion.partner?.birthTime ?? ""}
+                onChange={(e) => upPartner({ birthTime: e.target.value || undefined })}
+                style={{ fontSize: 17 }}
+              />
+            )}
+            <p className="font-myeongjo mt-4 text-center text-[13px] leading-[1.75] text-bone-faint">
+              {form.reunion.partner?.birthDate
+                ? "그 사람 쪽 흐름까지 같이 읽습니다"
+                : "하나도 모르셔도 됩니다 — 그때는 그쪽 얘기를 지어내지 않고, 손님 흐름으로만 봅니다"}
+            </p>
+          </div>
+        )}
+
+        {/* 13 心 — 지금 마음. **유일한 필수.** 뒤 셋을 고르면 결과지 9장(강을 건너지 않는다면)이 두꺼워진다. */}
+        {isReunion && step === R_FEELING_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {FEELING_OPTIONS.map((o) => {
+              const on = form.reunion.feeling === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("feeling", o.value);
+                    setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-4 text-left ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 15 慰 — 위로 한 화면. 넘어가기 전 한 박자(타이트 실측: 감정을 쏟은 직후에 이 화면이 있다).
+            비용 0 짜리 이탈 방지 장치라 값도 버튼도 두지 않는다 — 견우가 한 마디 하고 넘어간다. */}
+        {isReunion && step === R_COMFORT_STEP && (
+          <div className="text-center">
+            <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "var(--bone)" }}>
+              저도 일 년에 하루, 강 건너를 바라보는 놈입니다.
+              <br />
+              기다리는 마음은 압니다.
+            </p>
+            <p className="font-myeongjo mt-6 text-[15px] leading-[1.9]" style={{ color: "var(--bone-soft)" }}>
+              이제 장부를 열어 보겠습니다.
+            </p>
+          </div>
+        )}
+
         {/* STEP 7 — 고민. 산군(포괄)은 카테고리 칩이 상품과 안 맞아(전 영역을 어차피 다룸) 구체 물음 예시 탭으로 대체 */}
-        {step === CONCERN_STEP && (
+        {step === concernStep && (
           <div>
             {productSlug === "sangun-sinjeom" ? (
               <div className="flex flex-wrap justify-center gap-2">
@@ -1052,29 +1460,39 @@ export function SajuWizard({
                 className="ap-input text-center"
                 type="text"
                 maxLength={80}
-                placeholder={imm ? "직접 물어봐도 된다 — 예) 내년에 이직해도 되나" : "직접 적어주셔도 돼요 — 예) 내년에 이직해도 될까요?"}
+                placeholder={
+                  imm
+                    ? "직접 물어봐도 된다 — 예) 내년에 이직해도 되나"
+                    : isReunion
+                      ? "직접 적으셔도 됩니다 — 예) 지금 연락해도 될까요?"
+                      : "직접 적어주셔도 돼요 — 예) 내년에 이직해도 될까요?"
+                }
                 value={form.concernText}
                 onChange={(e) => up("concernText", e.target.value)}
                 style={{ fontSize: 15 }}
               />
               <p className="mt-2 text-center text-[11px] text-bone-faint">
-                {imm ? "적으면 그 물음부터 정면으로 답해준다" : "적어주시면 그 질문부터 정면으로 답해드려요"}
+                {imm
+                  ? "적으면 그 물음부터 정면으로 답해준다"
+                  : isReunion
+                    ? "적어주시면 그 물음부터 정면으로 답합니다"
+                    : "적어주시면 그 질문부터 정면으로 답해드려요"}
               </p>
             </div>
           </div>
         )}
 
-        {/* STEP 8 — 확인 · 직녀는 그 뒤에 이메일 한 화면을 더 둔다 */}
-        {step === CONFIRM_STEP &&
+        {/* STEP 8 — 확인 · 밤 무대 상품(직녀·견우)은 그 뒤에 이메일 한 화면을 더 둔다 */}
+        {step === confirmStep &&
           (emailGate ? (
             <div>
               <p className="font-myeongjo text-center text-[17px] leading-[1.8]" style={{ color: "var(--bone)" }}>
                 다 되면, 어디로 보내 드릴까요?
               </p>
               <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-                지금 화면에서 바로 열려요.
+                {isReunion ? "지금 화면에서 바로 열립니다." : "지금 화면에서 바로 열려요."}
                 <br />
-                이 주소로도 한 부 보내 둘게요.
+                {isReunion ? "이 주소로도 한 부 보내 두겠습니다." : "이 주소로도 한 부 보내 둘게요."}
               </p>
               <input
                 autoFocus
@@ -1122,11 +1540,53 @@ export function SajuWizard({
               imm={imm}
               optTone={optTone}
               skipped={skipped}
+              concernStep={concernStep}
+              // 재회 답도 확인 화면에 세운다 — 여기 없는 답은 손님이 고칠 방법이 없다.
+              extraRows={
+                isReunion
+                  ? ([
+                      [
+                        "이별 시기",
+                        form.reunion.breakupYear
+                          ? `${form.reunion.breakupYear}년${form.reunion.breakupMonth ? ` ${form.reunion.breakupMonth}월` : ""}`
+                          : "—",
+                        R_BREAKUP_STEP,
+                      ],
+                      ["연애 기간", form.reunion.datingLength || "—", R_DATING_STEP],
+                      [
+                        "이별 통보",
+                        form.reunion.whoEnded ? displayOf(WHO_ENDED_OPTIONS, form.reunion.whoEnded, optTone) : "—",
+                        R_WHO_STEP,
+                      ],
+                      [
+                        "이별 사유",
+                        form.reunion.reason ? displayOf(BREAKUP_REASON_OPTIONS, form.reunion.reason, optTone) : "—",
+                        R_REASON_STEP,
+                      ],
+                      [
+                        "그 사람",
+                        [
+                          form.reunion.partner?.name,
+                          form.reunion.partner?.gender === "male" ? "남자" : form.reunion.partner?.gender === "female" ? "여자" : "",
+                          form.reunion.partner?.birthDate?.replace(/-/g, "."),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—",
+                        R_PARTNER_STEP,
+                      ],
+                      [
+                        "지금 마음",
+                        form.reunion.feeling ? displayOf(FEELING_OPTIONS, form.reunion.feeling, optTone) : "—",
+                        R_FEELING_STEP,
+                      ],
+                    ] as [string, string, number][])
+                  : undefined
+              }
             />
           ))}
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
-        {step === TEASER_STEP && (
+        {step === teaserStep && (
           <TeaserStep
             teaser={teaser}
             pillars={pillars}
@@ -1155,12 +1615,12 @@ export function SajuWizard({
           우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
           "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
       <div id="pay" className="relative z-[2] w-full max-w-[560px] mx-auto scroll-mt-6 px-5 pb-7">
-        {teaserLoading || emailGate ? null : step < TOTAL - 1 ? (
+        {teaserLoading || emailGate ? null : step < total - 1 ? (
           <>
             <button
               type="button"
               onClick={next}
-              disabled={!canNext() || (step === CONFIRM_STEP && teaserLoading)}
+              disabled={!canNext() || (step === confirmStep && teaserLoading)}
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
@@ -1173,7 +1633,7 @@ export function SajuWizard({
                   "이거 누르면 결제되는 줄" 알고 멈췄다. 몰입 상품은 값을 뺐지만 겁은 그대로 남는다.
                   버튼은 손님이 누르는 것이라 캐릭터 말투가 아니라 "내가 뭘 얻는지"로 쓴다.
                   "겉장부터 펴봐라"는 겉장이 뭔지 모르면 되짚게 되고, 되짚는 순간 몰입이 끊긴다. */}
-              {step === CONFIRM_STEP ? "무료로 먼저 보기" : "다음"}
+              {step === confirmStep ? "무료로 먼저 보기" : isReunion && step === R_COMFORT_STEP ? "장부 열기" : "다음"}
             </button>
             {cur.optional && (
               <button
@@ -1246,11 +1706,14 @@ export function SajuWizard({
                       {pct != null && (
                         <p
                           className="mt-1 text-[13px]"
-                          style={{ color: pct >= 40 && !isInyeon ? "#d8563f" : "var(--bone-faint)" }}
+                          // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
+                          style={{ color: pct >= 40 && !isNight ? "#d8563f" : "var(--bone-faint)" }}
                         >
                           {pct}% 할인
+                          {/* ⚠ 「하나 더」를 고정으로 쓰면 3종 묶음에서 거짓말이 된다(2026-09-02 번들 ③ 신설).
+                              지금 상품을 뺀 나머지 개수를 세어 말한다 — 시트에서 손님이 직접 검산하는 줄이다. */}
                           {o.includes.length > 1 &&
-                            ` · ${formatKRW(o.price - price)} 더 내고 ${isInyeon ? "결과지 하나 더" : "장부 한 권 더"}`}
+                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight)}`}
                         </p>
                       )}
                     </button>
@@ -1710,8 +2173,11 @@ function TeaserStep({
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
   // 직녀(인연)판인가 — polite 렌더 경로는 존댓말 상품 4종과 공유라 slug 로만 갈라야 한다.
   const isInyeon = productSlug === "inyeon-saju";
-  // 인연·결혼이 같이 쓰는 껍데기(판·컷·로딩 체크리스트)는 이 가드로 연다.
+  // 인연·결혼이 같이 쓰는 껍데기(직녀 컷·목차·구매 카드)는 이 가드로 연다.
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // 견우(재회) — 조판(밝은 판·달빛 부품)은 같이 쓰고 **직녀 그림은 한 장도 안 쓴다**.
+  const isReunion = productSlug === REUNION_SLUG;
+  const isNight = isJiknyeoWorld || isReunion;
   // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
   const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
 
@@ -1720,10 +2186,14 @@ function TeaserStep({
       <div className="py-8 text-center">
         <span className="font-brush animate-pulse block text-[44px] leading-none text-gold-bright">命</span>
         <p className="font-myeongjo mt-5 text-[13px] text-bone-soft tracking-[0.06em]">
-          {imm ? "만세력에서 네 여덟 글자를 꺼내는 중이다…" : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
+          {imm
+            ? "만세력에서 네 여덟 글자를 꺼내는 중이다…"
+            : isReunion
+              ? "만세력에서 여덟 글자를 꺼내는 중입니다…"
+              : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
         </p>
         {/* 대기를 「기다림」이 아니라 「계산이 도는 증거」로 바꾼다 — 항목은 실제로 도는 계산들이다 */}
-        {isJiknyeoWorld && <LoadingChecklist />}
+        {isNight && <LoadingChecklist />}
       </div>
     );
   }
@@ -1765,9 +2235,9 @@ function TeaserStep({
       //   그래서 밝기는 유지하고 색만 달빛으로 옮겨 **밤 위에 뜬 판**으로 만들었다.
       //   `-mx-5` 를 뺀 이유: 화면 폭을 꽉 채우면 판이 아니라 그냥 배경이 된다 — 좌우 여백이 있어야 뜬다.
       //   되돌리려면 `?skin=pink` (globals.css `.teaser-pink`).
-      className={isJiknyeoWorld ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
+      className={isNight ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
       style={
-        imm && !isJiknyeoWorld
+        imm && !isNight
           ? {
               background: "rgba(7,6,9,0.86)",
               border: "1px solid var(--gold-pale)",
@@ -1815,6 +2285,14 @@ function TeaserStep({
             </ComicSay>
           }
         />
+      )}
+
+      {/* T1 오프닝 = 달력. 「언제」를 파는 상품이라 첫 화면이 달력이다(기획서 §6-T1).
+          아래 원국표·콜드리딩이 「이 달력이 어디서 나왔는지」를 뒤이어 증명한다. */}
+      {isReunion && teaser?.reunion && (
+        <div className="mb-12">
+          <ReunionCalendar data={teaser.reunion} name={name} />
+        </div>
       )}
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
@@ -1867,8 +2345,8 @@ function TeaserStep({
           <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
-          {/* 인연은 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
-          {!isJiknyeoWorld && (
+          {/* 인연·재회는 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
+          {!isNight && (
             <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
               {imm
                 ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
@@ -1897,7 +2375,7 @@ function TeaserStep({
                     style={{
                       border: "1px solid var(--gold-line)",
                       // 직녀는 세계관 토큰에 맡긴다(은사). 산군은 기존 금색 값을 그대로 둔다.
-                      background: isJiknyeoWorld ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
+                      background: isNight ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
                       color: "var(--gold-bright)",
                     }}
                   >
@@ -1921,9 +2399,11 @@ function TeaserStep({
                   하필 이 줄이 아래 콜드리딩 전체의 근거 선언이라 여기가 흔들리면 신뢰가 흔들린다. */}
               {imm
                 ? "읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고, 아래 말은 전부 여기서 나왔다."
-                : isJiknyeoWorld
-                  ? "읽을 줄 모르셔도 돼요. 이게 사주의 원본이고, 아래 말은 전부 여기서 나왔어요."
-                  : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
+                : isReunion
+                  ? "읽을 줄 모르셔도 됩니다. 이게 사주의 원본이고, 위 달력도 아래 말도 전부 여기서 나왔습니다."
+                  : isJiknyeoWorld
+                    ? "읽을 줄 모르셔도 돼요. 이게 사주의 원본이고, 아래 말은 전부 여기서 나왔어요."
+                    : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
             </p>
           )}
         </div>
@@ -1984,7 +2464,7 @@ function TeaserStep({
                 );
               })}
             </LedgerPanel>
-          ) : isInyeon ? (
+          ) : isInyeon || isReunion ? (
             /* 「방금 계산 발췌」 — 청월당은 결과지 일부를 크림 카드로 떠서 실물을 보여준다.
                걔넨 예시 발췌지만 우리는 **이 손님 계산**이라 같은 카드가 더 세게 먹는다.
                밤 무대 위 밝은 종이 한 장이라 시선이 여기서 멈춘다. */
@@ -2010,7 +2490,9 @@ function TeaserStep({
               {/* 11 → 13px. 각주 지위는 유지하되(별표 그대로) 읽을 수는 있어야 한다 —
                   콜드리딩 세 줄이 맞았을 때 「어떻게 알았지」의 답이 여기 있다. */}
               <p className="mt-2.5 text-center text-[13px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
-                * 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 {name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.
+                {isReunion
+                  ? `* 이름도, 적어주신 물음도 안 썼습니다 — 방금 계산된 ${name ? `${name}님` : "손님"} 사주에서만 나온 문장입니다.`
+                  : `* 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 ${name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.`}
               </p>
             </div>
           ) : (
@@ -2046,7 +2528,8 @@ function TeaserStep({
                 say={teaser.judgeInvite}
               />
             ) : (
-              !isInyeon && (
+              // 재회는 바로 아래 T2(이별 무렵 채점)가 같은 일을 **버튼으로** 한다 — 두 번 묻지 않는다.
+              !isInyeon && !isReunion && (
                 <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
               )
             ))}
@@ -2136,6 +2619,16 @@ function TeaserStep({
           {productSlug === "inyeon-saju" && teaser.inyeon && (
             <InyeonCalendar data={teaser.inyeon} />
           )}
+
+          {/* 재회 델타 — T2 채점 → T3 연적 → T4 환승. 값은 전부 teaser.reunion 에서만 온다.
+              (T1 달력은 맨 위 오프닝, T5 반전 절단은 구매 카드 직전) */}
+          {isReunion && teaser.reunion && (
+            <>
+              <ReunionBreakupCheck data={teaser.reunion} name={name} />
+              <ReunionRival data={teaser.reunion} />
+              <ReunionMoveOn data={teaser.reunion} />
+            </>
+          )}
         </>
       )}
 
@@ -2224,7 +2717,7 @@ function TeaserStep({
           // 눈금은 결과지에서 이미 검증한 사다리(기본 24 · 정점 56 · 최대 64)를 그대로 쓴다.
           className="mb-9 mt-14 px-4 py-7 text-center"
           style={
-            isInyeon
+            isNight
               ? { background: "rgba(217,199,232,0.08)", border: "1px solid var(--gold-line)", borderRadius: 6 }
               : { background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }
           }
@@ -2233,11 +2726,11 @@ function TeaserStep({
           {/* 라벨 11 → 13px. 이 카드의 40px 숫자가 무엇의 연도인지 말하는 유일한 줄이다. */}
           <p
             className="font-myeongjo text-[13px] tracking-[0.15em]"
-            style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
+            style={{ color: isNight ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
           >
             {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
                 손님이 되짚으면 어긋난다. 결과지 8장 제목과 같은 말로 둬 티저→결과지가 호응한다. */}
-            {isInyeon ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
+            {isNight ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
           </p>
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
@@ -2254,7 +2747,7 @@ function TeaserStep({
             <p
               className="text-[40px] font-bold leading-none"
               style={{
-                color: isInyeon ? "var(--gold-bright)" : "#e8695a",
+                color: isNight ? "var(--gold-bright)" : "#e8695a",
                 fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive",
               }}
             >
@@ -2285,15 +2778,15 @@ function TeaserStep({
                 </mask>
                 {/* 먹의 농담 — 붓을 댄 쪽이 짙고, 들어올리는 끝이 옅다 (직녀는 은사 농담) */}
                 <linearGradient id="ink-tone" x1="1" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isInyeon ? "#6f61a8" : "#b0301d"} />
-                  <stop offset="42%" stopColor={isInyeon ? "#a596e0" : "#d24430"} />
-                  <stop offset="100%" stopColor={isInyeon ? "#5b4f8c" : "#8f2b1e"} />
+                  <stop offset="0%" stopColor={isNight ? "#6f61a8" : "#b0301d"} />
+                  <stop offset="42%" stopColor={isNight ? "#a596e0" : "#d24430"} />
+                  <stop offset="100%" stopColor={isNight ? "#5b4f8c" : "#8f2b1e"} />
                 </linearGradient>
               </defs>
               {/* 번짐 — 종이에 먹이 스민 자국. 본획보다 먼저 깔린다 */}
               <path
                 d={INK_STROKE}
-                fill={isInyeon ? "#5b4f8c" : "#8f2b1e"}
+                fill={isNight ? "#5b4f8c" : "#8f2b1e"}
                 opacity={0.45}
                 mask="url(#ink-reveal)"
                 style={{ filter: "blur(1.1px)" }}
@@ -2434,14 +2927,16 @@ function TeaserStep({
             /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다.
                인연은 밑줄 리스트가 아니라 **줄마다 판**이다: 얇은 줄 다섯 개를 쌓으면
                다섯 개 전부 가벼워 보인다(형님 「밤티」 지적의 그 병). 값은 대사 크기(17)로 세운다. */
-            <div className={isJiknyeoWorld ? "mt-4 space-y-2" : "mt-4"}>
+            <div className={isNight ? "mt-4 space-y-2" : "mt-4"}>
               {(productSlug === "marriage-saju"
                 ? MARRIAGE_LOCKED
                 : isInyeon && teaser.inyeon
                   ? teaser.inyeon.locked
-                  : teaser.locked
+                  : isReunion && teaser.reunion
+                    ? teaser.reunion.locked
+                    : teaser.locked
               ).map((row, i) =>
-                isJiknyeoWorld ? (
+                isNight ? (
                   // 밝은 티저의 잠금 — 얇은 줄 + 가려진 값.
                   // ⚠ 가리개는 회색 ████ 이 아니라 NeonMask 다(LockRow 주석 참조):
                   //    회색 막대는 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다(2026-08-25 실측 대비 1.4).
@@ -2480,6 +2975,42 @@ function TeaserStep({
               onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
             />
           )}
+
+          {/* T5 반전 절단 — 값을 읽어 주다 검정 판에서 끊는다. 그다음이 값(구매 카드)이다.
+              ⚠ 재회 판에서 반전은 여기 하나뿐이다(직녀 컷·산군 컷은 이 상품에서 안 뜬다). */}
+          {isReunion && teaser.reunion && <ReunionCut data={teaser.reunion} />}
+
+          {isReunion && (
+            <JiknyeoBuyCard
+              title="견우의 재회예보"
+              // 분량 앵커(쪽수·시간)는 안 쓴다(2026-09-02 지시). 받는 것의 정점 하나만 말한다.
+              volume="열두 달 전부 + 연락의 달"
+              bullets={[
+                "다시 이어지는 달 — 열두 달 중 어디인지",
+                "연락해도 되는 달",
+                "먼저 연락하면 안 되는 달",
+                "재회 가능성 — 높음·보통·낮음",
+                "그날 갈라진 진짜 이유",
+                "그 사람에게 보낼 첫 줄",
+                "매달릴 때 하면 안 되는 것 셋",
+                "강을 건너지 않는다면 다음에 올 사람",
+              ]}
+              priceLabel={formatKRW(price)}
+              compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
+              discountPct={
+                compareAtPrice && compareAtPrice > price
+                  ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+                  : undefined
+              }
+              discountLabel="첫 손님 할인"
+              ctaText="할인받고 재회운 보러가기"
+              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            />
+          )}
+
+          {/* 목차 — 구매 카드가 「아래 목차에서 확인하세요」라고 가리키는 자리다.
+              잠긴 줄은 위 공용 블록이 이미 세웠다(teaser.reunion.locked) — 여기서 또 세우면 두 번 읽힌다. */}
+          {isReunion && <ReunionToc />}
 
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
@@ -2684,7 +3215,7 @@ function TeaserStep({
             </>
           ) : (
             <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.06em]">
-              {teaser.note}
+              {isReunion ? "여기까지는 무료로 보여드립니다. 나머지는 결과지에 담깁니다." : teaser.note}
             </p>
           )}
         </>
@@ -2708,6 +3239,23 @@ function TeaserStep({
               {teaser.inyeon.nearest.month}월
             </b>{" "}
             — 지나가면 빠져요
+          </>
+        }
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
+    {/* 재회판 고정바 — 유일하게 공짜로 연 값(먼저 연락하면 안 되는 달)을 그대로 데리고 다닌다.
+        재촉하지 않는다: 사실 한 줄 + 버튼이다(가짜 타이머 금지 규칙 그대로). */}
+    {isReunion && teaser?.reunion?.revealed && (
+      <StickyBuyBar
+        note={
+          <>
+            먼저 연락하면 안 되는 달,{" "}
+            <b className="font-bold" style={{ color: "var(--gold-bright)" }}>
+              {teaser.reunion.revealed.month}월
+            </b>{" "}
+            — 나머지 달은 결과지에
           </>
         }
         buyLabel={`${formatKRW(price)} 열기`}
@@ -3013,6 +3561,8 @@ function ConfirmStep({
   imm,
   optTone,
   skipped,
+  concernStep = CONCERN_STEP,
+  extraRows,
 }: {
   form: FormState;
   onEdit: (s: number) => void;
@@ -3021,6 +3571,10 @@ function ConfirmStep({
   imm: boolean; // 몰입 상품(산군)은 여기서 가격을 꺼내지 않는다
   optTone: OptionTone; // 손님이 고른 문장을 **고를 때와 같은 말투로** 되보여준다
   skipped: Set<number>; // 이 상품이 안 묻는 질문 — 확인 화면에서도 뺀다
+  /** 고민 화면 번호 — 재회만 뒤로 밀려 있다(「수정」이 엉뚱한 화면으로 가면 안 된다) */
+  concernStep?: number;
+  /** 상품 전용 답 줄 — 재회 여섯 문항이 여기로 온다. [라벨, 값, 수정할 화면] */
+  extraRows?: [string, string, number][];
 }) {
   const concernAll = [...form.concerns, ...(form.concernText.trim() ? [form.concernText.trim()] : [])];
   const rows: [string, string, number][] = [
@@ -3034,7 +3588,8 @@ function ConfirmStep({
     ["인연 방향", form.partner ? displayOf(PARTNER_OPTIONS, form.partner, optTone) : "—", PARTNER_STEP],
     ["연애 상태", form.relationship ? displayOf(RELATIONSHIP_OPTIONS, form.relationship, optTone) : "—", RELATIONSHIP_STEP],
     ["직업", form.job ? displayOf(JOB_OPTIONS, form.job, optTone) : "—", JOB_STEP],
-    ["고민", concernAll.length ? concernAll.join(" · ") : "—", CONCERN_STEP],
+    ...(extraRows ?? []),
+    ["고민", concernAll.length ? concernAll.join(" · ") : "—", concernStep],
   ].filter(([, , s]) => !skipped.has(s as number)) as [string, string, number][]; // 안 물은 질문은 확인 화면에서도 뺀다
 
   return (

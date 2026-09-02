@@ -226,8 +226,25 @@ export default async function ProductDetailPage({
       }));
     }
   } else {
+    // DB 미설정(데모 모드) — 코드 표만으로 화면을 세운다.
     const seed = productsSeed.find((p) => p.slug === slug && p.is_active);
     product = seed ? { id: seed.slug, ...seed } : null;
+    // 번들도 코드 표에서 세운다. 안 그러면 데모 모드에서 **결제 시트가 단품 한 장**으로 나와
+    // 시트 구성(단품 ↔ 묶음)을 눈으로 확인할 방법이 없다(DB 있는 환경과 화면이 갈린다).
+    if (product) {
+      const mine = product.slug;
+      bundles = productsSeed
+        .filter((b) => b.is_active && (b.bundle_slugs ?? []).includes(mine))
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((b) => ({
+          productId: b.slug,
+          slug: b.slug,
+          name: b.name,
+          price: b.price,
+          compareAtPrice: b.compare_at_price ?? null,
+          includes: (b.bundle_slugs ?? []).map((x) => productsSeed.find((p) => p.slug === x)?.name ?? x),
+        }));
+    }
   }
 
   if (!product) notFound();

@@ -74,7 +74,13 @@ export default async function CheckoutPage({
   // 직녀도 그걸 따라 붙였는데, 형님 「말할 필요 없는 말」「다른 데만큼만 해」로 걷어냈다.
   // 세계관은 **색으로만** 이어간다(.world-* 스킨) — 글은 다른 데만큼.
   const slug = product?.slug ?? "";
-  const world = slug.includes("sangun") ? "world-sangun" : slug === "inyeon-saju" || slug === "marriage-saju" ? "world-jiknyeo" : "";
+  // 재회(견우)도 같은 밤 무대 색을 쓴다 — world-jiknyeo 는 그림이 아니라 **색 토큰**이다.
+  const world =
+    slug.includes("sangun")
+      ? "world-sangun"
+      : slug === "inyeon-saju" || slug === "marriage-saju" || slug === "reunion-saju"
+        ? "world-jiknyeo"
+        : "";
   const bg = world === "world-sangun" ? "#0a0908" : world === "world-jiknyeo" ? "#0b0f1a" : "#000000";
 
   // ── 영수증 산수 ────────────────────────────────────────────────
