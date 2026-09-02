@@ -1435,22 +1435,35 @@ function LedgerPanel({ children }: { children: React.ReactNode }) {
  * 밝은 박스가 화면을 안 먹어서 어두운 신당이 끝까지 유지된다.
  * 사진은 한쪽(위/아래)이 비어 있게 발주했고(이미지지시서_티저컷 v2), 그 빈 쪽에 앉힌다.
  */
-function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactNode }) {
+/** `invert` = **반전 절단.** 카카오웹툰 「칠흑이 삼킨 여름」 54화 실측(2026-08-29):
+ *  회차 내내 흰 말풍선·먹 글자로 가다가 **마지막 대사 하나만 검정 판 + 흰 글자로 뒤집고 끊는다.**
+ *  같은 옷을 한 번 뒤집는 것만으로 「지금까지와 다른 말」이 된다 — 새 부품보다 세다.
+ *  티저에서 이 자리는 **가린 값을 읽다 끊는 한 줄**(▓▓년 ▓▓월 …여기까지)이다.
+ *  ⚠ 한 판에 딱 한 번. 두 번 쓰면 반전이 평상복이 되고 절단이 사라진다. */
+function CutSay({ at, children, invert = false }: { at: "top" | "bottom"; children: React.ReactNode; invert?: boolean }) {
   return (
     <div className={`absolute inset-x-4 ${at === "top" ? "top-4" : "bottom-4"} z-10`}>
       <div
         className="relative rounded-[5px] px-4 py-3"
-        style={{
-          // 반투명 한지 — 사진이 비쳐 보여야 "그 장면 안의 말"이 된다
-          background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
-          border: "1px solid rgba(201,185,142,0.8)",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
-          backdropFilter: "blur(2px)",
-        }}
+        style={
+          invert
+            ? {
+                background: "linear-gradient(180deg,#14100a,#080605)",
+                border: "1px solid #8f2b1e",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.75)",
+              }
+            : {
+                // 반투명 한지 — 사진이 비쳐 보여야 "그 장면 안의 말"이 된다
+                background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+                border: "1px solid rgba(201,185,142,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+                backdropFilter: "blur(2px)",
+              }
+        }
       >
         <span
           className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
-          style={{ background: "#8f2b1e", color: "#f3e6cf" }}
+          style={invert ? { background: "#f3e6cf", color: "#8f2b1e" } : { background: "#8f2b1e", color: "#f3e6cf" }}
         >
           산군
         </span>
@@ -1460,8 +1473,8 @@ function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactN
             그림 위에 얹힌 글은 그림을 따라가야 컷 안에서 비율이 안 깨진다. 본문·표는 고정 px 유지.
             상한 22px: 큰 화면에서 대사가 한 줄을 다 먹어 컷을 가리는 걸 막는다. */}
         <p
-          className="font-myeongjo font-semibold leading-[1.75] text-[#241d10]"
-          style={{ fontSize: "min(4.9cqw, 28px)" }}
+          className="font-myeongjo font-semibold leading-[1.75]"
+          style={{ fontSize: "min(4.9cqw, 28px)", color: invert ? "#f3e6cf" : "#241d10" }}
         >
           {children}
         </p>
@@ -1490,6 +1503,8 @@ function TeaserCut({
   tall,
   say,
   sayAt = "bottom",
+  invert = false,
+  lead = false,
 }: {
   src: string;
   alt: string;
@@ -1500,12 +1515,17 @@ function TeaserCut({
   /** 컷 위에 얹을 대사. 주면 CutSay 로 그리고, 아래 별도 대사 띠를 세울 필요가 없어진다. */
   say?: React.ReactNode;
   sayAt?: "top" | "bottom";
+  /** 대사를 검정 판·흰 글자로 뒤집는다 — **티저 전체에서 딱 한 번**(가린 값을 읽다 끊는 자리) */
+  invert?: boolean;
+  /** 정점 앞 한 박자 — 웹툰은 결정적 컷 앞에서 여백을 크게 벌린다(칠흑 48·54화 실측).
+   *  컷이 줄줄이 붙어 있으면 어느 것이 정점인지 눈이 못 고른다. */
+  lead?: boolean;
 }) {
   return (
     // 위저드 컨테이너의 px-5(20px)를 되물려 컬럼 끝까지 채운다.
     // 티저 본문 판의 좌우 패딩을 0으로 걷었으므로 이제 20px 만 되물리면 된다(전엔 -mx-9 = 20+16).
     <div
-      className={`relative -mx-5 mt-6 overflow-hidden ${tall ? "" : CUT_H[size]}`}
+      className={`relative -mx-5 ${lead ? "mt-14" : "mt-6"} overflow-hidden ${tall ? "" : CUT_H[size]}`}
       // containerType: 대사(CutSay)가 이 컷의 폭을 기준으로 커지게 하는 자다.
       // 없으면 CutSay 의 cqw 가 위쪽 조상 컨테이너를 잡아 엉뚱한 크기가 된다.
       style={{ containerType: "inline-size", ...(tall ? { aspectRatio: "4 / 5" } : {}) }}
@@ -1533,7 +1553,7 @@ function TeaserCut({
           }}
         />
       )}
-      {say && <CutSay at={sayAt}>{say}</CutSay>}
+      {say && <CutSay at={sayAt} invert={invert}>{say}</CutSay>}
     </div>
   );
 }
@@ -2147,6 +2167,10 @@ function TeaserStep({
             alt="엽전 꾸러미를 장부 위로 내리는 손"
             tall
             sayAt="top"
+            // 여기가 티저의 정점이다 — 값을 읽어 주다가 가린 자리에서 끊는 한 줄.
+            // 웹툰이 회차 마지막 대사만 뒤집어 끊는 그 문법을 이 한 곳에만 쓴다(CutSay invert 주석).
+            invert
+            lead
             say={
               <>
                 돈부터 볼까. 다들 그것부터 묻더군.

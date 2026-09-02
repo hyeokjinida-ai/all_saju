@@ -385,11 +385,14 @@ export function JiknyeoResult({
           織 女
         </p>
         {(() => {
-          // 손으로 그린 레터링을 갖고 있으면서 시스템 폰트를 쓰고 있었다(자산 미사용).
-          // 연애예보 전용 자산이라 결혼판은 기존 활자 그대로 둔다.
-          // ⚠ lettering-yeonae-yebo.png 는 보라·형광 3D 게임 로고체다. 먹빛 담채 세계관과 어긋나
-          //   붙였다가 되돌렸다(2026-08-25 화면 실측). 붓글씨 레터링을 새로 굽기 전까지 활자로 간다.
-          const lettering: string | null = null;
+          // 제목을 활자로 쓰던 자리 — 웹툰은 회차 제목을 **손으로 쓴 글씨**로 한 화면 세운다
+          // (칠흑 48화: 콜드오픈 뒤 붓글씨 제목이 통째로 한 판). 활자 제목은 「문서」가 되고
+          // 붓글씨는 「받은 물건」이 된다.
+          // ⚠ 옛 자산 lettering-yeonae-yebo.png 는 보라·형광 3D 게임 로고체라 먹빛 담채와
+          //   어긋나 붙였다 되돌렸다(2026-08-25). 2026-08-30 먹빛 붓글씨로 새로 구웠다 —
+          //   흰 배경을 알파로 빼고 획 색을 본문 먹빛(#2A2434)으로 통일해 판 위에 얹힌다.
+          // 연애예보 전용 자산이라 결혼판은 기존 활자 그대로 둔다(같은 글자가 아니다).
+          const lettering = isMarriage ? null : assetSrc("/products/jiknyeo/lettering-yeonae-brush.webp");
           if (lettering) {
             return (
               <div className="mt-2">
@@ -397,12 +400,14 @@ export function JiknyeoResult({
                   <p className="font-myeongjo text-[15px]" style={{ color: "#5B5470" }}>{who}님의</p>
                 ) : null}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* 활자 제목(24px)보다 크게 세운다 — 붓글씨는 획이 가늘어 활자만 한 크기로 두면
+                    존재감이 오히려 줄어든다. 아래 여백은 제목이 한 판을 쓰게 하는 숨이다(웹툰 타이틀 문법). */}
                 <img
                   src={lettering}
                   alt="연애예보"
                   draggable={false}
-                  className="mx-auto mt-1 select-none"
-                  style={{ width: "62%", maxWidth: 240, height: "auto" }}
+                  className="mx-auto mb-3 mt-2 select-none"
+                  style={{ width: "72%", maxWidth: 278, height: "auto" }}
                 />
               </div>
             );
