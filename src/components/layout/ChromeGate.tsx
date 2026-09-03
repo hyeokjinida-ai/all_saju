@@ -19,6 +19,9 @@ const isBare = (p: string) =>
   p === "/jiknyeo" ||
   p === "/products/wealth-saju" ||
   p === "/products/inyeon-saju" ||
+  // 견우 재회 랜딩 — 인연·산군과 같은 광고 착지다. 크롬을 떼는 대신
+  // 법정 표기는 랜딩 자체가 StoryFooter 로 세운다(GyeonuLanding 하단).
+  p === "/products/reunion-saju" ||
   p === "/products/sangun-sinjeom";
 
 export function ChromeGate({

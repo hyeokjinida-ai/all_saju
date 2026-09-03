@@ -15,6 +15,7 @@ import { SangunStory } from "@/components/products/SangunWebtoon";
 import { JiknyeoStory } from "@/components/products/JiknyeoStory";
 import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
 import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
+import { GyeonuLanding } from "@/components/products/GyeonuLanding";
 import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -258,9 +259,12 @@ export default async function ProductDetailPage({
   const isSangunStory = product.slug === "sangun-sinjeom";
   // 직녀 2번째 상품(결혼) — 랜딩은 청월당 시공법 클론. 위저드를 이 페이지가 소유한다.
   const isMarriage = product.slug === "marriage-saju";
+  // 견우(재회) — 광고 착지. 공용 보라 템플릿엔 세계관이 한 줄도 없어 손님이 티저에서야
+  // 화자를 처음 만났다(2026-09-04). 랜딩이 위저드를 소유하고 CTA 는 #start 로 내린다.
+  const isReunion = product.slug === "reunion-saju";
   // 풀스크린 랜딩(웹툰·몰입·클론)은 공용 컨테이너(좌우 여백 + max-w-2xl)를 쓰지 않는다 —
   // 감싸면 풀블리드 섹션이 안쪽으로 밀려 카드 여백 규격이 통째로 어긋난다(실측: 20px 설계가 44px).
-  const isWealth = !!Story || isSangunStory || isMarriage;
+  const isWealth = !!Story || isSangunStory || isMarriage || isReunion;
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -394,6 +398,26 @@ export default async function ProductDetailPage({
             jiknyeoAssets={jiknyeoAssets}
           />
         </JiknyeoDetail>
+      ) : isReunion ? (
+        // 견우: 광고 착지 스크롤 랜딩(히어로→죄책감 해제→약속→12칸 보기→정직 판정→목차→가격→CTA).
+        // 게이트는 두지 않는다 — 이미 「헤어졌다」는 자각을 안고 온 손님이라 한 겹 더 두면 잃기만 한다.
+        <GyeonuLanding
+          priceLabel={formatKRW(product.price)}
+          compareLabel={product.compare_at_price ? formatKRW(product.compare_at_price) : undefined}
+        >
+          <SajuWizard
+            productId={product.id}
+            productSlug={product.slug}
+            productName={product.name}
+            price={product.price}
+            compareAtPrice={product.compare_at_price ?? null}
+            bundles={bundles}
+            isLoggedIn={!!user}
+            initialConcerns={concernPreset ? [concernPreset] : undefined}
+            webtoonCuts={webtoonCuts}
+            demo={demo}
+          />
+        </GyeonuLanding>
       ) : isJiknyeoStory ? (
         // 직녀: 산군과 같은 풀스크린 스테이지. 랜딩은 웹툰 한 편이고 오퍼는 뒤로 뺀다
         // (청월당 캐릭터 랜딩 두 편 판독의 결론). 그림은 전부 슬롯이라 0장이어도 성립한다.
