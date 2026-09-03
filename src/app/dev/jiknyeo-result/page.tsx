@@ -87,6 +87,17 @@ const WHO: Record<
     suffix: "-연애중",
   },
   서윤: { name: "서윤", cache: "analysis-19940606-female-20.json", birthDate: "1994-06-06", birthTime: "20:10" },
+  // 재회 표본 2건(2026-09-04) — 같은 명식·같은 고민에 「지금 마음」만 다르다.
+  // 시각을 안 받은 판이라 명식 캐시가 `-x` 다. `-20`(20:10)을 붙이면 화면엔 시주가 서고
+  // 본문은 시 모름으로 쓰인 글이 나와, 미리보기가 그 자리에서 거짓말을 한다.
+  "서윤-재회": {
+    name: "서윤", cache: "analysis-19940606-female-x.json",
+    birthDate: "1994-06-06", birthTime: "", suffix: "-재회",
+  },
+  "서윤-환승": {
+    name: "서윤", cache: "analysis-19940606-female-x.json",
+    birthDate: "1994-06-06", birthTime: "", suffix: "-환승",
+  },
   은비: { name: "은비", cache: "analysis-19900524-female-17.json", birthDate: "1990-05-24", birthTime: "17:00" },
 };
 
@@ -99,7 +110,7 @@ export default async function DevJiknyeoResultPage({
   const { marriage, who, reunion } = await searchParams;
   // ?reunion=1 — 견우(재회) 조판. 같은 부품에 직녀 얼굴만 꺼지는지 눈으로 확인하는 문이다.
   const isReunion = reunion === "1";
-  const person = WHO[who ?? (isReunion ? "서윤" : "지수")] ?? WHO["지수"];
+  const person = WHO[who ?? (isReunion ? "서윤-재회" : "지수")] ?? WHO["지수"];
 
   // sample-results.ts 가 tmp 에 남긴 것을 **파일명 규칙으로 찾는다**.
   // 규칙: 명식 `analysis-<생일>-<성별>-<시>.json` · 본문 `sample-<slug>-<이름>-<모델태그>.md`
@@ -141,7 +152,8 @@ export default async function DevJiknyeoResultPage({
     name: person.name,
     birthDate: person.birthDate,
     birthTime: person.birthTime,
-    timeUnknown: false,
+    // 시각을 안 받은 표본은 기둥 3개로 세워야 한다 — 여기서 false 로 박으면 없는 시주가 그려진다
+    timeUnknown: !person.birthTime,
     gender: "female",
     calendar: "solar",
     concerns: ["올해는 진짜 만나고 싶어요"],

@@ -22,16 +22,26 @@ function loadEnv() {
 }
 loadEnv();
 
+type BirthInfoLike = {
+  birthYear: string; birthMonth: string; birthDay: string;
+  birthHour?: string; birthMinute?: string;
+  calendarType: "양력" | "음력"; gender: "male" | "female";
+};
+
 type Case = {
   slug: string;
   name: string;
   expectAges: number[]; // 만/세는 둘 다 허용
-  birthInfo: {
-    birthYear: string; birthMonth: string; birthDay: string;
-    birthHour?: string; birthMinute?: string;
-    calendarType: "양력" | "음력"; gender: "male" | "female";
-  };
+  birthInfo: BirthInfoLike;
   concern?: string;
+  /** 파일명 꼬리표 — 같은 사람으로 표본을 둘 이상 뽑을 때(감정만 바꾼 A/B) 서로 안 덮어쓰게 한다 */
+  variant?: string;
+  /**
+   * 「견우의 재회예보」 전용 입력 여섯 가지. 있으면 실제 파이프라인과 같은 순서로
+   * ① 상대 명식 1콜 ② computeReunionFacts ③ buildReunionFactsBlock 을 태운다
+   * (generate-result.fetchReunionFacts → keyFactsFor 와 같은 재료여야 표본이 거짓말을 안 한다).
+   */
+  reunion?: import("../src/lib/saju/reunion-input").ReunionInput;
 };
 
 // ⚠ expectAges 는 **세는나이** 기준이다(2026-08-21 정정).
@@ -47,9 +57,37 @@ const CASES: Case[] = [
   // [임시] 광고 v5 「서윤」 — 무성 UGC 광고(vU5)의 카드가 전부 이 결과지 실캡처다.
   // 고민 문구에 「미련」을 넣는 이유: 훅 「나한테 미련 남았냐는데?」의 증거 카드가 9장 [산군의 직언]에서 나와야 한다.
   // 계획서 marketing/소재/산군/광고영상_기획_v5_서윤UGC_2026-08-23.md §3-1
+  // [임시]
+  // {
+  //   slug: "sangun-sinjeom", name: "서윤", concern: "헤어진 지 석 달인데, 아직 미련이 남은 건지 모르겠어요", expectAges: [33, 34, 38, 39, 43, 44],
+  //   birthInfo: { birthYear: "1994", birthMonth: "6", birthDay: "6", birthHour: "20", birthMinute: "10", calendarType: "양력", gender: "female" },
+  // },
+
+  // ── 「견우의 재회예보」 표본 2건 (2026-09-04) ────────────────────────────────
+  // 같은 명식·같은 고민에 **「지금 마음」만** 다르다. 그래야 환승 트랙 스위치(track=moveon)가
+  // 9장을 실제로 두껍게 만드는지, 톤이 갈라지지는 않는지를 한 변수로 잰다.
+  // 명식은 서윤(기획서 §2 승격 페르소나) — 시각은 안 받는다(가장 흔한 경로).
+  // 상대는 준호(1992-03-15 남) — 생일을 받았으므로 만세력이 한 번 더 나간다(2인 풀이).
   {
-    slug: "sangun-sinjeom", name: "서윤", concern: "헤어진 지 석 달인데, 아직 미련이 남은 건지 모르겠어요", expectAges: [33, 34, 38, 39, 43, 44],
-    birthInfo: { birthYear: "1994", birthMonth: "6", birthDay: "6", birthHour: "20", birthMinute: "10", calendarType: "양력", gender: "female" },
+    // 1994-06-06 → 만 32(오늘) · 세는 33(2026) · 34(2027) · 35(2028). 대운 범위(31~40세)는 measure 가 지운다.
+    slug: "reunion-saju", name: "서윤", variant: "재회", expectAges: [32, 33, 34, 35],
+    concern: "그 사람이 아직 저를 생각하는지, 연락해도 되는지 알고 싶어요",
+    birthInfo: { birthYear: "1994", birthMonth: "6", birthDay: "6", calendarType: "양력", gender: "female" },
+    reunion: {
+      breakupYear: 2026, breakupMonth: 6,
+      datingLength: "2~3년", whoEnded: "그 사람", reason: "잠수·통보", feeling: "재회",
+      partner: { name: "준호", gender: "male", birthDate: "1992-03-15" },
+    },
+  },
+  {
+    slug: "reunion-saju", name: "서윤", variant: "환승", expectAges: [32, 33, 34, 35],
+    concern: "그 사람이 아직 저를 생각하는지, 연락해도 되는지 알고 싶어요",
+    birthInfo: { birthYear: "1994", birthMonth: "6", birthDay: "6", calendarType: "양력", gender: "female" },
+    reunion: {
+      breakupYear: 2026, breakupMonth: 6,
+      datingLength: "2~3년", whoEnded: "그 사람", reason: "잠수·통보", feeling: "새사람",
+      partner: { name: "준호", gender: "male", birthDate: "1992-03-15" },
+    },
   },
   // [임시] 결혼사주 1건만
   // {
@@ -118,6 +156,11 @@ async function main() {
   const { buildMonthPlan, generateBlueprint } = await import("../src/lib/saju/blueprint");
   const { buildPastBlock } = await import("../src/lib/saju/teaser");
   const { computePrescription, buildPrescriptionBlock } = await import("../src/lib/saju/prescription");
+  // 재회 — 확정값 계산과 프롬프트 블록. 운영 경로(generate-result)가 부르는 그 함수들 그대로다.
+  const { computeReunionFacts, buildReunionFactsBlock } = await import("../src/lib/saju/reunion");
+  const { REUNION_SLUG, reunionTags, hasPartnerChart, partnerBirthInfo } = await import(
+    "../src/lib/saju/reunion-input"
+  );
   const model = process.env.LLM_MODEL ?? "?";
   const tag = model.replace(/[^a-z0-9]/gi, "");
   console.log(`\n=== 모델: ${process.env.LLM_PROVIDER}/${model} ===\n`);
@@ -164,20 +207,57 @@ async function main() {
       console.log("  [확정값 주입]\n" + keyFacts.split("[재물 확정값")[1]?.slice(0, 600));
     }
 
+    // ── 재회(견우) — 상대 명식 1콜 → computeReunionFacts → 확정값 블록.
+    //    운영 경로(generate-result.fetchReunionFacts → keyFactsFor)와 **같은 순서·같은 함수**다.
+    //    ⚠ 인연 확정값은 얹지 않는다 — 같은 열두 달을 두 이름으로 주면 모델이 둘 다 쓴다.
+    let reunionFacts: ReturnType<typeof computeReunionFacts> | null = null;
+    if (c.slug === REUNION_SLUG && c.reunion) {
+      let partnerAnalysis: typeof analysis | null = null;
+      if (hasPartnerChart(c.reunion)) {
+        const pbi = partnerBirthInfo(c.reunion, c.birthInfo.gender)!;
+        const pk = `${pbi.birthYear}${pbi.birthMonth.padStart(2, "0")}${pbi.birthDay.padStart(2, "0")}`;
+        const pCache = resolve(tmpdir(), `analysis-${pk}-${pbi.gender}-${pbi.birthHour ?? "x"}.json`);
+        if (existsSync(pCache)) {
+          partnerAnalysis = JSON.parse(readFileSync(pCache, "utf8"));
+          console.log("  상대 명식 캐시 사용");
+        } else {
+          try {
+            console.log("  상대 명식 호출…");
+            partnerAnalysis = await saju.fetchSajuAnalysis(pbi, [], { source: "manual" });
+            writeFileSync(pCache, JSON.stringify(partnerAnalysis), "utf8");
+          } catch (e) {
+            // 운영도 여기서 안 죽는다 — 상대 없이 「나 혼자 판」으로 계속 간다.
+            console.log(`  상대 명식 실패 — 나 혼자 판으로 간다: ${e instanceof Error ? e.message : e}`);
+          }
+        }
+      }
+      reunionFacts = computeReunionFacts(analysis, c.birthInfo.gender, c.reunion, { partnerAnalysis });
+      keyFacts = [keyFacts, buildReunionFactsBlock(reunionFacts)].filter(Boolean).join("\n\n");
+      console.log(
+        `  [재회 확정값] 판정=${reunionFacts.odds.grade}(내부 ${reunionFacts.odds.score}) · 트랙=${reunionFacts.track}` +
+          ` · 다리 ${reunionFacts.reconnect.length} · 연락가능 ${reunionFacts.contactOk.length} · 연락금지 ${reunionFacts.contactNo.length}` +
+          ` · 이별판독 ${reunionFacts.breakup ? (reunionFacts.breakup.bent ? "꺾임" : "안꺾임") : "없음"}` +
+          ` · 상대명식 ${reunionFacts.partner ? "있음" : "없음"} · 연적 ${reunionFacts.rival.basis}/${reunionFacts.rival.strength}`,
+      );
+    }
+
     // 설계도 + 배정표 + 장별 확정값 — 실제 파이프라인(generate-result.buildPlanForSangun)과 같은 재료.
     // 샘플이 이걸 건너뛰면 개편의 핵심을 안 잰 채 "좋아졌다"고 말하게 된다.
     let blueprint = null, monthPlan = null, pastBlock = null, prescriptionBlock = null;
     // 산군·인연 둘 다 태운다 — generate-result.buildChapterPlan 과 같은 게이트여야 한다.
     // (인연은 2026-08-17 10장 개편으로 달을 쓰는 장이 4개가 되어 배정표가 필요해졌다)
-    if (c.slug === "sangun-sinjeom" || c.slug === "inyeon-saju") {
+    // 재회도 태운다 — 5장(다리가 놓이는 달)과 6장(연락의 달)이 **같은 열두 달을 다른 이름으로**
+    // 부르는 상품이라, 배정표가 없으면 두 장이 같은 달을 두 번 말한다(generate-result 와 같은 게이트).
+    if (c.slug === "sangun-sinjeom" || c.slug === "inyeon-saju" || c.slug === REUNION_SLUG) {
       const isSangun = c.slug === "sangun-sinjeom";
       const titles = outlineTitles(c.slug);
       try {
         monthPlan = buildMonthPlan(
           titles,
           saju.computeWealthFacts(analysis),
-          saju.computeInyeonFacts(analysis, c.birthInfo.gender, undefined),
+          saju.computeInyeonFacts(analysis, c.birthInfo.gender, c.reunion?.partner?.gender),
           saju.computeWealthYears(analysis),
+          reunionFacts,
         );
         pastBlock = buildPastBlock(analysis) || null;
         // 처방표 장은 산군에만 있다
@@ -204,7 +284,9 @@ async function main() {
       birthTime: bi.birthHour ? `${bi.birthHour.padStart(2, "0")}:${(bi.birthMinute ?? "00").padStart(2, "0")}` : null,
       timeUnknown: !bi.birthHour,
       gender: bi.gender,
-      concerns: c.concern ? [c.concern] : [],
+      // 운영과 같은 길로 싣는다 — 재회 여섯 답은 concerns 에 "[프로필] 키: 값" 으로 얹혀 온다.
+      // (prompt.ts 가 이 접두사를 알아 「독자 상황」 줄로 새지 않게 걸러 낸다)
+      concerns: [...(c.reunion ? reunionTags(c.reunion) : []), ...(c.concern ? [c.concern] : [])],
       keyFacts,
       blueprint,
       monthPlan,
@@ -225,9 +307,13 @@ async function main() {
     const birth = `${bi.birthYear}-${bi.birthMonth.padStart(2, "0")}-${bi.birthDay.padStart(2, "0")}`;
     // cache= 는 린터가 달 검사(지어낸달·표밖의달)를 돌릴 때 쓰는 명식 캐시 파일명이다.
     // 캐시 키가 slug 에서 생일 기준으로 바뀌어 린터가 더는 slug 로 추측할 수 없다.
-    const header = `<!-- slug=${c.slug} · ${c.name} · birth=${birth} · gender=${bi.gender} · cache=${basename(cacheFile)} · concern=${c.concern ?? ""} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
+    const reunionMeta = reunionFacts
+      ? ` · 재회판정=${reunionFacts.odds.grade} · 트랙=${reunionFacts.track}`
+      : "";
+    const header = `<!-- slug=${c.slug} · ${c.name} · birth=${birth} · gender=${bi.gender} · cache=${basename(cacheFile)} · concern=${c.concern ?? ""}${reunionMeta} · ${llm.provider}/${llm.model} · ${chapters.length}챕터 · ${ms}ms · ${text.length}자 · 헷지=${sc.hedge} · 잘못된나이=${JSON.stringify(sc.badAges)} · 가족단정어=${sc.family} -->\n\n`;
     // 파일명에 이름을 넣는다 — slug 만 쓰면 같은 상품의 두 번째 케이스가 첫 번째를 덮어쓴다.
-    const out = resolve(tmpdir(), `sample-${c.slug}-${c.name}-${tag}.md`);
+    // variant 는 **같은 사람으로 둘 이상** 뽑을 때(감정만 바꾼 A/B) 필요하다 — 없으면 서로 덮어쓴다.
+    const out = resolve(tmpdir(), `sample-${c.slug}-${c.name}${c.variant ? `-${c.variant}` : ""}-${tag}.md`);
     writeFileSync(out, header + text, "utf8");
 
     console.log(
