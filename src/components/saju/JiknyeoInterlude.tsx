@@ -817,13 +817,14 @@ export function SajuSense({ title }: { title: string }) {
 /* ── ⑤ 컷 인터루드 — 숨 쉬는 자리 ─────────────────────── */
 
 /** 티저가 쓰는 설화 컷을 결과지 본문 사이에 한 장씩 눕힌다.
- *  새 이미지를 만들지 않는다 — 이미 있는 자산(public/products/jiknyeo)의 재배치다. */
+ *  새 이미지를 만들지 않는다 — 이미 있는 자산(public/products/<dir>)의 재배치다. */
 export function CutInterlude({
   id,
   say,
   ratio = "3 / 2",
   pos = "center 22%",
   sfx,
+  dir = "jiknyeo",
 }: {
   id: string;
   say: string;
@@ -832,8 +833,11 @@ export function CutInterlude({
   /** 손글씨 방백 — 말풍선 없이 컷 위에 기울여 얹는다.
    *  청월당 웹툰 문법 4종 중 하나인데(해부 §3) 우리는 밴드 한 곳에서만 쓰고 있었다. */
   sfx?: string;
+  /** 자산 폴더 — 화자마다 다르다. 직녀 컷은 `jiknyeo`, 견우 컷은 `reunion`.
+   *  ⚠ 폴더를 안 가르면 재회 결과지에 직녀 얼굴이 뜬다(이 상품에서 제일 큰 사고). */
+  dir?: "jiknyeo" | "reunion";
 }) {
-  const src = assetSrc(`/products/jiknyeo/${id}.webp`) ?? assetSrc(`/products/jiknyeo/${id}.png`);
+  const src = assetSrc(`/products/${dir}/${id}.webp`) ?? assetSrc(`/products/${dir}/${id}.png`);
   if (!src) return null;
   return (
     // 풀블리드 — 청월당은 테두리 컷과 **가장자리까지 꽉 찬 컷**을 번갈아 써서 리듬을 만든다

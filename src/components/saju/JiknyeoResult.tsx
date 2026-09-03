@@ -594,8 +594,18 @@ export function JiknyeoResult({
           실측(행별 디테일 std<6): **y=1276 = 83.1% 부터 죽은 공간.**
           4/5 + top 정렬이면 위 83.3% 만 남아 딱 그 자리가 잘린다.
           (같은 자로 전수 측정: w7 은 15% 가 죽었지만 그 자리를 말풍선이 덮어 실害 없음) */}
-      {/* 재회는 이 자리를 비운다 — j3 는 직녀 컷이다(견우 컷이 나오면 그때 꽂는다). */}
-      {!isReunion && (
+      {/* j3 는 직녀 컷이라 재회에서 쓸 수 없다 — 같은 자리에 견우 도입 컷(g-greet)을 꽂는다.
+          장부에 손을 얹고 손님 쪽을 올려다보는 컷이라, 「이제 장부를 연다」는 프롤로그와 한 몸이다.
+          비율은 원본 2:3 그대로 — 3:2 로 자르면 장부에 얹은 손이 잘려 컷의 뜻이 사라진다. */}
+      {isReunion ? (
+        <CutInterlude
+          dir="reunion"
+          id="g-greet"
+          say={who ? `${who}님 장부를 펴 두었습니다.` : "장부를 펴 두었습니다."}
+          ratio="2 / 3"
+          pos="center"
+        />
+      ) : (
         <CutInterlude
           id="j3"
           say={who ? `${who}님 달력을 짜던 밤이에요.` : "그대의 달력을 짜던 밤이에요."}
@@ -768,6 +778,17 @@ export function JiknyeoResult({
         //   값 카드(MonthCards·ShakyCards 등)는 인물이 아니라 계산이라 그대로 써도 된다.
         const after = !inyeon ? null
           : isReunion ? (
+              // 2장 — 죄책감을 걷어내는 장. 강가에서 건너편을 보는 컷(은하수가 강물에 비친다)이
+              // 「그날 강이 갈라졌다」는 장 제목을 그림으로 받는다. 본문 앞에 두어 숨을 한 번 준다.
+              /강이 갈라진 날/.test(t) ? (
+                <CutInterlude
+                  dir="reunion"
+                  id="g-river"
+                  say="강은 그날 스스로 갈라진 게 아닙니다."
+                  ratio="2 / 3"
+                  pos="center"
+                />
+              ) :
               /다리가 놓이는 달/.test(t) ? (
                 <>
                   <MonthCards rows={inyeon.top3} voice="gyeonu" />
@@ -838,7 +859,11 @@ export function JiknyeoResult({
 
       {/* 배웅 — 편지 바로 앞. 돌아보며 눈을 맞추는 컷이라 「저는 여기 있을게요」와 붙는다.
           마지막 10초가 후기·공유 직전 감정이라 여기에 사람 얼굴이 있어야 한다 */}
-      {!isReunion && <CutInterlude id="w5" say="여기까지 같이 왔네요." ratio="2 / 3" pos="center" />}
+      {isReunion ? (
+        <CutInterlude dir="reunion" id="g-farewell" say="여기까지 같이 왔습니다." ratio="2 / 3" pos="center" />
+      ) : (
+        <CutInterlude id="w5" say="여기까지 같이 왔네요." ratio="2 / 3" pos="center" />
+      )}
 
       {/* 마치며 — 3사 공통 표준. 낙관(도장) 앞에 편지가 와야 순서가 맞다 */}
       <ClosingLetter who={who} nearest={top3[0] ?? null} voice={isReunion ? "gyeonu" : "jiknyeo"} />

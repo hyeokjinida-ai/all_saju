@@ -1395,6 +1395,20 @@ export function SajuWizard({
             비용 0 짜리 이탈 방지 장치라 값도 버튼도 두지 않는다 — 견우가 한 마디 하고 넘어간다. */}
         {isReunion && step === R_COMFORT_STEP && (
           <div className="text-center">
+            {/* 견우 도입 컷 — 장부에 손을 얹고 올려다본다. 손님이 이별을 다 적은 직후라
+                이 화면이 이 퍼널에서 견우 얼굴을 처음 보는 자리다(랜딩 히어로 다음).
+                ⚠ 치수를 박는다 — 없으면 로드 전 높이가 0 이라 아래 문장이 읽는 도중에 밀린다. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/products/reunion/g-greet.webp"
+              alt="장부에 손을 얹고 올려다보는 견우"
+              width={1080}
+              height={1620}
+              loading="lazy"
+              draggable={false}
+              className="mx-auto mb-6 block w-[62%] max-w-[240px] select-none"
+              style={{ borderRadius: 10, border: "1px solid var(--gold-line)" }}
+            />
             <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "var(--bone)" }}>
               저도 일 년에 하루, 강 건너를 바라보는 놈입니다.
               <br />

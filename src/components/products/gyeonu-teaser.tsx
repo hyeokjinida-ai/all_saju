@@ -14,7 +14,8 @@
 //  ③ 말은 견우다: 담백한 존댓말(~합니다/~요). 재촉·압박·느끼한 말 금지, 분량 앵커 금지.
 //
 // ⚠ 직녀 그림(InyeonCut·SlotCut·SD 캐릭터)은 이 파일에서 한 장도 안 쓴다.
-//    화자가 다른데 직녀 얼굴이 나오면 그게 제일 큰 사고다. 견우 컷은 별도 발주 — 그때 슬롯만 채운다.
+//    화자가 다른데 직녀 얼굴이 나오면 그게 제일 큰 사고다.
+//    견우 컷은 `public/products/reunion/` 에만 있다(2026-09-04 3장 입고).
 import { useState } from "react";
 import { track } from "@/lib/analytics";
 import {
@@ -186,8 +187,24 @@ export function ReunionBreakupCheck({ data, name }: { data: Reunion; name: strin
         <BrushHead lines={[`${b.year}년${b.month ? ` ${b.month}월` : ""}, 그 무렵 흐름`]} />
       </div>
 
+      {/* 견우 컷 — 강가에서 건너편을 본다(은하수가 강물에 비친다). 채점 카드 **위**에 둔다:
+          손님이 「맞아요/아니에요」를 누르기 전에 한 박자 숨을 쉬는 자리다.
+          ⚠ 치수를 박는다 — 없으면 로드 전 높이가 0 이라 아래 버튼이 읽는 도중에 밀린다
+            (직녀 랜딩 실측: 이미지가 뜨면서 페이지가 +42% 자랐다). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/products/reunion/g-river.webp"
+        alt="은하수가 비친 강가에서 건너편을 보는 견우"
+        width={1080}
+        height={1620}
+        loading="lazy"
+        draggable={false}
+        className="mt-5 block w-full select-none"
+        style={{ borderRadius: 14, border: `1px solid ${LINE}` }}
+      />
+
       <div
-        className="mt-5 bg-white px-5 py-5"
+        className="mt-3 bg-white px-5 py-5"
         style={{ borderRadius: 14, border: `1px solid ${LINE}`, boxShadow: "0 10px 26px rgba(20,12,40,0.10)" }}
       >
         <p className="text-[17px] leading-[27px]" style={{ color: INK, fontWeight: 700 }}>
