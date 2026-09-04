@@ -75,6 +75,83 @@ function MaskWord({ text, tone = "dark" }: { text: string; tone?: "dark" | "ligh
 }
 
 /* ─────────────────────────────────────────────────────────
+   견우 컷 — 티저 안의 웹툰 컷 한 장.
+
+   왜 필요한가: 재회 티저는 T1~T5 가 전부 **글 카드**라 스크롤이 「그냥 글만 있는 거」로 읽혔다
+   (형님 실측 2026-09-05). 앞서 컷이 하나 있긴 했는데 T2(이별 시기를 적은 손님)에만 달려 있어
+   건너뛴 손님 화면에는 그림이 **0장**이었다 — 실측: 스킵 플로 티저의 <img> 개수 0.
+
+   문법은 셋을 합친 것이다:
+    ① 앞 여백 44px(정점 앞은 56) — 글 → (숨) → 그림. 붙여 두면 컷이 앞 카드의 삽화가 된다
+       (칠흑 48·54화 실측을 결과지 CutInterlude 가 이미 이 눈금으로 옮겨 놨다).
+    ② 원본 비율 그대로 풀블리드 — 컷은 판 끝까지, 카드·표는 한 단 안쪽(리포 공통 규칙).
+       음수 마진 16 = teaser-light 의 px-4. **20(-mx-5)을 쓰면 안 된다** — 이 판은
+       border-radius 18 짜리 떠 있는 카드라 4px 이 모서리 밖으로 삐져나온다.
+    ③ 대사는 **컷 밖 띠**에 앉힌다 — 컷 위에 얹으면 받치려고 안개를 깔게 되고 그 안개가
+       밤 그림을 절반 죽인다(2026-08-29 형님 검수 「그림이 죽는다」로 결과지에서 이미 걷어낸 길).
+       대신 「견우」 명패를 달아 캡션이 아니라 **대사**로 읽히게 한다.
+
+   ⚠ width/height 를 반드시 박는다. 없으면 로드 전 높이가 0 이라 읽는 도중에 아래가 밀린다.
+   ⚠ 직녀 컷은 여기 못 들어온다 — 자산은 `public/products/reunion/` 셋뿐이다.
+   ───────────────────────────────────────────────────────── */
+export function GyeonuCut({
+  id,
+  alt,
+  say,
+  /** 앞 여백 — 기본 44(웹툰 컷 앞 숨) · 정점 앞 56 · 판 맨 위 첫 컷 0(판의 py-10 이 이미 준다) */
+  gap = 44,
+  /** 첫 화면 컷만 eager. 나머지는 lazy — 세 장이 2:3 세로라 한꺼번에 받으면 첫 그림이 늦다. */
+  eager = false,
+}: {
+  id: "g-river" | "g-greet" | "g-farewell";
+  alt: string;
+  say: React.ReactNode;
+  gap?: number;
+  eager?: boolean;
+}) {
+  return (
+    // 마진은 인라인으로 박는다 — 되물릴 값(16)이 판의 패딩과 한 몸이라 클래스로 흩어 두면
+    // 패딩이 바뀔 때 한쪽만 고쳐져 가로 넘침이 난다.
+    <figure style={{ marginTop: gap, marginLeft: -16, marginRight: -16 }}>
+      {/* 밤 그림이 판(달빛 종이) 위에 얹히므로 로드 전 자리는 밤색으로 둔다 — 흰 사각형이
+          한 번 번쩍였다 사라지는 걸 막는다. */}
+      <div style={{ overflow: "hidden", background: "#0b0f1a" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/products/reunion/${id}.webp`}
+          alt={alt}
+          width={1080}
+          height={1620}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          draggable={false}
+          className="block w-full select-none"
+          style={{ height: "auto" }}
+        />
+      </div>
+      <figcaption className="px-5 pt-3.5 text-center">
+        {/* 명패 — 반전 절단(ReunionCut)과 같은 부품을 밝은 판용으로 뒤집은 것.
+            이게 있어야 아래 한 줄이 「사진 설명」이 아니라 「견우가 하는 말」로 읽힌다. */}
+        <span
+          className="inline-block rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
+          style={{ background: "#3A3350", color: "#F3F0EA" }}
+        >
+          견우
+        </span>
+        {/* 17px — 조판 위계 그대로(본문 15 < 대사 17 < 나레이션 19).
+            keep-all 이 없으면 한글이 글자 단위로 꺾여 「배웅은 제 / 가 합니다」가 된다. */}
+        <p
+          className="font-myeongjo mt-2 text-[17px]"
+          style={{ color: "#3A3350", lineHeight: 1.62, fontWeight: 600, wordBreak: "keep-all" }}
+        >
+          {say}
+        </p>
+      </figcaption>
+    </figure>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
    T1 — 오프닝 달력
    「언제」를 파는 상품이라 첫 화면이 달력이다(청월당 재회 티저도 달력 3장으로 연다).
    열두 칸을 다 세워 계산을 보여주되, 종류는 **한 칸만** 연다.
@@ -87,7 +164,20 @@ export function ReunionCalendar({ data, name }: { data: Reunion; name: string })
 
   return (
     <section>
-      <T>앞으로 열두 달</T>
+      {/* 오프닝 컷 — 티저의 **첫 화면**이다. 전엔 여기가 곧장 달력 카드라 판이 열리자마자
+          글부터 시작했다. 강가에서 건너편을 보는 컷을 앞에 세워 「웹툰이 시작된다」로 열고,
+          대사가 바로 아래 열두 칸으로 손을 넘긴다.
+          gap 0: 판의 py-10(40px)이 이미 위 여백이라, 여기서 44 를 더 주면 84px 이 비어 뜬다. */}
+      <GyeonuCut
+        id="g-river"
+        alt="은하수가 비친 강가에서 건너편을 보는 견우"
+        gap={0}
+        eager
+        say={`강 건너를 보면서 ${callMe(name)} 달력을 적어 두었습니다.`}
+      />
+      <div className="mt-14">
+        <T>앞으로 열두 달</T>
+      </div>
       <div className="mt-2">
         <BrushHead lines={["열두 칸을 다 세워 두었습니다"]} />
       </div>
@@ -187,24 +277,11 @@ export function ReunionBreakupCheck({ data, name }: { data: Reunion; name: strin
         <BrushHead lines={[`${b.year}년${b.month ? ` ${b.month}월` : ""}, 그 무렵 흐름`]} />
       </div>
 
-      {/* 견우 컷 — 강가에서 건너편을 본다(은하수가 강물에 비친다). 채점 카드 **위**에 둔다:
-          손님이 「맞아요/아니에요」를 누르기 전에 한 박자 숨을 쉬는 자리다.
-          ⚠ 치수를 박는다 — 없으면 로드 전 높이가 0 이라 아래 버튼이 읽는 도중에 밀린다
-            (직녀 랜딩 실측: 이미지가 뜨면서 페이지가 +42% 자랐다). */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/products/reunion/g-river.webp"
-        alt="은하수가 비친 강가에서 건너편을 보는 견우"
-        width={1080}
-        height={1620}
-        loading="lazy"
-        draggable={false}
-        className="mt-5 block w-full select-none"
-        style={{ borderRadius: 14, border: `1px solid ${LINE}` }}
-      />
-
+      {/* 여기 붙어 있던 g-river 컷은 **오프닝으로 승격**했다(2026-09-05).
+          이 블록은 「이별 시기를 적은 손님」에게만 뜬다 — 건너뛴 손님은 컷을 한 장도 못 봤고,
+          적은 손님은 오프닝과 같은 그림을 두 번 봤다. 컷은 조건부 자리에 두지 않는다. */}
       <div
-        className="mt-3 bg-white px-5 py-5"
+        className="mt-5 bg-white px-5 py-5"
         style={{ borderRadius: 14, border: `1px solid ${LINE}`, boxShadow: "0 10px 26px rgba(20,12,40,0.10)" }}
       >
         <p className="text-[17px] leading-[27px]" style={{ color: INK, fontWeight: 700 }}>
@@ -317,6 +394,14 @@ export function ReunionMoveOn({ data }: { data: Reunion }) {
       <div className="mt-2">
         <BrushHead lines={["다음 사람도 같은 장부에 있습니다"]} />
       </div>
+      {/* 배웅 컷 — 「강을 건너지 않는다면」의 **그림 짝**이다. 길이 뒤로 뻗고 견우가 돌아본다.
+          제목 → 붓글씨 → 그림 → 값 순서라, 표(다음 사람)가 대사를 받아 열리는 모양이 된다.
+          ⚠ 대사에 「건너」를 다시 쓰지 않는다 — 바로 위 제목이 그 말이라 두 번 읽힌다. */}
+      <GyeonuCut
+        id="g-farewell"
+        alt="별길이 뻗은 강가에서 뒤를 돌아보는 견우"
+        say="어느 쪽으로 가시든, 배웅은 제가 합니다."
+      />
       <div
         className="mt-5 overflow-hidden bg-white"
         style={{ borderRadius: 14, border: `1px solid ${LINE}`, boxShadow: "0 10px 26px rgba(20,12,40,0.10)" }}

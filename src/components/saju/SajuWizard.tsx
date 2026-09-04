@@ -36,6 +36,7 @@ import {
   ReunionMoveOn,
   ReunionCut,
   ReunionToc,
+  GyeonuCut,
 } from "@/components/products/gyeonu-teaser";
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
@@ -2992,7 +2993,23 @@ function TeaserStep({
 
           {/* T5 반전 절단 — 값을 읽어 주다 검정 판에서 끊는다. 그다음이 값(구매 카드)이다.
               ⚠ 재회 판에서 반전은 여기 하나뿐이다(직녀 컷·산군 컷은 이 상품에서 안 뜬다). */}
-          {isReunion && teaser.reunion && <ReunionCut data={teaser.reunion} />}
+          {isReunion && teaser.reunion && (
+            <>
+              {/* 정점 앞 한 박자 — **정면 대면 컷**이다. 돈 얘기는 마주 보고 한다(산군이
+                  teaser-face 를 결제 전환 자리에 쓰는 것과 같은 판단).
+                  실측 56 + 56: 컷 앞 56, 컷과 검정 판 사이 56. 숨을 두 번 벌려야 절단이
+                  「앞 카드의 각주」가 아니라 회차 마지막 대사로 선다.
+                  ⚠ 같은 g-greet 가 위저드 12단계(위로 화면)에도 있다. 열 화면쯤 떨어져 있고
+                    「마주 본다」가 두 번 다 그 자리의 뜻이라 그대로 둔다 — 바꾸려면 새 컷이 필요하다. */}
+              <GyeonuCut
+                id="g-greet"
+                alt="펼쳐 둔 장부에 손을 얹고 정면으로 마주 보는 견우"
+                gap={56}
+                say="이 아래부터는… 복채를 받고 폅니다."
+              />
+              <ReunionCut data={teaser.reunion} />
+            </>
+          )}
 
           {isReunion && (
             <JiknyeoBuyCard
