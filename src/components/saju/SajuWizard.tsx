@@ -2193,6 +2193,50 @@ function DestinyCard({ face }: { face: PartnerFace }) {
   );
 }
 
+/** 콜드오픈 배경 영상 — 정지 그림이 서 있던 자리를 그대로 채우는 무음 클립.
+ *
+ *  ⚠ React 는 `muted` 를 **SSR 마크업에 안 찍는다**(속성이 아니라 프로퍼티로만 붙인다).
+ *    그래서 첫 페인트의 <video> 를 브라우저가 「소리 있는 영상」으로 보고 자동재생을 막아
+ *    poster 만 남는 일이 생긴다. 마운트 때 ref 로 el.muted 를 직접 세운 뒤 play() 를 한 번 부른다.
+ *    거부되면(저전력·데이터 절약 모드) 조용히 삼켜 poster(기존 webp)가 그대로 보이게 둔다 —
+ *    영상이 안 도는 환경에서도 첫 화면은 전과 똑같다.
+ *
+ *  loop=false(신당)면 끝 프레임에서 멈춘다 — 카메라가 계단을 타고 올라가는 컷이라 되감기면 튄다. */
+function ColdOpenVideo({
+  src,
+  poster,
+  loop = false,
+}: {
+  src: string;
+  poster: string;
+  loop?: boolean;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    void el.play().catch(() => {});
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop={loop}
+      playsInline
+      preload="auto"
+      aria-hidden
+      tabIndex={-1}
+      disablePictureInPicture
+      draggable={false}
+      className="pointer-events-none h-full w-full select-none object-cover"
+    />
+  );
+}
+
 // 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
 // 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
 function TeaserStep({
@@ -2313,15 +2357,12 @@ function TeaserStep({
   //   (941/1672 · 1122/1402) aspectRatio 를 직접 준다.
   const coldOpenBlock = useColdOpen ? (
     <div>
-      {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다. */}
+      {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다.
+          카메라가 계단을 타고 올라가는 7초 컷이라 **루프 없이** 한 번 돌고 끝 프레임에서 선다
+          (되감으면 올라가던 계단이 다시 아래로 떨어져 도입의 정적이 깨진다).
+          poster 는 전에 쓰던 정지 그림 그대로 — 영상이 안 도는 환경에서 첫 화면이 변하지 않는다. */}
       <div className="relative -mx-5 overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/products/sangun/t0-shrine.webp"
-          alt=""
-          className="h-full w-full select-none object-cover"
-          draggable={false}
-        />
+        <ColdOpenVideo src="/products/sangun/t0-shrine-dyn.mp4" poster="/products/sangun/t0-shrine.webp" />
       </div>
       <div style={{ height: 200 }} />
       {/* 어둠 위 공수 한 줄 — 기존 t1 대사의 **앞줄**이 여기로 올라왔다(t1 은 뒷줄만 남는다). */}
@@ -2336,13 +2377,8 @@ function TeaserStep({
       <div style={{ height: 160 }} />
       {/* 화면2 — 산군의 기척(신당 벽 호랑이 탱화). 아직 사람은 안 준다. 글자 0. */}
       <div className="relative -mx-5 overflow-hidden" style={{ aspectRatio: "1122 / 1402" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/products/sangun/t0-tiger.webp"
-          alt=""
-          className="h-full w-full select-none object-cover"
-          draggable={false}
-        />
+        {/* 이쪽은 촛불만 흔들리는 무이음 루프라 계속 돈다(loop). 그라데이션은 그대로 위에 얹는다. */}
+        <ColdOpenVideo src="/products/sangun/t0-tiger-loop.mp4" poster="/products/sangun/t0-tiger.webp" loop />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
