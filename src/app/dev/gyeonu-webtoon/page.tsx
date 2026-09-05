@@ -9,25 +9,33 @@
  * ⚠ 값은 전부 가짜다. 문장·수치의 정본은 `computeReunionFacts` → `buildReunionTeaser` 다.
  *    여기 값을 보고 카피를 고치지 말 것 — 조판만 본다.
  */
+"use client";
+
+import { useEffect } from "react";
 import type { ReunionTeaser } from "@/lib/saju/teaser";
 import { GyeonuWebtoon } from "@/components/products/gyeonu-teaser";
 
 const FIXTURE: ReunionTeaser = {
   calendar: [
-    { year: 2026, month: 9, kind: "contactNo", locked: false },
-    { year: 2026, month: 10, kind: "quiet", locked: true },
-    { year: 2026, month: 11, kind: "contactOk", locked: true },
-    { year: 2026, month: 12, kind: "quiet", locked: true },
-    { year: 2027, month: 1, kind: "reconnect", locked: true },
-    { year: 2027, month: 2, kind: "quiet", locked: true },
-    { year: 2027, month: 3, kind: "contactOk", locked: true },
-    { year: 2027, month: 4, kind: "quiet", locked: true },
-    { year: 2027, month: 5, kind: "contactNo", locked: true },
-    { year: 2027, month: 6, kind: "quiet", locked: true },
-    { year: 2027, month: 7, kind: "reconnect", locked: true },
-    { year: 2027, month: 8, kind: "quiet", locked: true },
+    { year: 2026, month: 9, kind: "먼저 연락하면 안 되는 달", locked: false },
+    { year: 2026, month: 10, kind: "그냥 지나가는 달", locked: true },
+    { year: 2026, month: 11, kind: "연락해도 되는 달", locked: true },
+    { year: 2026, month: 12, kind: "그냥 지나가는 달", locked: true },
+    { year: 2027, month: 1, kind: "다리가 놓이는 달", locked: true },
+    { year: 2027, month: 2, kind: "그냥 지나가는 달", locked: true },
+    { year: 2027, month: 3, kind: "연락해도 되는 달", locked: true },
+    { year: 2027, month: 4, kind: "그냥 지나가는 달", locked: true },
+    { year: 2027, month: 5, kind: "먼저 연락하면 안 되는 달", locked: true },
+    { year: 2027, month: 6, kind: "그냥 지나가는 달", locked: true },
+    { year: 2027, month: 7, kind: "다리가 놓이는 달", locked: true },
+    { year: 2027, month: 8, kind: "그냥 지나가는 달", locked: true },
   ],
-  revealed: { year: 2026, month: 9, kind: "contactNo", desc: "이 달에 보낸 말은 반대로 갑니다." },
+  revealed: {
+    year: 2026,
+    month: 9,
+    kind: "먼저 연락하면 안 되는 달",
+    desc: "이 달에 보낸 말은 반대로 갑니다.",
+  },
   lockedCount: 11,
   reconnectCount: 2,
   contactOkCount: 2,
@@ -55,11 +63,35 @@ const FIXTURE: ReunionTeaser = {
 };
 
 export default function DevGyeonuWebtoonPage() {
+  // 캡처 준비 — **hydration 이 끝난 뒤에** 손댄다.
+  //  · 컷은 lazy 라 화면 밖이면 안 받는다. 헤드리스로 통짜를 찍으면 아래쪽이 검게 나온다
+  //    (2026-09-05 실측: shoot-long 첫 판에서 컷 3~6 이 빈 판이었다).
+  //  · ⚠ 이걸 인라인 <script> 로 넣었다가 loading/decoding 이 서버 HTML 과 어긋나
+  //    **hydration mismatch** 를 만들었다(같은 날 실측). DOM 조작은 useEffect 안에서만.
+  //  · dev 오버레이 배지는 캡처에서 말풍선을 가린다 — 검사대에서만 숨긴다.
+  useEffect(() => {
+    document.querySelectorAll("img").forEach((i) => {
+      i.loading = "eager";
+      // ⚠ loading 을 바꾸는 것만으론 **이미 lazy 로 미뤄진 건 안 받는다**(2026-09-05 실측:
+      //    속성만 바꾼 판은 등불·강 건너 컷이 빈 판으로 찍혔다).
+      //    같은 값을 재할당(`i.src = i.src`)해도 브라우저가 무시한다 — **빈 문자열을 거쳐야** 다시 받는다.
+      if (!i.complete) {
+        const src = i.src;
+        i.src = "";
+        i.src = src;
+      }
+    });
+    const s = document.createElement("style");
+    s.textContent = "nextjs-portal{display:none!important}";
+    document.head.appendChild(s);
+    return () => s.remove();
+  }, []);
+
   return (
     <main style={{ background: "#070a12", minHeight: "100vh" }}>
       {/* 위저드 컨테이너의 px-5 를 흉내 낸다 — 웹툰부의 -mx-5 가 이걸 되물려야 폭이 실물과 같다. */}
       <div className="mx-auto w-full max-w-[430px] px-5">
-        <GyeonuWebtoon data={FIXTURE} name="서윤" />
+        <GyeonuWebtoon data={FIXTURE} name="서윤" eagerAll />
       </div>
     </main>
   );

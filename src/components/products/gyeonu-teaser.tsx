@@ -263,8 +263,9 @@ function GyeonuBubble({ lines, tail, box }: { lines: string[]; tail: SayTail; bo
 
 /** 웹툰부 컷 한 장 — 그림 + (말풍선 | 나레이션).
  *
- *  나레이션이 **밝은 띠 박스가 아닌** 이유: 띠를 깔면 컷이 거기서 끝나 버려 밤이 끊긴다.
- *  웹툰 나레이션은 그림 아래쪽을 어둡게 눌러 그 위에 흰 글씨를 얹는다 — 컷은 그대로 이어진다.
+ *  나레이션은 여기 없다 — 컷 **밖** `<Narration>` 이 맡는다(2026-09-05 이전).
+ *  옛 주석은 「띠를 깔면 밤이 끊긴다」였는데, 박스 없이 밤 위에 글자만 놓으면 밤은 안 끊긴다.
+ *  그리고 이제는 컷이 끊겨야 하는 게 목표다.
  *  ⚠ width/height 를 반드시 박는다. 없으면 로드 전 높이가 0 이라 읽는 도중 아래가 밀린다. */
 function WebtoonPanel({
   id,
@@ -272,7 +273,6 @@ function WebtoonPanel({
   /** 앞 숨 — 컷 **관계**로 정한다. 하나로 통일하면 안 된다(아래 숨 대역표). */
   gap = 128,
   eager = false,
-  narrate,
   say,
   /** 가로 밴드로 눌러 쓸 때 — `ratio`는 폭:높이, `focus`는 원본에서 살릴 세로 위치(%).
    *  안 주면 원본 비율(2:3) 그대로 깐다. 빨리 지나갈 컷(설명·전경·브리지)에만 쓴다. */
@@ -285,7 +285,6 @@ function WebtoonPanel({
   alt: string;
   gap?: number;
   eager?: boolean;
-  narrate?: React.ReactNode;
   say?: { lines: string[]; tail: SayTail; box: SayBox };
   band?: { ratio: string; focus: number };
   inset?: number;
@@ -325,34 +324,73 @@ function WebtoonPanel({
             : { display: "block", width: "100%", height: "auto" }
         }
       />
-      {narrate && (
-        <figcaption
-          data-narrate
-          className="absolute inset-x-0 bottom-0"
-          style={{
-            padding: "56px 20px 20px",
-            background:
-              "linear-gradient(180deg, rgba(4,6,12,0) 0%, rgba(4,6,12,0.58) 36%, rgba(4,6,12,0.90) 72%, rgba(4,6,12,0.96) 100%)",
-          }}
-        >
-          <p
-            className="font-myeongjo"
-            style={{
-              margin: 0,
-              color: "#F5F2EC",
-              fontSize: "clamp(15px, 4.6cqw, 19px)",
-              lineHeight: 1.6,
-              fontWeight: 600,
-              wordBreak: "keep-all",
-              textShadow: "0 1px 10px rgba(0,0,0,0.85)",
-            }}
-          >
-            {narrate}
-          </p>
-        </figcaption>
-      )}
       {say && <GyeonuBubble {...say} />}
     </figure>
+  );
+}
+
+/** 컷 **밖** 나레이션 — 밤 위에 글자만. 박스도, 그라데이션 띠도 없다.
+ *
+ *  왜 밖으로 나왔나(2026-09-05): 컷 안에 두면 그림과 글을 **동시에** 소비하고 거기서 끝난다.
+ *  밖으로 빼면 「그림 본다 → 글 읽는다 → 다음 그림을 기대한다」 3박자가 되고, 문장이
+ *  이미지 설명이 아니라 **다음 컷을 여는 문**이 된다. 결제 벽까지 끌고 가는 게 목적이라
+ *  이쪽이 맞다(경쟁사 타이트사주 문법 · 형님 픽 2026-09-05).
+ *  밴드 컷은 특히 못 품는다 — 189px 컷에 나레이션을 얹으면 그림의 61%가 글자로 덮인다(실측).
+ *
+ *  자리 규칙: **위 숨은 짧게, 아래 숨은 길게.** 문장이 앞 컷에 붙어 있어야 그 컷의 말로 읽힌다.
+ *  아래 숨은 이 요소가 아니라 **다음 패널의 gap** 이 맡는다(margin 이 겹치지 않게).
+ *  대사(말풍선)는 그림에 붙인 채로 둔다 — 표정과 함께 읽혀야 하는 건 나레이션이 아니라 대사다. */
+function Narration({ above, children }: { above: number; children: React.ReactNode }) {
+  return (
+    <p
+      data-narrate
+      className="font-myeongjo"
+      style={{
+        marginTop: above,
+        marginBottom: 0,
+        // 폭을 묶는다 — 375 를 다 쓰면 한 줄이 길어져 두 눈에 안 들어온다(권장 280~300).
+        maxWidth: 296,
+        marginLeft: "auto",
+        marginRight: "auto",
+        paddingLeft: 20,
+        paddingRight: 20,
+        textAlign: "center",
+        color: "rgba(255,255,255,0.91)",
+        fontSize: 19, // 조판 위계: 본문 15 < 대사 17 < 나레이션 19
+        lineHeight: "30px",
+        fontWeight: 500,
+        wordBreak: "keep-all",
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+// ⚠ 나레이션 줄은 **직접 끊는다**(`<br />`). 자동 줄바꿈에 맡기면 폭 296 에서
+//   「…쪽도, 보이는 / 데까지 봤습니다」·「…달에는, 강이 / 이렇게 됩니다」처럼
+//   한 덩어리가 갈라진다(2026-09-05 실측). 문장 하나가 한 줄이다.
+
+/** 침묵 — 정점 직전 한 곳에만 쓰는 점 리더.
+ *
+ *  이 구간에는 **글자를 같이 두지 않는다.** 페이지에서 유일하게 아무 말도 안 하는 자리라
+ *  나레이션과 겹치면 그 침묵이 사라진다. 정중앙이 아니라 위쪽에 두는 이유: 점이 화면 가운데
+ *  들어온 뒤에도 **아래에 빈 공간이 남아야** 다음 컷이 늦게 오는 느낌이 생긴다. */
+function DotRest({ above }: { above: number }) {
+  return (
+    <div
+      aria-hidden
+      data-rest
+      style={{
+        marginTop: above,
+        textAlign: "center",
+        letterSpacing: "0.5em",
+        fontSize: 13,
+        lineHeight: "14px",
+        color: "rgba(255,255,255,0.52)",
+      }}
+    >
+      · · ·
+    </div>
   );
 }
 
@@ -373,20 +411,43 @@ function WebtoonPanel({
  * 비교군(같은 자):  프로 웹툰 6회차 숨 16~37% · 청월당 재회 티저 12~71%
  *
  * 숨은 **하나로 통일하지 않는다.** 14 를 120 으로 바꾸면 메트로놈만 옮겨 놓는 꼴이다.
- * 컷과 컷의 **관계**로 정한다(563px 컷 기준):
+ * 컷과 컷의 **관계**로 정한다.
  *
- *   같은 장면의 연속        96px    p-farshore→p-magpie (배경끼리, 속도를 올리는 자리)
- *   보통의 컷 전환         128px    g-river→p-lanterns
- *   시점·감정 전환         160px    p-lanterns→p-farshore · p-bridge→g-greet
- *   중요한 대사 직전       180px    p-split→g-river
- *   정점 직전             260px    p-magpie→p-bridge
+ * 그리고 그 숨은 **비어 있지 않다** — 나레이션이 거기 산다(2026-09-05 2차).
+ * 컷 사이는 「빈 공간」이 아니라 **narrative slot = 위 숨 + 글 + 아래 숨** 이다.
+ * 텍스트 높이만큼 gap 에서 기계적으로 빼면 안 된다. 슬롯 통째로 다시 잡는다:
+ *
+ *   슬롯            위 숨   글    아래 숨   합    자리
+ *   1줄·앞 컷 소유    52    30     110     192   강 → 「그날, 강이 갈라졌습니다」 → 강가
+ *   2줄·앞 컷 소유    52    60      72     184   등불 → 「등불 하나가 한 달입니다」 → 강 건너
+ *   1줄·앞 컷 소유    48    30      64     142   강 건너 → 「보이는 데까지 봤습니다」 → 까치
+ *   1줄 + 침묵       52    30   118+128   328   까치 → 「따로 있습니다」 → · · · → 오작교
+ *   1줄·앞 컷 소유    52    30     110     192   오작교 → 「강이 이렇게 됩니다」 → 대면
+ *
+ * 위 숨(48~52) < 아래 숨(64~128) 인 게 규칙이다 — 문장이 앞 컷에 붙어 있어야 그 컷의 말로 읽힌다.
+ * 아래 숨은 나레이션이 아니라 **다음 패널의 gap** 이 맡는다(margin 겹침 방지).
+ * 말풍선이 있는 컷(g-river·g-greet)의 gap 110 은 풍선이 위로 34·45px 먹는 걸 감안한 값이다.
  *
  * 크기도 같이 흔든다 — 높이만 흔들면 「폭 375 고정」이 남아 랜딩페이지로 읽힌다:
- *   190(밴드·인셋) → 563 → 330(밴드) → 563 → 495(인셋) → 563 → 563
+ *   563 → 563 → 190(밴드·인셋) → 495(인셋) → 330(밴드) → 563 → 563
+ *
+ * 나레이션 overlay 하한(점유율 = 글 높이 ÷ 컷 높이): 컷 <330px 금지 · 330~420 1줄만 ·
+ * ≥480 2줄 허용. 우리 밴드 컷은 189·330 이라 **둘 다 못 품는다** — 그래서 전부 밖으로 뺐다.
  * 정점은 컷을 새로 뽑지 않는다. 프로의 733~1170px 은 그림 한 장의 높이가 아니라
  * **독자가 그 장면에 쓰는 세로 공간**이다: 260(앞숨) + 563(컷) + 160(뒷숨) = 983px 로 이미 대역 안.
  */
-export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
+export function GyeonuWebtoon({
+  data,
+  name,
+  /** 컷을 전부 즉시 받는다 — **조판 검사대(`/dev/gyeonu-webtoon`) 전용**이다. 손님 화면에선 쓰지 않는다.
+   *  왜 필요하냐: 캡처용 크롬은 뷰포트 밖 컷을 lazy 로 미뤄 통짜 캡처의 아래쪽이 빈 판으로 찍힌다.
+   *  페이지 쪽 useEffect 로 되받아 오는 건 그 크롬에서 안 먹었다(2026-09-05 실측) — 렌더 시점부터 eager 여야 한다. */
+  eagerAll = false,
+}: {
+  data: Reunion;
+  name: string;
+  eagerAll?: boolean;
+}) {
   return (
     <section
       data-webtoon
@@ -417,20 +478,17 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
 
       {/* ① 콜드오픈 — 사람도 말도 없이 갈라진 강 하나로 연다(웹툰 1화가 사건으로 시작하는 문법).
           eager: 티저 컷 아홉 장 중 **이 한 장만** 즉시 받는다. */}
-      <WebtoonPanel
-        id="p-split"
-        alt="두 갈래로 갈라져 흐르는 밤의 강"
-        gap={0}
-        eager
-        narrate="그날, 강이 갈라졌습니다."
-      />
+      <WebtoonPanel id="p-split" alt="두 갈래로 갈라져 흐르는 밤의 강" gap={0} eager />
+      <Narration above={52}>그날, 강이 갈라졌습니다.</Narration>
 
       {/* ② 화자 등장 — 앞 컷의 사건을 받아 「그래서 내가 적어 뒀다」로 잇는다.
-          앞 숨 200: 대사가 이 숨 위에 앉는다(아래 16px 만 컷 하늘에 걸침). */}
+          앞 숨 110: 위 나레이션과 이 컷 사이. 대사 말풍선이 그중 34px 를 위로 먹으므로
+          글에서 풍선까지 76px 이 남는다 — 여기를 80 아래로 줄이면 둘이 붙어 읽힌다. */}
       <WebtoonPanel
         id="g-river"
+        eager={eagerAll}
         alt="은하수가 비친 강가에서 건너편을 보는 견우"
-        gap={180}
+        gap={110}
         say={{
           tail: "br",
           box: GYEONU_SAY_BOX["g-river"],
@@ -445,54 +503,72 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
           꺾여 한 낱말이 두 줄에 걸린다(실측). 나레이션은 문장 하나가 한 줄이다. */}
       <WebtoonPanel
         id="p-lanterns"
+        eager={eagerAll}
         alt="강물 위에 뜬 등불들, 앞쪽 하나만 환하다"
         // 설명 컷 = 빨리 지나가야 하는 자리 → 가로로 눌러 앉힌다(밝은 등불 하나가 한가운데 오는 focus 50).
         gap={128}
         band={{ ratio: "335 / 190", focus: 50 }}
         inset={89}
-        narrate={
-          <>
-            등불 하나가 한 달입니다.
-            <br />
-            {data.revealed ? "지금 밝은 건 하나뿐입니다." : "불은 결과지에서 켭니다."}
-          </>
-        }
       />
+      {/* 이 컷이 나레이션을 밖으로 뺀 **이유 그 자체**다. 189px 컷에 두 줄을 얹으면
+          그림의 61%가 글자에 덮여 「그림 깔린 텍스트 박스」가 된다(실측). */}
+      <Narration above={52}>
+        등불 하나가 한 달입니다.
+        <br />
+        {data.revealed ? "지금 밝은 건 하나뿐입니다." : "불은 결과지에서 켭니다."}
+      </Narration>
 
       {/* ④ 시점 전환 — 여기서 처음 카메라가 강 건너를 본다. 얼굴은 안 그린다(그 사람 얼굴을
           그리면 손님이 실제 사람과 대조하기 시작하고, 상품부의 행동 패턴 세 줄이 무너진다). */}
       <WebtoonPanel
         id="p-farshore"
+        eager={eagerAll}
         alt="강 건너 멀리 서 있는 사람의 뒷모습"
         // ⚠ 이 컷만 밴드로 안 누른다. 200px 로 자르면 실루엣이 프레임 밖으로 나가
         //    「강 건너 그 사람」이라는 컷의 뜻이 통째로 죽는다(25/50/70 전부 실측).
         //    대신 **폭을 좁혀** 조용한 응시 컷으로 만든다 — 그림은 원본 그대로 다 산다.
-        gap={160}
+        gap={72}
         inset={88}
-        narrate="강 건너 그 사람 쪽도, 보이는 데까지 봤습니다."
       />
+      <Narration above={48}>
+        강 건너 그 사람 쪽도,
+        <br />
+        보이는 데까지 봤습니다.
+      </Narration>
 
       {/* ⑤ 까치 = 소식. 잠금 목록을 「안 주는 것」이 아니라 「오는 것」으로 뒤집는 컷이다.
           ⚠ 달을 말하지 않는다 — 「따로 있습니다」에서 끊는 게 이 컷의 일이다. */}
       <WebtoonPanel
         id="p-magpie"
+        eager={eagerAll}
         alt="발목에 서찰을 묶고 은하수를 건너 나는 까치"
         // 앞 두 컷(190·495)을 지나 190 → 330 → 563(정점)으로 커지며 정점을 민다.
-        // 앞 숨 96 = 이 표에서 제일 짧은 숨 — 까치는 앞 컷에 붙여 속도를 올리는 자리다.
-        gap={96}
+        gap={64}
         band={{ ratio: "375 / 330", focus: 50 }}
-        narrate="소식이 건너오는 달이… 따로 있습니다."
       />
+      <Narration above={52}>
+        소식이 건너오는 달이…
+        <br />
+        따로 있습니다.
+      </Narration>
 
       {/* ⑥ 정점 — 오작교. 티저에서 제일 큰 그림이고 유일하게 아무것도 안 가린 약속이다.
-          앞 여백 56(정점 앞 큰 숨): 앞 컷에 붙여 두면 까치 컷의 뒷장으로 읽힌다.
+          앞이 **페이지에서 유일한 침묵 구간**이다(글 0, 점 하나). 점을 위쪽(118)에 두고
+          아래 128 을 비우는 이유는 점이 화면 가운데 온 뒤에도 빈 공간이 남아야
+          다음 컷이 늦게 오기 때문이다.
           대사는 사실만 — 「다시 이어집니다」로 단정하면 재회가 안 되는 손님에게 거짓말이 된다. */}
+      <DotRest above={118} />
       <WebtoonPanel
         id="p-bridge"
+        eager={eagerAll}
         alt="수백 마리 까치가 은하수 위로 다리를 이룬 밤"
-        gap={260}
-        narrate="다리가 놓이는 달에는, 강이 이렇게 됩니다."
+        gap={128}
       />
+      <Narration above={52}>
+        다리가 놓이는 달에는,
+        <br />
+        강이 이렇게 됩니다.
+      </Narration>
 
       {/* ⑦ 대면 — 돈 얘기는 마주 보고 한다. 앞 숨 200 위에 대사를 올리고 아래 16px 만
           컷 하늘에 걸친다(얼굴 y26~42·양손 y38~52·y76~91 을 전부 비킨다).
@@ -500,8 +576,9 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
             떨어져 있고 「마주 본다」가 두 번 다 그 자리의 뜻이라 그대로 둔다 — 바꾸려면 새 컷이 필요하다. */}
       <WebtoonPanel
         id="g-greet"
+        eager={eagerAll}
         alt="펼쳐 둔 장부에 손을 얹고 정면으로 마주 보는 견우"
-        gap={160}
+        gap={110}
         say={{
           // 대사가 컷 위로 올라갔으니 꼬리도 아래(얼굴 쪽)를 가리켜야 한다 — tr 이면 허공을 가리킨다.
           tail: "br",
