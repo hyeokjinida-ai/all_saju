@@ -398,11 +398,13 @@ function Narration({
         marginTop: above,
         marginBottom: 0,
         // 폭을 묶는다 — 375 를 다 쓰면 한 줄이 길어져 두 눈에 안 들어온다.
-        maxWidth: 320,
+        // 폭·패딩 실측(2026-09-05): 24px 한글은 실폭 280 에서 한 줄 12자가 한계다.
+        // 320/20 으로 두었더니 두 줄로 쓴 등불 문장이 **네 줄로 깨졌다**. 실폭 304 로 넓힌다.
+        maxWidth: 336,
         marginLeft: "auto",
         marginRight: "auto",
-        paddingLeft: 20,
-        paddingRight: 20,
+        paddingLeft: 16,
+        paddingRight: 16,
         textAlign: "center",
         color: accent ? STAR : "rgba(255,255,255,0.82)",
         // 24px 인 이유: 19 로 두니 여백에 나와도 캡션으로 읽혔다. 경쟁사 실물은 이 자리 글자가
@@ -802,7 +804,7 @@ export function GyeonuWebtoon({
         say={{
           tail: "br",
           box: GYEONU_SAY_BOX["g-river"],
-          lines: ["강 건너를 보면서", `${callMe(name)} 달력을`, "적어 두었습니다."],
+          lines: [`${callMe(name)}, 시선이`, "강 건너에", "있네요."],
         }}
       />
 
@@ -824,10 +826,12 @@ export function GyeonuWebtoon({
       />
       {/* 이 컷이 나레이션을 밖으로 뺀 **이유 그 자체**다. 189px 컷에 두 줄을 얹으면
           그림의 61%가 글자에 덮여 「그림 깔린 텍스트 박스」가 된다(실측). */}
+      {/* 규칙 한 줄 + 서사 한 줄. 규칙을 통째로 빼면 뒤의 열두 칸 격자와 「다리가 놓이는 달」이
+          설 자리를 잃는다 — 손님은 여기서 딱 한 번 「등불 = 한 달」을 배운다. */}
       <Narration above={44}>
         등불 하나가 <Hi>한 달</Hi>입니다.
         <br />
-        {data.revealed ? "지금 밝은 건 하나뿐입니다." : "불은 결과지에서 켭니다."}
+        {data.revealed ? "아직 빛나는 게 있습니다." : "불은 결과지에서 켭니다."}
       </Narration>
 
       {/* ▶ 증거 ① — 이야기가 「등불 하나 = 한 달」을 가르친 **직후**에 그 한 칸을 실제로 연다.
@@ -868,10 +872,11 @@ export function GyeonuWebtoon({
         inset={88}
         align="left"
       />
+      {/* 「보이는 데까지 봤습니다」는 작업 보고처럼 들렸다 — 손님이 보던 쪽을 견우가 같이 본 것으로 돌린다. */}
       <Narration above={44}>
         강 건너 그 사람 쪽도,
         <br />
-        <Hi>보이는 데까지</Hi> 봤습니다.
+        <Hi>함께</Hi> 살펴봤습니다.
       </Narration>
 
       {/* ▶ 증거 ② — 「봤습니다」 바로 뒤에 무엇을 봤는지 내놓는다. 손님이 O/X 로 직접
@@ -921,6 +926,28 @@ export function GyeonuWebtoon({
           「그래서 어떻게 되는데」의 답으로 읽힌다. */}
       <NightRival data={data} above={72} />
 
+      {/* ▶ 반응 ③ — 연적 카드를 읽은 직후. 여기서 처음 견우의 표정이 **굳는다**.
+          응시(관찰) → 미소(맞혔죠) → 굳음(불안 전조) 순으로 감정이 올라가고, 그 상태로
+          침묵을 지나 정점에 닿는다.
+          ⚠ 넷째 「돌아봄」은 일부러 안 넣었다 — 바로 뒤 대면 컷(g-greet)과 감정 기능이 겹치고,
+            얼굴 500px 컷이 여섯 장이 되면 서로 비슷해져 평평해진다. 그 컷은 가격 뒤
+            배웅·목차 연결용으로 남겨 둔다. */}
+      <WebtoonPanel
+        id="g-face-down"
+        eager={eagerAll}
+        fade="both"
+        alt="등불 아래 장부를 내려다보며 표정이 굳은 견우"
+        gap={72}
+        band={{ ratio: "1080 / 1440", focus: 50 }}
+        inset={86}
+        align="right"
+      />
+      <Narration above={44}>
+        여기서는 조금
+        <br />
+        다르게 보입니다.
+      </Narration>
+
       {/* ⑥ 정점 — 오작교. 티저에서 제일 큰 그림이고 유일하게 아무것도 안 가린 약속이다.
           앞이 **페이지에서 유일한 침묵 구간**이다(글 0, 점 하나). 점을 위쪽(118)에 두고
           아래 128 을 비우는 이유는 점이 화면 가운데 온 뒤에도 빈 공간이 남아야
@@ -957,7 +984,7 @@ export function GyeonuWebtoon({
           // 대사가 컷 위로 올라갔으니 꼬리도 아래(얼굴 쪽)를 가리켜야 한다 — tr 이면 허공을 가리킨다.
           tail: "br",
           box: GYEONU_SAY_BOX["g-greet"],
-          lines: ["이 아래부터는…", "복채를 받고", "폅니다."],
+          lines: ["여기부터는,", "복채를 받고", "펼쳐 드립니다."],
         }}
       />
 
