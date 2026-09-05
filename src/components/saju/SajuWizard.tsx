@@ -108,6 +108,12 @@ type Props = {
   demo?: DemoPreset | null;
   /** 직녀 에셋 슬롯 — 서버(page.tsx)가 디스크를 훑어 내려보낸다. 없으면 라벨 패널로 선다. */
   jiknyeoAssets?: AssetMap;
+  /**
+   * `?cold=1` — 산군 티저를 **콜드오픈 판**으로 연다(그림 먼저 · 헤더·제목·하단 고정바는
+   * 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). 기본값 false 라 **스위치가 없으면 전과 같다**.
+   * 산군(sangun-sinjeom) 아닌 상품에는 켜도 아무 효과가 없다(inColdOpen · useColdOpen 이 slug 로 한 번 더 가른다).
+   */
+  coldOpen?: boolean;
 };
 
 /** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
@@ -371,6 +377,7 @@ export function SajuWizard({
   bgVideo,
   demo = null,
   jiknyeoAssets,
+  coldOpen = false,
 }: Props) {
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
@@ -411,16 +418,19 @@ export function SajuWizard({
   // 고민(자유 입력) 칸 — 재회만 뒤로 옮긴다(사연은 이별 얘기를 다 한 뒤에 나온다).
   const concernStep = isReunion ? R_CONCERN_STEP : CONCERN_STEP;
   const [step, setStep] = useState(0);
-  // 산군 콜드오픈 — 웹툰 몰입 실측(2026-09-03) 4작품 만장일치의 도입 문법을 그대로 옮긴 것:
+  // 산군 콜드오픈(`?cold=1` 일 때만) — 웹툰 몰입 실측(2026-09-03) 4작품 만장일치의 도입 문법:
   // **그림이 먼저**고 이름·설명·UI 는 타이틀 드랍 뒤에 온다. 그때까지는 헤더(이전·진행바)도
   // 하단 고정바도 아예 **안 그린다** — display 토글이 아니라 미렌더다(숨긴 요소가 자리를
   // 먹으면 첫 화면이 그만큼 밀려 「그림으로 시작」이 깨진다).
   // 타이틀 드랍 직후의 감시점(TeaserStep 의 sentinel)을 지나면 켜지고, 그 뒤로 계속 켜져 있다.
   // 360폰 첫 화면에서 CTA 가 사라지는 것은 **의도된 변경**이다(형님 확정 2026-09-05).
+  // ⚠ 이 판 전체가 `?cold=1` 뒤에 있다 — 스위치가 없으면 아래 게이트가 하나도 안 걸려
+  //   운영 티저의 DOM 이 스위치 이전(937a2af)과 같다. 「기존 건 바꾸지 말고 따로 빼서」(9/5).
   const [coldOpenDone, setColdOpenDone] = useState(false);
   const markColdOpenDone = useCallback(() => setColdOpenDone(true), []);
-  /** 지금이 콜드오픈 구간인가 — 산군 티저 화면에서 타이틀 드랍을 아직 안 지난 상태. */
-  const inColdOpen = productSlug === "sangun-sinjeom" && step === teaserStep && !coldOpenDone;
+  /** 지금이 콜드오픈 구간인가 — `?cold=1` 인 산군 티저 화면에서 타이틀 드랍을 아직 안 지난 상태.
+   *  이 하나가 false 면 헤더 게이트·제목 게이트·data-cold-open 신호가 한꺼번에 잠긴다. */
+  const inColdOpen = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep && !coldOpenDone;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
   // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
@@ -1649,6 +1659,7 @@ export function SajuWizard({
             }
             jiknyeoAssets={jiknyeoAssets}
             // 콜드오픈 — 감시점은 티저 안에 있고(타이틀 드랍 직후), 헤더·고정바는 부모가 그린다.
+            coldOpen={coldOpen}
             coldOpenDone={coldOpenDone}
             onColdOpenDone={markColdOpenDone}
           />
@@ -2198,6 +2209,7 @@ function TeaserStep({
   compareAtPrice,
   bundleLine,
   jiknyeoAssets,
+  coldOpen = false,
   coldOpenDone = true,
   onColdOpenDone,
 }: {
@@ -2214,6 +2226,8 @@ function TeaserStep({
   compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
   bundleLine?: string; // 번들 예고 한 줄 — 추천 번들 값은 부모가 만들어 내린다
   jiknyeoAssets?: AssetMap;
+  /** `?cold=1` — 콜드오픈 판으로 그릴 것인가. false(기본)면 아래 게이트가 전부 옛 판으로 돈다. */
+  coldOpen?: boolean;
   /** 산군 콜드오픈이 끝났는가(타이틀 드랍 통과). 산군 외 상품은 기본값 true 라 영향이 없다. */
   coldOpenDone?: boolean;
   /** 콜드오픈 감시점을 지났을 때 부모에게 알린다(헤더·고정바를 그 뒤에 연다). */
@@ -2232,6 +2246,10 @@ function TeaserStep({
   const isInyeon = productSlug === "inyeon-saju";
   // 산군판 — 콜드오픈·등장 절단·어드민 웹툰 차단이 이 상품에만 걸린다.
   const isSangunWorld = productSlug === "sangun-sinjeom";
+  /** 콜드오픈 판으로 그릴 것인가 — 산군 **이면서** `?cold=1` 일 때만.
+   *  다섯 자리(어드민 웹툰 차단 · 콜드오픈 블록 · t1 말풍선 · 「복채」 컷 · 등장 절단 · 고정바)가
+   *  전부 이 하나로 열리고 닫힌다. false 면 DOM 이 스위치 이전(937a2af)과 같다. */
+  const useColdOpen = isSangunWorld && coldOpen;
   // 인연·결혼이 같이 쓰는 껍데기(직녀 컷·목차·구매 카드)는 이 가드로 연다.
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
   // 견우(재회) — 조판(밝은 판·달빛 부품)은 같이 쓰고 **직녀 그림은 한 장도 안 쓴다**.
@@ -2276,9 +2294,10 @@ function TeaserStep({
   // -mx-5: 웹툰도 사진 컷과 같이 컬럼 끝까지 나간다. 전엔 컬럼 안쪽(520)이라 사진 컷(558)보다
   // 좁았고, 대사 크기가 컷 폭 비례라 **같은 말풍선인데 웹툰 쪽만 작게** 나왔다.
   // 규칙: 그림(사진 컷·웹툰 컷)은 끝까지, 판·카드는 한 단 안쪽.
-  // 산군은 예외 — 티저 맨 위가 **콜드오픈**이 됐다(아래 블록). 어드민 웹툰까지 같이 얹으면
-  // 그림이 두 겹으로 시작해 도입의 정적이 깨진다. 다른 상품은 전과 같이 그대로 얹는다.
-  const webtoon = !isSangunWorld && cuts.length > 0 && Object.keys(tokens).length > 0
+  // 콜드오픈을 켠 산군만 예외 — 티저 맨 위가 **콜드오픈**이 된다(아래 블록). 어드민 웹툰까지
+  // 같이 얹으면 그림이 두 겹으로 시작해 도입의 정적이 깨진다.
+  // 스위치가 없으면 산군도 다른 상품과 똑같이 어드민 웹툰을 그대로 얹는다.
+  const webtoon = !useColdOpen && cuts.length > 0 && Object.keys(tokens).length > 0
     ? <WebtoonPage cuts={cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
     : null;
 
@@ -2292,7 +2311,7 @@ function TeaserStep({
   //   못한다(mt-11 실측 0px 사고 — 아래 4章 카드 주석과 같은 병). 재야 하는 값은 인라인으로.
   // ⚠ 컷은 TeaserCut 과 같은 풀블리드 규칙(-mx-5)을 쓰되, 비율이 4:5 도 띠도 아니라
   //   (941/1672 · 1122/1402) aspectRatio 를 직접 준다.
-  const coldOpen = isSangunWorld ? (
+  const coldOpenBlock = useColdOpen ? (
     <div>
       {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다. */}
       <div className="relative -mx-5 overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
@@ -2366,7 +2385,7 @@ function TeaserStep({
 
   return (
     <>
-    {coldOpen}
+    {coldOpenBlock}
     {webtoon}
     {/* 티저는 "펴놓은 장부" 한 장으로 앉힌다. 배경에 박수 사진이 opacity .7 로 깔려 있어서
         글자만 얹으면 얼굴·촛불 무늬가 표와 문장 사이로 비쳐 읽기가 힘들어진다.
@@ -2402,16 +2421,23 @@ function TeaserStep({
       {imm && (
         <>
           {/* 장부를 펴 든 손. 대사는 컷 위에 — 밝은 박스를 아래에 쌓지 않아야 신당이 어둡게 유지된다.
-              혼잣말("가만있어 봐라 …여기 있군")은 **콜드오픈 나레이션이 가져갔다** — 여기 남기면
-              같은 문장이 한 페이지 안에 두 번 나온다. 손님에게 건네는 뒷줄만 남긴다.
-              글자 수는 하드코딩하지 않는다: 시각 모름이면 여섯이라, 바로 아래 원국 판의
-              「이 날에서 나온 여섯 글자」와 같은 말이 된다(전엔 여덟로 굳어 있어 어긋났다). */}
+              옛 판(스위치 없음): 말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다").
+              무당은 손님한테 설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리).
+              콜드오픈 판(`?cold=1`): 혼잣말은 **콜드오픈 나레이션이 가져간다** — 여기 남기면 같은
+              문장이 한 페이지 안에 두 번 나온다. 손님에게 건네는 뒷줄만 남기고 글자 수도
+              하드코딩하지 않는다(시각 모름이면 여섯 — 바로 아래 원국 판의 「이 날에서 나온 여섯 글자」와 같은 말). */}
           <TeaserCut
             src="/products/sangun/t1-open.webp"
             alt="옛 장부를 펴 든 손"
             tall
             sayAt="top"
-            say={<>네 {GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`} 글자다.</>}
+            say={
+              useColdOpen ? (
+                <>네 {GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`} 글자다.</>
+              ) : (
+                <>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>
+              )
+            }
           />
         </>
       )}
@@ -2976,9 +3002,32 @@ function TeaserStep({
           모양·기울기는 위치 기반으로 고정해 SSR/하이드레이션이 어긋나지 않게 한다(난수 금지). */}
       {teaser && (
         <>
-          {/* 「복채 얘기를 하자」 정면 컷은 여기서 뺐다(2026-09-05) — 대사가 붙은 컷은 설명이고,
-              웹툰의 절단은 **대사 0**이다. 같은 정면 대면을 목차 뒤·구매 카드 앞으로 옮겨
-              말 없이 노려보는 컷으로 세운다(견우와선녀 4화 「등장 절단」 번역, 아래 블록). */}
+          {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리.
+              정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
+          {/* 콜드오픈 판(`?cold=1`)에서만 이 컷을 뺀다(2026-09-05) — 대사가 붙은 컷은 설명이고,
+              웹툰의 절단은 **대사 0**이다. 같은 정면 대면을 목차 뒤·구매 카드 앞으로 옮겨 말 없이
+              노려보는 컷으로 세운다(견우와선녀 4화 「등장 절단」 번역, 아래 블록).
+              스위치가 없으면 이 컷이 **원래 자리(목차 앞)에 원래 대사로** 선다. */}
+          {imm && !useColdOpen && teaser.chapters.length > 0 && (
+            <TeaserCut
+              src="/products/sangun/teaser-face.webp"
+              alt="정면으로 마주 앉은 산군"
+              pos="center 42%"
+              size="md"
+              sayAt="top"
+              // 「이제 복채 얘기를 하자」는 요구가 먼저 오는 문장이었다 — 모의구매 5/6이 결제
+              // 시트의 「복채」를 「갖다 바치는 느낌」이라 했던 그 결이 여기서 시작된다(:1289 주석).
+              // 「복채」 자체는 캐릭터의 값이라 지키고, 순서만 뒤집는다: 요구 앞에 제안을 세운다.
+              // 바로 아래 4章 카드가 그 「값어치」고, 그다음 카드가 「값을 말하마」로 받는다.
+              say={
+                <>
+                  복채 얘기를 하자.
+                  <br />
+                  뭘 주는지 먼저 보여주마.
+                </>
+              }
+            />
+          )}
           {teaser.chapters.length > 0 ? (
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
@@ -3107,7 +3156,7 @@ function TeaserStep({
               설명이 끊긴 자리에 곧바로 값(구매 카드)이 온다. 페이지당 정점 문법은 하나라
               반전 절단은 같이 쓰지 않는다.
               marginTop 96 은 인라인 — 「정점 앞 큰 숨」이 확실히 서야 하는 값이다(아래 4章 주석). */}
-          {isSangunWorld && teaser.chapters.length > 0 && (
+          {useColdOpen && teaser.chapters.length > 0 && (
             <div
               className="relative -mx-5 overflow-hidden"
               style={{ marginTop: 96, aspectRatio: "4 / 5" }}
@@ -3475,8 +3524,9 @@ function TeaserStep({
     )}
     {/* 산군은 이 바가 아예 없어 16.4화면 동안 살 자리가 없었다. 마감으로 재촉하지는 않는다 —
         가짜 타이머 대신 「이미 다 적혀 있다」는 사실만 말하고 버튼을 붙인다. */}
-    {/* 콜드오픈 동안은 이 바도 안 그린다 — 첫 화면에 가격이 서 있으면 도입이 광고가 된다. */}
-    {imm && !isJiknyeoWorld && teaser && (!isSangunWorld || coldOpenDone) && (
+    {/* 콜드오픈(`?cold=1`) 동안은 이 바도 안 그린다 — 첫 화면에 가격이 서 있으면 도입이 광고가 된다.
+        스위치가 없으면 옛 판대로 티저 내내 서 있다. */}
+    {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && (
       <StickyBuyBar
         dark
         note={<>네 장부 11장, 이미 다 적혀 있다</>}
