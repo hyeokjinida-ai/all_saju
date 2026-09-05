@@ -1463,7 +1463,13 @@ function TocMark({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ReunionToc() {
+/** 목차 — 열 장을 셋으로 끊고 사이에 견우와 **환승 결과**를 끼운다.
+ *
+ *  `data` 를 받는 이유: 환승(강을 건너지 않는다면)이 여기로 들어왔기 때문이다.
+ *  경쟁사 PDF 판독(2026-09-05): 목차는 Chapter → 캐릭터 → Chapter 로 끊기고, 그 사이에
+ *  아직 안 보여준 결과가 하나 더 열린다. 목차만 3,000px 쌓으면 그 지점부터 상세페이지다.
+ *  ⚠ 환승을 여기 넣었으므로 **SajuWizard 의 ReunionMoveOn 은 뺐다** — 안 그러면 두 번 뜬다. */
+export function ReunionToc({ data }: { data?: Reunion }) {
   return (
     <section className="mt-14">
       <T>받으시는 것</T>
@@ -1493,10 +1499,12 @@ export function ReunionToc() {
       {/* 5~7장 — 「언제, 무엇을」 */}
       <TocGroup from={4} to={7} gap={40} />
 
-      <TocMark>남은 세 장은 그 뒤를 적어 둔 자리입니다.</TocMark>
+      {/* 아직 안 보여준 결과 하나 — 「재회가 아니어도 받는 게 있다」. 목차 한가운데에 두어야
+          남은 세 장(8~10)이 그 답의 뒷장으로 읽힌다. */}
+      {data ? <ReunionMoveOn data={data} /> : <TocMark>남은 세 장은 그 뒤를 적어 둔 자리입니다.</TocMark>}
 
       {/* 8~10장 — 「그 다음」 */}
-      <TocGroup from={7} to={10} />
+      <TocGroup from={7} to={10} gap={40} />
 
       <div className="mt-4">
         <Cap>마이페이지에 계속 보관돼요 · 언제든 다시 열어볼 수 있어요</Cap>

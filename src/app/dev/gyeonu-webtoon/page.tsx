@@ -96,7 +96,7 @@ export default function DevGyeonuWebtoonPage() {
       {/* 상품부 조각 — 절단 뒤 **밝은 판**이라 배경 클래스(teaser-light)와 패딩을 실물과 맞춘다.
           전체 상품부는 SajuWizard 안에 흩어져 있어 여기서 못 세운다. 목차처럼 독립 컴포넌트만 올린다. */}
       <div className="teaser-light mx-auto w-full max-w-[430px] px-4 py-10">
-        <ReunionToc />
+        <ReunionToc data={FIXTURE} />
       </div>
     </main>
   );

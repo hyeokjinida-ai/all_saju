@@ -33,7 +33,6 @@ import {
   GyeonuWebtoon,
   ReunionCalendar,
   // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
-  ReunionMoveOn,
   ReunionToc,
   GyeonuCut,
 } from "@/components/products/gyeonu-teaser";
@@ -2650,7 +2649,10 @@ function TeaserStep({
               「봤습니다」 뒤에 채점, 「따로 있습니다」 뒤에 연적이 붙는다.
               ⚠ 여기에 다시 넣으면 같은 카드가 두 번 뜬다. 옮기려면 저쪽에서 빼고 옮길 것.
               (T1 달력은 맨 위 오프닝, T5 반전 절단은 구매 카드 직전) */}
-          {isReunion && teaser.reunion && <ReunionMoveOn data={teaser.reunion} />}
+          {/* 환승(T4)은 **목차 안으로 옮겼다**(2026-09-05 5차, ReunionToc). 경쟁사 티저는
+              목차를 Chapter → 캐릭터 → 결과 → Chapter 로 끊는다 — 여기 두면 목차가 통째로
+              3,000px 짜리 UI 덩어리가 되고 그 지점부터 상세페이지로 되돌아간다.
+              ⚠ 여기에 되살리면 같은 블록이 두 번 뜬다. */}
         </>
       )}
 
@@ -3036,7 +3038,7 @@ function TeaserStep({
 
           {/* 목차 — 구매 카드가 「아래 목차에서 확인하세요」라고 가리키는 자리다.
               잠긴 줄은 위 공용 블록이 이미 세웠다(teaser.reunion.locked) — 여기서 또 세우면 두 번 읽힌다. */}
-          {isReunion && <ReunionToc />}
+          {isReunion && <ReunionToc data={teaser?.reunion ?? undefined} />}
 
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
