@@ -13,7 +13,7 @@
 
 import { useEffect } from "react";
 import type { ReunionTeaser } from "@/lib/saju/teaser";
-import { GyeonuWebtoon, ReunionToc } from "@/components/products/gyeonu-teaser";
+import { GyeonuWebtoon, ReunionToc, GyeonuComfortCut } from "@/components/products/gyeonu-teaser";
 
 const FIXTURE: ReunionTeaser = {
   calendar: [
@@ -89,6 +89,16 @@ export default function DevGyeonuWebtoonPage() {
 
   return (
     <main style={{ background: "#070a12", minHeight: "100vh" }}>
+      {/* 위저드 12칸 慰 화면 조각 — 여기 있는 이유는 그 화면이 **위저드 12칸을 다 걸어야** 나와서다.
+          카드 폭(≤280)·2:3 비율·영상 폴백을 여기서 잰다. 실물 순서상 웹툰부보다 앞이라 위에 둔다. */}
+      <div className="mx-auto w-full max-w-[430px] px-5 pt-10 text-center">
+        <GyeonuComfortCut />
+        <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "var(--bone)" }}>
+          저도 일 년에 하루, 강 건너를 바라보는 놈입니다.
+          <br />
+          기다리는 마음은 압니다.
+        </p>
+      </div>
       {/* 위저드 컨테이너의 px-5 를 흉내 낸다 — 웹툰부의 -mx-5 가 이걸 되물려야 폭이 실물과 같다. */}
       <div className="mx-auto w-full max-w-[430px] px-5">
         <GyeonuWebtoon data={FIXTURE} name="서윤" eagerAll />

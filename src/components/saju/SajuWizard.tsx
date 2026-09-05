@@ -33,6 +33,7 @@ import {
   GyeonuWebtoon,
   ReunionCalendar,
   GyeonuMark,
+  GyeonuComfortCut,
   // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
   ReunionToc,
   GyeonuCut,
@@ -854,21 +855,37 @@ export function SajuWizard({
         </div>
       ) : isReunion ? (
         <div className={bgHolderCls}>
-          {/* 견우 컷은 아직 없다 — 인물 자리에 **강 건너 밤하늘**만 세운다.
-              직녀 영상(w2.mp4)을 빌려 오면 화자가 견우인데 화면엔 직녀 얼굴이 뜬다.
-              그림 없이 성립하게 CSS 만으로 그린다: 별밭 + 은하수 한 줄 + 아래를 눌러 글자를 살린다. */}
-          <div className="starfield opacity-45" />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0"
-            style={{
-              top: "34%",
-              height: 140,
-              background:
-                "linear-gradient(180deg, rgba(207,214,230,0) 0%, rgba(207,214,230,0.14) 48%, rgba(207,214,230,0) 100%)",
-              filter: "blur(10px)",
-            }}
-          />
+          {/* 입력 18칸 동안은 **강 건너 밤하늘**만 세운다 — CSS 별밭 + 은하수 한 줄.
+              여기에 캐릭터 루프를 까는 건 일부러 안 한다(경쟁사는 깐다): 이 구간은 손님이
+              읽고 고르고 타이핑하는 **작업 구간**이라, 계속 움직이는 배경은 분위기가 아니라
+              잡음이 된다(GPT 자문 2026-09-06 · 지표 보고 다시 판단).
+              ⚠ 직녀 영상(w2.mp4)을 빌려 오면 화자가 견우인데 화면엔 직녀 얼굴이 뜬다 — 금지. */}
+          {teaserLoading ? (
+            // 「장부를 찾는 중」 3.2초 — 손님이 아무것도 안 하고 기다리는 **유일한** 구간이다.
+            // 여기서만 그림이 살아나 「장부를 뒤진다」는 말이 회수된다(산군이 ritual.mp4 로 하는 그 자리).
+            // 파일이 없거나 못 틀면 같은 컷의 webp 로 조용히 내려앉는다.
+            <BgMedia
+              video="/products/reunion/g-ledger.mp4"
+              img="/products/reunion/g-ledger.webp"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-90"
+            />
+          ) : (
+            <>
+              <div className="starfield opacity-45" />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0"
+                style={{
+                  top: "34%",
+                  height: 140,
+                  background:
+                    "linear-gradient(180deg, rgba(207,214,230,0) 0%, rgba(207,214,230,0.14) 48%, rgba(207,214,230,0) 100%)",
+                  filter: "blur(10px)",
+                }}
+              />
+            </>
+          )}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -1395,20 +1412,15 @@ export function SajuWizard({
             비용 0 짜리 이탈 방지 장치라 값도 버튼도 두지 않는다 — 견우가 한 마디 하고 넘어간다. */}
         {isReunion && step === R_COMFORT_STEP && (
           <div className="text-center">
-            {/* 견우 도입 컷 — 장부에 손을 얹고 올려다본다. 손님이 이별을 다 적은 직후라
-                이 화면이 이 퍼널에서 견우 얼굴을 처음 보는 자리다(랜딩 히어로 다음).
-                ⚠ 치수를 박는다 — 없으면 로드 전 높이가 0 이라 아래 문장이 읽는 도중에 밀린다. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/products/reunion/g-greet.webp"
-              alt="장부에 손을 얹고 올려다보는 견우"
-              width={1080}
-              height={1620}
-              loading="lazy"
-              draggable={false}
-              className="mx-auto mb-6 block w-[62%] max-w-[240px] select-none"
-              style={{ borderRadius: 10, border: "1px solid var(--gold-line)" }}
-            />
+            {/* 견우 도입 컷 — 손님이 이별을 다 적은 직후라 이 화면이 이 퍼널에서
+                견우를 처음 보는 자리다(랜딩 히어로 다음).
+                2026-09-06: 정지 g-greet(장부에 손 얹고 **올려다보는** 컷)에서 **눈을 내린 새 컷 +
+                루프 영상**으로 갈았다. 두 가지가 같이 좋아진다 —
+                  ① 「기다리는 마음은 압니다」와 눈 내린 얼굴이 맞고,
+                  ② 웹툰부 끝(g-greet)에서 **처음 올려다보는** 순간이 그대로 남는다.
+                    같은 컷을 두 번 쓰면 그 시선이 두 번째엔 아무것도 아니게 된다.
+                치수·폴백은 GyeonuComfortCut 안에 있다(영상 없으면 그림). */}
+            <GyeonuComfortCut />
             <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "var(--bone)" }}>
               저도 일 년에 하루, 강 건너를 바라보는 놈입니다.
               <br />
