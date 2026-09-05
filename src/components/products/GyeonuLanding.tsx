@@ -31,10 +31,12 @@ const BONE = "#e9ecf4";
 const SUB = "#93a0b8";
 const LINE = "rgba(207,214,230,0.22)";
 
-/** 히어로 그림 — 견우 확정 얼굴(견우/fin-face.png)을 1080폭 webp 로 구운 것. 원본 png 는 커밋 안 한다. */
+/** 히어로 그림 — 견우 확정 얼굴(견우/fin-face.png)을 1080폭 webp 로 구운 것. 원본 png 는 커밋 안 한다.
+ *  세로 5:6 인 이유(2026-09-05 실측): 말풍선이 아래 37% 를 덮는다. 3:2 로 자르면 입과 손이 통째로
+ *  가려 눈만 남았다. 5:6 으로 키우니 눈·손·고삐끈이 다 살고 첫 CTA 도 폴드(812) 안에 남는다. */
 const HERO = "/products/reunion/gyeonu-hero.webp";
 const HERO_W = 1080;
-const HERO_H = 720;
+const HERO_H = 1200;
 
 /** CTA 는 전부 이 페이지 아래 위저드로 내린다(#start). 다른 상품으로 새 나가지 않는다. */
 const CTA_HREF = "#start";
