@@ -33,6 +33,9 @@ ROOT = "C:/Users/HP/OneDrive/Desktop/all_saju"
 MAT = f"{ROOT}/marketing/소재/산군/재료"
 CAPS = f"{MAT}/캡처/seo"
 CLIPS = f"{MAT}/클립/seo"
+FOOT = "seo"                                                        # 푸티지 계보(베이스 캐시 이름) — 민지판은 "minji"
+CLIP_FILES = ["seo_A_15s.mp4", "seo_B_15s.mp4", "seo_C_15s.mp4"]   # A·B·C 순서로 이어붙인다
+PERSON = "서윤"
 AUD = f"{MAT}/클립/audio/seo"
 OUT = f"{ROOT}/marketing/소재/산군/영상"
 TMP = "C:/Users/HP/AppData/Local/Temp/claude/seobuild"
@@ -206,22 +209,39 @@ V8_CARDS = [
 ]
 NO_TTS = False        # True 면 나레이션 없이 무음 판만 만든다(v8: 형님이 캡컷에서 TTS)
 BARE_NAME = ""        # BARE* 변형(카드 없음, 크로마·엔드카드만) 출력명
+FOOT_SEO = dict(FOOT="seo", CLIPS=CLIPS, CLIP_FILES=CLIP_FILES, PERSON="서윤", CHROMA=CHROMA)   # 서윤 푸티지(v5·v7·v8)
 SCRIPTS = {
     "v5": dict(LINES=LINES, HOOKS=HOOKS, CARDS=CARDS, END_T=46.00, CUT_T=DUR, AUD=AUD, NO_TTS=False, BARE_NAME="",
-               TAG="vU5", EDIT_DIR="편집용", PLAIN_NAME="_v5_무음무자막",
+               TAG="vU5", EDIT_DIR="편집용", PLAIN_NAME="_v5_무음무자막", **FOOT_SEO,
                VARIANTS={"V0": ("h24", "긁힐 준비는 하고!"), "V2": ("h25", "긁힐 준비는 하고!"),
                          "V3": ("h26", "긁힐 준비는 하고!"),
                          # PLAIN = 편집용 소스. 서윤 연기 + 카드 + 크로마 + 엔드카드만, 자막·훅·소리 없음.
                          "PLAIN": ("h24", "")}),
     "v7": dict(LINES=V7_LINES, HOOKS=V7_HOOKS, CARDS=V7_CARDS, END_T=44.40, CUT_T=46.40, NO_TTS=False, BARE_NAME="",
-               AUD=f"{MAT}/클립/audio/seo_v7", TAG="vU5", EDIT_DIR="편집용_v7", PLAIN_NAME="_v7_무음무자막",
+               AUD=f"{MAT}/클립/audio/seo_v7", TAG="vU5", EDIT_DIR="편집용_v7", PLAIN_NAME="_v7_무음무자막", **FOOT_SEO,
                VARIANTS={"V7": ("h27", "긁힐 준비는 하고."), "PLAIN7": ("h27", "")}),
     "v8": dict(LINES=V8_LINES, HOOKS=V8_HOOKS, CARDS=V8_CARDS, END_T=44.40, CUT_T=46.40, NO_TTS=True,
                BARE_NAME="_v8_바탕_카드없음", AUD=f"{MAT}/클립/audio/seo_v8", TAG="vU5", EDIT_DIR="편집용_v8",
-               PLAIN_NAME="_v8_무음무자막",
+               PLAIN_NAME="_v8_무음무자막", **FOOT_SEO,
                # PLAIN8 = 카드 박힌 무음판 / BARE8 = 카드도 없는 무음판(크로마·엔드카드만) — 형님 TTS 길이대로 카드를 직접 놓을 때
                VARIANTS={"PLAIN8": ("h28", ""), "BARE8": ("h28", "")}),
 }
+
+# ── 민지판 (2026-09-06, 형님 「좀 다른 애로도 해봐」) — 같은 두 대본을 두 번째 크리에이터 민지 푸티지로.
+#    푸티지 = Seedance 2.5 A 15s·B 15s·C 17s(재료/클립/minji/). 폰 화면 크로마(폰 돌리기 컷)는 없다 → CHROMA=None,
+#    짝 카드 블러 슬롯을 30.10 까지 늘려 30.20 얼굴 공개로 잇는다. 그래서 푸티지 앵커가 없고 형님 TTS 길이 제약도 없다.
+FOOT_MINJI = dict(FOOT="minji", CLIPS=f"{MAT}/클립/minji", CLIP_FILES=["minji_A_15s.mp4", "minji_B_15s.mp4", "minji_C_17s.mp4"],
+                  PERSON="민지", CHROMA=None, NO_TTS=True)
+V7M_CARDS = [c for c in V7_CARDS if not (c[0] == "slot")] + [("slot", "seo_partner_card_ad_blur.png", 22.60, 30.10, {})]
+V7M_CARDS.sort(key=lambda c: c[2])
+V8M_CARDS = [c for c in V8_CARDS if not (c[0] == "slot" and c[2] > 10)] + [("slot", "seo_partner_card_ad_blur.png", 24.90, 30.10, {})]
+V8M_CARDS.sort(key=lambda c: c[2])
+SCRIPTS["v7m"] = dict(SCRIPTS["v7"], CARDS=V7M_CARDS, **FOOT_MINJI, EDIT_DIR="편집용_v7m", PLAIN_NAME="_v7m_무음무자막",
+                      BARE_NAME="_v7m_바탕_카드없음", AUD=f"{MAT}/클립/audio/seo_v7m",
+                      VARIANTS={"PLAIN7M": ("h27", ""), "BARE7M": ("h27", "")})
+SCRIPTS["v8m"] = dict(SCRIPTS["v8"], CARDS=V8M_CARDS, **FOOT_MINJI, EDIT_DIR="편집용_v8m", PLAIN_NAME="_v8m_무음무자막",
+                      BARE_NAME="_v8m_바탕_카드없음", AUD=f"{MAT}/클립/audio/seo_v8m",
+                      VARIANTS={"PLAIN8M": ("h28", ""), "BARE8M": ("h28", "")})
 SCRIPT = "v5"
 VARIANTS, TAG, EDIT_DIR, PLAIN_NAME = (SCRIPTS["v5"][k] for k in ("VARIANTS", "TAG", "EDIT_DIR", "PLAIN_NAME"))
 
@@ -276,22 +296,22 @@ def rounded(im, r=18, pad=14, bg=(10, 8, 6, 235), border=(232, 201, 106, 90)):
 # ───────────────────────── 베이스 트랙 ─────────────────────────
 def build_base(ratio):
     W, H = 1080, (1920 if ratio == "9x16" else 1350)
-    base = f"{TMP}/base_{ratio}.mp4"
+    base = f"{TMP}/base_{ratio}.mp4" if FOOT == "seo" else f"{TMP}/base_{FOOT}_{ratio}.mp4"
     if os.path.exists(base):
         return base, W, H
     log("  concat+encode base (수 분 걸린다)")
-    lst = f"{TMP}/concat.txt"
+    lst = f"{TMP}/concat_{FOOT}.txt"
     tmpclips = []
-    for n in ("A", "B", "C"):
-        src = f"{CLIPS}/seo_{n}_15s.mp4"
-        dst = f"{TMP}/clip_{n}.mp4"
+    for n, fn in zip(("A", "B", "C"), CLIP_FILES):
+        src = f"{CLIPS}/{fn}"
+        dst = f"{TMP}/clip_{FOOT}_{n}.mp4"
         if not os.path.exists(dst):
             shutil.copyfile(src, dst)   # 한글 경로 회피
         tmpclips.append(dst)
     with open(lst, "w", encoding="utf-8") as f:
         for p in tmpclips:
             f.write(f"file '{p}'\n")
-    joined = f"{TMP}/joined.mp4"
+    joined = f"{TMP}/joined_{FOOT}.mp4"
     run([FF, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
          "-r", str(FPS), *qsv_args(14, "slow"), "-an", joined])
     # 45s 뒤 3초는 마지막 프레임 정지(엔드카드 바탕)
@@ -684,7 +704,7 @@ def main():
             layers.append({"im": endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": CUT_T,
                            "fade": 0.10, "fade_out": 0.0, "pop": 0.0, "full": True, "reveal": None})
             tmp_out = f"{TMP}/{vid}_{ratio}.mp4"
-            composite(ratio, layers, base, W, H, tmp_out, None if plain else wav, CHROMA[2])
+            composite(ratio, layers, base, W, H, tmp_out, None if plain else wav, CHROMA[2] if CHROMA else None)
             final = (f"{OUT}/{EDIT_DIR}/{BARE_NAME}_1080x{H}.mp4" if bare
                      else f"{OUT}/{EDIT_DIR}/{PLAIN_NAME}_1080x{H}.mp4" if plain
                      else f"{OUT}/sangun_{TAG}_{vid}_seoyun_1080x{H}.mp4")
