@@ -5,6 +5,7 @@ build_seoyun.py — 광고 v5 「사주 보다가 긁힘」 조립기 (서윤 �
   PYTHONUTF8=1 python marketing/tools/build_seoyun.py V0            # 본판 9:16
   PYTHONUTF8=1 python marketing/tools/build_seoyun.py all --ratios 9x16,4x5
   PYTHONUTF8=1 python marketing/tools/build_seoyun.py V0 --check
+  PYTHONUTF8=1 python marketing/tools/build_seoyun.py V7 PLAIN7 --script v7 --ratios 9x16,4x5   # 9/6 형님 새 대본 — 아래 SCRIPTS
 
 왜 build_ads.py 를 안 늘리고 따로 쓰나: 저 파일의 STORY 는 **정지컷·루프 기반 v3 공장** 형태로 굳어 있고,
 v5 는 실사 클립 3개를 이어 붙인 뒤 그 위에 카드·자막을 얹는 완전히 다른 골격이다.
@@ -110,6 +111,79 @@ CHROMA = (28.60, 30.00, "seo_partner_card_ad_blur.png")  # 초록은 28.9s 시�
 SCREEN_ASPECT = 2.57   # 폰 화면 세로/가로 실측(29.7s 꼭짓점) — 4:5 에서 아래 꼭짓점을 되짚을 때 쓴다
 FLASH = 15.00
 END_T = 46.00
+CUT_T = DUR          # 출력 길이 — 베이스(48s)를 여기서 잘라 낸다. v7 은 45.5
+PAN_FALLBACK = {     # %TEMP%/seo_cap 이 비었을 때 pan 원본 — 편집용 세트에 1080 폭으로 남겨 둔 페이지원본(8/24)
+    "0": f"{OUT}/편집용/02_카드_투명PNG/스크롤_07.60s_페이지원본.png",
+    "1": f"{OUT}/편집용/02_카드_투명PNG/스크롤_37.40s_페이지원본.png",
+}
+
+
+# ───────────────────────── 대본 스위치 (2026-09-06) ─────────────────────────
+# v5 = 8/23 「사주 보다가 긁힘」 = 위 상수 그대로. v7 = 9/6 형님 새 대본 「사주 봤는데 은근히 기분 나쁘네」.
+# 푸티지·크로마·카드 규격·엔드카드는 같고 대본·훅·카드 시각·길이만 다르다. use_script() 가 모듈 전역을 바꾼다.
+# ⚠ v7 2.4~7.2s 직언 카드(seo_line_jikeon_v7.png)는 서윤 실결과지가 아니라 결과지 조판으로 렌더한 **가짜 화면**
+#    (형님 「실제 화면 아니어도 되니까」 9/6). 대본 2번 줄 문장을 dev 페이지 ?case=seoyun_v7 로 찍었다(cap_seoyun --only).
+V7_LINES = [
+    (1, 0.20, "사주 봤는데 이거 은근히 기분 나쁘네??", ["사주 봤는데 이거", "은근히 기분 나쁘네??"], False),
+    (2, 2.60, "사람 보는 눈은 있는데 결정할 때 같은 실수를 반복한다", ["사람 보는 눈은 있는데", "결정할 때 같은 실수를 반복한다"], False),
+    (3, 5.50, "아니…", ["아니…"], False),
+    (4, 6.14, "이걸 어떻게 알지?", ["이걸 어떻게 알지?"], True),
+    (5, 7.40, "요즘 계속 뜨길래 그냥 고민 하나 적어본 박수무당 사주였거든?", ["요즘 계속 뜨길래 고민 하나", "적어본 박수무당 사주였거든?"], False),
+    (6, 11.20, "근데 한두 줄 나오는 게 아니라 결과가 열한 장이 나옴", ["한두 줄 나오는 게 아니라", "결과가 열한 장이 나옴"], False),
+    (7, 14.20, "성격, 돈, 일, 인연에 조심할 시기까지 나오는데", ["성격, 돈, 일, 인연에", "조심할 시기까지 나오는데"], False),
+    (8, 17.04, "좋은 얘기만 해주는 게 아니라", ["좋은 얘기만", "해주는 게 아니라"], False),
+    (9, 18.90, "내가 자꾸 반복하는 패턴을 계속 찌름", ["내가 자꾸 반복하는", "패턴을 계속 찌름"], False),
+    (10, 21.40, "특히 인연 쪽에서", ["특히 인연 쪽에서"], False),
+    (11, 22.60, "말보다 행동으로 보여주는 사람이 더 잘 맞는다는데", ["말보다 행동으로 보여주는", "사람이 더 잘 맞는다는데"], False),
+    (12, 25.35, "생각해보니까 나는 맨날 말 잘하는 사람만 만났음", ["생각해보니까 나는", "맨날 말 잘하는 사람만 만났음"], False),
+    (13, 27.40, "아…", ["아…"], False),
+    (14, 28.65, "여기서 좀 긁힘", ["여기서 좀 긁힘"], True),
+    (15, 30.20, "근데 더 웃긴 건 어떤 느낌의 사람인지", ["근데 더 웃긴 건", "어떤 느낌의 사람인지"], False),
+    (16, 32.39, "이미지까지 보여줌", ["이미지까지 보여줌"], False),
+    (17, 33.62, "왜 또 내 스타일인데?", ["왜 또 내 스타일인데?"], True),
+    (18, 35.00, "이거 운세 보는 느낌보다", ["이거 운세 보는 느낌보다"], False),
+    (19, 36.81, "내 인생을 몰래 읽힌 느낌임", ["내 인생을 몰래 읽힌 느낌임"], True),
+    (20, 38.60, "앞부분은 무료로 볼 수 있으니까 궁금하면 한번 봐봐", ["앞부분은 무료로 볼 수 있으니까", "궁금하면 한번 봐봐"], False),
+    (21, 41.60, "근데", ["근데"], False),
+    (22, 42.20, "긁힐 준비는 하고.", ["긁힐 준비는 하고."], False),
+]
+V7_HOOKS = {
+    # 4번째 값 = 빨강 토큰(없으면 첫 단어). 3행 고지는 v5 그대로 — 「*예시 결과 화면입니다」로 바꾸려면 여기 한 줄.
+    "h27": [("사주 봤는데 이거", 57, "bone"), ("은근히 기분 나쁘네??", 84, "red_word", "기분 나쁘네"),
+            ("*실제 사주 서비스 화면입니다", 40, "pink")],
+}
+V7_CARDS = [
+    ("pin", "seo_line_jikeon_v7.png", 2.40, 7.20, {"hl": True}),       # 가짜 직언 카드(위 ⚠)
+    ("pan", "__win0", 11.40, 14.60, {"y0": 0.06, "y1": 0.160}),        # 스크롤① 「열한 장이 나옴」
+    ("pin", "seo_line_ch2_repeat.png", 17.00, 21.20, {}),              # 2장 「약속과 책임이 반복해서 어긋나면」 실캡처 크롭
+    ("slot", "seo_partner_card_ad_blur.png", 22.60, 28.10, {}),
+    # 28.6~30.0 = 크로마(폰 화면) — CHROMA 그대로(푸티지 고정)
+    ("full", "seo_partner_card_ad.png", 30.20, 33.20, {"reveal": (30.30, 31.50)}),
+    ("pan", "__win1", 35.20, 38.40, {"y0": 0.10, "y1": 0.186}),        # 스크롤② 「인생을 몰래 읽힌 느낌」
+]
+SCRIPTS = {
+    "v5": dict(LINES=LINES, HOOKS=HOOKS, CARDS=CARDS, END_T=46.00, CUT_T=DUR, AUD=AUD,
+               TAG="vU5", EDIT_DIR="편집용", PLAIN_NAME="_v5_무음무자막",
+               VARIANTS={"V0": ("h24", "긁힐 준비는 하고!"), "V2": ("h25", "긁힐 준비는 하고!"),
+                         "V3": ("h26", "긁힐 준비는 하고!"),
+                         # PLAIN = 편집용 소스. 서윤 연기 + 카드 + 크로마 + 엔드카드만, 자막·훅·소리 없음.
+                         "PLAIN": ("h24", "")}),
+    "v7": dict(LINES=V7_LINES, HOOKS=V7_HOOKS, CARDS=V7_CARDS, END_T=44.40, CUT_T=46.40,
+               AUD=f"{MAT}/클립/audio/seo_v7", TAG="vU5", EDIT_DIR="편집용_v7", PLAIN_NAME="_v7_무음무자막",
+               VARIANTS={"V7": ("h27", "긁힐 준비는 하고."), "PLAIN7": ("h27", "")}),
+}
+SCRIPT = "v5"
+VARIANTS, TAG, EDIT_DIR, PLAIN_NAME = (SCRIPTS["v5"][k] for k in ("VARIANTS", "TAG", "EDIT_DIR", "PLAIN_NAME"))
+
+
+def use_script(name):
+    """모듈 전역(LINES·HOOKS·CARDS·END_T·CUT_T·AUD·VARIANTS…)을 해당 대본 것으로 바꾼다. main()·export 가 부른다."""
+    globals().update(SCRIPTS[name])
+    globals()["SCRIPT"] = name
+
+
+def narr_wav():
+    return f"{TMP}/narr.wav" if SCRIPT == "v5" else f"{TMP}/narr_{SCRIPT}.wav"
 
 
 # ───────────────────────── 그리기 도우미 ─────────────────────────
@@ -195,7 +269,8 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
     ys = [int(H * 0.030), int(H * 0.068), int(H * 0.142)] if ratio == "9x16" else [int(H * 0.020), int(H * 0.055), int(H * 0.135)]
     sc = 1.0 if ratio == "9x16" else 0.82
     items = []
-    for (txt, px, style), y in zip(hk, ys):
+    for row, y in zip(hk, ys):
+        txt, px, style = row[:3]
         px = int(px * sc)
         col = {"bone": C["BONE"], "red_word": (255, 255, 255), "pink": (244, 194, 200)}[style]
         items.append((txt, "gothic_b" if style != "pink" else "gothic", px, col, y, 6 if style != "pink" else 3))
@@ -204,12 +279,12 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
     d = ImageDraw.Draw(hook)
     f2 = font("gothic_b", int(hk[1][1] * sc))
     t2 = hk[1][0]
-    key = t2.split()[0]
+    key = hk[1][3] if len(hk[1]) > 3 else t2.split()[0]   # 빨강 토큰 = 4번째 값, 없으면 첫 단어(v5)
     wfull = d.textlength(t2, font=f2)
-    x2 = (W - wfull) / 2
+    x2 = (W - wfull) / 2 + d.textlength(t2[:t2.index(key)], font=f2)
     d.text((x2, ys[1]), key, font=f2, fill=C["RED"] + (255,), stroke_width=6, stroke_fill=(0, 0, 0, 235))
     if not plain:
-        add(hook, (0, 0), 0.0, 44.0, fade=0.0, fade_out=0.5)
+        add(hook, (0, 0), 0.0, END_T - 2.0, fade=0.0, fade_out=0.5)   # v5 = 44.0
 
     # ② 자막
     cap_y = int(H * 0.527)
@@ -218,8 +293,13 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
     else:
         LINES_ = LINES
     for i, t0, spoken, rows, peak in LINES_:
-        txt_rows = rows if i != 23 else [cta_line23]
+        txt_rows = [cta_line23] if (i == LINES[-1][0] and cta_line23) else rows   # 마지막 줄 = CTA 변형 자리
         px = int((81 if peak else 45) * (1.0 if ratio == "9x16" else 0.85))
+        if peak:   # 정점 81px 가 화면 폭을 넘으면 그 줄만 줄인다(v7 「내 인생을 몰래 읽힌 느낌임」 14자)
+            _d = ImageDraw.Draw(Image.new("RGBA", (4, 4)))
+            wmax = max(_d.textlength(r, font=font("gothic_b", px)) for r in txt_rows)
+            if wmax > W * 0.93:
+                px = int(px * W * 0.93 / wmax)
         items = []
         yy = cap_y - (len(txt_rows) - 1) * int(px * 0.62)
         for r in txt_rows:
@@ -233,6 +313,8 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
     for kind, name, t0, t1, opt in CARDS:
         if name.startswith("__win"):
             src = f"{WIN}/win{name[-1]}.png"
+            if not os.path.exists(src):
+                src = PAN_FALLBACK.get(name[-1], src)   # %TEMP% 가 비면 편집용 세트의 1080 폭 페이지원본
             if not os.path.exists(src):
                 log("  pan 원본 없음, 건너뜀:", src)
                 continue
@@ -264,7 +346,8 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
 
 # ───────────────────────── 합성 ─────────────────────────
 def composite(ratio, layers, base, W, H, out_mp4, audio_wav, chroma_card):
-    n = int(round(DUR * FPS))
+    n = int(round(CUT_T * FPS))
+    _CH.update({"quad": None, "wake": None})   # 크로마 상태는 판마다 새로(안 그러면 두 번째 판에서 화면이 켜지는 연출이 빠진다)
     dec = subprocess.Popen([FF, "-loglevel", "quiet", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
     cmd = [FF, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
@@ -272,7 +355,7 @@ def composite(ratio, layers, base, W, H, out_mp4, audio_wav, chroma_card):
         cmd += ["-i", audio_wav, "-map", "0:v", "-map", "1:a", "-c:a", "aac", "-b:a", "160k", "-ar", "44100"]
     else:
         cmd += ["-an"]
-    cmd += ["-t", f"{DUR:.2f}", *qsv_args(16, "slow"), "-movflags", "+faststart", out_mp4]
+    cmd += ["-t", f"{CUT_T:.2f}", *qsv_args(16, "slow"), "-movflags", "+faststart", out_mp4]
     enc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     nb = W * H * 3
     # 크로마 카드 미리 준비
@@ -461,7 +544,7 @@ def build_audio(out_wav):
     meta = json.load(open(f"{AUD}/_lines_meta.json", encoding="utf-8"))
     M = {int(m["file"][5:7]): m for m in meta}
     sr = 44100
-    total = int(DUR * sr)
+    total = int(CUT_T * sr)
     mix = np.zeros(total, np.float32)
     import wave
     for i, t0, spoken, rows, peak in LINES:
@@ -505,7 +588,7 @@ def build_audio(out_wav):
         w.setsampwidth(2)
         w.setframerate(sr)
         w.writeframes((mix * 32767).astype(np.int16).tobytes())
-    loudnorm_2pass(raw, out_wav, DUR)
+    loudnorm_2pass(raw, out_wav, CUT_T)
     return out_wav
 
 
@@ -529,18 +612,14 @@ def endcard(W, H):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("ids", nargs="*", default=["V0"])
+    ap.add_argument("ids", nargs="*", default=None)
     ap.add_argument("--ratios", default="9x16")
+    ap.add_argument("--script", default="v5", choices=list(SCRIPTS), help="v5(8/23 본판) / v7(9/6 새 대본)")
     a = ap.parse_args()
-    variants = {
-        "V0": ("h24", "긁힐 준비는 하고!"),
-        "V2": ("h25", "긁힐 준비는 하고!"),
-        "V3": ("h26", "긁힐 준비는 하고!"),
-        # PLAIN = 편집용 소스. 서윤 연기 + 카드 + 크로마 + 엔드카드만, 자막·훅·소리 없음.
-        "PLAIN": ("h24", ""),
-    }
-    ids = list(variants) if a.ids == ["all"] else a.ids
-    wav = f"{TMP}/narr.wav"
+    use_script(a.script)
+    variants = VARIANTS
+    ids = list(variants) if a.ids == ["all"] else (a.ids or [next(iter(variants))])
+    wav = narr_wav()
     if not os.path.exists(wav):
         log("audio …")
         build_audio(wav)
@@ -549,14 +628,14 @@ def main():
         log("base", ratio, base)
         for vid in ids:
             hook_key, cta = variants[vid]
-            plain = vid == "PLAIN"
+            plain = vid.startswith("PLAIN")
             layers = make_layers(ratio, hook_key, cta, plain=plain)
-            layers.append({"im": endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": DUR,
+            layers.append({"im": endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": CUT_T,
                            "fade": 0.10, "fade_out": 0.0, "pop": 0.0, "full": True, "reveal": None})
             tmp_out = f"{TMP}/{vid}_{ratio}.mp4"
             composite(ratio, layers, base, W, H, tmp_out, None if plain else wav, CHROMA[2])
-            final = (f"{OUT}/편집용/_v5_무음무자막_1080x{H}.mp4" if plain
-                     else f"{OUT}/sangun_vU5_{vid}_seoyun_1080x{H}.mp4")
+            final = (f"{OUT}/{EDIT_DIR}/{PLAIN_NAME}_1080x{H}.mp4" if plain
+                     else f"{OUT}/sangun_{TAG}_{vid}_seoyun_1080x{H}.mp4")
             os.makedirs(os.path.dirname(final), exist_ok=True)
             shutil.copyfile(tmp_out, final)
             log("saved", final, f"{os.path.getsize(final)/1e6:.1f}MB")

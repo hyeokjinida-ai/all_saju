@@ -66,6 +66,17 @@ const CASES: Record<string, DevCase> = {
     concerns: ["헤어진 지 석 달인데, 아직 미련이 남은 건지 모르겠어요"],
     analysisFile: "analysis-19940606-female-20.json",
   },
+  // 광고 V7 「서윤 새 대본」 — 9장 직언 한 문장만 바꾼 사본(가짜 화면, 형님 승인 2026-09-06).
+  // md 는 %TEMP%/sample-sangun-sinjeom-서윤v7-gpt56luna.md (서윤 9/1 샘플 복사본). 명식은 서윤과 같다.
+  seoyun_v7: {
+    fileName: "서윤v7",
+    name: "서윤",
+    birthDate: "1994-06-06",
+    birthTime: "20:10",
+    gender: "female",
+    concerns: ["헤어진 지 석 달인데, 아직 미련이 남은 건지 모르겠어요"],
+    analysisFile: "analysis-19940606-female-20.json",
+  },
 };
 
 /** md 후보 — 모델 태그가 바뀌어도 찾도록 실재하는 파일 중 **가장 최근** 것을 집는다.
