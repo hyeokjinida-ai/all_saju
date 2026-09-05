@@ -25,8 +25,9 @@
 //   ② 대사가 그림 밖 캡션이었다 → 웹툰부 대사는 **그림 위**(말풍선·나레이션)로 올렸다.
 //   ③ 컷과 UI 카드가 뒤섞여 흐름이 끊겼다 → 컷을 앞으로 모으고 표·카드는 절단 뒤로 내렸다.
 // 부품도 그래서 둘이다: 웹툰부 = WebtoonPanel(그림 위 대사) · 상품부 = GyeonuCut(한지 띠 캡션).
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
+import { useInView } from "@/lib/use-in-view";
 import {
   BrushHead,
   Cap,
@@ -303,6 +304,21 @@ function WebtoonPanel({
    *  ⚠ 페이드를 쓰면 figure 의 바탕색을 지운다. 안 그러면 녹은 자리에 컷보다 **더 어두운**
    *    사각형(NIGHT_DEEP)이 남아 페이드가 아니라 얼룩으로 보인다. */
   fade,
+  /** 이 컷만 **움직인다** — `<id>.mp4` 가 있으면 영상, 없거나 못 틀면 그림 그대로다.
+   *
+   *  왜 한 컷뿐인가(GPT 자문 2026-09-06 + 경쟁사 문법): 정지 컷이 이어지다 **정점에서 한 번**
+   *  움직이면 그 움직임 자체가 정점 표시가 된다. 여러 컷이 움직이면 표시가 아니라 장식이 되고,
+   *  같은 5초가 반복되는 걸 손님이 알아채는 순간 「캐릭터가 산다」가 아니라 「GIF 가 돈다」가 된다.
+   *
+   *  그래서 **루프가 아니다**: 화면에 절반 넘게 들어온 순간 1회 재생하고 끝 프레임에 선다.
+   *  되돌아 올라갔다 내려와도 다시 안 튼다(useInView 가 한 번만 true 로 바뀐다) — 정점은 사건이지
+   *  반복되는 효과가 아니다.
+   *
+   *  ⚠ **까치는 실제로 난다**(형님 픽 2026-09-06). 처음엔 「그림이 유지되는가」만 보고 새를 얼린
+   *  판(MiniMax H3, 하늘 연속차 1.6)을 올렸는데 형님이 「까치가 날아다녀야 하는 거 아냐?」로
+   *  되물렸다 — **오작교는 까치가 다리를 놓는 장면이라 새가 멈추면 그림의 뜻이 죽는다.**
+   *  채택판은 Kling 3.0(하늘 14.2·다리 12.6). 판정선(<3)은 「그림 보존」의 자이지 **채택의 자가 아니다**. */
+  video,
 }: {
   id: GyeonuCutId;
   alt: string;
@@ -314,6 +330,7 @@ function WebtoonPanel({
   align?: "left" | "center" | "right";
   fx?: { text: string; top: number; side: "left" | "right"; size?: number; dim?: number };
   fade?: "both" | "top";
+  video?: boolean;
 }) {
   const F = 30; // 페이드 폭(px)
   const maskCss = fade
@@ -321,8 +338,41 @@ function WebtoonPanel({
       ? `linear-gradient(180deg, transparent 0, #000 ${F}px, #000 calc(100% - ${F}px), transparent 100%)`
       : `linear-gradient(180deg, transparent 0, #000 ${F}px)`
     : undefined;
+
+  // 영상 컷 전용 — 컷이 화면 절반을 넘겨 들어온 순간 **한 번** 튼다.
+  // threshold 를 0.55 로 올린 이유: 컷 위쪽 한 줄만 걸쳤을 때 시작하면 손님이 도착했을 땐
+  // 이미 강물이 다 흐른 뒤다. 절반이 들어와야 「지금 이 컷이 화면」이다.
+  const { ref: seenRef, inView } = useInView<HTMLElement>({ threshold: 0.55, rootMargin: "0px" });
+  const vRef = useRef<HTMLVideoElement>(null);
+  const [videoDead, setVideoDead] = useState(false); // 파일이 없거나 못 읽으면 그림으로 되돌린다
+  useEffect(() => {
+    if (!video || videoDead || !inView) return;
+    const el = vRef.current;
+    if (!el) return;
+    // 움직임을 꺼 둔 손님(멀미·저사양)에겐 안 튼다 — poster 가 남아 정지 컷과 똑같아진다.
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    // 자동재생이 막히면 그대로 poster 정지 — 검은 칸이 나올 길이 없다.
+    void el.play().catch(() => {});
+  }, [video, videoDead, inView]);
+
+  // 그림·영상이 같은 자리에 같은 모양으로 앉아야 한다(둘 사이를 오갈 수 있으므로).
+  const mediaStyle: React.CSSProperties = {
+    ...(band
+      ? // 밴드 컷 — aspectRatio 로 자리를 먼저 잡으므로 로드 전에도 높이가 확정된다(점프 0).
+        {
+          display: "block",
+          width: "100%",
+          aspectRatio: band.ratio,
+          objectFit: "cover",
+          objectPosition: `50% ${band.focus}%`,
+        }
+      : { display: "block", width: "100%", height: "auto" }),
+    ...(maskCss ? { maskImage: maskCss, WebkitMaskImage: maskCss } : null),
+  };
+
   return (
     <figure
+      ref={video ? seenRef : undefined}
       data-panel={id}
       style={{
         position: "relative",
@@ -339,33 +389,100 @@ function WebtoonPanel({
           : null),
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`/products/reunion/${id}.webp`}
-        alt={alt}
-        width={1080}
-        height={1620}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        draggable={false}
-        className="select-none"
-        style={{
-          ...(band
-            ? // 밴드 컷 — aspectRatio 로 자리를 먼저 잡으므로 로드 전에도 높이가 확정된다(점프 0).
-              {
-                display: "block",
-                width: "100%",
-                aspectRatio: band.ratio,
-                objectFit: "cover",
-                objectPosition: `50% ${band.focus}%`,
-              }
-            : { display: "block", width: "100%", height: "auto" }),
-          ...(maskCss ? { maskImage: maskCss, WebkitMaskImage: maskCss } : null),
-        }}
-      />
+      {video && !videoDead ? (
+        // poster 가 같은 컷의 webp 다 — 재생 전·자동재생 거부·reduced-motion 어느 쪽이든
+        // 화면에는 늘 그림이 서 있고, 영상은 그 위에 「움직임만」 얹히는 셈이 된다.
+        <video
+          ref={vRef}
+          width={1080}
+          height={1620}
+          muted
+          playsInline
+          preload="metadata"
+          poster={`/products/reunion/${id}.webp`}
+          aria-label={alt}
+          onError={() => setVideoDead(true)}
+          className="select-none"
+          style={mediaStyle}
+        >
+          <source src={`/products/reunion/${id}.mp4`} type="video/mp4" />
+        </video>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/products/reunion/${id}.webp`}
+          alt={alt}
+          width={1080}
+          height={1620}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          draggable={false}
+          className="select-none"
+          style={mediaStyle}
+        />
+      )}
       {say && <GyeonuBubble {...say} />}
       {fx && <SoundFx {...fx} />}
     </figure>
+  );
+}
+
+/** 위저드 12칸 「慰」 화면의 견우 카드 — **이 퍼널에서 견우가 처음 움직이는 자리**.
+ *
+ *  왜 여기가 첫 영상인가(GPT 자문 2026-09-06): 손님이 이별 사연을 막 다 적은 직후다.
+ *  이 시점의 물음은 「결제할까」가 아니라 「이 서비스가 내 말을 받은 느낌이 드나」이고,
+ *  정지 컷만 있으면 캐릭터가 설명 카드처럼 보인다. 여기서 처음 움직이면 「기다리고 있었다」가 된다.
+ *
+ *  움직이는 건 **세계**다: 머리카락 몇 가닥·등불 불꽃·물빛·별. 얼굴·눈·입·손은 정지다.
+ *  견우는 눈을 감고 있어서(이 컷 전용으로 새로 그렸다) 「눈을 안 깜빡이는 어색함」이 없다.
+ *  화면 폭 75%(≤280px) — 240px 이면 머리카락 몇 가닥 흔들림이 눈에 안 띈다(GPT 실측 조언).
+ *
+ *  손님이 「장부 열기」를 누를 때까지 머무는 화면이라 **루프**다(스크롤 정점 컷과 반대).
+ *  영상이 없거나 못 틀면 poster 가 남아 예전의 정지 화면과 똑같아진다 — 깨질 길이 없다. */
+export function GyeonuComfortCut() {
+  const vRef = useRef<HTMLVideoElement>(null);
+  const [dead, setDead] = useState(false);
+  useEffect(() => {
+    const el = vRef.current;
+    if (!el) return;
+    // 움직임을 꺼 둔 손님에겐 정지 컷 그대로 둔다(멀미·저사양·접근성).
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    void el.play().catch(() => {});
+  }, []);
+  const frame: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    borderRadius: 10,
+    border: "1px solid var(--gold-line)",
+  };
+  return (
+    /* 폭 84% 인 이유: 이 카드가 앉는 자리는 화면(375)이 아니라 **위저드 컬럼(px-5 뺀 335)** 이다.
+       75% 로 뒀더니 실측 251px — 화면 폭의 67% 라 머리카락 몇 가닥 흔들림이 눈에 안 띈다.
+       84% → 281 → max 280 에 걸려 **280×420**(화면 폭의 75%)이 된다. */
+    <div className="mx-auto mb-6 w-[84%] max-w-[280px] select-none" style={{ aspectRatio: "2 / 3" }}>
+      {dead ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/products/reunion/g-comfort.webp" alt="닫힌 장부에 손을 얹고 눈을 내린 견우" style={frame} />
+      ) : (
+        <video
+          ref={vRef}
+          width={1080}
+          height={1620}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster="/products/reunion/g-comfort.webp"
+          aria-label="닫힌 장부에 손을 얹고 눈을 내린 견우"
+          onError={() => setDead(true)}
+          style={frame}
+        >
+          <source src="/products/reunion/g-comfort.mp4" type="video/mp4" />
+        </video>
+      )}
+    </div>
   );
 }
 
@@ -960,6 +1077,9 @@ export function GyeonuWebtoon({
         fade="both"
         alt="수백 마리 까치가 은하수 위로 다리를 이룬 밤"
         gap={104}
+        /* 판에서 **유일하게 움직이는 컷** — 까치 떼가 은하수 위로 날아 다리를 놓는다.
+           색 강조(STAR)가 바로 아래 나레이션 한 곳뿐인 것과 같은 이유 — 정점은 하나여야 한다. */
+        video
       />
       {/* 판에서 **한 번뿐인** 색 강조. 정점 문장이라 여기 쓴다 — 두 번째가 생기면 둘 다 죽는다. */}
       <Narration above={44} accent>
