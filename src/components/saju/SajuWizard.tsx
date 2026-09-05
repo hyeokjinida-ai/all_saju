@@ -428,9 +428,15 @@ export function SajuWizard({
   //   운영 티저의 DOM 이 스위치 이전(937a2af)과 같다. 「기존 건 바꾸지 말고 따로 빼서」(9/5).
   const [coldOpenDone, setColdOpenDone] = useState(false);
   const markColdOpenDone = useCallback(() => setColdOpenDone(true), []);
-  /** 지금이 콜드오픈 구간인가 — `?cold=1` 인 산군 티저 화면에서 타이틀 드랍을 아직 안 지난 상태.
-   *  이 하나가 false 면 헤더 게이트·제목 게이트·data-cold-open 신호가 한꺼번에 잠긴다. */
-  const inColdOpen = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep && !coldOpenDone;
+  /** 지금이 콜드오픈 **판**인가 — 감시점을 지났든 아니든 `?cold=1` 인 산군 티저 화면이면 참.
+   *  「구간」(inColdOpen)과 갈라야 하는 이유: 타이틀 드랍을 지나면 구간은 끝나지만 **판은 계속**이다.
+   *  구간만 있던 때는 감시점을 지나는 순간 제목·헤더가 콜드오픈 블록 **위에** 다시 끼어들어
+   *  문서가 191px 늘고 스크롤 앵커링이 화면을 그만큼 밀었다(2026-09-05 실측: scrollY 1527→1718).
+   *  정점 직후에 화면이 덜컥 밀리면 몰입이 깨진다 — 그래서 판 단위 게이트를 따로 둔다. */
+  const coldOpenLane = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep;
+  /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
+   *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
+  const inColdOpen = coldOpenLane && !coldOpenDone;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
   // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
@@ -916,8 +922,21 @@ export function SajuWizard({
           위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
           무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
       {/* 산군 콜드오픈 구간에서는 이 헤더를 통째로 안 그린다 — 그림이 먼저다(위 coldOpenDone 주석). */}
+      {/* ⚠ 감시점을 지난 **뒤에도** 이 헤더를 in-flow 로 되돌리면 안 된다. 콜드오픈 블록 위에
+          99px 짜리 헤더가 새로 끼어들어 문서가 늘고, 스크롤 앵커링이 손님 화면을 그만큼
+          밀어 올린다(실측 191px — 타이틀 드랍 직후에 화면이 덜컥 움직였다).
+          그래서 콜드오픈 판에서는 fixed 오버레이로 띄운다: 레이아웃 기여 0 → 밀림 0.
+          배경은 반투명 먹색 + blur — 아래로 흐르는 글이 헤더 글자와 겹쳐 읽히면 안 된다.
+          스위치 없는 판(coldOpenLane=false)은 클래스가 전과 **바이트 단위로 같다**. */}
       {!inColdOpen && (
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}>
+      <div
+        className={`${coldOpenLane ? "fixed inset-x-0 top-0 z-30" : "relative z-[2]"} w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}
+        style={
+          coldOpenLane
+            ? { background: "rgba(7,6,9,0.85)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }
+            : undefined
+        }
+      >
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -967,8 +986,11 @@ export function SajuWizard({
       >
         {/* 콜드오픈 동안에는 제목·부제도 안 그린다 — 신당 컷보다 위에 글자가 남으면
             「그림으로 시작」이 깨진다(375폰 실측: 제목 y=30 · 부제 y=74 vs 신당 y=122).
-            다만 「네 장부를 찾는 중이다」는 로딩 표시라 그때는 계속 보여야 한다. */}
-        {!(inColdOpen && !teaserLoading) && (
+            다만 「네 장부를 찾는 중이다」는 로딩 표시라 그때는 계속 보여야 한다.
+            ⚠ 게이트가 `coldOpenLane` 인 이유: 감시점을 지난 뒤에 이 블록을 되살리면
+            콜드오픈 블록 **위**에 92px 이 새로 끼어들어 화면이 밀린다. 그리고 애초에
+            제목의 일은 타이틀 드랍(박수무당 레터링)이 이미 다 했다 — 두 번 소개할 이유가 없다. */}
+        {!(coldOpenLane && !teaserLoading) && (
         <div className="text-center mb-7">
           {!imm && (
             <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
@@ -2386,8 +2408,14 @@ function TeaserStep({
   //   -mx-5 는 뺀다(두 번 되물면 375 가 아니라 415 로 나가 옆이 잘린다). 글자 두 줄만 px-5 로
   //   원래의 335 글상자를 되돌려 준다 — 줄바꿈 폭이 전과 같아야 한다.
   // ⚠ 본문 구간은 이 판 **바깥**이다. 감시점을 지난 뒤 장부·구매 카드에는 전처럼 배경이 비친다.
+  // ⚠ paddingTop 20 / marginTop -20 은 **레이아웃을 안 바꾸는 덮개**다. 컬럼(중앙 div)의 py-5 때문에
+  //   판이 y=20 에서 시작해 화면 맨 위 20px 띠만 먹색 밖이었다(그 자리에 배경 영상이 비쳤다).
+  //   패딩으로 판을 위로 20 늘리고 같은 값의 음수 마진으로 되물리면 뒤 컷들의 y 는 그대로다(신당 20 유지).
   const coldOpenBlock = useColdOpen ? (
-    <div className="-mx-5" style={{ background: "#070609", position: "relative", zIndex: 1 }}>
+    <div
+      className="-mx-5"
+      style={{ background: "#070609", position: "relative", zIndex: 1, paddingTop: 20, marginTop: -20 }}
+    >
       {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다.
           카메라가 계단을 타고 올라가는 7초 컷이라 **루프 없이** 한 번 돌고 끝 프레임에서 선다
           (되감으면 올라가던 계단이 다시 아래로 떨어져 도입의 정적이 깨진다).
