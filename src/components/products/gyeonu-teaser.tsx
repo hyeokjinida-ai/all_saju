@@ -17,6 +17,14 @@
 //    화자가 다른데 직녀 얼굴이 나오면 그게 제일 큰 사고다.
 //    견우 컷은 `public/products/reunion/` 에만 있다
 //    (2026-09-04 인물 컷 3장 · 2026-09-05 판넬 6장 입고 = 티저 아홉 컷).
+//    (예외 하나 — **말풍선 PNG**(`say-lg-*.png`)는 직녀 폴더에 있지만 인물이 아니라
+//     손으로 그은 잉크선 부품이다. 얼굴이 없으니 화자가 갈리지 않는다. 아래 SAY_ART 참조.)
+//
+// 2026-09-05 3차 — **웹툰부 / 상품부 두 단으로 갈랐다**(형님 실측 「그림 끼운 랜딩이다」).
+//   ① 밝은 카드판 위에 밤 컷이 붙임 사진처럼 떴다 → 웹툰부는 **자기 밤 배경**을 갖는다.
+//   ② 대사가 그림 밖 캡션이었다 → 웹툰부 대사는 **그림 위**(말풍선·나레이션)로 올렸다.
+//   ③ 컷과 UI 카드가 뒤섞여 흐름이 끊겼다 → 컷을 앞으로 모으고 표·카드는 절단 뒤로 내렸다.
+// 부품도 그래서 둘이다: 웹툰부 = WebtoonPanel(그림 위 대사) · 상품부 = GyeonuCut(한지 띠 캡션).
 import { useState } from "react";
 import { track } from "@/lib/analytics";
 import {
@@ -34,6 +42,7 @@ import {
 } from "@/components/products/jiknyeo-teaser-kit";
 import { NeonMask } from "@/components/products/jiknyeo-ui";
 import { Moon } from "@/components/products/JiknyeoForecast";
+import type { SayBox } from "@/lib/jiknyeo-say-box";
 import type { SajuTeaser } from "@/lib/saju/teaser";
 
 type Reunion = NonNullable<SajuTeaser["reunion"]>;
@@ -90,38 +99,386 @@ export type GyeonuCutId =
   | "g-greet" // 장부에 손을 얹고 마주 보는 견우
   | "p-close"; // 장부를 덮는 손 — 마감
 
+/* ═════════════════════════════════════════════════════════
+   웹툰부 — 티저의 **위 절반**. 컷 일곱 장 + 반전 절단으로 끝난다.
+
+   왜 이렇게 갈랐나(형님 실측 2026-09-05, 현재판 937a2af 판정 「그림 끼운 랜딩」):
+     ① 밝은 달빛 판 위에 밤 컷이 얹혀 있어서 컷마다 **붙임 사진**처럼 떴다.
+        → 웹툰부는 자기 밤 배경(진남색→먹색)을 통째로 깔고, 컷 사이 여백까지 그 밤이다.
+          컷이 서로 다른 장면이 아니라 **한 밤의 연속**으로 읽히는 게 이 배경의 일이다.
+     ② 대사가 그림 밖 캡션이었다 — 「사진 + 설명글」은 웹툰이 아니라 상세페이지 문법이다.
+        → 대사를 그림 **위**로 올렸다. 인물 컷은 말풍선, 풍경 컷은 하단 나레이션.
+     ③ 컷과 UI 카드(달력·표·잠금 줄)가 번갈아 나와 읽는 흐름이 계속 끊겼다.
+        → 컷을 앞으로 다 모으고, 표·카드는 절단 뒤 **상품부**로 내렸다.
+
+   순서는 이야기 그대로다: 갈라진 강(사건) → 화자 등장 → 등불(열두 달) → 강 건너(그 사람)
+   → 까치(소식) → 오작교(정점) → 대면(복채) → 검정 절단. 값은 여기서 한 개도 안 연다.
+   ═════════════════════════════════════════════════════════ */
+
+/** 컷 사이 여백에만 보이는 별 — 컷은 불투명이라 그 위는 그림이 덮는다.
+ *
+ *  왜 두 겹인가: 한 겹이면 타일이 반복되는 게 격자로 잡힌다. 크기가 서로 안 나누어떨어지는
+ *  두 겹을 겹치면 반복 주기가 길어져 눈에 안 걸린다.
+ *  ⚠ 진하게 뿌리면 이음새를 죽이는 게 아니라 **얼룩**이 된다 — 점 8개·opacity 0.6 이 상한이다. */
+const STARS_A =
+  "radial-gradient(1.1px 1.1px at 22px 34px, rgba(238,240,252,0.70), transparent 60%)," +
+  "radial-gradient(0.8px 0.8px at 118px 18px, rgba(238,240,252,0.48), transparent 60%)," +
+  "radial-gradient(1px 1px at 68px 132px, rgba(214,206,242,0.52), transparent 60%)," +
+  "radial-gradient(0.7px 0.7px at 156px 96px, rgba(238,240,252,0.40), transparent 60%)," +
+  "radial-gradient(0.9px 0.9px at 12px 176px, rgba(238,240,252,0.44), transparent 60%)";
+const STARS_B =
+  "radial-gradient(0.8px 0.8px at 40px 22px, rgba(238,240,252,0.46), transparent 60%)," +
+  "radial-gradient(1px 1px at 96px 108px, rgba(200,192,238,0.40), transparent 60%)," +
+  "radial-gradient(0.7px 0.7px at 8px 74px, rgba(238,240,252,0.34), transparent 60%)";
+
+/** 컷 로드 전 자리 색 — 밤 배경과 같은 계열이라 흰 사각형이 번쩍이지 않는다. */
+const NIGHT_DEEP = "#06080f";
+
+type SayTail = "bl" | "br" | "tl" | "tr";
+
+/** 말풍선 자산 — **직녀 결과지(JiknyeoInterlude)의 SAY_ART 실측표와 같은 값**이다.
+ *
+ *  왜 import 하지 않고 옮겨 적었나: 그 파일은 `node:fs` 를 쓰는 **서버 컴포넌트**라
+ *  "use client" 인 여기서 부르면 fs 가 클라이언트 번들에 딸려 들어가 빌드가 죽는다.
+ *  값의 정본은 저쪽이다 — 말풍선을 다시 구우면 `python 직녀/tools/bubble-cut.py` 로 재고
+ *  두 곳을 같이 고친다.
+ *  box = 잉크선 **안쪽**(꼬리를 뺀 몸통) 범위. 여기 글자를 앉혀야 아래로 안 밀린다. */
+const SAY_ART: Record<SayTail, { src: string; ratio: number; box: { x: number; y: number; w: number; h: number } }> = {
+  br: { src: "/products/jiknyeo/say-lg-br.png", ratio: 1.215, box: { x: 5.7, y: 6.1, w: 89.0, h: 65.9 } },
+  bl: { src: "/products/jiknyeo/say-lg-bl.png", ratio: 1.213, box: { x: 5.4, y: 6.3, w: 89.1, h: 65.7 } },
+  tr: { src: "/products/jiknyeo/say-lg-tr.png", ratio: 1.215, box: { x: 5.7, y: 28.0, w: 89.0, h: 65.9 } },
+  tl: { src: "/products/jiknyeo/say-lg-tl.png", ratio: 1.213, box: { x: 5.4, y: 28.0, w: 89.1, h: 65.7 } },
+};
+
+/**
+ * 컷별 말풍선 자리 — **그림을 재서 박은 값**(1080×1620 원본 실측 2026-09-05).
+ * x·w 는 컷 폭 기준 %, y 는 컷 높이 기준 %(직녀 SAY_BOX 와 같은 좌표계).
+ *
+ *   컷        얼굴            손                  앉힌 자리
+ *   g-river   x45~59 y15~27   x31~42 y79~88       좌상단 은하수(꼬리 br → 얼굴 쪽)
+ *   g-greet   x38~63 y25~46   x33~72 y82~95       좌하단 옷자락(꼬리 tr → 얼굴 쪽)
+ *
+ * 규칙(2026-08-24 확정): **눈·입·손 위에는 절대 안 얹는다.** 머리카락 윤곽을 한 조각
+ * 스치는 건 허용 — 인물을 통째로 피해 허공에 띄우면 대사가 아니라 UI 라벨로 보인다.
+ * 그림을 새로 구우면 이 표부터 다시 잰다.
+ */
+const GYEONU_SAY_BOX: Record<"g-river" | "g-greet", SayBox> = {
+  "g-river": { x: 2.5, y: 4, w: 40 },
+  "g-greet": { x: 2, y: 55, w: 44 },
+};
+
+/** 한 줄의 가로 길이(em) — 한글 1 · 영숫자 0.55 · 공백 0.34 · 마침표류 0.4.
+ *  글씨 크기를 이 값에서 거꾸로 뽑는다(아래 GyeonuBubble). */
+function emWidth(s: string): number {
+  let w = 0;
+  for (const ch of s) {
+    if (ch === " ") w += 0.34;
+    else if (/[.,!?·]/.test(ch)) w += 0.4;
+    else if (/[A-Za-z0-9]/.test(ch)) w += 0.55;
+    else w += 1;
+  }
+  return w;
+}
+
+/** 그림 위 말풍선 — 인물 컷 전용(컷당 하나, 짧게).
+ *
+ *  글씨 크기를 **폭에서 계산**하는 이유: 원 안에 든 글자는 넘치면 원을 뚫는다(직녀 w3 실측:
+ *  대사가 원 밖으로 29px 나가 화면 가로를 넘겼다). 폭·줄 수·글자 길이로 들어갈 수 있는
+ *  최대 크기를 먼저 구하고 96% 만 쓴다 — 손님 이름이 길어져도 안 터진다.
+ *  단위는 cqw(컷 폭의 1%)라 폰이든 태블릿이든 컷과 같은 비율로 커진다. */
+function GyeonuBubble({ lines, tail, box }: { lines: string[]; tail: SayTail; box: SayBox }) {
+  const art = SAY_ART[tail];
+  const innerW = (art.box.w / 100) * box.w; // 잉크선 안쪽 가로(cqw)
+  const innerH = (art.box.h / 100) * (box.w / art.ratio); // 잉크선 안쪽 세로(cqw)
+  const cols = Math.max(...lines.map(emWidth));
+  const k = Math.min(innerW / cols, innerH / (1.3 * lines.length)) * 0.96;
+  return (
+    <div
+      data-say
+      className="pointer-events-none absolute"
+      style={{ left: `${box.x}%`, top: `${box.y}%`, width: `${box.w}%` }}
+    >
+      <div style={{ position: "relative", width: "100%", aspectRatio: String(art.ratio) }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={art.src}
+          alt=""
+          draggable={false}
+          className="select-none"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            // 밤 컷 위라 흰 원이 그냥 뜨면 스티커가 된다 — 그림자로 그림 위에 앉힌다.
+            filter: "drop-shadow(0 6px 16px rgba(4,6,14,0.62))",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: `${art.box.x}%`,
+            top: `${art.box.y}%`,
+            width: `${art.box.w}%`,
+            height: `${art.box.h}%`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {lines.map((t, i) => (
+            <span
+              key={i}
+              className="font-myeongjo"
+              style={{
+                fontSize: `clamp(11px, ${k.toFixed(2)}cqw, 21px)`,
+                lineHeight: 1.3,
+                color: "#14111F",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 웹툰부 컷 한 장 — 그림 + (말풍선 | 나레이션).
+ *
+ *  나레이션이 **밝은 띠 박스가 아닌** 이유: 띠를 깔면 컷이 거기서 끝나 버려 밤이 끊긴다.
+ *  웹툰 나레이션은 그림 아래쪽을 어둡게 눌러 그 위에 흰 글씨를 얹는다 — 컷은 그대로 이어진다.
+ *  ⚠ width/height 를 반드시 박는다. 없으면 로드 전 높이가 0 이라 읽는 도중 아래가 밀린다. */
+function WebtoonPanel({
+  id,
+  alt,
+  /** 앞 여백 — 기본 14(밤하늘 이음새) · 정점·절단 앞 56 · 첫 컷 0 */
+  gap = 14,
+  eager = false,
+  narrate,
+  say,
+}: {
+  id: GyeonuCutId;
+  alt: string;
+  gap?: number;
+  eager?: boolean;
+  narrate?: React.ReactNode;
+  say?: { lines: string[]; tail: SayTail; box: SayBox };
+}) {
+  return (
+    <figure
+      data-panel={id}
+      style={{
+        position: "relative",
+        marginTop: gap,
+        // 대사 크기의 자 — 없으면 cqw 가 위쪽 조상을 잡아 엉뚱한 크기가 된다.
+        containerType: "inline-size",
+        background: NIGHT_DEEP,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/products/reunion/${id}.webp`}
+        alt={alt}
+        width={1080}
+        height={1620}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        draggable={false}
+        className="select-none"
+        style={{ display: "block", width: "100%", height: "auto" }}
+      />
+      {narrate && (
+        <figcaption
+          data-narrate
+          className="absolute inset-x-0 bottom-0"
+          style={{
+            padding: "56px 20px 20px",
+            background:
+              "linear-gradient(180deg, rgba(4,6,12,0) 0%, rgba(4,6,12,0.58) 36%, rgba(4,6,12,0.90) 72%, rgba(4,6,12,0.96) 100%)",
+          }}
+        >
+          <p
+            className="font-myeongjo"
+            style={{
+              margin: 0,
+              color: "#F5F2EC",
+              fontSize: "clamp(15px, 4.6cqw, 19px)",
+              lineHeight: 1.6,
+              fontWeight: 600,
+              wordBreak: "keep-all",
+              textShadow: "0 1px 10px rgba(0,0,0,0.85)",
+            }}
+          >
+            {narrate}
+          </p>
+        </figcaption>
+      )}
+      {say && <GyeonuBubble {...say} />}
+    </figure>
+  );
+}
+
+/**
+ * 웹툰부 전체 — 티저 맨 위, 밝은 판(teaser-light)보다 **먼저** 온다.
+ *
+ * 청월당 재회 티저 문법 그대로다: **웹툰 먼저, 상품 나중.** 손님은 값을 보기 전에
+ * 이야기를 한 번 다 읽고, 절단에서 끊긴 채로 상품부에 들어간다.
+ *
+ * `-mx-5`(=20) 은 위저드 컨테이너의 px-5 를 되물리는 값이다 — 웹툰부는 컬럼 끝까지 나간다.
+ * (밝은 판은 -16 을 쓴다. 판의 px-4 가 다른 값이라 여기 20 을 그대로 쓰면 4px 이 삐져나온다.)
+ */
+export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
+  return (
+    <section
+      data-webtoon
+      aria-label="견우가 그린 밤"
+      style={{
+        position: "relative",
+        marginLeft: -20,
+        marginRight: -20,
+        marginBottom: 22,
+        overflow: "hidden",
+        // 위에서 아래로 조금씩 깊어진다 — 절단(검정 판)으로 자연스럽게 내려앉게.
+        background:
+          "linear-gradient(180deg,#070a15 0%,#0b1026 22%,#0a0e20 56%,#070911 82%,#05070d 100%)",
+        paddingBottom: 30,
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          backgroundImage: `${STARS_A},${STARS_B}`,
+          backgroundSize: "188px 246px, 131px 173px",
+          opacity: 0.6,
+        }}
+      />
+
+      {/* ① 콜드오픈 — 사람도 말도 없이 갈라진 강 하나로 연다(웹툰 1화가 사건으로 시작하는 문법).
+          eager: 티저 컷 아홉 장 중 **이 한 장만** 즉시 받는다. */}
+      <WebtoonPanel
+        id="p-split"
+        alt="두 갈래로 갈라져 흐르는 밤의 강"
+        gap={0}
+        eager
+        narrate="그날, 강이 갈라졌습니다."
+      />
+
+      {/* ② 화자 등장 — 앞 컷의 사건을 받아 「그래서 내가 적어 뒀다」로 잇는다.
+          말풍선: 좌상단 은하수. 얼굴(x45~59 y15~27)·손(x31~42 y79~88) 둘 다 피한다. */}
+      <WebtoonPanel
+        id="g-river"
+        alt="은하수가 비친 강가에서 건너편을 보는 견우"
+        say={{
+          tail: "br",
+          box: GYEONU_SAY_BOX["g-river"],
+          lines: ["강 건너를 보면서", `${callMe(name)} 달력을`, "적어 두었습니다."],
+        }}
+      />
+
+      {/* ③ 등불 = 열두 달. 여기서 「등불 하나 = 한 달」을 가르쳐 두면 뒤의 까치(소식)·
+          오작교(다리)가 설명 없이 읽힌다.
+          ⚠ 칸 수를 세지 않는다 — 열린 칸이 없는 손님(revealed 없음)에게 거짓말이 된다. */}
+      {/* 두 문장이라 줄을 **직접 끊는다**. 자동 줄바꿈에 맡기면 「지금 밝은 / 건 하나뿐입니다」로
+          꺾여 한 낱말이 두 줄에 걸린다(실측). 나레이션은 문장 하나가 한 줄이다. */}
+      <WebtoonPanel
+        id="p-lanterns"
+        alt="강물 위에 뜬 등불들, 앞쪽 하나만 환하다"
+        narrate={
+          <>
+            등불 하나가 한 달입니다.
+            <br />
+            {data.revealed ? "지금 밝은 건 하나뿐입니다." : "불은 결과지에서 켭니다."}
+          </>
+        }
+      />
+
+      {/* ④ 시점 전환 — 여기서 처음 카메라가 강 건너를 본다. 얼굴은 안 그린다(그 사람 얼굴을
+          그리면 손님이 실제 사람과 대조하기 시작하고, 상품부의 행동 패턴 세 줄이 무너진다). */}
+      <WebtoonPanel
+        id="p-farshore"
+        alt="강 건너 멀리 서 있는 사람의 뒷모습"
+        narrate="강 건너 그 사람 쪽도, 보이는 데까지 봤습니다."
+      />
+
+      {/* ⑤ 까치 = 소식. 잠금 목록을 「안 주는 것」이 아니라 「오는 것」으로 뒤집는 컷이다.
+          ⚠ 달을 말하지 않는다 — 「따로 있습니다」에서 끊는 게 이 컷의 일이다. */}
+      <WebtoonPanel
+        id="p-magpie"
+        alt="발목에 서찰을 묶고 은하수를 건너 나는 까치"
+        narrate="소식이 건너오는 달이… 따로 있습니다."
+      />
+
+      {/* ⑥ 정점 — 오작교. 티저에서 제일 큰 그림이고 유일하게 아무것도 안 가린 약속이다.
+          앞 여백 56(정점 앞 큰 숨): 앞 컷에 붙여 두면 까치 컷의 뒷장으로 읽힌다.
+          대사는 사실만 — 「다시 이어집니다」로 단정하면 재회가 안 되는 손님에게 거짓말이 된다. */}
+      <WebtoonPanel
+        id="p-bridge"
+        alt="수백 마리 까치가 은하수 위로 다리를 이룬 밤"
+        gap={56}
+        narrate="다리가 놓이는 달에는, 강이 이렇게 됩니다."
+      />
+
+      {/* ⑦ 대면 — 돈 얘기는 마주 보고 한다. 말풍선은 좌하단 옷자락(눈 y33~36·입 y43·
+          장부 짚은 손 y82~95 를 전부 피한다), 꼬리는 위 얼굴 쪽.
+          ⚠ 같은 g-greet 가 위저드 12단계(위로 화면, SajuWizard:1404)에도 있다. 열 화면쯤
+            떨어져 있고 「마주 본다」가 두 번 다 그 자리의 뜻이라 그대로 둔다 — 바꾸려면 새 컷이 필요하다. */}
+      <WebtoonPanel
+        id="g-greet"
+        alt="펼쳐 둔 장부에 손을 얹고 정면으로 마주 보는 견우"
+        say={{
+          tail: "tr",
+          box: GYEONU_SAY_BOX["g-greet"],
+          lines: ["이 아래부터는…", "복채를 받고", "폅니다."],
+        }}
+      />
+
+      {/* ⑧ 절단 — 웹툰부는 여기서 끝난다. 아래는 상품부(밝은 판)다.
+          좌우 20 은 여백이 아니라 문법이다: 컷은 끝까지, **판은 한 단 안쪽**. */}
+      <div style={{ position: "relative", paddingLeft: 20, paddingRight: 20 }}>
+        <ReunionCut data={data} />
+      </div>
+    </section>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────
-   견우 컷 — 티저 안의 웹툰 컷 한 장.
+   견우 컷 — **상품부**에 남는 컷 두 장(g-farewell·p-close)의 옷.
 
-   왜 필요한가: 재회 티저는 T1~T5 가 전부 **글 카드**라 스크롤이 「그냥 글만 있는 거」로 읽혔다
-   (형님 실측 2026-09-05). 앞서 컷이 하나 있긴 했는데 T2(이별 시기를 적은 손님)에만 달려 있어
-   건너뛴 손님 화면에는 그림이 **0장**이었다 — 실측: 스킵 플로 티저의 <img> 개수 0.
+   2026-09-05 3차까지 이 부품이 티저 컷 아홉 장을 다 그렸다. 지금은 **두 장만** 그린다 —
+   나머지 일곱은 웹툰부(WebtoonPanel)로 올라갔다. 남은 둘은 절단 **뒤**, 표와 카드가 흐르는
+   상품부 안에 있어서 문법이 다르다:
 
-   2026-09-05 2차: 인물 컷 셋으로는 「글 사이에 그림이 세 번」이었을 뿐 웹툰이 아니었다
-   (형님 「제발 웹툰처럼」). 무인 판넬 여섯을 더 심어 **컷이 서사를 끌고 가는** 아홉 컷으로 짠다 —
-   갈라진 강(이별) → 달력 → 등불(열두 달) → 건너편(그 사람) → 배웅 → 까치(소식) → 오작교(정점)
-   → 대면 → 덮는 손(마감). 글 카드는 이제 컷과 컷 사이의 근거지 화면의 뼈대가 아니다.
+     상품부는 문서다. 여기서는 그림도 「이 문단 옆에 붙은 한 장」이지 장면이 아니다.
+     그래서 대사를 컷 위에 얹지 않고 **컷 밖 한지 띠**에 「견우」 명패를 달아 앉힌다 —
+     밝은 판 위에 흰 말풍선을 띄우면 흰 위에 흰이라 원이 안 보인다(웹툰부는 밤이라 뜬다).
 
-   문법은 셋을 합친 것이다:
-    ① 앞 여백 44px(정점 앞은 56) — 글 → (숨) → 그림. 붙여 두면 컷이 앞 카드의 삽화가 된다
+   문법 둘:
+    ① 앞 여백 44px — 글 → (숨) → 그림. 붙여 두면 컷이 앞 카드의 삽화가 된다
        (칠흑 48·54화 실측을 결과지 CutInterlude 가 이미 이 눈금으로 옮겨 놨다).
     ② 원본 비율 그대로 풀블리드 — 컷은 판 끝까지, 카드·표는 한 단 안쪽(리포 공통 규칙).
        음수 마진 16 = teaser-light 의 px-4. **20(-mx-5)을 쓰면 안 된다** — 이 판은
        border-radius 18 짜리 떠 있는 카드라 4px 이 모서리 밖으로 삐져나온다.
-    ③ 대사는 **컷 밖 띠**에 앉힌다 — 컷 위에 얹으면 받치려고 안개를 깔게 되고 그 안개가
-       밤 그림을 절반 죽인다(2026-08-29 형님 검수 「그림이 죽는다」로 결과지에서 이미 걷어낸 길).
-       대신 「견우」 명패를 달아 캡션이 아니라 **대사**로 읽히게 한다.
+       (웹툰부는 판 바깥이라 거기선 20 이 맞다 — 값이 두 개인 건 판이 둘이라서다.)
 
    ⚠ width/height 를 반드시 박는다. 없으면 로드 전 높이가 0 이라 읽는 도중에 아래가 밀린다.
-   ⚠ 직녀 컷은 여기 못 들어온다 — 자산은 `public/products/reunion/` 셋뿐이다.
+   ⚠ 직녀 컷은 여기 못 들어온다 — 자산은 `public/products/reunion/` 에만 있다.
    ───────────────────────────────────────────────────────── */
 export function GyeonuCut({
   id,
   alt,
   say,
-  /** 앞 여백 — 기본 44(웹툰 컷 앞 숨) · 정점 앞 56 · 판 맨 위 첫 컷 0(판의 py-10 이 이미 준다) */
+  /** 앞 여백 — 기본 44(글 → 숨 → 그림) */
   gap = 44,
-  /** 첫 화면 컷(p-split)만 eager. 나머지는 lazy — 아홉 장이 2:3 세로라 한꺼번에 받으면 첫 그림이 늦다. */
+  /** 상품부 컷은 전부 스크롤 한참 아래라 lazy 가 기본이다(즉시 받는 건 웹툰부 첫 컷 하나뿐). */
   eager = false,
 }: {
   id: GyeonuCutId;
@@ -185,28 +542,10 @@ export function ReunionCalendar({ data, name }: { data: Reunion; name: string })
 
   return (
     <section>
-      {/* 콜드오픈 — 티저의 **최초 화면**이다. 사람도 말풍선도 없이 갈라진 강 하나로 연다.
-          웹툰 1화가 인물 소개가 아니라 사건으로 시작하는 그 문법이다: 손님이 여기 온 이유
-          (갈라진 날)를 첫 컷이 그림으로 먼저 말하고, 그다음 컷에서 화자가 나온다.
-          gap 0: 판의 py-10(40px)이 이미 위 여백이라, 여기서 44 를 더 주면 84px 이 비어 뜬다.
-          eager: 티저 아홉 컷 중 **이 한 장만** 즉시 받는다(나머지 여덟은 lazy). */}
-      <GyeonuCut
-        id="p-split"
-        alt="두 갈래로 갈라져 흐르는 밤의 강"
-        gap={0}
-        eager
-        say="그날, 강이 갈라졌습니다."
-      />
-      {/* 화자 등장 — 앞 컷의 사건을 받아 「그래서 내가 적어 뒀다」로 잇는다.
-          대사가 바로 아래 열두 칸으로 손을 넘긴다. */}
-      <GyeonuCut
-        id="g-river"
-        alt="은하수가 비친 강가에서 건너편을 보는 견우"
-        say={`강 건너를 보면서 ${callMe(name)} 달력을 적어 두었습니다.`}
-      />
-      <div className="mt-14">
-        <T>앞으로 열두 달</T>
-      </div>
+      {/* 여기 있던 컷 셋(p-split·g-river·p-lanterns)은 **웹툰부로 올라갔다**(2026-09-05 3차).
+          이 블록은 이제 상품부의 첫 화면 — 절단(검정 판)이 끊고 나서 손님이 처음 만나는
+          「그래서 계산은 이렇다」다. 컷이 앞에 없으므로 제목이 판의 py-10 바로 아래 선다. */}
+      <T>앞으로 열두 달</T>
       <div className="mt-2">
         <BrushHead lines={["열두 칸을 다 세워 두었습니다"]} />
       </div>
@@ -279,21 +618,6 @@ export function ReunionCalendar({ data, name }: { data: Reunion; name: string })
         <br />
         달 이름은 결과지에서 엽니다.
       </p>
-
-      {/* 등불 컷 — 표(열두 칸)를 그림 한 장으로 번역한다. 표는 계산의 증거고, 이 컷은 그 계산이
-          손님에게 어떤 밤인지다. 「등불 하나 = 한 달」을 여기서 한 번 가르쳐 두면 뒤에 오는
-          까치(소식)·오작교(다리)가 설명 없이 읽힌다.
-          ⚠ 칸 수(열두·열한)를 대사에서 다시 세지 않는다 — 바로 위 두 줄이 이미 센 값이고,
-            여기서 「열한 칸」이라 박아 두면 열린 칸이 없는 손님(revealed 없음)에게 거짓말이 된다. */}
-      <GyeonuCut
-        id="p-lanterns"
-        alt="강물 위에 뜬 등불들, 앞쪽 하나만 환하다"
-        say={
-          data.revealed
-            ? "등불 하나가 한 달입니다. 지금 밝은 건 하나뿐입니다."
-            : "등불 하나가 한 달입니다. 불은 결과지에서 켭니다."
-        }
-      />
     </section>
   );
 }
@@ -394,22 +718,11 @@ export function ReunionRival({ data }: { data: Reunion }) {
   const r = data.rival;
   if (!r || r.lines.length === 0) return null;
   return (
-    <section>
-      {/* 시점 전환 컷 — 여기서 처음으로 카메라가 **강 건너**를 본다. 앞까지는 전부 이쪽 강가
-          (내 달력·내 이별)였다. 얼굴은 안 그린다: 그 사람 얼굴을 그리면 손님이 실제 사람과
-          대조하기 시작하고, 그 순간 아래 세 줄(행동 패턴)이 「안 닮았다」로 무너진다.
-          ⚠ 이 컷이 section 의 첫 요소라 mt-14 는 section 이 아니라 컷의 gap 44 가 준다 —
-            둘 다 주면 100px 이 비어 앞 블록과 끊긴다. */}
-      <GyeonuCut
-        id="p-farshore"
-        alt="강 건너 멀리 서 있는 사람의 뒷모습"
-        say="강 건너 그 사람 쪽도, 보이는 데까지 봤습니다."
-      />
-      {/* 컷 대사 → 제목 사이 56. 오프닝(g-river → 「앞으로 열두 달」)과 같은 눈금이라
-          손님이 두 번째로 만나는 「컷이 다음 블록을 소개한다」가 같은 리듬으로 온다. */}
-      <div className="mt-14">
-        <T>그 사람 옆자리</T>
-      </div>
+    // 앞에 있던 시점 전환 컷(p-farshore)은 웹툰부로 올라갔다(2026-09-05 3차) — 강 건너를
+    // 처음 보는 순간은 이야기 쪽 일이고, 여기는 그 시선이 무엇을 봤는지 적는 자리다.
+    // 컷이 빠졌으므로 앞 여백을 section 이 직접 든다(앞뒤 블록과 같은 56 눈금).
+    <section className="mt-14">
+      <T>그 사람 옆자리</T>
       <div className="mt-2">
         <BrushHead lines={["비어 있는지부터 봤습니다"]} />
       </div>
@@ -496,23 +809,27 @@ export function ReunionMoveOn({ data }: { data: Reunion }) {
 }
 
 /* ─────────────────────────────────────────────────────────
-   T5 — 반전 절단
-   흰 판으로 읽어 오다 **검정 판 흰 글자**로 한 번 뒤집고 끊는다(카카오웹툰 회차 마지막 대사 문법).
-   ⚠ 한 판에 딱 한 번. 재회 티저에서 반전은 여기 하나뿐이다 — 두 번 쓰면 절단이 사라진다.
+   T5 — 반전 절단. **웹툰부의 마지막 한 판**이다(GyeonuWebtoon 안에서만 그린다).
+   카카오웹툰이 회차 마지막 대사만 뒤집어 끊는 그 문법: 그림으로 읽어 오다 그림이 사라지고
+   글자만 남는다. 그리고 이 판 바로 아래에서 화면이 **밝은 상품부**로 통째로 뒤집힌다 —
+   반전은 판 색이 아니라 그 자리다.
+   ⚠ 한 화면에 딱 한 번. 재회 티저에서 절단은 여기 하나뿐이다 — 두 번 쓰면 절단이 사라진다.
    ───────────────────────────────────────────────────────── */
 export function ReunionCut({ data }: { data: Reunion }) {
   const c = data.cut;
   if (!c) return null;
   return (
-    // 정점 앞 큰 숨 — 앞 블록에 붙여 두면 절단이 앞 카드의 각주로 읽힌다(칠흑 여백 눈금 56).
+    // 절단 앞 큰 숨 — 앞 컷에 붙여 두면 절단이 그 컷의 자막으로 읽힌다(칠흑 여백 눈금 56).
     <section className="mt-14">
       <div
         className="relative px-5 pb-6 pt-7"
         style={{
-          background: "linear-gradient(180deg,#14121f,#08070c)",
+          // 밤하늘(#05070d~#0b1026)보다 **한 단 더 검다** — 같은 어둠이면 판이 안 서고
+          // 배경에 녹아 그냥 글자만 떠 있는 자리가 된다(은사 테두리가 그 경계를 긋는다).
+          background: "linear-gradient(180deg,#101020,#000000)",
           borderRadius: 6,
-          border: "1px solid rgba(207,214,230,0.35)",
-          boxShadow: "0 12px 34px rgba(0,0,0,0.55)",
+          border: "1px solid rgba(207,214,230,0.42)",
+          boxShadow: "0 12px 34px rgba(0,0,0,0.72)",
         }}
       >
         <span
