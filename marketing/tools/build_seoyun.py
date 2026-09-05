@@ -161,16 +161,66 @@ V7_CARDS = [
     ("full", "seo_partner_card_ad.png", 30.20, 33.20, {"reveal": (30.30, 31.50)}),
     ("pan", "__win1", 35.20, 38.40, {"y0": 0.10, "y1": 0.186}),        # 스크롤② 「인생을 몰래 읽힌 느낌」
 ]
+# ── v8 (2026-09-06) 형님 두 번째 대본 「내 다음 남친, 사주가 먼저 보여줌」 — TTS 는 형님이 캡컷에서(NO_TTS).
+#    카드는 전부 8/23 실캡처(짝 카드·스크롤) + 짝 카드 글줄 크롭 seo_pin_partner_rows.png. 가짜 화면 없음.
+#    t0 는 7.0음절/초 추정 목표값 — 형님 TTS 길이대로 캡컷에서 옮긴다. 앵커는 크로마 28.6·얼굴 공개 30.2 둘.
+V8_LINES = [
+    (1, 0.20, "내 다음 남친 사주가 먼저 보여줌", ["내 다음 남친", "사주가 먼저 보여줌"], False),
+    (2, 2.30, "처음엔 나도 뭔 소린가 했거든?", ["처음엔 나도", "뭔 소린가 했거든?"], False),
+    (3, 4.30, "근데 여기", ["근데 여기"], False),
+    (4, 5.10, "말보다 행동이 먼저고 자기 일 확실한 사람", ["“말보다 행동이 먼저고", "자기 일 확실한 사람”"], False),
+    (5, 7.70, "이라고 나오는데", ["이라고 나오는데"], False),
+    (6, 8.90, "여기까진 뭐 그럴 수 있잖아", ["여기까진", "뭐 그럴 수 있잖아"], False),
+    (7, 10.70, "근데", ["근데"], False),
+    (8, 11.20, "만나는 시기랑 어떤 일을 하는지", ["만나는 시기랑", "어떤 일을 하는지"], False),
+    (9, 13.20, "어디서 만날 가능성이 높은지까지 나옴", ["어디서 만날 가능성이", "높은지까지 나옴"], False),
+    (10, 15.70, "잠깐만…", ["잠깐만…"], False),
+    (11, 16.50, "이 정도까지 알려준다고?", ["이 정도까지 알려준다고?"], True),
+    (12, 18.20, "요즘 계속 보이길래", ["요즘 계속 보이길래"], False),
+    (13, 19.50, "생년월일이랑 고민 하나 넣어본 건데", ["생년월일이랑", "고민 하나 넣어본 건데"], False),
+    (14, 21.80, "결과가 열한 장이나 나오고", ["결과가 열한 장이나 나오고"], False),
+    (15, 23.50, "돈, 일, 성격도 있는데", ["돈, 일, 성격도 있는데"], False),
+    (16, 24.80, "나는 솔직히 인연 쪽만 계속 봤음ㅋㅋ", ["나는 솔직히", "인연 쪽만 계속 봤음ㅋㅋ"], False),
+    (17, 27.00, "근데 진짜 웃긴 게", ["근데 진짜 웃긴 게"], False),
+    (18, 28.20, "마지막에 어떤 느낌으로 생긴 사람인지", ["마지막에", "어떤 느낌으로 생긴 사람인지"], False),
+    (19, 30.20, "이미지까지 보여줌", ["이미지까지 보여줌"], False),
+    (20, 31.60, "아니 근데", ["아니 근데"], False),
+    (21, 32.40, "왜 내가 좋아하게 생겼는데?", ["왜 내가 좋아하게 생겼는데?"], True),
+    (22, 34.30, "이거 사주 본 것보다", ["이거 사주 본 것보다"], False),
+    (23, 35.70, "다음 연애 미리 스포당한 기분임", ["다음 연애", "미리 스포당한 기분임"], True),
+    (24, 38.00, "앞부분은 무료니까 궁금하면 한번 봐봐.", ["앞부분은 무료니까", "궁금하면 한번 봐봐."], False),
+]
+V8_HOOKS = {
+    "h28": [("내 다음 남친", 57, "bone"), ("사주가 먼저 보여줌", 84, "red_word", "먼저 보여줌"),
+            ("*실제 사주 서비스 화면입니다", 40, "pink")],   # v8 은 카드가 전부 실화면 — 고지행이 사실
+}
+V8_CARDS = [
+    ("slot", "seo_partner_card_ad_blur.png", 0.30, 2.20, {}),        # 첫 0.25초 3요소 — 「사주가 먼저 보여줌」
+    ("pin", "seo_pin_partner_sungkyuk.png", 5.00, 9.60, {}),          # 짝 카드 「성격」 줄 실캡처 — 「말보다 행동으로 챙긴다」
+    ("pin", "seo_pin_partner_sigi.png", 11.10, 15.40, {}),            # 짝 카드 「만나는 시기」+「나이대」 줄 — 「~까지 나옴」 (4:5 에서도 안 잘리게 두 장으로 나눔)
+    ("pan", "__win0", 21.70, 24.90, {"y0": 0.06, "y1": 0.160}),       # 「열한 장」 스크롤①
+    ("slot", "seo_partner_card_ad_blur.png", 24.90, 28.50, {}),       # 「인연 쪽만 계속 봤음」
+    # 28.6~30.0 크로마 — CHROMA 그대로(푸티지 고정)
+    ("full", "seo_partner_card_ad.png", 30.20, 34.10, {"reveal": (30.30, 31.50)}),  # 「이미지까지 보여줌 / 왜 내가 좋아하게」
+    ("pan", "__win1", 35.60, 38.40, {"y0": 0.10, "y1": 0.186}),       # 「스포당한 기분」 스크롤②
+]
+NO_TTS = False        # True 면 나레이션 없이 무음 판만 만든다(v8: 형님이 캡컷에서 TTS)
+BARE_NAME = ""        # BARE* 변형(카드 없음, 크로마·엔드카드만) 출력명
 SCRIPTS = {
-    "v5": dict(LINES=LINES, HOOKS=HOOKS, CARDS=CARDS, END_T=46.00, CUT_T=DUR, AUD=AUD,
+    "v5": dict(LINES=LINES, HOOKS=HOOKS, CARDS=CARDS, END_T=46.00, CUT_T=DUR, AUD=AUD, NO_TTS=False, BARE_NAME="",
                TAG="vU5", EDIT_DIR="편집용", PLAIN_NAME="_v5_무음무자막",
                VARIANTS={"V0": ("h24", "긁힐 준비는 하고!"), "V2": ("h25", "긁힐 준비는 하고!"),
                          "V3": ("h26", "긁힐 준비는 하고!"),
                          # PLAIN = 편집용 소스. 서윤 연기 + 카드 + 크로마 + 엔드카드만, 자막·훅·소리 없음.
                          "PLAIN": ("h24", "")}),
-    "v7": dict(LINES=V7_LINES, HOOKS=V7_HOOKS, CARDS=V7_CARDS, END_T=44.40, CUT_T=46.40,
+    "v7": dict(LINES=V7_LINES, HOOKS=V7_HOOKS, CARDS=V7_CARDS, END_T=44.40, CUT_T=46.40, NO_TTS=False, BARE_NAME="",
                AUD=f"{MAT}/클립/audio/seo_v7", TAG="vU5", EDIT_DIR="편집용_v7", PLAIN_NAME="_v7_무음무자막",
                VARIANTS={"V7": ("h27", "긁힐 준비는 하고."), "PLAIN7": ("h27", "")}),
+    "v8": dict(LINES=V8_LINES, HOOKS=V8_HOOKS, CARDS=V8_CARDS, END_T=44.40, CUT_T=46.40, NO_TTS=True,
+               BARE_NAME="_v8_바탕_카드없음", AUD=f"{MAT}/클립/audio/seo_v8", TAG="vU5", EDIT_DIR="편집용_v8",
+               PLAIN_NAME="_v8_무음무자막",
+               # PLAIN8 = 카드 박힌 무음판 / BARE8 = 카드도 없는 무음판(크로마·엔드카드만) — 형님 TTS 길이대로 카드를 직접 놓을 때
+               VARIANTS={"PLAIN8": ("h28", ""), "BARE8": ("h28", "")}),
 }
 SCRIPT = "v5"
 VARIANTS, TAG, EDIT_DIR, PLAIN_NAME = (SCRIPTS["v5"][k] for k in ("VARIANTS", "TAG", "EDIT_DIR", "PLAIN_NAME"))
@@ -254,7 +304,7 @@ def build_base(ratio):
 
 
 # ───────────────────────── 레이어 생성 ─────────────────────────
-def make_layers(ratio, hook_key, cta_line23, plain=False):
+def make_layers(ratio, hook_key, cta_line23, plain=False, nocards=False):
     W, H = 1080, (1920 if ratio == "9x16" else 1350)
     L = []   # {"im":PIL RGBA, "pos":(x,y), "t0","t1","fade","fade_out","pop"}
 
@@ -309,8 +359,8 @@ def make_layers(ratio, hook_key, cta_line23, plain=False):
         nxt = next((x[1] for x in LINES if x[0] == i + 1), DUR)
         add(im, (0, 0), t0 - 0.08, min(nxt - 0.05, t0 + 3.4), fade=0.10, fade_out=0.12)
 
-    # ③ 카드
-    for kind, name, t0, t1, opt in CARDS:
+    # ③ 카드 (nocards = BARE 판: 카드 없이 크로마·엔드카드만 — 형님이 캡컷에서 카드 PNG 를 직접 놓는다)
+    for kind, name, t0, t1, opt in ([] if nocards else CARDS):
         if name.startswith("__win"):
             src = f"{WIN}/win{name[-1]}.png"
             if not os.path.exists(src):
@@ -619,8 +669,8 @@ def main():
     use_script(a.script)
     variants = VARIANTS
     ids = list(variants) if a.ids == ["all"] else (a.ids or [next(iter(variants))])
-    wav = narr_wav()
-    if not os.path.exists(wav):
+    wav = None if NO_TTS else narr_wav()
+    if wav and not os.path.exists(wav):
         log("audio …")
         build_audio(wav)
     for ratio in a.ratios.split(","):
@@ -628,13 +678,15 @@ def main():
         log("base", ratio, base)
         for vid in ids:
             hook_key, cta = variants[vid]
-            plain = vid.startswith("PLAIN")
-            layers = make_layers(ratio, hook_key, cta, plain=plain)
+            bare = vid.startswith("BARE")
+            plain = vid.startswith("PLAIN") or bare
+            layers = make_layers(ratio, hook_key, cta, plain=plain, nocards=bare)
             layers.append({"im": endcard(W, H), "pos": (0, 0), "t0": END_T, "t1": CUT_T,
                            "fade": 0.10, "fade_out": 0.0, "pop": 0.0, "full": True, "reveal": None})
             tmp_out = f"{TMP}/{vid}_{ratio}.mp4"
             composite(ratio, layers, base, W, H, tmp_out, None if plain else wav, CHROMA[2])
-            final = (f"{OUT}/{EDIT_DIR}/{PLAIN_NAME}_1080x{H}.mp4" if plain
+            final = (f"{OUT}/{EDIT_DIR}/{BARE_NAME}_1080x{H}.mp4" if bare
+                     else f"{OUT}/{EDIT_DIR}/{PLAIN_NAME}_1080x{H}.mp4" if plain
                      else f"{OUT}/sangun_{TAG}_{vid}_seoyun_1080x{H}.mp4")
             os.makedirs(os.path.dirname(final), exist_ok=True)
             shutil.copyfile(tmp_out, final)

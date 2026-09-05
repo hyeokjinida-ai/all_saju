@@ -38,6 +38,14 @@ NOTES = {
    28.9~30초엔 그 카드가 폰 화면에 박힙니다. 「말보다 행동으로」는 바꾸지 마세요.
 5. ⚠ **2.4~7.2초 직언 카드는 가짜 화면입니다** — 서윤 실결과지 문장이 아니라 결과지 조판으로 새로 만든 것(형님 승인 2026-09-06).
    훅 3행 「*실제 사주 서비스 화면입니다」와는 어긋납니다. 고지행을 바꾸려면 `03_훅_투명PNG` 를 다시 뽑습니다(build_seoyun V7_HOOKS).""",
+    "v8": """1. **TTS 는 형님이 캡컷에서.** 여기 시각(t0)은 7.0음절/초로 잡은 **목표값**입니다. TTS 길이대로 옮기되 두 앵커만 지키세요 —
+   **28.6~30.0초 폰 화면 크로마**(짝 카드가 폰에 박힘)와 **30.2초 얼굴 공개**(풀스크린 짝 카드). 이 둘은 영상에 박혀 있어 못 옮깁니다.
+2. 얼굴 공개 앞까지 186음절이라 TTS 가 6.6음절/초면 30.9초로 앵커를 넘습니다 → **TTS 속도 1.1~1.2배**, 또는 `_v8_바탕_카드없음` 판에 카드 PNG 를 직접 놓으세요.
+3. **훅 「내 다음 남친 / 사주가 먼저 보여줌」** 0~42.4초 고정 — 훅은 자막이 아니라 소재의 뼈대입니다.
+4. **정점 3곳** 1.8배 — 이 정도까지 알려준다고? / 왜 내가 좋아하게 생겼는데? / 다음 연애 미리 스포당한 기분임
+5. ⚠ 제품 진실 2건: 짝 카드에 **직업은 없습니다**(8번 줄 「어떤 일을 하는지」는 화면에 근거가 없음 → 「어떤 성격인지」가 제품에 맞는 말).
+   「만나는 자리」 항목은 있지만 서윤 샘플 문장이 공급사 경고문이라 화면엔 못 냈습니다(화면 근거 = 시기·외모·성격·나이대).
+6. 「스포당한」은 TTS 엔진이 뭉개기 쉬운 단어(8/23 실측) — 캡컷 TTS 뽑고 한 번 들어 보세요.""",
 }
 D = {
     "clip": f"{OUT}/01_영상소스",
@@ -49,6 +57,9 @@ D = {
     "raw": f"{OUT}/07_원본재료",
     "crop": f"{OUT}/02_카드_투명PNG/_원본크롭",
 }
+HAS_TTS = (not getattr(B, "NO_TTS", False)) and os.path.exists(f"{B.AUD}/_lines_meta.json")
+if not HAS_TTS:
+    D.pop("aud")   # v8: 형님이 캡컷에서 TTS — 나레이션 폴더를 만들지 않는다
 for p in D.values():
     os.makedirs(p, exist_ok=True)
 
@@ -128,7 +139,8 @@ def main():
     for key in B.HOOKS:
         layers = B.make_layers("9x16", key, cta)
         hook = layers[0]["im"]           # 첫 레이어가 훅
-        nm = {"h24": "V0_긁힘·미련", "h25": "V2_전남친취향", "h26": "V3_얼굴", "h27": "V7_은근히기분나쁘네"}.get(key, key)
+        nm = {"h24": "V0_긁힘·미련", "h25": "V2_전남친취향", "h26": "V3_얼굴", "h27": "V7_은근히기분나쁘네",
+              "h28": "V8_다음남친"}.get(key, key)
         out = f"{D['hook']}/훅_{nm}.png"
         hook.save(out)
         log("hook", os.path.basename(out))
@@ -143,17 +155,18 @@ def main():
         l["im"].save(out)
     log("subs", len(subs), "장")
 
-    # ── 05 나레이션 ──────────────────────────────────────────
-    meta = json.load(open(f"{B.AUD}/_lines_meta.json", encoding="utf-8"))
-    M = {int(m["file"][5:7]): m for m in meta}
-    for i, t0, spoken, rows, peak in B.LINES:
-        src = f"{B.AUD}/line_{i:02d}.wav"
-        if os.path.exists(src):
-            shutil.copyfile(src, f"{D['aud']}/{i:02d}_{t0:05.2f}s.wav")
-    mix = B.narr_wav()
-    if os.path.exists(mix):
-        shutil.copyfile(mix, f"{D['aud']}/_통짜_{B.CUT_T:.0f}초.wav")
-    log("audio", len(B.LINES), "줄 + 통짜")
+    # ── 05 나레이션 (TTS 가 있을 때만) ───────────────────────
+    if HAS_TTS:
+        for i, t0, spoken, rows, peak in B.LINES:
+            src = f"{B.AUD}/line_{i:02d}.wav"
+            if os.path.exists(src):
+                shutil.copyfile(src, f"{D['aud']}/{i:02d}_{t0:05.2f}s.wav")
+        mix = B.narr_wav()
+        if os.path.exists(mix):
+            shutil.copyfile(mix, f"{D['aud']}/_통짜_{B.CUT_T:.0f}초.wav")
+        log("audio", len(B.LINES), "줄 + 통짜")
+    else:
+        log("audio 없음 — 형님이 캡컷에서 TTS")
 
     # ── 06 엔드카드 ─────────────────────────────────────────
     B.endcard(W, H).save(f"{D['end']}/엔드카드_1080x1920.png")
@@ -193,7 +206,7 @@ def main():
 | `02_카드_투명PNG` | 결과지 카드. 파일명 앞 숫자가 **들어가는 시각(초)** |
 | `03_훅_투명PNG` | 상단 고정 훅 {len(B.HOOKS)}종. 0~{B.END_T - 2:.1f}초 내내 깔면 됩니다 |
 | `04_자막_투명PNG` | 자막 {len(B.LINES)}장. 파일명에 시각·정점 표시 |
-| `05_나레이션` | TTS {len(B.LINES)}줄 낱개 + 통짜 {B.CUT_T:.0f}초 |
+| `05_나레이션` | {"TTS " + str(len(B.LINES)) + "줄 낱개 + 통짜 " + format(B.CUT_T, ".0f") + "초" if HAS_TTS else "없음 — TTS 는 형님이 캡컷에서. 카드 시각은 아래 표의 목표값"} |
 | `06_엔드카드` | {B.END_T:.1f}~{B.CUT_T:.1f}초 |
 | `07_원본재료` | 서윤 정지컷·결과지 통짜·짝 카드·로고 |
 
