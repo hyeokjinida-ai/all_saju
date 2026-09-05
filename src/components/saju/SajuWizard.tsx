@@ -2218,6 +2218,27 @@ function ColdOpenVideo({
     el.muted = true;
     void el.play().catch(() => {});
   }, []);
+  // 화면 밖이면 루프를 멈춘다 — 안 멈추면 손님이 티저 본문을 읽는 내내 탱화가 계속 돌아
+  // 폰이 뜨거워진다(BgMedia 가 `/jiknyeo` 실측으로 이미 쓰는 장치, 규칙을 그대로 따른다).
+  // rootMargin 200px — 스크롤로 들어오기 직전에 이미 돌고 있어야 검은 칸이 안 보인다.
+  //
+  // ⚠ loop 인 컷(탱화)에만 건다. 신당은 1회 재생 후 끝 프레임에 서 있는 컷이라,
+  //   되돌아왔을 때 play() 를 부르면 **처음부터 다시 올라가** 도입의 정적이 깨진다.
+  useEffect(() => {
+    if (!loop) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const shown = entries[0]?.isIntersecting ?? true;
+        if (shown) void el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [loop, src]);
   return (
     <video
       ref={ref}
@@ -2355,19 +2376,29 @@ function TeaserStep({
   //   못한다(mt-11 실측 0px 사고 — 아래 4章 카드 주석과 같은 병). 재야 하는 값은 인라인으로.
   // ⚠ 컷은 TeaserCut 과 같은 풀블리드 규칙(-mx-5)을 쓰되, 비율이 4:5 도 띠도 아니라
   //   (941/1672 · 1122/1402) aspectRatio 를 직접 준다.
+  //
+  // ⚠ 래퍼가 **먹색 판**이다. 이 판이 없으면 컷과 컷 사이의 숨(200/160/220/180)이 그냥 투명이라
+  //   위저드의 **고정 배경 레이어**(제단 앞 산군 뒷모습 face.mp4, opacity .7)가 그대로 비쳐,
+  //   「타이틀 드랍 전엔 사람을 안 보여준다」는 도입 원칙이 첫 화면부터 깨진다
+  //   (2026-09-05 실측: 나레이션도 타이틀도 산군 뒷모습 위에 떠 있었다).
+  //   시안(design/sangun/티저시안_콜드오픈_2026-09-03.html)의 그 자리는 순수 #070609 다.
+  // ⚠ 래퍼가 -mx-5 로 컬럼 패딩을 되물어 **화면 끝까지** 먹색이 되므로, 안쪽 컷·레터링의
+  //   -mx-5 는 뺀다(두 번 되물면 375 가 아니라 415 로 나가 옆이 잘린다). 글자 두 줄만 px-5 로
+  //   원래의 335 글상자를 되돌려 준다 — 줄바꿈 폭이 전과 같아야 한다.
+  // ⚠ 본문 구간은 이 판 **바깥**이다. 감시점을 지난 뒤 장부·구매 카드에는 전처럼 배경이 비친다.
   const coldOpenBlock = useColdOpen ? (
-    <div>
+    <div className="-mx-5" style={{ background: "#070609", position: "relative", zIndex: 1 }}>
       {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다.
           카메라가 계단을 타고 올라가는 7초 컷이라 **루프 없이** 한 번 돌고 끝 프레임에서 선다
           (되감으면 올라가던 계단이 다시 아래로 떨어져 도입의 정적이 깨진다).
           poster 는 전에 쓰던 정지 그림 그대로 — 영상이 안 도는 환경에서 첫 화면이 변하지 않는다. */}
-      <div className="relative -mx-5 overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
+      <div className="relative overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
         <ColdOpenVideo src="/products/sangun/t0-shrine-dyn.mp4" poster="/products/sangun/t0-shrine.webp" />
       </div>
       <div style={{ height: 200 }} />
       {/* 어둠 위 공수 한 줄 — 기존 t1 대사의 **앞줄**이 여기로 올라왔다(t1 은 뒷줄만 남는다). */}
       <p
-        className="font-myeongjo text-center"
+        className="font-myeongjo px-5 text-center"
         style={{ fontSize: 19, lineHeight: 1.9, color: "#e9dfc9" }}
       >
         가만있어 봐라.
@@ -2376,7 +2407,7 @@ function TeaserStep({
       </p>
       <div style={{ height: 160 }} />
       {/* 화면2 — 산군의 기척(신당 벽 호랑이 탱화). 아직 사람은 안 준다. 글자 0. */}
-      <div className="relative -mx-5 overflow-hidden" style={{ aspectRatio: "1122 / 1402" }}>
+      <div className="relative overflow-hidden" style={{ aspectRatio: "1122 / 1402" }}>
         {/* 이쪽은 촛불만 흔들리는 무이음 루프라 계속 돈다(loop). 그라데이션은 그대로 위에 얹는다. */}
         <ColdOpenVideo src="/products/sangun/t0-tiger-loop.mp4" poster="/products/sangun/t0-tiger.webp" loop />
         <div
@@ -2390,9 +2421,9 @@ function TeaserStep({
       </div>
       {/* ════ 타이틀 드랍 — 세계를 먼저 보여준 뒤에야 이름을 준다 ════ */}
       <div style={{ height: 220 }} />
-      {/* -mx-5 로 컬럼 패딩을 되물린 뒤 44 를 준다 — 시안의 44 는 **화면 끝** 기준이다
-          (안 되물리면 20+44=64 가 되어 레터링이 262px 로 쪼그라든다, 실측). */}
-      <div className="-mx-5" style={{ padding: "0 44px" }}>
+      {/* 44 는 **화면 끝** 기준이다 — 컬럼 패딩은 이미 래퍼의 -mx-5 가 되물었으므로 여기선 안 쓴다
+          (한 번 더 되물면 415 로 나가고, 안 되물린 채 두면 20+44=64 가 되어 레터링이 262px 로 쪼그라든다, 실측). */}
+      <div style={{ padding: "0 44px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/products/sangun/lettering-baksu-brush.webp"
@@ -2403,7 +2434,7 @@ function TeaserStep({
         />
       </div>
       <p
-        className="font-myeongjo text-center"
+        className="font-myeongjo px-5 text-center"
         style={{
           marginTop: 22,
           fontSize: 12,
