@@ -1416,6 +1416,53 @@ const TOC_REUNION: { title: string; items: string[] }[] = [
   { title: "10장. 견우의 배웅", items: ["이번 주에 할 것 셋", "가장 가까운 연락의 달에 맞춰"] },
 ];
 
+/** 목차 한 덩이 — 열 장을 통째로 쌓지 않는다.
+ *
+ *  왜 쪼갰나(2026-09-05 5차, 경쟁사 PDF 판독): 상품 UI 가 길게 이어지면 그 지점부터
+ *  웹툰이 아니라 일반 상세페이지로 되돌아간다. 경쟁사는 목차조차
+ *  **Chapter → 캐릭터 → Chapter → 캐릭터** 로 끊는다.
+ *  우리 목차는 한 카드 안에 10장을 쌓아 2,000px 넘는 단일 UI 덩어리였다. */
+function TocGroup({ from, to, gap = 28 }: { from: number; to: number; gap?: number }) {
+  return (
+    <div style={{ marginTop: gap }}>
+      <HanjiCard>
+        {TOC_REUNION.slice(from, to).map((c, i) => (
+          <div key={c.title} className={i > 0 ? "mt-10" : "mt-5"}>
+            <TocChapter title={c.title} items={c.items} />
+          </div>
+        ))}
+      </HanjiCard>
+    </div>
+  );
+}
+
+/** 목차 사이에 끼우는 견우 표식 — 큰 일러스트가 아니라 **32~48px 짜리 자국**이다.
+ *  「아직 견우가 같이 있다」만 말하면 되는 자리라 그림을 키우면 목차의 리듬을 잡아먹는다. */
+function TocMark({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-9 flex items-center justify-center gap-2.5 px-6">
+      <span
+        aria-hidden
+        className="shrink-0 rounded-full"
+        style={{
+          width: 38,
+          height: 38,
+          backgroundImage: "url(/products/reunion/g-face-gaze.webp)",
+          backgroundSize: "180%",
+          backgroundPosition: "50% 24%",
+          border: "1px solid rgba(58,51,80,0.28)",
+        }}
+      />
+      <p
+        className="font-myeongjo text-[15px]"
+        style={{ color: "#3A3350", lineHeight: 1.6, fontWeight: 600, wordBreak: "keep-all" }}
+      >
+        {children}
+      </p>
+    </div>
+  );
+}
+
 export function ReunionToc() {
   return (
     <section className="mt-14">
@@ -1424,20 +1471,33 @@ export function ReunionToc() {
         <BrushHead lines={["열 장을 다 펴서 보여드립니다"]} accent={0} />
       </div>
       <div className="mt-7">
-        <HanjiCard>
-          <div
-            className="bg-white px-3 py-2.5 text-center text-[13px]"
-            style={{ border: `1px solid ${LINE}`, color: INK, fontWeight: 700 }}
-          >
-            *전체 풀이 내용이에요. 결제하시면 이 열 장이 다 열립니다.
-          </div>
-          {TOC_REUNION.map((c, i) => (
-            <div key={c.title} className={i > 0 ? "mt-10" : "mt-5"}>
-              <TocChapter title={c.title} items={c.items} />
-            </div>
-          ))}
-        </HanjiCard>
+        <div
+          className="bg-white px-3 py-2.5 text-center text-[13px]"
+          style={{ border: `1px solid ${LINE}`, color: INK, fontWeight: 700 }}
+        >
+          *전체 풀이 내용이에요. 결제하시면 이 열 장이 다 열립니다.
+        </div>
       </div>
+
+      {/* 1~4장 — 「무슨 일이 있었나」 */}
+      <TocGroup from={0} to={4} />
+
+      {/* 결제 구역에 와서도 견우가 아직 같이 있다는 자리. 그림은 크게 안 쓴다. */}
+      <GyeonuCut
+        id="g-face-back"
+        alt="별길에서 돌아보는 견우"
+        gap={40}
+        say={<>여기까지 오셨으면, 나머지도 같이 보시죠.</>}
+      />
+
+      {/* 5~7장 — 「언제, 무엇을」 */}
+      <TocGroup from={4} to={7} gap={40} />
+
+      <TocMark>남은 세 장은 그 뒤를 적어 둔 자리입니다.</TocMark>
+
+      {/* 8~10장 — 「그 다음」 */}
+      <TocGroup from={7} to={10} />
+
       <div className="mt-4">
         <Cap>마이페이지에 계속 보관돼요 · 언제든 다시 열어볼 수 있어요</Cap>
       </div>

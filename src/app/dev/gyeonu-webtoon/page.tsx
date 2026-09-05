@@ -13,7 +13,7 @@
 
 import { useEffect } from "react";
 import type { ReunionTeaser } from "@/lib/saju/teaser";
-import { GyeonuWebtoon } from "@/components/products/gyeonu-teaser";
+import { GyeonuWebtoon, ReunionToc } from "@/components/products/gyeonu-teaser";
 
 const FIXTURE: ReunionTeaser = {
   calendar: [
@@ -92,6 +92,11 @@ export default function DevGyeonuWebtoonPage() {
       {/* 위저드 컨테이너의 px-5 를 흉내 낸다 — 웹툰부의 -mx-5 가 이걸 되물려야 폭이 실물과 같다. */}
       <div className="mx-auto w-full max-w-[430px] px-5">
         <GyeonuWebtoon data={FIXTURE} name="서윤" eagerAll />
+      </div>
+      {/* 상품부 조각 — 절단 뒤 **밝은 판**이라 배경 클래스(teaser-light)와 패딩을 실물과 맞춘다.
+          전체 상품부는 SajuWizard 안에 흩어져 있어 여기서 못 세운다. 목차처럼 독립 컴포넌트만 올린다. */}
+      <div className="teaser-light mx-auto w-full max-w-[430px] px-4 py-10">
+        <ReunionToc />
       </div>
     </main>
   );
