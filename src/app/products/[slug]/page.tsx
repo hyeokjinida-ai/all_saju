@@ -120,10 +120,16 @@ export default async function ProductDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string; view?: string; demo?: string; from?: string }>;
+  searchParams: Promise<{ c?: string; view?: string; demo?: string; from?: string; cold?: string }>;
 }) {
   const { slug } = await params;
-  const { c: concernPreset, view, demo: demoParam, from } = await searchParams;
+  const { c: concernPreset, view, demo: demoParam, from, cold } = await searchParams;
+
+  // `?cold=1` — 산군 티저의 **콜드오픈 판**을 켠다(그림으로 시작 · 헤더·제목·하단 고정바는
+  // 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). `?skin=pink` 와 같은 「두 판을 나란히 보는 문」이라,
+  // 스위치가 없으면 운영 티저는 전과 **완전히 같다**. 산군 외 상품에는 켜도 효과가 없다
+  // (위저드가 slug 로 한 번 더 가른다 — SajuWizard 의 inColdOpen · useColdOpen).
+  const coldOpen = cold === "1";
 
   // `?demo=` — 입력 10단계를 건너뛰고 결제 전 티저로 바로 들어간다(화면 확인용).
   //   ?demo=1              기본 표본(1994-06-01 여, 시각 모름)
@@ -308,6 +314,7 @@ export default async function ProductDetailPage({
         isLoggedIn={!!user}
         initialConcerns={concernPreset ? [concernPreset] : undefined}
         webtoonCuts={webtoonCuts}
+        coldOpen={coldOpen}
         variant={isSangun ? "immersive" : undefined}
         bgImage={isSangun ? "/products/sangun/face.webp" : undefined}
         // ?demo= 는 산군 분기에만 연결돼 있어서 정작 티저를 자주 봐야 하는 직녀에서 안 먹었다.
@@ -394,6 +401,7 @@ export default async function ProductDetailPage({
             isLoggedIn={!!user}
             initialConcerns={concernPreset ? [concernPreset] : undefined}
             webtoonCuts={webtoonCuts}
+            coldOpen={coldOpen}
             demo={demo}
             jiknyeoAssets={jiknyeoAssets}
           />
@@ -415,6 +423,7 @@ export default async function ProductDetailPage({
             isLoggedIn={!!user}
             initialConcerns={concernPreset ? [concernPreset] : undefined}
             webtoonCuts={webtoonCuts}
+            coldOpen={coldOpen}
             demo={demo}
           />
         </GyeonuLanding>
@@ -437,6 +446,7 @@ export default async function ProductDetailPage({
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
               webtoonCuts={webtoonCuts}
+              coldOpen={coldOpen}
               demo={demo}
               jiknyeoAssets={jiknyeoAssets}
             />
@@ -464,6 +474,7 @@ export default async function ProductDetailPage({
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
               webtoonCuts={webtoonCuts}
+              coldOpen={coldOpen}
               variant="immersive"
               bgImage="/products/sangun/face.webp"
               demo={demo}

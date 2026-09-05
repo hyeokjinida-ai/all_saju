@@ -108,6 +108,12 @@ type Props = {
   demo?: DemoPreset | null;
   /** 직녀 에셋 슬롯 — 서버(page.tsx)가 디스크를 훑어 내려보낸다. 없으면 라벨 패널로 선다. */
   jiknyeoAssets?: AssetMap;
+  /**
+   * `?cold=1` — 산군 티저를 **콜드오픈 판**으로 연다(그림 먼저 · 헤더·제목·하단 고정바는
+   * 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). 기본값 false 라 **스위치가 없으면 전과 같다**.
+   * 산군(sangun-sinjeom) 아닌 상품에는 켜도 아무 효과가 없다(inColdOpen · useColdOpen 이 slug 로 한 번 더 가른다).
+   */
+  coldOpen?: boolean;
 };
 
 /** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
@@ -371,6 +377,7 @@ export function SajuWizard({
   bgVideo,
   demo = null,
   jiknyeoAssets,
+  coldOpen = false,
 }: Props) {
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
@@ -411,6 +418,34 @@ export function SajuWizard({
   // 고민(자유 입력) 칸 — 재회만 뒤로 옮긴다(사연은 이별 얘기를 다 한 뒤에 나온다).
   const concernStep = isReunion ? R_CONCERN_STEP : CONCERN_STEP;
   const [step, setStep] = useState(0);
+  // 산군 콜드오픈(`?cold=1` 일 때만) — 웹툰 몰입 실측(2026-09-03) 4작품 만장일치의 도입 문법:
+  // **그림이 먼저**고 이름·설명·UI 는 타이틀 드랍 뒤에 온다. 그때까지는 헤더(이전·진행바)도
+  // 하단 고정바도 아예 **안 그린다** — display 토글이 아니라 미렌더다(숨긴 요소가 자리를
+  // 먹으면 첫 화면이 그만큼 밀려 「그림으로 시작」이 깨진다).
+  // 타이틀 드랍 직후의 감시점(TeaserStep 의 sentinel)을 지나면 켜지고, 그 뒤로 계속 켜져 있다.
+  // 360폰 첫 화면에서 CTA 가 사라지는 것은 **의도된 변경**이다(형님 확정 2026-09-05).
+  // ⚠ 이 판 전체가 `?cold=1` 뒤에 있다 — 스위치가 없으면 아래 게이트가 하나도 안 걸려
+  //   운영 티저의 DOM 이 스위치 이전(937a2af)과 같다. 「기존 건 바꾸지 말고 따로 빼서」(9/5).
+  const [coldOpenDone, setColdOpenDone] = useState(false);
+  const markColdOpenDone = useCallback(() => setColdOpenDone(true), []);
+  /** 지금이 콜드오픈 **판**인가 — 감시점을 지났든 아니든 `?cold=1` 인 산군 티저 화면이면 참.
+   *  「구간」(inColdOpen)과 갈라야 하는 이유: 타이틀 드랍을 지나면 구간은 끝나지만 **판은 계속**이다.
+   *  구간만 있던 때는 감시점을 지나는 순간 제목·헤더가 콜드오픈 블록 **위에** 다시 끼어들어
+   *  문서가 191px 늘고 스크롤 앵커링이 화면을 그만큼 밀었다(2026-09-05 실측: scrollY 1527→1718).
+   *  정점 직후에 화면이 덜컥 밀리면 몰입이 깨진다 — 그래서 판 단위 게이트를 따로 둔다. */
+  const coldOpenLane = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep;
+  /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
+   *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
+  const inColdOpen = coldOpenLane && !coldOpenDone;
+  // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
+  // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
+  // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
+  useEffect(() => {
+    if (!inColdOpen) return;
+    const root = document.documentElement;
+    root.setAttribute("data-cold-open", "");
+    return () => root.removeAttribute("data-cold-open");
+  }, [inColdOpen]);
   const [submitting, setSubmitting] = useState(false);
   const [birthRaw, setBirthRaw] = useState("");
   // 그 사람 생년월일도 같은 8자리 마스크로 받는다(네이티브 date 는 연도 칸이 6자리까지 먹는다).
@@ -902,7 +937,22 @@ export function SajuWizard({
       {/* 직녀는 무대(JiknyeoStory)가 브랜드 줄을 **화면 상단에 고정**으로 얹는다(top 16~36).
           위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
           무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}>
+      {/* 산군 콜드오픈 구간에서는 이 헤더를 통째로 안 그린다 — 그림이 먼저다(위 coldOpenDone 주석). */}
+      {/* ⚠ 감시점을 지난 **뒤에도** 이 헤더를 in-flow 로 되돌리면 안 된다. 콜드오픈 블록 위에
+          99px 짜리 헤더가 새로 끼어들어 문서가 늘고, 스크롤 앵커링이 손님 화면을 그만큼
+          밀어 올린다(실측 191px — 타이틀 드랍 직후에 화면이 덜컥 움직였다).
+          그래서 콜드오픈 판에서는 fixed 오버레이로 띄운다: 레이아웃 기여 0 → 밀림 0.
+          배경은 반투명 먹색 + blur — 아래로 흐르는 글이 헤더 글자와 겹쳐 읽히면 안 된다.
+          스위치 없는 판(coldOpenLane=false)은 클래스가 전과 **바이트 단위로 같다**. */}
+      {!inColdOpen && (
+      <div
+        className={`${coldOpenLane ? "fixed inset-x-0 top-0 z-30" : "relative z-[2]"} w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}
+        style={
+          coldOpenLane
+            ? { background: "rgba(7,6,9,0.85)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }
+            : undefined
+        }
+      >
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -943,12 +993,20 @@ export function SajuWizard({
           </span>
         </div>
       </div>
+      )}
 
       {/* 중앙: 질문 + 컨트롤 */}
       <div
         key={step}
         className={`svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center${imm ? " overflow-y-auto" : ""}`}
       >
+        {/* 콜드오픈 동안에는 제목·부제도 안 그린다 — 신당 컷보다 위에 글자가 남으면
+            「그림으로 시작」이 깨진다(375폰 실측: 제목 y=30 · 부제 y=74 vs 신당 y=122).
+            다만 「네 장부를 찾는 중이다」는 로딩 표시라 그때는 계속 보여야 한다.
+            ⚠ 게이트가 `coldOpenLane` 인 이유: 감시점을 지난 뒤에 이 블록을 되살리면
+            콜드오픈 블록 **위**에 92px 이 새로 끼어들어 화면이 밀린다. 그리고 애초에
+            제목의 일은 타이틀 드랍(박수무당 레터링)이 이미 다 했다 — 두 번 소개할 이유가 없다. */}
+        {!(coldOpenLane && !teaserLoading) && (
         <div className="text-center mb-7">
           {!imm && (
             <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
@@ -974,6 +1032,7 @@ export function SajuWizard({
             <p className="font-myeongjo mt-3 text-[13px] text-bone-soft tracking-[0.06em]">{cur.help}</p>
           )}
         </div>
+        )}
 
         {/* STEP 0 — 이름 */}
         {step === 0 && (
@@ -1632,6 +1691,10 @@ export function SajuWizard({
                 : undefined
             }
             jiknyeoAssets={jiknyeoAssets}
+            // 콜드오픈 — 감시점은 티저 안에 있고(타이틀 드랍 직후), 헤더·고정바는 부모가 그린다.
+            coldOpen={coldOpen}
+            coldOpenDone={coldOpenDone}
+            onColdOpenDone={markColdOpenDone}
           />
         )}
       </div>
@@ -2163,6 +2226,71 @@ function DestinyCard({ face }: { face: PartnerFace }) {
   );
 }
 
+/** 콜드오픈 배경 영상 — 정지 그림이 서 있던 자리를 그대로 채우는 무음 클립.
+ *
+ *  ⚠ React 는 `muted` 를 **SSR 마크업에 안 찍는다**(속성이 아니라 프로퍼티로만 붙인다).
+ *    그래서 첫 페인트의 <video> 를 브라우저가 「소리 있는 영상」으로 보고 자동재생을 막아
+ *    poster 만 남는 일이 생긴다. 마운트 때 ref 로 el.muted 를 직접 세운 뒤 play() 를 한 번 부른다.
+ *    거부되면(저전력·데이터 절약 모드) 조용히 삼켜 poster(기존 webp)가 그대로 보이게 둔다 —
+ *    영상이 안 도는 환경에서도 첫 화면은 전과 똑같다.
+ *
+ *  loop=false(신당)면 끝 프레임에서 멈춘다 — 카메라가 계단을 타고 올라가는 컷이라 되감기면 튄다. */
+function ColdOpenVideo({
+  src,
+  poster,
+  loop = false,
+}: {
+  src: string;
+  poster: string;
+  loop?: boolean;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    void el.play().catch(() => {});
+  }, []);
+  // 화면 밖이면 루프를 멈춘다 — 안 멈추면 손님이 티저 본문을 읽는 내내 탱화가 계속 돌아
+  // 폰이 뜨거워진다(BgMedia 가 `/jiknyeo` 실측으로 이미 쓰는 장치, 규칙을 그대로 따른다).
+  // rootMargin 200px — 스크롤로 들어오기 직전에 이미 돌고 있어야 검은 칸이 안 보인다.
+  //
+  // ⚠ loop 인 컷(탱화)에만 건다. 신당은 1회 재생 후 끝 프레임에 서 있는 컷이라,
+  //   되돌아왔을 때 play() 를 부르면 **처음부터 다시 올라가** 도입의 정적이 깨진다.
+  useEffect(() => {
+    if (!loop) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const shown = entries[0]?.isIntersecting ?? true;
+        if (shown) void el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [loop, src]);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop={loop}
+      playsInline
+      preload="auto"
+      aria-hidden
+      tabIndex={-1}
+      disablePictureInPicture
+      draggable={false}
+      className="pointer-events-none h-full w-full select-none object-cover"
+    />
+  );
+}
+
 // 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
 // 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
 function TeaserStep({
@@ -2179,6 +2307,9 @@ function TeaserStep({
   compareAtPrice,
   bundleLine,
   jiknyeoAssets,
+  coldOpen = false,
+  coldOpenDone = true,
+  onColdOpenDone,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -2193,12 +2324,30 @@ function TeaserStep({
   compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
   bundleLine?: string; // 번들 예고 한 줄 — 추천 번들 값은 부모가 만들어 내린다
   jiknyeoAssets?: AssetMap;
+  /** `?cold=1` — 콜드오픈 판으로 그릴 것인가. false(기본)면 아래 게이트가 전부 옛 판으로 돈다. */
+  coldOpen?: boolean;
+  /** 산군 콜드오픈이 끝났는가(타이틀 드랍 통과). 산군 외 상품은 기본값 true 라 영향이 없다. */
+  coldOpenDone?: boolean;
+  /** 콜드오픈 감시점을 지났을 때 부모에게 알린다(헤더·고정바를 그 뒤에 연다). */
+  onColdOpenDone?: () => void;
 }) {
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
+  // 콜드오픈 감시점 — 타이틀 드랍 아래 숨(180px)이 화면에 걸리면 도입이 끝난 것으로 친다.
+  // 훅이라 아래 조기 반환보다 위에 있어야 호출 순서가 안 깨진다(inkRef 와 같은 이유).
+  const { ref: coldRef, inView: coldInView } = useInView<HTMLDivElement>();
+  useEffect(() => {
+    if (coldInView) onColdOpenDone?.();
+  }, [coldInView, onColdOpenDone]);
   // 직녀(인연)판인가 — polite 렌더 경로는 존댓말 상품 4종과 공유라 slug 로만 갈라야 한다.
   const isInyeon = productSlug === "inyeon-saju";
+  // 산군판 — 콜드오픈·등장 절단·어드민 웹툰 차단이 이 상품에만 걸린다.
+  const isSangunWorld = productSlug === "sangun-sinjeom";
+  /** 콜드오픈 판으로 그릴 것인가 — 산군 **이면서** `?cold=1` 일 때만.
+   *  다섯 자리(어드민 웹툰 차단 · 콜드오픈 블록 · t1 말풍선 · 「복채」 컷 · 등장 절단 · 고정바)가
+   *  전부 이 하나로 열리고 닫힌다. false 면 DOM 이 스위치 이전(937a2af)과 같다. */
+  const useColdOpen = isSangunWorld && coldOpen;
   // 인연·결혼이 같이 쓰는 껍데기(직녀 컷·목차·구매 카드)는 이 가드로 연다.
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
   // 견우(재회) — 조판(밝은 판·달빛 부품)은 같이 쓰고 **직녀 그림은 한 장도 안 쓴다**.
@@ -2243,12 +2392,106 @@ function TeaserStep({
   // -mx-5: 웹툰도 사진 컷과 같이 컬럼 끝까지 나간다. 전엔 컬럼 안쪽(520)이라 사진 컷(558)보다
   // 좁았고, 대사 크기가 컷 폭 비례라 **같은 말풍선인데 웹툰 쪽만 작게** 나왔다.
   // 규칙: 그림(사진 컷·웹툰 컷)은 끝까지, 판·카드는 한 단 안쪽.
-  const webtoon = cuts.length > 0 && Object.keys(tokens).length > 0
+  // 콜드오픈을 켠 산군만 예외 — 티저 맨 위가 **콜드오픈**이 된다(아래 블록). 어드민 웹툰까지
+  // 같이 얹으면 그림이 두 겹으로 시작해 도입의 정적이 깨진다.
+  // 스위치가 없으면 산군도 다른 상품과 똑같이 어드민 웹툰을 그대로 얹는다.
+  const webtoon = !useColdOpen && cuts.length > 0 && Object.keys(tokens).length > 0
     ? <WebtoonPage cuts={cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
     : null;
 
+  // ════ 콜드오픈 — 그림이 먼저다. 헤더도 제목도 진행바도 아직 없다. ════
+  //
+  // 웹툰 몰입 실측(웹툰_몰입판독_실측_2026-09-03.md) 4작품 만장일치의 도입 문법:
+  //   그림 → 흑숨 → 그림 → 흑숨 → **타이틀 드랍**(세계를 보여준 뒤에야 이름을 준다).
+  // 숨 값(200/160/220/180)은 그 실측의 숨 중앙값 대역(133~284px)에서 고른 것이다.
+  //
+  // ⚠ px 는 전부 **인라인**이다. 이 리포의 dev 는 처음 쓰는 Tailwind 유틸리티를 생성하지
+  //   못한다(mt-11 실측 0px 사고 — 아래 4章 카드 주석과 같은 병). 재야 하는 값은 인라인으로.
+  // ⚠ 컷은 TeaserCut 과 같은 풀블리드 규칙(-mx-5)을 쓰되, 비율이 4:5 도 띠도 아니라
+  //   (941/1672 · 1122/1402) aspectRatio 를 직접 준다.
+  //
+  // ⚠ 래퍼가 **먹색 판**이다. 이 판이 없으면 컷과 컷 사이의 숨(200/160/220/180)이 그냥 투명이라
+  //   위저드의 **고정 배경 레이어**(제단 앞 산군 뒷모습 face.mp4, opacity .7)가 그대로 비쳐,
+  //   「타이틀 드랍 전엔 사람을 안 보여준다」는 도입 원칙이 첫 화면부터 깨진다
+  //   (2026-09-05 실측: 나레이션도 타이틀도 산군 뒷모습 위에 떠 있었다).
+  //   시안(design/sangun/티저시안_콜드오픈_2026-09-03.html)의 그 자리는 순수 #070609 다.
+  // ⚠ 래퍼가 -mx-5 로 컬럼 패딩을 되물어 **화면 끝까지** 먹색이 되므로, 안쪽 컷·레터링의
+  //   -mx-5 는 뺀다(두 번 되물면 375 가 아니라 415 로 나가 옆이 잘린다). 글자 두 줄만 px-5 로
+  //   원래의 335 글상자를 되돌려 준다 — 줄바꿈 폭이 전과 같아야 한다.
+  // ⚠ 본문 구간은 이 판 **바깥**이다. 감시점을 지난 뒤 장부·구매 카드에는 전처럼 배경이 비친다.
+  // ⚠ paddingTop 20 / marginTop -20 은 **레이아웃을 안 바꾸는 덮개**다. 컬럼(중앙 div)의 py-5 때문에
+  //   판이 y=20 에서 시작해 화면 맨 위 20px 띠만 먹색 밖이었다(그 자리에 배경 영상이 비쳤다).
+  //   패딩으로 판을 위로 20 늘리고 같은 값의 음수 마진으로 되물리면 뒤 컷들의 y 는 그대로다(신당 20 유지).
+  const coldOpenBlock = useColdOpen ? (
+    <div
+      className="-mx-5"
+      style={{ background: "#070609", position: "relative", zIndex: 1, paddingTop: 20, marginTop: -20 }}
+    >
+      {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다.
+          카메라가 계단을 타고 올라가는 7초 컷이라 **루프 없이** 한 번 돌고 끝 프레임에서 선다
+          (되감으면 올라가던 계단이 다시 아래로 떨어져 도입의 정적이 깨진다).
+          poster 는 전에 쓰던 정지 그림 그대로 — 영상이 안 도는 환경에서 첫 화면이 변하지 않는다. */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
+        <ColdOpenVideo src="/products/sangun/t0-shrine-dyn.mp4" poster="/products/sangun/t0-shrine.webp" />
+      </div>
+      <div style={{ height: 200 }} />
+      {/* 어둠 위 공수 한 줄 — 기존 t1 대사의 **앞줄**이 여기로 올라왔다(t1 은 뒷줄만 남는다). */}
+      <p
+        className="font-myeongjo px-5 text-center"
+        style={{ fontSize: 19, lineHeight: 1.9, color: "#e9dfc9" }}
+      >
+        가만있어 봐라.
+        <br />
+        …여기 있군.
+      </p>
+      <div style={{ height: 160 }} />
+      {/* 화면2 — 산군의 기척(신당 벽 호랑이 탱화). 아직 사람은 안 준다. 글자 0. */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: "1122 / 1402" }}>
+        {/* 이쪽은 촛불만 흔들리는 무이음 루프라 계속 돈다(loop). 그라데이션은 그대로 위에 얹는다. */}
+        <ColdOpenVideo src="/products/sangun/t0-tiger-loop.mp4" poster="/products/sangun/t0-tiger.webp" loop />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg,rgba(7,6,9,0.35),rgba(7,6,9,0) 22%,rgba(7,6,9,0) 70%,rgba(7,6,9,0.6))",
+          }}
+        />
+      </div>
+      {/* ════ 타이틀 드랍 — 세계를 먼저 보여준 뒤에야 이름을 준다 ════ */}
+      <div style={{ height: 220 }} />
+      {/* 44 는 **화면 끝** 기준이다 — 컬럼 패딩은 이미 래퍼의 -mx-5 가 되물었으므로 여기선 안 쓴다
+          (한 번 더 되물면 415 로 나가고, 안 되물린 채 두면 20+44=64 가 되어 레터링이 262px 로 쪼그라든다, 실측). */}
+      <div style={{ padding: "0 44px" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/products/sangun/lettering-baksu-brush.webp"
+          alt="박수무당"
+          className="w-full select-none"
+          draggable={false}
+          style={{ filter: "drop-shadow(0 6px 22px rgba(232,201,106,0.28))" }}
+        />
+      </div>
+      <p
+        className="font-myeongjo px-5 text-center"
+        style={{
+          marginTop: 22,
+          fontSize: 12,
+          letterSpacing: "0.5em",
+          textIndent: "0.5em",
+          color: "rgba(215,206,188,0.6)",
+        }}
+      >
+        명운록
+      </p>
+      {/* 감시점 — 이 숨에 손님이 닿으면 콜드오픈이 끝난다(헤더·하단 고정바가 그때 열린다). */}
+      <div ref={coldRef} aria-hidden style={{ height: 180 }} />
+    </div>
+  ) : null;
+
   return (
     <>
+    {coldOpenBlock}
     {webtoon}
     {/* 재회 웹툰부 — **밝은 판보다 먼저** 온다(2026-09-05 3차, 형님 실측 「그림 끼운 랜딩이다」).
         컷 일곱 장과 반전 절단이 자기 밤 배경 위에서 한 장면으로 이어지고, 절단이 끊은 뒤에야
@@ -2289,14 +2532,23 @@ function TeaserStep({
       {imm && (
         <>
           {/* 장부를 펴 든 손. 대사는 컷 위에 — 밝은 박스를 아래에 쌓지 않아야 신당이 어둡게 유지된다.
-              말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다"). 무당은 손님한테
-              설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리). */}
+              옛 판(스위치 없음): 말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다").
+              무당은 손님한테 설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리).
+              콜드오픈 판(`?cold=1`): 혼잣말은 **콜드오픈 나레이션이 가져간다** — 여기 남기면 같은
+              문장이 한 페이지 안에 두 번 나온다. 손님에게 건네는 뒷줄만 남기고 글자 수도
+              하드코딩하지 않는다(시각 모름이면 여섯 — 바로 아래 원국 판의 「이 날에서 나온 여섯 글자」와 같은 말). */}
           <TeaserCut
             src="/products/sangun/t1-open.webp"
             alt="옛 장부를 펴 든 손"
             tall
             sayAt="top"
-            say={<>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>}
+            say={
+              useColdOpen ? (
+                <>네 {GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`} 글자다.</>
+              ) : (
+                <>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>
+              )
+            }
           />
         </>
       )}
@@ -2857,7 +3109,11 @@ function TeaserStep({
         <>
           {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리.
               정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
-          {imm && teaser.chapters.length > 0 && (
+          {/* 콜드오픈 판(`?cold=1`)에서만 이 컷을 뺀다(2026-09-05) — 대사가 붙은 컷은 설명이고,
+              웹툰의 절단은 **대사 0**이다. 같은 정면 대면을 목차 뒤·구매 카드 앞으로 옮겨 말 없이
+              노려보는 컷으로 세운다(견우와선녀 4화 「등장 절단」 번역, 아래 블록).
+              스위치가 없으면 이 컷이 **원래 자리(목차 앞)에 원래 대사로** 선다. */}
+          {imm && !useColdOpen && teaser.chapters.length > 0 && (
             <TeaserCut
               src="/products/sangun/teaser-face.webp"
               alt="정면으로 마주 앉은 산군"
@@ -2997,6 +3253,32 @@ function TeaserStep({
                   </div>
                 ),
               )}
+            </div>
+          )}
+
+          {/* ════ 등장 절단 — 큰 숨 뒤, 산군이 손님을 정면으로 노려본다. 대사는 없다. ════
+              견우와선녀 4화(공감 46,462 베댓 인증)의 문법: 독자를 정면으로 보는 컷 + 대사 0 →
+              설명이 끊긴 자리에 곧바로 값(구매 카드)이 온다. 페이지당 정점 문법은 하나라
+              반전 절단은 같이 쓰지 않는다.
+              marginTop 96 은 인라인 — 「정점 앞 큰 숨」이 확실히 서야 하는 값이다(아래 4章 주석). */}
+          {useColdOpen && teaser.chapters.length > 0 && (
+            <div
+              className="relative -mx-5 overflow-hidden"
+              style={{ marginTop: 96, aspectRatio: "4 / 5" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/products/sangun/cut-gaze-h.webp"
+                alt="정면으로 마주 앉아 손님을 보는 산군"
+                className="h-full w-full select-none object-cover"
+                draggable={false}
+              />
+              {/* 컷 아래를 페이지 배경색으로 녹인다 — 끊기는 자리라 테두리가 보이면 안 된다. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{ background: "linear-gradient(180deg,rgba(7,6,9,0) 62%,rgba(7,6,9,0.8))" }}
+              />
             </div>
           )}
 
@@ -3320,7 +3602,9 @@ function TeaserStep({
     )}
     {/* 산군은 이 바가 아예 없어 16.4화면 동안 살 자리가 없었다. 마감으로 재촉하지는 않는다 —
         가짜 타이머 대신 「이미 다 적혀 있다」는 사실만 말하고 버튼을 붙인다. */}
-    {imm && !isJiknyeoWorld && teaser && (
+    {/* 콜드오픈(`?cold=1`) 동안은 이 바도 안 그린다 — 첫 화면에 가격이 서 있으면 도입이 광고가 된다.
+        스위치가 없으면 옛 판대로 티저 내내 서 있다. */}
+    {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && (
       <StickyBuyBar
         dark
         note={<>네 장부 11장, 이미 다 적혀 있다</>}
