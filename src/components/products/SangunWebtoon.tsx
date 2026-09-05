@@ -515,7 +515,12 @@ export function SangunStory({
             누르면 위저드가 언마운트돼 그때까지 입력한 값이 전부 날아갔고(초안 저장은 로그인 경로에만 걸려 있음),
             바로 아래 위저드 자체 '‹' 와 뒤로가기가 겹쳐 보였다. */}
         <div className="absolute inset-x-0 top-0 z-20 mx-auto flex w-full max-w-[560px] items-center justify-center px-5 pt-4">
-          <span className="text-[13px] tracking-[0.22em]" style={{ color: GOLD, opacity: 0.85 }}>
+          {/* 콜드오픈(타이틀 드랍 전) 동안에는 이 줄도 지운다 — 신당 컷보다 위에 있는 유일한 글자였다.
+              위저드가 html[data-cold-open] 을 켜고 globals.css 의 .sangun-brand-line 이 받는다. */}
+          <span
+            className="sangun-brand-line text-[13px] tracking-[0.22em]"
+            style={{ color: GOLD, opacity: 0.85 }}
+          >
             명운록 · 박수무당 사주
           </span>
         </div>
