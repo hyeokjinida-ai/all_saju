@@ -155,16 +155,28 @@ const SAY_ART: Record<SayTail, { src: string; ratio: number; box: { x: number; y
  * x·w 는 컷 폭 기준 %, y 는 컷 높이 기준 %(직녀 SAY_BOX 와 같은 좌표계).
  *
  *   컷        얼굴            손                  앉힌 자리
- *   g-river   x45~59 y15~27   x31~42 y79~88       좌상단 은하수(꼬리 br → 얼굴 쪽)
- *   g-greet   x38~63 y25~46   x33~72 y82~95       좌하단 옷자락(꼬리 tr → 얼굴 쪽)
+ *   g-river   x54~70 y12~23   x29~44 y77~94       컷 **위 숨**으로 올림(꼬리 br → 아래 얼굴 쪽)
+ *   g-greet   x39~61 y26~42   x42~77 y76~91       컷 **위 숨**으로 올림(꼬리 br → 아래 얼굴 쪽)
  *
  * 규칙(2026-08-24 확정): **눈·입·손 위에는 절대 안 얹는다.** 머리카락 윤곽을 한 조각
  * 스치는 건 허용 — 인물을 통째로 피해 허공에 띄우면 대사가 아니라 UI 라벨로 보인다.
  * 그림을 새로 구우면 이 표부터 다시 잰다.
+ *
+ * y 가 **음수인 이유**(2026-09-05): 경쟁사 셋(청월당·타이트사주·프로 웹툰)을 같은 자로
+ * 재 보니 말풍선이 컷 안에 갇혀 있지 않다 — 컷 경계를 넘어 앞 숨으로 걸친다.
+ * 컷 안에만 두면 웹툰이 아니라 「이미지에 캡션 얹은 랜딩」으로 읽힌다.
+ *
+ * ⚠ 넘기는 양이 규칙이다: **풍선 높이의 20~35% 만** 컷 밖으로 낸다.
+ *   처음엔 87% 를 숨에 띄웠다가 되물렸다 — 통째로 띄우면 대사가 컷에서 떨어져 나와
+ *   카드뉴스처럼 흩어진다. 걸쳐야 대사가 그 컷의 말이 된다.
+ *   그리고 **일곱 컷 중 두 곳만** 쓴다. 문법을 깨는 장치라 흔해지면 힘이 죽는다.
+ *
+ *   g-river  풍선 123px · 34px(28%) 밖 — 걸치는 x2.5~42.5 는 하늘, 얼굴은 x54~70 이라 안 겹침
+ *   g-greet  풍선 136px · 45px(33%) 밖 — 걸치는 y-8~16% 는 하늘, 얼굴은 y26~42
  */
 const GYEONU_SAY_BOX: Record<"g-river" | "g-greet", SayBox> = {
-  "g-river": { x: 2.5, y: 4, w: 40 },
-  "g-greet": { x: 2, y: 55, w: 44 },
+  "g-river": { x: 2.5, y: -6.0, w: 40 },
+  "g-greet": { x: 2, y: -8.0, w: 44 },
 };
 
 /** 한 줄의 가로 길이(em) — 한글 1 · 영숫자 0.55 · 공백 0.34 · 마침표류 0.4.
@@ -257,11 +269,17 @@ function GyeonuBubble({ lines, tail, box }: { lines: string[]; tail: SayTail; bo
 function WebtoonPanel({
   id,
   alt,
-  /** 앞 여백 — 기본 14(밤하늘 이음새) · 정점·절단 앞 56 · 첫 컷 0 */
-  gap = 14,
+  /** 앞 숨 — 컷 **관계**로 정한다. 하나로 통일하면 안 된다(아래 숨 대역표). */
+  gap = 128,
   eager = false,
   narrate,
   say,
+  /** 가로 밴드로 눌러 쓸 때 — `ratio`는 폭:높이, `focus`는 원본에서 살릴 세로 위치(%).
+   *  안 주면 원본 비율(2:3) 그대로 깐다. 빨리 지나갈 컷(설명·전경·브리지)에만 쓴다. */
+  band,
+  /** 컬럼 폭의 몇 %로 좁혀 앉힐지 — 안 주면 풀블리드.
+   *  높이만 흔들면 「폭 375 고정」이 남아서 랜딩페이지로 읽힌다. 조용한 컷은 폭을 좁힌다. */
+  inset,
 }: {
   id: GyeonuCutId;
   alt: string;
@@ -269,6 +287,8 @@ function WebtoonPanel({
   eager?: boolean;
   narrate?: React.ReactNode;
   say?: { lines: string[]; tail: SayTail; box: SayBox };
+  band?: { ratio: string; focus: number };
+  inset?: number;
 }) {
   return (
     <figure
@@ -279,6 +299,7 @@ function WebtoonPanel({
         // 대사 크기의 자 — 없으면 cqw 가 위쪽 조상을 잡아 엉뚱한 크기가 된다.
         containerType: "inline-size",
         background: NIGHT_DEEP,
+        ...(inset ? { width: `${inset}%`, marginLeft: "auto", marginRight: "auto" } : null),
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -291,7 +312,18 @@ function WebtoonPanel({
         decoding="async"
         draggable={false}
         className="select-none"
-        style={{ display: "block", width: "100%", height: "auto" }}
+        style={
+          band
+            ? // 밴드 컷 — aspectRatio 로 자리를 먼저 잡으므로 로드 전에도 높이가 확정된다(점프 0).
+              {
+                display: "block",
+                width: "100%",
+                aspectRatio: band.ratio,
+                objectFit: "cover",
+                objectPosition: `50% ${band.focus}%`,
+              }
+            : { display: "block", width: "100%", height: "auto" }
+        }
       />
       {narrate && (
         <figcaption
@@ -332,6 +364,27 @@ function WebtoonPanel({
  *
  * `-mx-5`(=20) 은 위저드 컨테이너의 px-5 를 되물리는 값이다 — 웹툰부는 컬럼 끝까지 나간다.
  * (밝은 판은 -16 을 쓴다. 판의 px-4 가 다른 값이라 여기 20 을 그대로 쓰면 4px 이 삐져나온다.)
+ *
+ * ── 숨(컷 사이 여백) 대역표 — 2026-09-05 실측으로 다시 깐 것 ───────────────
+ * 고치기 전: 컷 7장이 전부 563px 풀블리드, 사이 14px. 같은 자(행 프로파일)로 재니
+ * **숨 2.3%**, 숨으로 잡힌 구간 2곳뿐 — 14px 은 측정기도 사람 눈도 숨으로 못 본다.
+ * 그래서 일곱 장이 「잘못 이어붙인 한 장」으로 읽혔다(형님 지적: "이어지는 부분이 어색").
+ *
+ * 비교군(같은 자):  프로 웹툰 6회차 숨 16~37% · 청월당 재회 티저 12~71%
+ *
+ * 숨은 **하나로 통일하지 않는다.** 14 를 120 으로 바꾸면 메트로놈만 옮겨 놓는 꼴이다.
+ * 컷과 컷의 **관계**로 정한다(563px 컷 기준):
+ *
+ *   같은 장면의 연속        96px    p-farshore→p-magpie (배경끼리, 속도를 올리는 자리)
+ *   보통의 컷 전환         128px    g-river→p-lanterns
+ *   시점·감정 전환         160px    p-lanterns→p-farshore · p-bridge→g-greet
+ *   중요한 대사 직전       180px    p-split→g-river
+ *   정점 직전             260px    p-magpie→p-bridge
+ *
+ * 크기도 같이 흔든다 — 높이만 흔들면 「폭 375 고정」이 남아 랜딩페이지로 읽힌다:
+ *   190(밴드·인셋) → 563 → 330(밴드) → 563 → 495(인셋) → 563 → 563
+ * 정점은 컷을 새로 뽑지 않는다. 프로의 733~1170px 은 그림 한 장의 높이가 아니라
+ * **독자가 그 장면에 쓰는 세로 공간**이다: 260(앞숨) + 563(컷) + 160(뒷숨) = 983px 로 이미 대역 안.
  */
 export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
   return (
@@ -373,10 +426,11 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
       />
 
       {/* ② 화자 등장 — 앞 컷의 사건을 받아 「그래서 내가 적어 뒀다」로 잇는다.
-          말풍선: 좌상단 은하수. 얼굴(x45~59 y15~27)·손(x31~42 y79~88) 둘 다 피한다. */}
+          앞 숨 200: 대사가 이 숨 위에 앉는다(아래 16px 만 컷 하늘에 걸침). */}
       <WebtoonPanel
         id="g-river"
         alt="은하수가 비친 강가에서 건너편을 보는 견우"
+        gap={180}
         say={{
           tail: "br",
           box: GYEONU_SAY_BOX["g-river"],
@@ -392,6 +446,10 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
       <WebtoonPanel
         id="p-lanterns"
         alt="강물 위에 뜬 등불들, 앞쪽 하나만 환하다"
+        // 설명 컷 = 빨리 지나가야 하는 자리 → 가로로 눌러 앉힌다(밝은 등불 하나가 한가운데 오는 focus 50).
+        gap={128}
+        band={{ ratio: "335 / 190", focus: 50 }}
+        inset={89}
         narrate={
           <>
             등불 하나가 한 달입니다.
@@ -406,6 +464,11 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
       <WebtoonPanel
         id="p-farshore"
         alt="강 건너 멀리 서 있는 사람의 뒷모습"
+        // ⚠ 이 컷만 밴드로 안 누른다. 200px 로 자르면 실루엣이 프레임 밖으로 나가
+        //    「강 건너 그 사람」이라는 컷의 뜻이 통째로 죽는다(25/50/70 전부 실측).
+        //    대신 **폭을 좁혀** 조용한 응시 컷으로 만든다 — 그림은 원본 그대로 다 산다.
+        gap={160}
+        inset={88}
         narrate="강 건너 그 사람 쪽도, 보이는 데까지 봤습니다."
       />
 
@@ -414,6 +477,10 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
       <WebtoonPanel
         id="p-magpie"
         alt="발목에 서찰을 묶고 은하수를 건너 나는 까치"
+        // 앞 두 컷(190·495)을 지나 190 → 330 → 563(정점)으로 커지며 정점을 민다.
+        // 앞 숨 96 = 이 표에서 제일 짧은 숨 — 까치는 앞 컷에 붙여 속도를 올리는 자리다.
+        gap={96}
+        band={{ ratio: "375 / 330", focus: 50 }}
         narrate="소식이 건너오는 달이… 따로 있습니다."
       />
 
@@ -423,19 +490,21 @@ export function GyeonuWebtoon({ data, name }: { data: Reunion; name: string }) {
       <WebtoonPanel
         id="p-bridge"
         alt="수백 마리 까치가 은하수 위로 다리를 이룬 밤"
-        gap={56}
+        gap={260}
         narrate="다리가 놓이는 달에는, 강이 이렇게 됩니다."
       />
 
-      {/* ⑦ 대면 — 돈 얘기는 마주 보고 한다. 말풍선은 좌하단 옷자락(눈 y33~36·입 y43·
-          장부 짚은 손 y82~95 를 전부 피한다), 꼬리는 위 얼굴 쪽.
+      {/* ⑦ 대면 — 돈 얘기는 마주 보고 한다. 앞 숨 200 위에 대사를 올리고 아래 16px 만
+          컷 하늘에 걸친다(얼굴 y26~42·양손 y38~52·y76~91 을 전부 비킨다).
           ⚠ 같은 g-greet 가 위저드 12단계(위로 화면, SajuWizard:1404)에도 있다. 열 화면쯤
             떨어져 있고 「마주 본다」가 두 번 다 그 자리의 뜻이라 그대로 둔다 — 바꾸려면 새 컷이 필요하다. */}
       <WebtoonPanel
         id="g-greet"
         alt="펼쳐 둔 장부에 손을 얹고 정면으로 마주 보는 견우"
+        gap={160}
         say={{
-          tail: "tr",
+          // 대사가 컷 위로 올라갔으니 꼬리도 아래(얼굴 쪽)를 가리켜야 한다 — tr 이면 허공을 가리킨다.
+          tail: "br",
           box: GYEONU_SAY_BOX["g-greet"],
           lines: ["이 아래부터는…", "복채를 받고", "폅니다."],
         }}
