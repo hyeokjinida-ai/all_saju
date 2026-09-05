@@ -1436,9 +1436,11 @@ function TocGroup({ from, to, gap = 28 }: { from: number; to: number; gap?: numb
   );
 }
 
-/** 목차 사이에 끼우는 견우 표식 — 큰 일러스트가 아니라 **32~48px 짜리 자국**이다.
- *  「아직 견우가 같이 있다」만 말하면 되는 자리라 그림을 키우면 목차의 리듬을 잡아먹는다. */
-function TocMark({ children }: { children: React.ReactNode }) {
+/** 상품 UI 사이에 끼우는 견우 표식 — 큰 일러스트가 아니라 **32~48px 짜리 자국**이다.
+ *  「아직 견우가 같이 있다」만 말하면 되는 자리라 그림을 키우면 그 구간의 리듬을 잡아먹는다.
+ *  export 인 이유: 목차뿐 아니라 SajuWizard 의 상품부(원국 뒤)에서도 같은 부품을 쓴다 —
+ *  12칸 격자 → 원국 → 콜드리딩 → 잠긴 줄 → 가격이 사람 없이 2,000px 넘게 이어지던 자리다. */
+export function GyeonuMark({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-9 flex items-center justify-center gap-2.5 px-6">
       <span
@@ -1501,7 +1503,7 @@ export function ReunionToc({ data }: { data?: Reunion }) {
 
       {/* 아직 안 보여준 결과 하나 — 「재회가 아니어도 받는 게 있다」. 목차 한가운데에 두어야
           남은 세 장(8~10)이 그 답의 뒷장으로 읽힌다. */}
-      {data ? <ReunionMoveOn data={data} /> : <TocMark>남은 세 장은 그 뒤를 적어 둔 자리입니다.</TocMark>}
+      {data ? <ReunionMoveOn data={data} /> : <GyeonuMark>남은 세 장은 그 뒤를 적어 둔 자리입니다.</GyeonuMark>}
 
       {/* 8~10장 — 「그 다음」 */}
       <TocGroup from={7} to={10} gap={40} />

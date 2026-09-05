@@ -32,6 +32,7 @@ import {
 import {
   GyeonuWebtoon,
   ReunionCalendar,
+  GyeonuMark,
   // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
   ReunionToc,
   GyeonuCut,
@@ -2365,6 +2366,11 @@ function TeaserStep({
               타이트는 戊 바로 위에 「일간(나)」, 바로 아래에 「정인」을 붙여 눈으로 잇는다.
               용어 자체는 타이트도 안 풀어준다 — 목표는 이해가 아니라 "내 생일로 진짜 계산했다"는 증거다. */}
           <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
+          {/* 재회 전용 — 12칸 격자 → 원국 → 콜드리딩 → 잠긴 줄 → 가격이 **사람 없이 2,000px 넘게**
+              이어지던 자리다(2026-09-06 운영 실측). 경쟁사 티저는 상품 UI 를 1~2개 지나면
+              캐릭터를 다시 세운다 — 그래야 상세페이지가 아니라 이야기로 읽힌다.
+              그림은 38px 자국이면 충분하다. 여기서 컷을 키우면 원국의 증거 기능을 잡아먹는다. */}
+          {isReunion && <GyeonuMark>이 여섯 글자에서 열두 달을 세었습니다.</GyeonuMark>}
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
           {/* 인연·재회는 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
