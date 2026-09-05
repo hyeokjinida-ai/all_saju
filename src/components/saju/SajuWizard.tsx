@@ -3256,17 +3256,12 @@ function TeaserStep({
               className="relative -mx-5 overflow-hidden"
               style={{ marginTop: 96, aspectRatio: "4 / 5" }}
             >
-              {/* 정지 그림이던 자리 — 갓 그늘의 붉은 눈이 5초에 한 번 감았다 뜬다.
-                  「노려본다」는 정지 컷으로는 절반만 전해진다. 눈이 살아 있어야 손님이 구매 카드를
-                  읽는 동안에도 계속 보고 있는 것이 된다(그래서 loop, 화면 밖이면 관찰자가 멈춘다).
-                  ⚠ 눈은 합성이 아니라 **생성분 그대로**다(형님 지시 2026-09-05 「합성하지 말아줘」).
-                     원본 `design/sangun/video-src/f1/f1-gen9-minimax.mp4`(MiniMax H3),
-                     시드는 정지 컷 `sangun-eyeF1.png` 가 아니라 Kling 이 눈을 켠 프레임이다
-                     — F1 의 눈은 픽셀상 어두운 붉은색이라 모델이 「켜진 눈」으로 못 읽는다(실측). */}
-              <ColdOpenVideo
-                src="/products/sangun/cut-gaze-blink.mp4"
-                poster="/products/sangun/cut-gaze-blink.webp"
-                loop
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/products/sangun/cut-gaze-h.webp"
+                alt="정면으로 마주 앉아 손님을 보는 산군"
+                className="h-full w-full select-none object-cover"
+                draggable={false}
               />
               {/* 컷 아래를 페이지 배경색으로 녹인다 — 끊기는 자리라 테두리가 보이면 안 된다. */}
               <div
