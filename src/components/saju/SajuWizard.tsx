@@ -32,8 +32,7 @@ import {
 import {
   GyeonuWebtoon,
   ReunionCalendar,
-  ReunionBreakupCheck,
-  ReunionRival,
+  // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
   ReunionMoveOn,
   ReunionToc,
   GyeonuCut,
@@ -2644,15 +2643,14 @@ function TeaserStep({
             <InyeonCalendar data={teaser.inyeon} />
           )}
 
-          {/* 재회 델타 — T2 채점 → T3 연적 → T4 환승. 값은 전부 teaser.reunion 에서만 온다.
+          {/* 재회 델타 — 여기 남은 건 T4 환승 하나다.
+              **T2 채점·T3 연적은 웹툰부로 올라갔다**(2026-09-05 4차, gyeonu-teaser 의 NightBreakup·NightRival).
+              경쟁사 티저 둘(타이트·청월당)은 컷 ↔ 카드 **교차**인데 우리만 컷을 다 보여준 뒤 상품을
+              통째로 내밀고 있었다. 이야기가 물으면 그 자리에서 답이 나와야 한다 —
+              「봤습니다」 뒤에 채점, 「따로 있습니다」 뒤에 연적이 붙는다.
+              ⚠ 여기에 다시 넣으면 같은 카드가 두 번 뜬다. 옮기려면 저쪽에서 빼고 옮길 것.
               (T1 달력은 맨 위 오프닝, T5 반전 절단은 구매 카드 직전) */}
-          {isReunion && teaser.reunion && (
-            <>
-              <ReunionBreakupCheck data={teaser.reunion} name={name} />
-              <ReunionRival data={teaser.reunion} />
-              <ReunionMoveOn data={teaser.reunion} />
-            </>
-          )}
+          {isReunion && teaser.reunion && <ReunionMoveOn data={teaser.reunion} />}
         </>
       )}
 
