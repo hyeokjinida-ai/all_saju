@@ -290,6 +290,12 @@ function WebtoonPanel({
   align = "center",
   /** 효과음 — 컷 위 경계에 걸치는 손글씨. 없으면 안 그린다. */
   fx,
+  /** 가장자리를 밤으로 녹인다 — 컷이 「붙인 사진」이 아니라 어둠에서 떠오른 장면이 된다.
+   *  `"both"` 위아래 · `"top"` 위만. 인물이 프레임 아래까지 찬 컷은 아래를 녹이면 몸이 잘리므로 top.
+   *  경쟁사 실측 페이드 폭 **30px**(375 환산) — 우리도 그 대역을 쓴다.
+   *  ⚠ 페이드를 쓰면 figure 의 바탕색을 지운다. 안 그러면 녹은 자리에 컷보다 **더 어두운**
+   *    사각형(NIGHT_DEEP)이 남아 페이드가 아니라 얼룩으로 보인다. */
+  fade,
 }: {
   id: GyeonuCutId;
   alt: string;
@@ -300,7 +306,14 @@ function WebtoonPanel({
   inset?: number;
   align?: "left" | "center" | "right";
   fx?: { text: string; top: number; side: "left" | "right"; size?: number; dim?: number };
+  fade?: "both" | "top";
 }) {
+  const F = 30; // 페이드 폭(px)
+  const maskCss = fade
+    ? fade === "both"
+      ? `linear-gradient(180deg, transparent 0, #000 ${F}px, #000 calc(100% - ${F}px), transparent 100%)`
+      : `linear-gradient(180deg, transparent 0, #000 ${F}px)`
+    : undefined;
   return (
     <figure
       data-panel={id}
@@ -309,7 +322,7 @@ function WebtoonPanel({
         marginTop: gap,
         // 대사 크기의 자 — 없으면 cqw 가 위쪽 조상을 잡아 엉뚱한 크기가 된다.
         containerType: "inline-size",
-        background: NIGHT_DEEP,
+        background: fade ? "transparent" : NIGHT_DEEP,
         ...(inset
           ? {
               width: `${inset}%`,
@@ -329,8 +342,8 @@ function WebtoonPanel({
         decoding="async"
         draggable={false}
         className="select-none"
-        style={
-          band
+        style={{
+          ...(band
             ? // 밴드 컷 — aspectRatio 로 자리를 먼저 잡으므로 로드 전에도 높이가 확정된다(점프 0).
               {
                 display: "block",
@@ -339,8 +352,9 @@ function WebtoonPanel({
                 objectFit: "cover",
                 objectPosition: `50% ${band.focus}%`,
               }
-            : { display: "block", width: "100%", height: "auto" }
-        }
+            : { display: "block", width: "100%", height: "auto" }),
+          ...(maskCss ? { maskImage: maskCss, WebkitMaskImage: maskCss } : null),
+        }}
       />
       {say && <GyeonuBubble {...say} />}
       {fx && <SoundFx {...fx} />}
@@ -759,6 +773,7 @@ export function GyeonuWebtoon({
           eager: 티저 컷 아홉 장 중 **이 한 장만** 즉시 받는다. */}
       <WebtoonPanel
         id="p-split"
+        fade="both"
         alt="두 갈래로 갈라져 흐르는 밤의 강"
         gap={0}
         eager
@@ -774,6 +789,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="g-river"
         eager={eagerAll}
+        fade="top"
         alt="은하수가 비친 강가에서 건너편을 보는 견우"
         gap={110}
         say={{
@@ -791,6 +807,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="p-lanterns"
         eager={eagerAll}
+        fade="both"
         alt="강물 위에 뜬 등불들, 앞쪽 하나만 환하다"
         // 설명 컷 = 빨리 지나가야 하는 자리 → 가로로 눌러 앉힌다(밝은 등불 하나가 한가운데 오는 focus 50).
         gap={92}
@@ -815,6 +832,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="p-farshore"
         eager={eagerAll}
+        fade="both"
         alt="강 건너 멀리 서 있는 사람의 뒷모습"
         // ⚠ 이 컷만 밴드로 안 누른다. 200px 로 자르면 실루엣이 프레임 밖으로 나가
         //    「강 건너 그 사람」이라는 컷의 뜻이 통째로 죽는다(25/50/70 전부 실측).
@@ -840,6 +858,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="p-magpie"
         eager={eagerAll}
+        fade="both"
         alt="발목에 서찰을 묶고 은하수를 건너 나는 까치"
         // 앞 두 컷(190·495)을 지나 190 → 330 → 563(정점)으로 커지며 정점을 민다.
         gap={80}
@@ -866,6 +885,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="p-bridge"
         eager={eagerAll}
+        fade="both"
         alt="수백 마리 까치가 은하수 위로 다리를 이룬 밤"
         gap={104}
       />
@@ -883,6 +903,7 @@ export function GyeonuWebtoon({
       <WebtoonPanel
         id="g-greet"
         eager={eagerAll}
+        fade="top"
         alt="펼쳐 둔 장부에 손을 얹고 정면으로 마주 보는 견우"
         gap={100}
         // 장부를 펴는 소리. 정점(오작교)엔 안 넣는다 — 거기선 침묵이 더 세다.
