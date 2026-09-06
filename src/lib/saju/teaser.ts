@@ -203,7 +203,7 @@ export function buildReunionTeaser(f: ReunionFacts): ReunionTeaser {
       { label: "연락해도 되는 달", mask: "▓▓년 ▓▓월" },
       { label: "재회 가능성 — 높음·보통·낮음 중 어디인지", mask: "▓▓" },
       { label: "그 사람에게 보낼 첫 줄", mask: "▓▓▓▓▓▓▓▓" },
-      { label: "강을 건너지 않는다면 다음에 올 사람", mask: "▓▓▓▓▓▓" },
+      { label: "다시 만나지 않는다면 다음에 올 사람", mask: "▓▓▓▓▓▓" },
     ],
   };
 }
