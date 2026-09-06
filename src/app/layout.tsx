@@ -20,6 +20,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ko_KR",
   },
+  // 메타 도메인 인증(2026-09-07). 이게 있어야 종합 이벤트 측정(iOS 전환 회수)을 설정할 수 있다.
+  // ⚠ 메타 안내: 태그가 <head> 밖이거나 **JS 로 동적 주입되면 인증이 실패한다**.
+  //    그래서 픽셀처럼 next/script 로 넣지 않고 metadata 로 넣는다 — 서버 렌더 HTML 의 <head> 에 박힌다.
+  //    확인법: `curl -s https://myeongunrok.com | grep facebook-domain-verification` (픽셀과 달리 curl 에 보인다)
+  other: {
+    "facebook-domain-verification": "9nrz2tx5kn0incy1gwq188rr631zop",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

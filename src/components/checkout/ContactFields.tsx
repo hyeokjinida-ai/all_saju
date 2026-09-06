@@ -84,7 +84,10 @@ export function CheckoutForm({
           className="w-full rounded-md border border-hairline px-3 py-2.5 text-[15px] text-ink outline-none focus:border-gold"
         />
         <p className="mt-1.5 text-[12px] text-bone-faint">
-          {err ?? "결과지가 준비되면 문자로 알려드려요."}
+          {/* ⚠ 「문자로 알려드려요」였다. 문자 발송이 구현돼 있지 않아(발송 라이브러리 0개, 번호는
+              저장만 된다) 손님 앞에 빈 약속이 서 있었다 — 2026-09-07 광고 발사 점검에서 잡아 뻐다.
+              알림톡·SMS 를 실제로 붙이는 날 이 문장을 되살릴 것. */}
+          {err ?? "주문에 문제가 있으면 이 번호로 연락드려요."}
         </p>
       </div>
 
