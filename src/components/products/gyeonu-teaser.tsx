@@ -782,7 +782,7 @@ export function GyeonuWebtoon({
         fx={{ text: "찰랑", top: 292, side: "right", size: 27, dim: 0.6 }}
       />
       <Narration above={52}>
-        그날, 강이 <Hi>갈라졌습니다</Hi>.
+        그날, 두 사람은 <Hi>갈라졌습니다</Hi>.
       </Narration>
 
       {/* ② 화자 등장 — 앞 컷의 사건을 받아 「그래서 내가 적어 뒀다」로 잇는다.
@@ -799,7 +799,7 @@ export function GyeonuWebtoon({
           box: GYEONU_SAY_BOX["g-river"],
           // 2줄이 기본, 3줄이 상한. 「강 건너에 / 있네요」처럼 **장소+서술어를 떼면** 기계처럼 들린다.
           // 자르는 우선순위: 의미 단위 > 문법 단위 > 풍선 실루엣 > 글자수(2026-09-06 확정).
-          lines: [`${callMe(name)}, 시선이`, "강 건너에 있네요."],
+          lines: [`${callMe(name)}, 마음이 아직`, "그 사람 쪽에 있네요."],
         }}
       />
 
@@ -850,7 +850,7 @@ export function GyeonuWebtoon({
       <Narration above={44}>
         {callMe(name)}, 아직
         <br />
-        강 건너를 보고 계시네요.
+        그 사람을 보고 계시네요.
       </Narration>
 
       {/* ④ 시점 전환 — 여기서 처음 카메라가 강 건너를 본다. 얼굴은 안 그린다(그 사람 얼굴을
@@ -869,7 +869,7 @@ export function GyeonuWebtoon({
       />
       {/* 「보이는 데까지 봤습니다」는 작업 보고처럼 들렸다 — 손님이 보던 쪽을 견우가 같이 본 것으로 돌린다. */}
       <Narration above={44}>
-        강 건너 그 사람 쪽도,
+        그 사람 쪽 흐름도,
         <br />
         <Hi>함께</Hi> 살펴봤습니다.
       </Narration>
@@ -912,7 +912,7 @@ export function GyeonuWebtoon({
         fx={{ text: "파드득", top: -14, side: "left", size: 32, dim: 0.72 }}
       />
       <Narration above={44}>
-        소식이 건너오는 달이…
+        연락이 오는 달이…
         <br />
         <Hi>따로</Hi> 있습니다.
       </Narration>
@@ -961,9 +961,9 @@ export function GyeonuWebtoon({
       />
       {/* 판에서 **한 번뿐인** 색 강조. 정점 문장이라 여기 쓴다 — 두 번째가 생기면 둘 다 죽는다. */}
       <Narration above={44} accent>
-        다리가 놓이는 달에는,
+        다리가 놓이는 달은,
         <br />
-        강이 이렇게 됩니다.
+        이렇게 열립니다.
       </Narration>
 
       {/* ⑦ 대면 — 돈 얘기는 마주 보고 한다. 앞 숨 200 위에 대사를 올리고 아래 16px 만
@@ -1196,7 +1196,7 @@ export function ReunionBreakupCheck({ data, name }: { data: Reunion; name: strin
 
   return (
     <section className="mt-14">
-      <T>강이 갈라지던 무렵</T>
+      <T>두 사람이 갈라지던 무렵</T>
       <div className="mt-2">
         <BrushHead lines={[`${b.year}년${b.month ? ` ${b.month}월` : ""}, 그 무렵 흐름`]} />
       </div>
@@ -1318,13 +1318,14 @@ export function ReunionMoveOn({ data }: { data: Reunion }) {
   if (!m) return null;
   return (
     <section className="mt-14">
-      <T>강을 건너지 않는다면</T>
+      <T>다시 만나지 않는다면</T>
       <div className="mt-2">
         <BrushHead lines={["다음 사람도 같은 장부에 있습니다"]} />
       </div>
-      {/* 배웅 컷 — 「강을 건너지 않는다면」의 **그림 짝**이다. 길이 뒤로 뻗고 견우가 돌아본다.
+      {/* 배웅 컷 — 「다시 만나지 않는다면」의 **그림 짝**이다. 길이 뒤로 뻗고 견우가 돌아본다.
           제목 → 붓글씨 → 그림 → 값 순서라, 표(다음 사람)가 대사를 받아 열리는 모양이 된다.
-          ⚠ 대사에 「건너」를 다시 쓰지 않는다 — 바로 위 제목이 그 말이라 두 번 읽힌다. */}
+          ⚠ 손님 상황은 은유로 안 부른다(2026-09-06 형님) — 「강을 건넌다」로 재회를 대신
+            말하지 않는다. 그림(강가·별길)은 배경으로 남되 말은 직설이다. */}
       <GyeonuCut
         id="g-farewell"
         alt="별길이 뻗은 강가에서 뒤를 돌아보는 견우"

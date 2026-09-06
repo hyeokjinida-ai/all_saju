@@ -311,7 +311,7 @@ export function GyeonuLanding({
         <GyeonuScene
           id="g-nofault"
           alt="고개를 돌린 채 정면을 보는 견우"
-          lines={["그날 강이 갈라진 건,", "당신이 모자라서가 아닙니다."]}
+          lines={["그날 두 사람이 갈라진 건,", "당신이 모자라서가 아닙니다."]}
         />
         <p className="px-8 pt-5 text-center font-myeongjo text-[17px] leading-[1.85]" style={{ color: "#cfd0d8" }}>
           그 무렵 두 사람 흐름이 같이 꺾여 있었는지부터 봅니다.
