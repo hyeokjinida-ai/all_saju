@@ -54,6 +54,14 @@ export async function generateMetadata({
     p = s ? { name: s.name, description: s.description } : null;
   }
   if (!p) return { title: "상품" };
+  // 공유 썸네일 — 없으면 카톡·메타에 링크가 **그림 없이 글자만** 뜬다(2026-09-06 운영 실측: og:image 0건).
+  // 유입이 광고라 링크가 사람 손으로 돌아다니는데, 그 자리에서 상품이 안 보이면 클릭이 안 산다.
+  // 파일은 `public/og/<slug>.png`(1200×630, scratchpad `bake-og.mjs` 가 대표 컷 + 붓글씨 제목으로 구움).
+  // ⚠ 있는 상품만 건다 — 없는 경로를 넘기면 크롤러가 깨진 그림을 물어 간다.
+  const OG_SLUGS = new Set(["sangun-sinjeom", "inyeon-saju", "reunion-saju"]);
+  const ogImage = OG_SLUGS.has(slug)
+    ? [{ url: `/og/${slug}.png`, width: 1200, height: 630, alt: p.name }]
+    : undefined;
   return {
     title: p.name,
     description: p.description,
@@ -62,8 +70,14 @@ export async function generateMetadata({
       description: p.description,
       type: "website",
       locale: "ko_KR",
+      ...(ogImage ? { images: ogImage } : {}),
     },
-    twitter: { card: "summary_large_image", title: p.name, description: p.description },
+    twitter: {
+      card: "summary_large_image",
+      title: p.name,
+      description: p.description,
+      ...(ogImage ? { images: ogImage.map((i) => i.url) } : {}),
+    },
   };
 }
 
