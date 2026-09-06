@@ -93,15 +93,50 @@ function referrerHost(): string {
   }
 }
 
+// 광고 소재 꼬리표. 광고 링크의 utm_content 를 **첫 진입 때 한 번만** 세션에 새긴다.
+//
+// 왜 첫 진입만인가: 손님이 사이트 안에서 움직이면 쿼리가 사라진다. 나중 이벤트에
+// 빈 값을 덮어쓰면 그 세션이 「직접 유입」으로 둔갑해 소재 판정이 통째로 무너진다.
+// 그래서 빈 값이어도 **저장해 둔다** — 「이 세션은 꼬리표가 없다」를 확정짓기 위해.
+//
+// 메타 픽셀은 소재별 CTR·ROAS 까지만 알려 준다. 「어느 소재로 들어온 사람이
+// 위저드 몇 단계에서 빠졌는가」는 이 꼬리표가 있어야 가릅니다(/admin/analytics).
+const UTM_KEY = "mr_utm"; // sessionStorage — 이 방문의 utm_content
+const UTM_MAX = 60; // /api/track 의 prop 길이 제한(120) 안에서 넘게 잡은 값
+
+function utmFromUrl(): string {
+  try {
+    return (new URLSearchParams(location.search).get("utm_content") ?? "").slice(0, UTM_MAX);
+  } catch {
+    return "";
+  }
+}
+
+function creative(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const saved = sessionStorage.getItem(UTM_KEY);
+    if (saved !== null) return saved;
+    const v = utmFromUrl();
+    sessionStorage.setItem(UTM_KEY, v);
+    return v;
+  } catch {
+    // 스토리지가 막힌 브라우저(프라이빗·일부 인앱) — 이번 이벤트만 URL 에서 읽는다.
+    return utmFromUrl();
+  }
+}
+
 // 이벤트 1건을 자체 수집 엔드포인트로 전송(페이지 이탈에도 살아남도록 beacon 우선).
 function send(event: string, params: EventParams, path?: string): void {
   if (typeof window === "undefined") return;
+  const cr = creative();
   try {
     const body = JSON.stringify({
       event,
       path: path ?? location.pathname,
       referrer: referrerHost(),
-      props: params,
+      // 소재 꼬리표를 자체 DB 쪽에만 실는다(메타는 sendMeta 가 따로 보낸다).
+      props: cr ? { ...params, utm: cr } : params,
       visitorId: visitorId(),
       sessionId: sessionId(),
     });
