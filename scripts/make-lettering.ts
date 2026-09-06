@@ -42,6 +42,12 @@ const BG = process.env.LETTERING_BG === "white" ? "#FFFFFF" : "#00FF00";
 
 const JOBS: Job[] = [
   // 산군 — 검정+금+주사 세계관(globals.css .world-sangun). 촛불 금색.
+  //
+  // ⚠ 2026-09-06 각진 전각체 → **서예체**로 바꿨다(형님 확정). 원래는 「부적·현판」을 노려
+  //    face 를 안 주고 block 으로 구웠는데, 홈 첫 화면에서 **명운록 워드마크(붓글씨)·연애예보
+  //    (붓글씨) 사이에 박수무당만 각진 금속 베벨**로 서서 혼자 다른 계열로 읽혔다.
+  //    로고가 붓글씨인 이상 상품 제목도 붓글씨여야 한 벌이 된다 — 세계관 구분은 **색**이
+  //    맡는다(산군 금 / 직녀 은보라).
   {
     slug: "sangun-sinjeom",
     title: "박수무당",
@@ -49,6 +55,7 @@ const JOBS: Job[] = [
     to: "#8A6516",
     edge: "#FBEFC9",
     shadow: "#3A2708",
+    face: "brush",
   },
   // 직녀 — 먹남색 밤 + 달빛·은사(.world-jiknyeo). 빨강 금기.
   {
