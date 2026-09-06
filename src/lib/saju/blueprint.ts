@@ -100,7 +100,7 @@ export function buildMonthPlan(
     return plan;
   }
 
-  // ── 재회(10장, 화자 견우) — 축이 셋이다: 과거(강이 갈라진 날) · 다리가 놓이는 달 · 연락의 달 ──
+  // ── 재회(10장, 화자 견우) — 축이 셋이다: 과거(두 사람이 갈라진 날) · 다리가 놓이는 달 · 연락의 달 ──
   // 5장과 6장이 **같은 열두 달을 다른 이름으로** 부른다. 배정을 안 하면 두 장이 같은 달을
   // 두 번 말한다(인연에서 이미 확인된 병). 「다리가 놓이는 달」은 5장이 독점하고,
   // 6장은 그 밖의 「연락해도 되는 달」과 「먼저 연락하면 안 되는 달」만 든다.
@@ -117,11 +117,11 @@ export function buildMonthPlan(
     const soonestReconnect = soonestOf(reconnect);
     set(findIdx(chapterTitles, /아직 이어져 있는 것/), soonestReconnect ? [soonestReconnect] : []);
     // 9장은 새 인연 — 달이 아니라 **해**가 주인공이다(크게 바뀌는 해를 여기가 독점한다).
-    set(findIdx(chapterTitles, /강을 건너지 않는다면/), [], true);
+    set(findIdx(chapterTitles, /다시 만나지 않는다면/), [], true);
     // 배웅은 '가장 가까운 연락해도 되는 달' 하나와만 잇는다.
     const soonestOk = soonestOf(reunion.contactOk.map((m) => m.row.label));
     set(findIdx(chapterTitles, /배웅/), soonestOk ? [soonestOk] : []);
-    // 나머지(두 사람의 별·강이 갈라진 날·그 사람의 지금·하면 안 되는 것·다시 보고 싶은 사람으로)는
+    // 나머지(두 사람의 별·두 사람이 갈라진 날·그 사람의 지금·하면 안 되는 것·다시 보고 싶은 사람으로)는
     // 달을 말하지 않는다 — 초기값이 이미 빈 배열이라 손대지 않는다.
     return plan;
   }

@@ -199,7 +199,7 @@ const hanjiCard: React.CSSProperties = {
 function chapterMood(title: string): React.CSSProperties {
   const HANJI_URL = "url(/products/jiknyeo/hanji.png)";
   // 가라앉음 — 지나간 것을 들여다보는 장. 흰 오버레이를 옅은 회보라로 바꾼다(채도만 내림)
-  if (/놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리|강이 갈라진 날|하면 안 되는 것/.test(title))
+  if (/놓치는 패턴|늦어지는 이유|조심할 달|피해야 할|흔들리|두 사람이 갈라진 날|하면 안 되는 것/.test(title))
     return {
       backgroundColor: "#F4F1F7",
       backgroundImage: `linear-gradient(rgba(240,236,247,.66), rgba(233,228,242,.66)), ${HANJI_URL}`,
@@ -349,7 +349,7 @@ const OH_TRAIT: Record<string, { keul: string; how: string }> = {
 
 /**
  * 짝 프로필 판 — 얼굴 카드 + 표. 인연은 결과지 **머리**에서 결제의 보상으로 열고,
- * 재회는 **9장 「강을 건너지 않는다면」 바로 위**에서 「그 사람이 아니어도 되는 이유」의 물증으로 연다.
+ * 재회는 **9장 「다시 만나지 않는다면」 바로 위**에서 「그 사람이 아니어도 되는 이유」의 물증으로 연다.
  * (prompt.ts 의 그 장 지시가 「표가 바로 위에 떠 있다」를 전제로 쓰여 있다 — 자리를 옮기면 본문이 어긋난다)
  */
 function PartnerProfilePlate({
@@ -366,7 +366,7 @@ function PartnerProfilePlate({
   return (
     <Plate id="sec-profile">
 
-          <PlateTitle sub={isReunion ? "강을 건너지 않는다면, 다음에 올 사람입니다" : "티저에서 가려 두었던 자리예요"}>
+          <PlateTitle sub={isReunion ? "다시 만나지 않는다면, 다음에 올 사람입니다" : "티저에서 가려 두었던 자리예요"}>
             {isReunion ? "다음에 올 사람" : "내 앞에 나타날 사람"}
           </PlateTitle>
 
@@ -754,7 +754,7 @@ export function JiknyeoResult({
           티저가 「그 사람은 ████ 에서 처음 마주쳐요」 로 가린 것의 **직접 보상**.
           타이트 유료 결과지의 「[운명 카드] 내 앞에 나타날 진짜 인연 프로필」 자리인데,
           걔넨 외모·직업군까지 단정하고 우리는 그 선을 안 넘는다 — 대신 근거 있는 항목만 표로 박는다. */}
-      {/* 짝 프로필 표 — 인연은 여기(머리), **재회는 9장 「강을 건너지 않는다면」 바로 위**에 선다.
+      {/* 짝 프로필 표 — 인연은 여기(머리), **재회는 9장 「다시 만나지 않는다면」 바로 위**에 선다.
           prompt.ts 가 그 장에 「표가 바로 위에 떠 있다」고 못 박아 놨다 — 자리가 어긋나면 본문이 거짓말이 된다. */}
       {inyeon && !isMarriage && !isReunion && (
         <PartnerProfilePlate inyeon={inyeon} firstMonth={top3[0] ?? null} />
@@ -779,8 +779,8 @@ export function JiknyeoResult({
         const after = !inyeon ? null
           : isReunion ? (
               // 2장 — 죄책감을 걷어내는 장. 강가에서 건너편을 보는 컷(은하수가 강물에 비친다)이
-              // 「그날 강이 갈라졌다」는 장 제목을 그림으로 받는다. 본문 앞에 두어 숨을 한 번 준다.
-              /강이 갈라진 날/.test(t) ? (
+              // 「그날 두 사람은 갈라졌다」는 장 제목을 그림으로 받는다. 본문 앞에 두어 숨을 한 번 준다.
+              /두 사람이 갈라진 날/.test(t) ? (
                 <CutInterlude
                   dir="reunion"
                   id="g-river"
@@ -836,9 +836,9 @@ export function JiknyeoResult({
         return (
           <Fragment key={i}>
             {before(t)}
-            {/* 재회 9장 「강을 건너지 않는다면」 바로 위에 짝 프로필 표를 세운다 —
+            {/* 재회 9장 「다시 만나지 않는다면」 바로 위에 짝 프로필 표를 세운다 —
                 그 장 본문이 「표가 바로 위에 떠 있다」를 전제로 쓰인다(prompt.ts outline). */}
-            {isReunion && inyeon && /강을 건너지 않는다면|다음에 올 사람/.test(t) && (
+            {isReunion && inyeon && /다시 만나지 않는다면|다음에 올 사람/.test(t) && (
               <PartnerProfilePlate inyeon={inyeon} firstMonth={top3[0] ?? null} isReunion />
             )}
             <ChapterGate no={i + 1} title={c.title} id={`ch-${i}`} badge={badges?.[i] || undefined} />

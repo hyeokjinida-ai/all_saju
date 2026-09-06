@@ -1472,7 +1472,7 @@ export function SajuWizard({
           </div>
         )}
 
-        {/* 13 心 — 지금 마음. **유일한 필수.** 뒤 셋을 고르면 결과지 9장(강을 건너지 않는다면)이 두꺼워진다. */}
+        {/* 13 心 — 지금 마음. **유일한 필수.** 뒤 셋을 고르면 결과지 9장(다시 만나지 않는다면)이 두꺼워진다. */}
         {isReunion && step === R_FEELING_STEP && (
           <div className="grid grid-cols-1 gap-2.5">
             {FEELING_OPTIONS.map((o) => {
@@ -3395,7 +3395,7 @@ function TeaserStep({
                 "그날 갈라진 진짜 이유",
                 "그 사람에게 보낼 첫 줄",
                 "매달릴 때 하면 안 되는 것 셋",
-                "강을 건너지 않는다면 다음에 올 사람",
+                "다시 만나지 않는다면 다음에 올 사람",
               ]}
               priceLabel={formatKRW(price)}
               compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
