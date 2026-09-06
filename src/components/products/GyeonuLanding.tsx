@@ -119,10 +119,13 @@ const SAMPLE_12: ("full" | "half" | "cres" | "cloud")[] = [
   "cres", "full", "cloud", "half",
 ];
 
-const LEGEND: { p: "full" | "half" | "cloud"; label: string; desc: string }[] = [
-  { p: "full", label: "다리가 놓이는 달", desc: "다시 이어지는 자리가 열립니다" },
-  { p: "half", label: "연락해도 되는 달", desc: "보낸 말이 그대로 닿습니다" },
-  { p: "cloud", label: "먼저 연락하면 안 되는 달", desc: "보낸 말이 반대로 갑니다" },
+/** 달 모양 ↔ 이름만. **설명 줄은 안 붙인다**(2026-09-06 형님 「글자만 너무 많다」) —
+ *  월상 UI 자체가 이미 시각적 설명이라, 문장으로 또 풀면 한 정보를 두 번 처리하게 된다.
+ *  「무슨 일이 일어나는 달인지」는 결과지가 열두 달치로 말한다. */
+const LEGEND: { p: "full" | "half" | "cloud"; label: string }[] = [
+  { p: "full", label: "다리가 놓이는 달" },
+  { p: "half", label: "연락해도 되는 달" },
+  { p: "cloud", label: "먼저 연락하면 안 되는 달" },
 ];
 
 function ReunionGridPreview() {
@@ -155,17 +158,15 @@ function ReunionGridPreview() {
           })}
         </div>
 
-        <ul className="mt-5 space-y-3 border-t pt-4" style={{ borderColor: LINE }}>
+        <ul className="mt-5 space-y-2.5 border-t pt-4" style={{ borderColor: LINE }}>
           {LEGEND.map((l) => (
-            <li key={l.label} className="flex items-start gap-2.5">
-              <span className="mt-0.5 shrink-0">
-                <Moon phase={l.p} size={22} />
+            <li key={l.label} className="flex items-center gap-2.5">
+              <span className="shrink-0">
+                <Moon phase={l.p} size={20} />
               </span>
-              <span className="text-[14px] leading-[1.6]">
-                <b style={{ color: BONE }}>{l.label}</b>
-                <br />
-                <span style={{ color: SUB }}>{l.desc}</span>
-              </span>
+              <b className="text-[14px] leading-[1.6]" style={{ color: BONE }}>
+                {l.label}
+              </b>
             </li>
           ))}
         </ul>
@@ -223,9 +224,9 @@ export function GyeonuLanding({
               (타이트 「연락 지금 해도 될까 / 차단할까 말까」). 화면 아래 「연락해도 되는 달 /
               먼저 연락하면 안 되는 달」이 이미 있으므로 새 주장이 아니다. */}
           <Say>
-            먼저 연락할지, 기다릴지
+            먼저 연락할지,
             <br />
-            <b style={{ color: STAR }}>부터</b> 봅니다.
+            <b style={{ color: STAR }}>기다릴지부터</b> 봅니다.
           </Say>
         </div>
 
@@ -244,9 +245,9 @@ export function GyeonuLanding({
           <b style={{ color: STAR }}>당신이 모자라서가 아닙니다.</b>
           <br />
           <br />
+          {/* 「꺾여 있지 않았으면, 그렇다고 말합니다」를 뺐다(2026-09-06 형님 「글자만 너무 많다」).
+              바로 아래 정직 판정 카드의 「가능성이 낮으면 낮다고 말합니다」가 같은 약속을 한다. */}
           그 무렵 두 사람 흐름이 같이 꺾여 있었는지부터 봅니다.
-          <br />
-          꺾여 있지 않았으면, 그렇다고 말합니다.
         </Narration>
 
         <StarStream />
@@ -267,9 +268,8 @@ export function GyeonuLanding({
               <p className="font-myeongjo text-[15px] font-bold" style={{ color: STAR }}>
                 연락해도 되는 달
               </p>
-              <p className="mt-2 text-[13px] leading-[1.7]" style={{ color: SUB }}>
-                첫 줄을 뭐라고 열지, 무엇을 묻지 말지까지 적어 드립니다
-              </p>
+              {/* 설명문을 뺐다 — 카드 둘은 **설명이 아니라 선택지**로 보여야 한다
+                  (타이트 첫 화면의 질문 카드 문법). 무엇을 적어 주는지는 목차와 티저가 말한다. */}
             </div>
             <div className="rounded-md p-4" style={{ background: "rgba(0,0,0,0.28)", border: `1px solid ${LINE}` }}>
               <p className="font-myeongjo text-[15px] font-bold" style={{ color: BONE }}>
@@ -277,9 +277,7 @@ export function GyeonuLanding({
                 <br />
                 안 되는 달
               </p>
-              <p className="mt-2 text-[13px] leading-[1.7]" style={{ color: SUB }}>
-                왜 반대로 가는지 말씀드리고, 대신 할 것을 드립니다
-              </p>
+
             </div>
           </div>
         </div>
@@ -297,9 +295,8 @@ export function GyeonuLanding({
               <br />
               <b style={{ color: STAR }}>낮다고 말합니다.</b>
             </p>
-            <p className="mt-3 text-[15px] leading-[1.8]" style={{ color: "#cfd0d8" }}>
-              대신 그다음까지 같이 봅니다. 듣기 좋은 말로 달래 놓고 끝내지 않습니다.
-            </p>
+            {/* 뒤 두 문장을 뺐다 — 이 카드의 일은 「낮으면 낮다고 한다」 한 방이다.
+                「그다음까지 같이 본다」는 목차 9장(강을 건너지 않는다면)이 실물로 보여준다. */}
           </div>
         </div>
 
@@ -362,13 +359,12 @@ export function GyeonuLanding({
             <h2 className="mb-2 text-center font-myeongjo text-lg font-semibold" style={{ color: BONE }}>
               여기서부터 같이 봅시다
             </h2>
-            <p className="mb-3 text-center text-sm" style={{ color: SUB }}>
-              하나씩만 답하시면 됩니다 — 2분이면 됩니다.
-            </p>
+            {/* 이 화면의 일은 **입력을 시작하게 하는 것**이지 보관 정책을 가르치는 게 아니다.
+                「하나씩만…2분」과 「마이페이지에 보관됩니다」를 뺐다 — 둘 다 아래 안심 카드가
+                이미 말하고, 여기선 손님이 망설이는 이유(시각·음력) 둘만 지우면 된다. */}
             <p className="mb-4 text-center text-[13px] leading-relaxed" style={{ color: SUB }}>
               <span style={{ color: STAR }}>✓</span> 태어난 시각 몰라도 됩니다&nbsp;&nbsp;
-              <span style={{ color: STAR }}>✓</span> 음력 생일만 알아도 됩니다&nbsp;&nbsp;
-              <span style={{ color: STAR }}>✓</span> 마이페이지에 보관됩니다
+              <span style={{ color: STAR }}>✓</span> 음력 생일만 알아도 됩니다
             </p>
           </div>
 
