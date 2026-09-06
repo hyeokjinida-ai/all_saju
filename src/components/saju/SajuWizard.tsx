@@ -1758,12 +1758,18 @@ export function SajuWizard({
                   const on = o.productId === selected.productId;
                   const pct = discountPct(o);
                   const isRec = !!recommended && o.productId === recommended.productId;
+                  // 재회는 **단품이 주상품**이다 — 묶음과 같은 크기로 나란히 세우면 결제 직전에
+                  // 「어느 걸 사지」를 다시 묻게 된다(GPT 대조 진단 2026-09-06 ⑧).
+                  // 레퍼런스 실측: 청월당은 비교 대상을 작게 두고 자기 상품 하나만 크게 세운다.
+                  // 그래서 여기서는 **단품을 키우고 묶음은 add-on 크기로** 둔다(다른 상품은 그대로).
+                  const isBundleOpt = o.includes.length > 1;
+                  const lead = isReunion && !isBundleOpt;
                   return (
                     <button
                       key={o.productId}
                       type="button"
                       onClick={() => setSelectedId(o.productId)}
-                      className="relative w-full border px-4 py-3 text-left"
+                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : "py-3"}`}
                       style={{
                         borderColor: on
                           ? sheetAccent
@@ -1773,7 +1779,7 @@ export function SajuWizard({
                           : "transparent",
                       }}
                     >
-                      {isRec && (
+                      {isRec && !isReunion && (
                         <span
                           className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
                           style={{ background: sheetAccent, color: imm ? "#241a08" : isInyeon ? "#1a1330" : "#1b1230" }}
@@ -1795,8 +1801,8 @@ export function SajuWizard({
                             </span>
                           )}
                           <span
-                            className="font-myeongjo text-[15px] font-bold"
-                            style={{ color: sheetAccent }}
+                            className="font-myeongjo font-bold"
+                            style={{ color: sheetAccent, fontSize: lead ? 24 : 15 }}
                           >
                             {formatKRW(o.price)}
                           </span>
