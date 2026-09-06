@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Moon } from "@/components/products/JiknyeoForecast";
 import { StoryFooter } from "@/components/products/StoryFooter";
 import { outlineTitles } from "@/lib/saju/prompt";
+import { GyeonuBubble, type SayTail } from "@/components/products/gyeonu-bubble";
+import type { SayBox } from "@/lib/jiknyeo-say-box";
 
 // 견우(재회) 광고 착지 랜딩 — 2026-09-04 신설.
 //
@@ -77,61 +79,62 @@ function Narration({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 견우가 **말하는** 자리 — 작은 얼굴 + 말풍선 카드.
+/** 견우가 **말하는** 자리 — 웹툰부와 같은 문법의 **큰 컷 + 잉크선 말풍선**.
  *
- *  왜 만들었나(형님 2026-09-06 「아니 캐릭터가 말해주던지 하면안돼?」):
- *  랜딩의 설명문이 전부 **화자 없는 UI 텍스트**라 「읽는 글」이었다. 같은 문장이라도
- *  견우가 말하면 「듣는 말」이 된다 — 글자를 더 지우는 대신 화자를 준다.
+ *  왜 이렇게 하나(형님 2026-09-06 「왜 미니 캐릭터로 하는거야?? 몰입도를 안올릴려고 하는거야?」):
+ *  처음엔 48px 원형 아바타 + 카드로 만들었다가 물렸다. **몰입은 화면을 차지하는 컷에서 생긴다** —
+ *  작은 원은 캐릭터가 아니라 UI 아이콘이다.
  *
- *  ⚠ **아무 데나 쓰지 않는다.** 감정·판정 블록에만 쓰고 상품 구조(카드·격자·목차·가격·입력)는
- *  UI 로 남긴다. 정보를 말풍선에 넣으면 한눈에 볼 것을 읽게 만드는 장식이 된다.
- *  레퍼런스도 그렇다 — 청월당은 전환점마다 캐릭터 발화를 꽂지만(「제가 함께하겠습니다」,
- *  「그래서 준비했어요!」) 가격·비교표·장 구성은 말풍선으로 안 만든다.
+ *  컷은 자리마다 **새로 뽑는다**(재활용 금지). 대사에 맞는 연기를 발주문에 적어 시킨다:
+ *    g-nofault  고개를 돌린 채 눈은 정면 — 「당신이 모자라서가 아닙니다」
+ *    g-plain    장부를 덮고 몸을 세워 정면 응시 — 「낮으면 낮다고 말합니다」
  *
- *  얼굴은 컷마다 다른 것을 쓴다(위로는 눈 내린 컷, 판정은 정면 응시) — 같은 얼굴을 두 번
- *  붙이면 아바타가 아니라 아이콘으로 읽힌다. objectPosition 은 원형 48px 안에 얼굴이
- *  들어오도록 컷별로 잡은 값이다. */
-function GyeonuSays({ face, pos, children }: { face: string; pos: string; children: React.ReactNode }) {
+ *  조판은 웹툰부와 같다: 풀블리드(랜딩 컨테이너 520px), 위아래 30px 페이드로 밤에 녹이고,
+ *  말풍선은 컷 **위 숨에 25~30% 걸친다**(컷 안에 가두면 웹툰이 아니라 캡션이 된다).
+ *  말풍선 자리는 컷마다 실측해 `GYEONU_SAY_BOX` 에 박아 뒀다 — 눈·입·손 위에는 안 얹는다. */
+/** 랜딩 발화컷의 말풍선 자리 — **그림을 재서 박은 값**(컷 폭 % 기준, 웹툰부와 같은 좌표계).
+ *
+ *  두 컷 다 **왼쪽 위는 등불이, 아래는 손과 장부가** 차지하고 오른쪽 위 밤하늘만 비어 있다.
+ *  그래서 우상단에 앉히고 꼬리는 왼쪽 아래(bl)로 내려 얼굴을 가리킨다.
+ *  y 가 음수인 건 웹툰부 문법 그대로 — 풍선 높이의 25~30% 를 **컷 위 숨으로 넘긴다**.
+ *  컷 안에 가두면 웹툰이 아니라 「이미지에 캡션 얹은 랜딩」이 된다.
+ *
+ *  ⚠ 웹툰부 표(GYEONU_SAY_BOX)와 **일부러 갈라 뒀다** — 랜딩 컷은 랜딩만 쓴다.
+ *    한 표에 몰면 어느 화면이 어느 값을 쓰는지 흐려지고, 실제로 dev 에서 값이 안 잡혔다. */
+const LANDING_SAY_BOX: Record<"g-nofault" | "g-plain", SayBox> = {
+  "g-nofault": { x: 46, y: -7.0, w: 50 },
+  "g-plain": { x: 46, y: -6.0, w: 50 },
+};
+
+function GyeonuScene({
+  id,
+  alt,
+  lines,
+  tail = "bl",
+}: {
+  id: "g-nofault" | "g-plain";
+  alt: string;
+  lines: string[];
+  tail?: SayTail;
+}) {
+  const F = 30;
+  const mask = `linear-gradient(180deg, transparent 0, #000 ${F}px, #000 calc(100% - ${F}px), transparent 100%)`;
   return (
-    <div className="px-5 py-7">
-      <div className="flex items-start gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`/products/reunion/${face}.webp`}
-          alt=""
-          width={48}
-          height={48}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          className="mt-1 shrink-0 select-none"
-          style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", objectPosition: pos, border: `1px solid ${LINE}` }}
-        />
-        <div
-          className="relative flex-1 px-4 py-3.5"
-          style={{ background: "rgba(255,255,255,0.055)", border: `1px solid ${LINE}`, borderRadius: 16 }}
-        >
-          {/* 꼬리 — 카드 왼쪽 위에 붙는 작은 마름모. 얼굴 쪽을 가리켜야 말이 그 사람 것이 된다. */}
-          <span
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: -6,
-              top: 17,
-              width: 11,
-              height: 11,
-              transform: "rotate(45deg)",
-              background: "rgba(255,255,255,0.055)",
-              borderLeft: `1px solid ${LINE}`,
-              borderBottom: `1px solid ${LINE}`,
-            }}
-          />
-          <p className="font-myeongjo text-[17px] leading-[1.8]" style={{ color: BONE }}>
-            {children}
-          </p>
-        </div>
-      </div>
-    </div>
+    <figure className="relative my-2" style={{ containerType: "inline-size", margin: "8px 0 0" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/products/reunion/${id}.webp`}
+        alt={alt}
+        width={1080}
+        height={1620}
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className="select-none"
+        style={{ display: "block", width: "100%", height: "auto", maskImage: mask, WebkitMaskImage: mask }}
+      />
+      <GyeonuBubble lines={lines} tail={tail} box={LANDING_SAY_BOX[id]} />
+    </figure>
   );
 }
 
@@ -297,19 +300,16 @@ export function GyeonuLanding({
 
         {/* ── 2. 죄책감 해제 — 이 상품의 첫 일이다. 다만 없는 꺾임을 지어내지 않는다는 것까지
                같은 자리에서 말한다(reunion.ts breakupCheck 가 실제로 그렇게 갈린다). ── */}
-        {/* 화자 없는 설명문이었다 → **견우가 말한다**(형님 2026-09-06).
-            문장은 한 자도 안 바꿨다. 「꺾여 있지 않았으면…」 한 줄만 앞서 뺐는데,
-            그 약속은 아래 정직 판정 대사가 한다. 얼굴은 눈 내린 컷 — 위로하는 자리다. */}
-        {/* ⚠ 얼굴은 **클로즈업 컷**을 쓴다 — 전신 반신(g-comfort)을 48px 원에 넣으면
-            얼굴이 너무 작아 어두운 덩어리가 된다(로컬 실측 2026-09-06). */}
-        <GyeonuSays face="g-face-smile" pos="50% 30%">
-          그날 강이 갈라진 건
-          <br />
-          <b style={{ color: STAR }}>당신이 모자라서가 아닙니다.</b>
-          <br />
-          <br />
+        {/* 화자 없는 설명문이었다 → **견우가 말한다**. 이 자리 전용으로 새로 뽑은 컷이다
+            (고개를 돌린 채 눈은 정면 — 「아니다」를 말하는 중). 문장은 한 자도 안 바꿨다. */}
+        <GyeonuScene
+          id="g-nofault"
+          alt="고개를 돌린 채 정면을 보는 견우"
+          lines={["그날 강이 갈라진 건,", "당신이 모자라서가", "아닙니다."]}
+        />
+        <p className="px-8 pt-5 text-center font-myeongjo text-[17px] leading-[1.85]" style={{ color: "#cfd0d8" }}>
           그 무렵 두 사람 흐름이 같이 꺾여 있었는지부터 봅니다.
-        </GyeonuSays>
+        </p>
 
         <StarStream />
 
@@ -349,14 +349,13 @@ export function GyeonuLanding({
         <StarStream />
 
         {/* ── 5. 정직 판정 — 재회 레인 최강 장치의 우리 판(거절 대신 정직 판정 + 다음 길) ── */}
-        {/* 브랜드 약속은 **화자가 있어야** 약속이 된다 — 화자 없는 카드보다 견우의 말이 낫다.
-            뒤 두 문장은 앞서 뺐다(「그다음까지 같이 본다」는 목차 9장이 실물로 보여준다).
-            얼굴은 정면 응시 — 위로가 아니라 판정하는 자리라 눈을 든 컷을 쓴다. */}
-        <GyeonuSays face="g-face-gaze" pos="50% 26%">
-          가능성이 낮으면
-          <br />
-          <b style={{ color: STAR }}>낮다고 말합니다.</b>
-        </GyeonuSays>
+        {/* 브랜드 약속은 **화자가 있어야** 약속이 된다. 이 자리 전용 컷 — 장부를 덮고 몸을 세워
+            정면을 본다(눈을 안 피한다). 앞 컷보다 가깝게 잡아 눈이 화면을 채운다. */}
+        <GyeonuScene
+          id="g-plain"
+          alt="장부를 덮고 정면을 보는 견우"
+          lines={["가능성이 낮으면", "낮다고", "말합니다."]}
+        />
 
         <StarStream />
 
