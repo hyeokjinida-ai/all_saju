@@ -3627,16 +3627,11 @@ function TeaserStep({
     {/* 재회판 고정바 — 유일하게 공짜로 연 값(먼저 연락하면 안 되는 달)을 그대로 데리고 다닌다.
         재촉하지 않는다: 사실 한 줄 + 버튼이다(가짜 타이머 금지 규칙 그대로). */}
     {isReunion && teaser?.reunion?.revealed && (
-      <StickyBuyBar
-        note={
-          <>
-            먼저 연락하면 안 되는 달,{" "}
-            <b className="font-bold" style={{ color: "var(--gold-bright)" }}>
-              {teaser.reunion.revealed.month}월
-            </b>{" "}
-            — 나머지 달은 결과지에
-          </>
-        }
+      <ReunionStickyBar
+        /* 카피가 짧아진 이유: 이 바는 이제 **복채 선언 뒤에만** 뜬다(useReunionBarGate).
+           그 시점엔 손님이 열린 달을 이미 봤고 「여기부터는 복채를 받습니다」도 들은 뒤라,
+           무료로 연 달을 바에서 또 설명할 필요가 없다. 사실 한 줄 + 버튼만 남긴다. */
+        note={<>나머지 열한 달은 결과지에</>}
         buyLabel={`${formatKRW(price)} 열기`}
         onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
       />
@@ -3860,6 +3855,71 @@ function LoadingChecklist() {
  *
  * 그래서 **진짜 마감(월운 창은 실제로 미끄러진다)을 말하면서 버튼을 같이 태운다.**
  */
+/** 재회 고정 결제바의 **노출 시점**을 정하는 게이트.
+ *
+ *  왜 필요한가(GPT 대조 진단 2026-09-06, 남은 최대 누수): 바가 첫 화면부터 끝까지 떠 있었다.
+ *  65px 은 폰 화면의 8~10% 인데, 강·등불·까치·오작교가 감정을 쌓는 내내 가격 UI 가 따라다니면
+ *  정작 견우가 「여기부터는 복채를 받고 펼쳐 드립니다」라고 말하는 **그 사건이 약해진다**.
+ *  경쟁사(타이트·청월당)도 CTA 를 이르게 두지만 그건 서사가 아니라 광고 UI 구간이다.
+ *
+ *  그래서 두 지점으로 연다:
+ *    · 켜기 = 복채 컷(`g-greet`)이 화면에 절반 넘게 들어온 뒤. UI 의 값과 이야기의 값이 같은 순간.
+ *    · 끄기 = 큰 구매 카드(`[data-buycard]`)가 화면에 있는 동안. 한 화면에 CTA 둘이 서지 않게.
+ *  결제 시트(#pay)까지 내려가면 그 자리의 최종 버튼이 주인공이라 역시 끈다.
+ *
+ *  ⚠ 관찰 대상은 티저가 그려진 **뒤에** 생긴다 — 그래서 폴링으로 붙을 때까지 기다린다
+ *    (마운트 시점엔 querySelector 가 null 이라 옵저버가 헛돈다). */
+function useReunionBarGate(enabled: boolean) {
+  const [armed, setArmed] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    if (!enabled || typeof IntersectionObserver === "undefined") return;
+    let armedIo: IntersectionObserver | null = null;
+    let blockIo: IntersectionObserver | null = null;
+    let stop = false;
+    const attach = () => {
+      if (stop) return;
+      const gate = document.querySelector('figure[data-panel="g-greet"]');
+      const cards = document.querySelectorAll("[data-buycard], #pay");
+      if (gate && !armedIo) {
+        armedIo = new IntersectionObserver(
+          (es) => {
+            if (es.some((e) => e.isIntersecting)) {
+              setArmed(true);
+              armedIo?.disconnect();
+            }
+          },
+          { threshold: 0.5 },
+        );
+        armedIo.observe(gate);
+      }
+      if (cards.length && !blockIo) {
+        const seen = new Set<Element>();
+        blockIo = new IntersectionObserver((es) => {
+          for (const e of es) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target);
+          setBlocked(seen.size > 0);
+        });
+        cards.forEach((c) => blockIo!.observe(c));
+      }
+      if (!armedIo || !blockIo) setTimeout(attach, 400);
+    };
+    attach();
+    return () => {
+      stop = true;
+      armedIo?.disconnect();
+      blockIo?.disconnect();
+    };
+  }, [enabled]);
+  return enabled ? armed && !blocked : true;
+}
+
+/** 재회 고정바 — 게이트를 안에서 돌린다(훅은 조건부로 못 부른다). */
+function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBuy: () => void }) {
+  const show = useReunionBarGate(true);
+  if (!show) return null;
+  return <StickyBuyBar {...props} />;
+}
+
 function StickyBuyBar({
   note,
   buyLabel,
