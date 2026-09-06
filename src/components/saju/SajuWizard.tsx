@@ -953,6 +953,10 @@ export function SajuWizard({
             : undefined
         }
       >
+        {/* 진행 점·「N/M」은 **입력 구간에서만** 그린다.
+            티저 화면에서 「14/14」가 서 있으면 손님은 **과업이 끝났다**고 읽는다 — 그런데
+            그 아래에서 웹툰 본편이 시작한다(GPT 대조 진단 2026-09-06 P0). 끝났다고 말해 놓고
+            더 읽으라 하니 그 자리가 이탈점이 됐다. 뒤로 가기는 남긴다 — 입력을 고칠 길은 있어야 한다. */}
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -963,34 +967,41 @@ export function SajuWizard({
           >
             ‹
           </button>
-          {/* 점은 **실제로 걷는 칸만** 찍는다. steps 를 그대로 돌면 건너뛰는 칸까지 세어
-              오른쪽 「N/M」 과 개수가 어긋나고, 재회(18칸)에서는 폰 가로를 넘긴다. */}
-          <div className="flex items-center gap-[5px]">
-            {visibleSteps.map((s) => (
-              <span
-                key={s}
-                className="h-[7px] rounded-full transition-all duration-300"
-                style={{
-                  width: s === step ? 22 : 7,
-                  background:
-                    s < step
-                      ? "var(--gold-soft)"
-                      : s === step
-                        ? "var(--gold-bright)"
-                        : imm
-                          ? "rgba(232,201,106,0.18)"
-                          : isNight
-                            ? "rgba(207,214,230,0.2)"
-                            : "rgba(150,90,255,0.2)",
-                  // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
-                  boxShadow: s === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isNight ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
-                }}
-              />
-            ))}
-          </div>
-          <span className="font-mono text-[11px] text-bone-faint tracking-[0.15em]">
-            {visibleSteps.indexOf(step) + 1}/{visibleSteps.length}
-          </span>
+          {/* 재회 티저 화면에서는 진행 표시를 **지운다**. 「14/14」가 서 있으면 손님은 과업이
+              끝났다고 읽는데, 그 아래에서 웹툰 본편이 시작한다(GPT 대조 진단 2026-09-06 P0).
+              다른 상품은 티저 구조가 달라 그대로 둔다 — 이 세션은 재회만 만진다. */}
+          {!(isReunion && step === teaserStep) && (
+            <>
+            {/* 점은 **실제로 걷는 칸만** 찍는다. steps 를 그대로 돌면 건너뛰는 칸까지 세어
+                오른쪽 「N/M」 과 개수가 어긋나고, 재회(18칸)에서는 폰 가로를 넘긴다. */}
+            <div className="flex items-center gap-[5px]">
+              {visibleSteps.map((s) => (
+                <span
+                  key={s}
+                  className="h-[7px] rounded-full transition-all duration-300"
+                  style={{
+                    width: s === step ? 22 : 7,
+                    background:
+                      s < step
+                        ? "var(--gold-soft)"
+                        : s === step
+                          ? "var(--gold-bright)"
+                          : imm
+                            ? "rgba(232,201,106,0.18)"
+                            : isNight
+                              ? "rgba(207,214,230,0.2)"
+                              : "rgba(150,90,255,0.2)",
+                    // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
+                    boxShadow: s === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isNight ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
+                  }}
+                />
+              ))}
+            </div>
+            <span className="font-mono text-[11px] text-bone-faint tracking-[0.15em]">
+              {visibleSteps.indexOf(step) + 1}/{visibleSteps.length}
+            </span>
+            </>
+          )}
         </div>
       </div>
       )}
