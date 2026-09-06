@@ -1609,7 +1609,11 @@ export function ReunionToc({ data }: { data?: Reunion }) {
           className="bg-white px-3 py-2.5 text-center text-[13px]"
           style={{ border: `1px solid ${LINE}`, color: INK, fontWeight: 700 }}
         >
-          *전체 풀이 내용이에요. 결제하시면 이 열 장이 다 열립니다.
+          {/* 「*전체 풀이 내용이에요」를 뺐다(2026-09-06 검토) — 바로 위 구매 카드 각주가
+              「*전체 풀이 항목은 아래 목차에서 확인해 주세요!」로 같은 말을 하고, 그 사이 머리도
+              「그 사람의 지금부터, 앞으로의 선택까지 차례로 봅니다」로 목차를 이미 설명한다.
+              세 번째로 같은 안내를 하면 새 정보가 아니라 잡음이다. 남길 건 **잠금 해제 약속** 한 줄. */}
+          결제하시면 이 열 장이 다 열립니다.
         </div>
       </div>
 
