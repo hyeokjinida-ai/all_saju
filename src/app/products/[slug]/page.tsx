@@ -17,6 +17,7 @@ import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
 import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
 import { GyeonuLanding } from "@/components/products/GyeonuLanding";
 import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
+import { getProductReviews, type ProductReview } from "@/lib/home-data";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -154,6 +155,10 @@ export default async function ProductDetailPage({
 
   let product: Product | null;
   let reviews: Review[] | null = null;
+  // 티저 구매 카드 뒤 후기 블록이 쓸 것 — 위 `reviews` 와 달리 **이름이 붙어 있다**.
+  // profiles 는 "본인만 select" RLS 라 anon 클라이언트로는 이름이 안 딸려 온다(조용히 0건).
+  // 그래서 홈과 같은 service 경로(getProductReviews)로 따로 읽는다.
+  let teaserReviews: ProductReview[] = [];
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let webtoonCuts: WebtoonCutData[] = [];
   let bundles: BundleOption[] = [];
@@ -191,7 +196,7 @@ export default async function ProductDetailPage({
     user = currentUser;
 
     if (product) {
-      const [{ data: upsell }, { data: builder }, { data: r }, { data: wt }, { data: bundleRows }] =
+      const [{ data: upsell }, { data: builder }, { data: r }, { data: wt }, { data: bundleRows }, tRev] =
         await Promise.all([
           // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
           supabase.from("products").select("compare_at_price, is_addon").eq("id", product.id).maybeSingle(),
@@ -203,6 +208,10 @@ export default async function ProductDetailPage({
             .select("id, rating, content, created_at")
             .eq("product_id", product.id)
             .eq("is_public", true)
+            // 승인 게이트(0013) — 형님이 /admin/reviews 에서 켠 것만 보인다.
+            // 0010 미적용 DB 면 이 줄 때문에 error 로 떨어져 r 이 null 이 된다(= 후기 없음).
+            // **안 나오는 쪽으로 실패**하는 게 맞다 — 위 upsell·builder 와 같은 방침이다.
+            .eq("is_approved", true)
             .order("created_at", { ascending: false })
             .limit(5),
           // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
@@ -222,6 +231,10 @@ export default async function ProductDetailPage({
             .eq("is_active", true)
             .contains("bundle_slugs", [product.slug])
             .order("display_order", { ascending: true }),
+          // 티저 후기 블록 — **같은 왕복에 태운다.** 뒤에 따로 await 하면 광고 클릭마다
+          // 왕복 하나가 그대로 더 붙는다(이 Promise.all 을 만든 이유가 그것이다).
+          // 산군 티저에만 블록이 있으므로 다른 상품에서는 조회 자체를 안 한다.
+          slug === "sangun-sinjeom" ? getProductReviews(product.id, 3) : Promise.resolve([]),
         ]);
 
       dbPitch = (builder as { pitch?: unknown } | null)?.pitch ?? null;
@@ -229,6 +242,7 @@ export default async function ProductDetailPage({
       if ((upsell as { is_addon?: boolean } | null)?.is_addon) notFound();
       product.compare_at_price = (upsell as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
       reviews = r;
+      teaserReviews = tRev;
       if (Array.isArray(wt?.cuts)) webtoonCuts = wt.cuts as WebtoonCutData[];
 
       const memberSlugs = [...new Set((bundleRows ?? []).flatMap((b) => b.bundle_slugs ?? []))];
@@ -492,6 +506,7 @@ export default async function ProductDetailPage({
               variant="immersive"
               bgImage="/products/sangun/face.webp"
               demo={demo}
+              reviews={teaserReviews}
             />
           }
         />

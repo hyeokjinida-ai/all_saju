@@ -128,6 +128,10 @@ export async function getHomeReviews(): Promise<HomeReview[]> {
       .from("reviews")
       .select("id, rating, content, created_at, user_id, product_id")
       .eq("is_public", true)
+      // 승인 게이트(0013) — 형님이 /admin/reviews 에서 켠 것만 화면에 나온다.
+      // ⚠ 0010 이 안 붙은 DB 면 이 줄에서 "column does not exist" 로 떨어져 catch → [] 다.
+      //    **안 나오는 쪽으로 실패**하는 게 맞다(승인 안 한 후기가 뜨는 것보다 낫다).
+      .eq("is_approved", true)
       .order("created_at", { ascending: false })
       .limit(20);
     if (!data?.length) return [];
@@ -157,6 +161,54 @@ export async function getHomeReviews(): Promise<HomeReview[]> {
       createdAt: r.created_at as string,
       who: whoById.get(r.user_id as string) ?? "손님",
       productName: nameById.get(r.product_id as string) ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 상품 하나의 승인 후기 — 티저 구매 카드 뒤 후기 블록이 읽는다.
+ *
+ * 홈(getHomeReviews)과 다른 점은 **상품으로 좁힌다**는 것뿐이다. 이름 가리기·승인 게이트·
+ * service 키를 쓰는 이유는 전부 같아서 mask() 를 그대로 나눠 쓴다.
+ *
+ * ⚠ 날짜를 안 돌려준다. 조판(B안)이 날짜·사진을 안 쓰기로 한 것도 있지만,
+ *    후기가 몇 건 없을 때 날짜가 보이면 **"3개월째 후기 3개"** 가 그대로 읽힌다.
+ */
+export type ProductReview = { id: string; rating: number; content: string; who: string };
+
+export async function getProductReviews(productId: string, limit = 3): Promise<ProductReview[]> {
+  if (!isSupabaseConfigured()) return [];
+  try {
+    const db = createServiceClient();
+    const { data } = await db
+      .from("reviews")
+      .select("id, rating, content, user_id")
+      .eq("product_id", productId)
+      .eq("is_public", true)
+      .eq("is_approved", true) // 위와 같은 게이트 — 실패하면 catch 로 빠져 안 나온다
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (!data?.length) return [];
+
+    const userIds = [...new Set(data.map((r) => r.user_id as string).filter(Boolean))];
+    const { data: profiles } = userIds.length
+      ? await db.from("profiles").select("id, display_name, email").in("id", userIds)
+      : { data: [] as { id: string; display_name: string | null; email: string }[] };
+
+    const whoById = new Map(
+      (profiles ?? []).map((p) => {
+        const raw = (p.display_name as string | null) || (p.email as string).split("@")[0];
+        return [p.id as string, mask(raw)];
+      }),
+    );
+
+    return data.map((r) => ({
+      id: r.id as string,
+      rating: r.rating as number,
+      content: r.content as string,
+      who: whoById.get(r.user_id as string) ?? "손님",
     }));
   } catch {
     return [];

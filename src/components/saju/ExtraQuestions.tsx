@@ -19,11 +19,15 @@ export function ExtraQuestions({
   price,
   answered,
   tone,
+  freeCredit = false,
 }: {
   resultId: string;
-  price: number;
+  /** 유료 값. 상품이 내려가 있으면 null 이고, 그땐 답례 질문권이 있을 때만 이 블록이 선다. */
+  price: number | null;
   answered: AnsweredQuestion[];
   tone: "sangun" | "saju";
+  /** 후기 답례로 받아 둔, 아직 안 쓴 질문권이 있는가. 있으면 결제창을 안 거친다. */
+  freeCredit?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -37,26 +41,32 @@ export function ExtraQuestions({
   const border = sangun ? "rgba(232,201,106,0.22)" : "rgba(150,90,255,0.28)";
   const panel = sangun ? "rgba(255,255,255,0.03)" : "rgba(150,90,255,0.07)";
 
+  // 답례 질문권이 있으면 **값을 말하지 않는다.** 이미 후기로 치른 것이라
+  // 여기서 금액을 다시 꺼내면 「공짜라더니 얼마?」로 읽힌다.
   const copy = sangun
     ? {
         eyebrow: "追問",
         title: "더 물을 것이 있느냐",
-        body: "장부는 다 읽어 줬다. 그래도 걸리는 게 있으면 하나만 더 물어라.\n복채를 따로 받고, 그 물음만 정면으로 답해 주마.",
-        cta: `복채 ${formatKRW(price)} 내고 하나 더 묻기`,
+        body: freeCredit
+          ? "네 소감, 잘 받았다. 답례로 하나는 복채 없이 봐주마.\n걸리는 것 하나만 물어라."
+          : "장부는 다 읽어 줬다. 그래도 걸리는 게 있으면 하나만 더 물어라.\n복채를 따로 받고, 그 물음만 정면으로 답해 주마.",
+        cta: freeCredit ? "복채 없이 하나 묻기 — 후기 답례" : `복채 ${formatKRW(price ?? 0)} 내고 하나 더 묻기`,
         placeholder: "예) 지금 회사 그만두고 준비하던 일 시작해도 되나",
         submit: "이대로 묻는다",
         answeredTitle: "네가 물은 것",
-        busy: "장부를 여는 중…",
+        busy: freeCredit ? "장부를 다시 펴는 중…" : "장부를 여는 중…",
       }
     : {
         eyebrow: "追問",
         title: "더 여쭤보고 싶은 게 있으세요?",
-        body: "결과지를 읽고 나서 생긴 물음이 있다면 하나만 더 받아요.\n같은 명식으로, 그 질문만 정면으로 답해 드려요.",
-        cta: `${formatKRW(price)}로 하나 더 여쭤보기`,
+        body: freeCredit
+          ? "후기 고맙습니다. 답례로 질문 하나를 무료로 받아요.\n궁금한 것 하나만 적어 주세요."
+          : "결과지를 읽고 나서 생긴 물음이 있다면 하나만 더 받아요.\n같은 명식으로, 그 질문만 정면으로 답해 드려요.",
+        cta: freeCredit ? "무료로 하나 여쭤보기 — 후기 답례" : `${formatKRW(price ?? 0)}로 하나 더 여쭤보기`,
         placeholder: "예) 지금 만나는 사람과 계속 가도 될까요",
         submit: "이대로 여쭤보기",
         answeredTitle: "여쭤보신 것",
-        busy: "준비하는 중…",
+        busy: freeCredit ? "답을 적는 중…" : "준비하는 중…",
       };
 
   async function submit() {
@@ -78,6 +88,15 @@ export function ExtraQuestions({
         setBusy(false);
         return;
       }
+      // 답례 질문은 결제창을 안 거친다 — 서버가 답까지 만들어 놨으므로
+      // 이 화면을 다시 그리면 위 「네가 물은 것」 자리에 답이 붙어 있다.
+      if (json.free) {
+        setQuestion("");
+        setOpen(false);
+        router.refresh();
+        setBusy(false);
+        return;
+      }
       router.push(`/checkout/${json.orderId}`);
     } catch {
       setError("네트워크가 불안정해요. 다시 시도해 주세요");
@@ -86,7 +105,9 @@ export function ExtraQuestions({
   }
 
   return (
-    <section className="mt-8">
+    // id="ask" — 후기를 쓰고 돌아온 손님이 곧장 여기로 떨어진다(후기 폼이 #ask 로 보낸다).
+    // scroll-mt 는 결과지 상단 고정 바 높이만큼 — 없으면 제목이 바 뒤로 숨는다.
+    <section id="ask" className="mt-8 scroll-mt-20">
       {/* 이미 답을 받은 질문들 — 결과지의 일부처럼 이어 붙는다 */}
       {answered.length > 0 && (
         <div className="mb-7">
@@ -162,10 +183,16 @@ export function ExtraQuestions({
                 color: busy ? faint : "#1a1408",
               }}
             >
-              {busy ? copy.busy : `${copy.submit} · ${formatKRW(price)}`}
+              {busy
+                ? copy.busy
+                : freeCredit
+                  ? copy.submit
+                  : `${copy.submit} · ${formatKRW(price ?? 0)}`}
             </button>
             <p className="font-myeongjo mt-2 text-center text-[11px] leading-[1.7]" style={{ color: faint }}>
-              결제 후 이 결과지로 돌아와 답이 붙습니다
+              {freeCredit
+                ? "결제 없이 바로 답이 붙습니다 · 20~60초 걸려요"
+                : "결제 후 이 결과지로 돌아와 답이 붙습니다"}
             </p>
           </div>
         )}
