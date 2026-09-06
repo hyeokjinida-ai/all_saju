@@ -34,6 +34,7 @@ import {
   ReunionCalendar,
   GyeonuMark,
   GyeonuComfortCut,
+  ReunionReviews,
   // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
   ReunionToc,
   GyeonuCut,
@@ -3349,6 +3350,10 @@ function TeaserStep({
               (2026-09-05 3차). 절단이 잠금 목록과 구매 카드 사이에 있으면 「끊고 나서도 계속
               읽히는」 절단이라 아무것도 못 끊는다 — 절단은 이야기의 끝에 서야 절단이다.
               지금 이 자리는 절단 **뒤**, 값을 말하는 구간이다. */}
+          {/* 후기 자리 — 「무엇을 받는지」를 다 보여준 뒤, **값을 말하기 직전**이다.
+              두 레퍼런스의 공통 문법(상품 → 받아본 증거 → 가격)에서 증거가 서는 자리다.
+              지금은 후기가 0개라 아무것도 안 그린다(컴포넌트가 스스로 null 을 낸다). */}
+          {isReunion && <ReunionReviews />}
           {isReunion && (
             <JiknyeoBuyCard
               title="견우의 재회예보"
