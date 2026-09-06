@@ -1014,11 +1014,11 @@ export function GyeonuWebtoon({
         inset={86}
         align="left"
       />
-      <Narration above={44}>
-        방금 그 대목에서
-        <br />
-        눈이 오래 머무셨네요.
-      </Narration>
+      {/* 여기 있던 「방금 그 대목에서 / 눈이 오래 머무셨네요」는 뺐다(GPT 대조 진단 2026-09-06).
+          바로 앞 응시 컷의 「○○님, 아직 강 건너를 보고 계셨군요」와 **같은 일**을 한다 —
+          둘 다 「제가 당신을 보고 있습니다」다. 두 번 하면 통찰이 아니라 행동 추적으로 읽힌다.
+          컷은 남긴다: 카드가 답을 준 직후의 **무언 반응**이라 침묵이 대사보다 낫다
+          (이 판은 이미 DotRest 로 침묵을 쓴다). 재확인 1회 → 결과 → 표정 변화 1회면 충분하다. */}
 
       {/* ⑤ 까치 = 소식. 잠금 목록을 「안 주는 것」이 아니라 「오는 것」으로 뒤집는 컷이다.
           ⚠ 달을 말하지 않는다 — 「따로 있습니다」에서 끊는 게 이 컷의 일이다. */}
@@ -1595,6 +1595,75 @@ export function GyeonuMark({ children }: { children: React.ReactNode }) {
  *  경쟁사 PDF 판독(2026-09-05): 목차는 Chapter → 캐릭터 → Chapter 로 끊기고, 그 사이에
  *  아직 안 보여준 결과가 하나 더 열린다. 목차만 3,000px 쌓으면 그 지점부터 상세페이지다.
  *  ⚠ 환승을 여기 넣었으므로 **SajuWizard 의 ReunionMoveOn 은 뺐다** — 안 그러면 두 번 뜬다. */
+/** 손님 후기 — **데이터가 들어오면 그때 켜진다.** 지금은 배열이 비어 있어 아무것도 안 그린다.
+ *
+ *  왜 자리를 미리 잡아 두나(GPT 대조 진단 2026-09-06, 우리에게 없는 것 1순위):
+ *  타이트는 리뷰 카드를 3장 연속(R2 하단~R3 상단), 청월당은 「1,756명」 뒤에 4장 연속으로 놓는다.
+ *  우리 판에는 **「이걸 실제 사람이 돈 주고 받아서 만족했는가」 증거가 한 줄도 없다.**
+ *  결과가 어떻게 생겼는지는 실물로 다 보여주는데 그 한 단계만 비어 있다.
+ *
+ *  ⚠ **지어내지 않는다.** 실제 구매자가 생기고 소감을 받은 뒤에만 채운다 —
+ *    없는 후기를 만들면 그건 상품이 아니라 사기다. 데이터가 0개면 이 블록은 없는 것과 같다
+ *    (빈 상자도 안 그린다 — 720~820px 짜리 구멍이 남으면 조판이 무너진다).
+ *
+ *  조판은 레퍼런스 실측을 따른다: 카드 190~210px × 3 + 카드 사이 22px + 머리 100~130px.
+ *  한 카드 = 이니셜 원 · 이름 · 별 다섯 · 한 줄 제목 · 본문 2~4줄. 날짜·사진은 안 쓴다(둘 다 안 씀).
+ *  자리는 **구매 카드 바로 앞** — 두 레퍼런스의 공통 문법이 「무엇인지 보여줌 → 받아본 증거 → 값」이다. */
+type ReunionReview = { who: string; head: string; body: string; outcome?: string };
+
+/** 형님이 지인 소감을 받아 오시면 여기 세 개만 채우면 켜진다. 손대는 곳은 이 배열뿐이다. */
+const REUNION_REVIEWS: ReunionReview[] = [];
+
+export function ReunionReviews() {
+  if (REUNION_REVIEWS.length === 0) return null;
+  return (
+    <section className="mt-14">
+      <T>먼저 받아 보신 분들</T>
+      <div className="mt-2">
+        <BrushHead lines={["열어 보고 남겨 주신 말입니다"]} />
+      </div>
+      <div className="mt-6 space-y-[22px]">
+        {REUNION_REVIEWS.slice(0, 3).map((r, i) => (
+          <div
+            key={i}
+            className="bg-white px-4 py-4"
+            style={{ borderRadius: 14, border: `1px solid ${LINE}` }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className="font-myeongjo flex h-8 w-8 shrink-0 items-center justify-center text-[13px]"
+                style={{ borderRadius: "50%", background: "rgba(150,90,255,0.10)", color: INK, fontWeight: 700 }}
+              >
+                {r.who.slice(0, 1)}
+              </span>
+              <span className="font-myeongjo text-[13px]" style={{ color: MUTE }}>
+                {r.who}
+              </span>
+              <span className="text-[12px]" style={{ color: PINK, letterSpacing: "0.06em" }}>
+                ★★★★★
+              </span>
+              {r.outcome && (
+                <span
+                  className="ml-auto shrink-0 px-2 py-[2px] text-[11px]"
+                  style={{ borderRadius: 999, background: "rgba(150,90,255,0.08)", color: MUTE }}
+                >
+                  {r.outcome}
+                </span>
+              )}
+            </div>
+            <p className="font-myeongjo mt-3 text-[15px] leading-[22px]" style={{ color: INK, fontWeight: 700 }}>
+              {r.head}
+            </p>
+            <p className="mt-1.5 text-[13px] leading-[21px]" style={{ color: BODY }}>
+              {r.body}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ReunionToc({ data }: { data?: Reunion }) {
   return (
     <section className="mt-14">
@@ -1609,7 +1678,11 @@ export function ReunionToc({ data }: { data?: Reunion }) {
           className="bg-white px-3 py-2.5 text-center text-[13px]"
           style={{ border: `1px solid ${LINE}`, color: INK, fontWeight: 700 }}
         >
-          *전체 풀이 내용이에요. 결제하시면 이 열 장이 다 열립니다.
+          {/* 「*전체 풀이 내용이에요」를 뺐다(2026-09-06 검토) — 바로 위 구매 카드 각주가
+              「*전체 풀이 항목은 아래 목차에서 확인해 주세요!」로 같은 말을 하고, 그 사이 머리도
+              「그 사람의 지금부터, 앞으로의 선택까지 차례로 봅니다」로 목차를 이미 설명한다.
+              세 번째로 같은 안내를 하면 새 정보가 아니라 잡음이다. 남길 건 **잠금 해제 약속** 한 줄. */}
+          결제하시면 이 열 장이 다 열립니다.
         </div>
       </div>
 

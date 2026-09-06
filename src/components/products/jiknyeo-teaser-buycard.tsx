@@ -41,7 +41,9 @@ export function JiknyeoBuyCard({
   const cut = (s: string) => Number(String(s).replace(/[^\d]/g, ""));
   const save = compareLabel ? cut(compareLabel) - cut(priceLabel) : 0;
   return (
-    <section className="mt-14">
+    // data-buycard: 하단 고정바가 **이 카드가 화면에 들어오면 자기를 숨기는** 표지다.
+    // 같은 화면에서 CTA 둘이 경쟁하면 둘 다 약해진다(GPT 대조 진단 2026-09-06).
+    <section className="mt-14" data-buycard>
       {/* 분량 리본 — 카드 위에 걸치게 겹친다(원본은 카드 상단선을 물고 있다) */}
       <div className="relative z-10 text-center">
         <span
