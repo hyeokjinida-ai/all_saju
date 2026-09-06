@@ -112,28 +112,59 @@ function GyeonuScene({
   alt,
   lines,
   tail = "bl",
+  /** 같은 이름의 mp4 가 있으면 **루프 영상**으로 튼다 — 없거나 못 틀면 그림 그대로.
+   *  인물은 석상이고 머리카락·등불·물빛만 움직인다(살아있는 루프 레시피).
+   *  ⚠ 랜딩에 영상은 **한 편만** 둔다: 스크롤 첫 화면에서 여러 편이 동시에 받으면
+   *    폰에서 그림보다 늦게 뜬다. 두 발화컷 중 정면 응시 쪽만 살린다(GPT 영상 1순위). */
+  video,
 }: {
   id: "g-nofault" | "g-plain";
   alt: string;
   lines: string[];
   tail?: SayTail;
+  video?: boolean;
 }) {
   const F = 30;
   const mask = `linear-gradient(180deg, transparent 0, #000 ${F}px, #000 calc(100% - ${F}px), transparent 100%)`;
+  const frame: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    maskImage: mask,
+    WebkitMaskImage: mask,
+  };
   return (
     <figure className="relative my-2" style={{ containerType: "inline-size", margin: "8px 0 0" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`/products/reunion/${id}.webp`}
-        alt={alt}
-        width={1080}
-        height={1620}
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-        className="select-none"
-        style={{ display: "block", width: "100%", height: "auto", maskImage: mask, WebkitMaskImage: mask }}
-      />
+      {video ? (
+        <video
+          width={1080}
+          height={1620}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={`/products/reunion/${id}.webp`}
+          aria-label={alt}
+          className="select-none"
+          style={frame}
+        >
+          <source src={`/products/reunion/${id}.mp4`} type="video/mp4" />
+        </video>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/products/reunion/${id}.webp`}
+          alt={alt}
+          width={1080}
+          height={1620}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          className="select-none"
+          style={frame}
+        />
+      )}
       <GyeonuBubble lines={lines} tail={tail} box={LANDING_SAY_BOX[id]} />
     </figure>
   );
@@ -361,6 +392,9 @@ export function GyeonuLanding({
           id="g-plain"
           alt="장부를 덮고 정면을 보는 견우"
           lines={["가능성이 낮으면", "낮다고 말합니다."]}
+          /* 랜딩에서 유일하게 움직이는 컷 — 견우가 눈을 한 번 감았다 뜬다.
+             「낮으면 낮다고 한다」를 말하는 자리라 살아 있는 사람이어야 무게가 선다. */
+          video
         />
 
         <StarStream />
