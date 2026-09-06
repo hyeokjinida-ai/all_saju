@@ -2604,6 +2604,17 @@ function TeaserStep({
         </div>
       )}
 
+      {/* 상품부 머리 셋 중 둘째 — **재회에만** 붙인다(GPT 대조 진단 2026-09-06).
+          여기서부터 원국 → 방금 계산 발췌 → 콜드리딩이 이어지는데, 손님 눈에는
+          「명식표 · 아바타 · 노란 카드 · 세 줄」이 **서로 무관한 UI 넉 장**으로 나열된다.
+          이 한 줄이 그 넷을 「왜 그 답이 나왔는지」라는 한 가지 이유로 묶는다.
+          앞(열두 달)과 뒤(목차) 머리와 같은 옷이라 세 구획이 같은 문법으로 읽힌다. */}
+      {isReunion && shown.length > 0 && (
+        <div className="mt-10 mb-1">
+          <BrushHead lines={["왜 그렇게 나왔는지도", "같이 봅니다."]} />
+        </div>
+      )}
+
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
         <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.15em]${imm ? " mt-4" : ""}`}>{name}</p>

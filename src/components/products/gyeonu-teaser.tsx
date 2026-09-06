@@ -1212,9 +1212,13 @@ export function ReunionCalendar({ data, name }: { data: Reunion; name: string })
       {/* 여기 있던 컷 셋(p-split·g-river·p-lanterns)은 **웹툰부로 올라갔다**(2026-09-05 3차).
           이 블록은 이제 상품부의 첫 화면 — 절단(검정 판)이 끊고 나서 손님이 처음 만나는
           「그래서 계산은 이렇다」다. 컷이 앞에 없으므로 제목이 판의 py-10 바로 아래 선다. */}
-      <T>앞으로 열두 달</T>
-      <div className="mt-2">
-        <BrushHead lines={["열두 칸을 다 세워 두었습니다"]} />
+      {/* 상품부 머리 셋 중 첫째(GPT 대조 진단 2026-09-06). 전에는 「앞으로 열두 달 /
+          열두 칸을 다 세워 두었습니다」 — **무엇을 만들었는지**를 말하는 문장이었다.
+          손님이 사는 건 칸이 아니라 「언제 연락하고 언제 기다리나」다. UI 안에 이미
+          「연락해도 되는 달 / 먼저 연락하면 안 되는 달」이 있으므로 새 주장이 아니다.
+          번호·POINT 배지는 안 붙인다 — 붙이면 견우 장부가 발표 자료가 된다. */}
+      <div className="mt-1">
+        <BrushHead lines={["먼저, 연락할 때와", "기다릴 때를 나눠 봅니다."]} />
       </div>
       <p className="mt-3 text-center text-[16px] leading-[24px]" style={{ color: BODY }}>
         칸은 다 보여드립니다. 이름은 한 칸만 먼저 엽니다.
@@ -1594,9 +1598,11 @@ export function GyeonuMark({ children }: { children: React.ReactNode }) {
 export function ReunionToc({ data }: { data?: Reunion }) {
   return (
     <section className="mt-14">
-      <T>받으시는 것</T>
-      <div className="mt-2">
-        <BrushHead lines={["열 장을 다 펴서 보여드립니다"]} accent={0} />
+      {/* 상품부 머리 셋 중 셋째. 전에는 「받으시는 것 / 열 장을 다 펴서 보여드립니다」로
+          **양**을 말했는데, 「열 장」은 바로 아래 목차가 스스로 보여준다. 머리는 **범위**를
+          말해야 목차가 그 증거로 읽힌다(GPT 대조 진단 2026-09-06). */}
+      <div className="mt-1">
+        <BrushHead lines={["그 사람의 지금부터,", "앞으로의 선택까지 차례로 봅니다."]} accent={0} />
       </div>
       <div className="mt-7">
         <div
