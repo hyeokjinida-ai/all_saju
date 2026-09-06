@@ -1769,7 +1769,7 @@ export function SajuWizard({
                       key={o.productId}
                       type="button"
                       onClick={() => setSelectedId(o.productId)}
-                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : "py-3"}`}
+                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
                       style={{
                         borderColor: on
                           ? sheetAccent
@@ -1789,8 +1789,11 @@ export function SajuWizard({
                       )}
                       <div className="flex items-baseline justify-between gap-2">
                         <span
-                          className="font-myeongjo text-[14px] font-bold leading-[1.4]"
-                          style={{ color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)" }}
+                          className="font-myeongjo font-bold leading-[1.4]"
+                          style={{
+                            color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)",
+                            fontSize: isReunion && isBundleOpt ? 12.5 : 14,
+                          }}
                         >
                           {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
                         </span>
@@ -1802,7 +1805,7 @@ export function SajuWizard({
                           )}
                           <span
                             className="font-myeongjo font-bold"
-                            style={{ color: sheetAccent, fontSize: lead ? 24 : 15 }}
+                            style={{ color: sheetAccent, fontSize: lead ? 24 : isReunion ? 13 : 15 }}
                           >
                             {formatKRW(o.price)}
                           </span>
@@ -1813,7 +1816,7 @@ export function SajuWizard({
                           문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
                       {pct != null && (
                         <p
-                          className="mt-1 text-[13px]"
+                          className={`mt-1 ${isReunion && isBundleOpt ? "text-[11px]" : "text-[13px]"}`}
                           // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
                           style={{ color: pct >= 40 && !isNight ? "#d8563f" : "var(--bone-faint)" }}
                         >
