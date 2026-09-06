@@ -102,8 +102,9 @@ function Narration({ children }: { children: React.ReactNode }) {
  *  ⚠ 웹툰부 표(GYEONU_SAY_BOX)와 **일부러 갈라 뒀다** — 랜딩 컷은 랜딩만 쓴다.
  *    한 표에 몰면 어느 화면이 어느 값을 쓰는지 흐려지고, 실제로 dev 에서 값이 안 잡혔다. */
 const LANDING_SAY_BOX: Record<"g-nofault" | "g-plain", SayBox> = {
-  "g-nofault": { x: 46, y: -7.0, w: 50 },
-  "g-plain": { x: 46, y: -6.0, w: 50 },
+  // 2줄로 바꾸면서 폭을 8~12% 넓혔다 — 풍선에 맞춰 문장을 깨는 게 아니라 문장에 풍선을 맞춘다.
+  "g-nofault": { x: 40, y: -7.0, w: 56 },
+  "g-plain": { x: 42, y: -6.0, w: 54 },
 };
 
 function GyeonuScene({
@@ -305,7 +306,7 @@ export function GyeonuLanding({
         <GyeonuScene
           id="g-nofault"
           alt="고개를 돌린 채 정면을 보는 견우"
-          lines={["그날 강이 갈라진 건,", "당신이 모자라서가", "아닙니다."]}
+          lines={["그날 강이 갈라진 건,", "당신이 모자라서가 아닙니다."]}
         />
         <p className="px-8 pt-5 text-center font-myeongjo text-[17px] leading-[1.85]" style={{ color: "#cfd0d8" }}>
           그 무렵 두 사람 흐름이 같이 꺾여 있었는지부터 봅니다.
@@ -354,7 +355,7 @@ export function GyeonuLanding({
         <GyeonuScene
           id="g-plain"
           alt="장부를 덮고 정면을 보는 견우"
-          lines={["가능성이 낮으면", "낮다고", "말합니다."]}
+          lines={["가능성이 낮으면", "낮다고 말합니다."]}
         />
 
         <StarStream />

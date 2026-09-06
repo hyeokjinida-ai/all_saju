@@ -797,7 +797,9 @@ export function GyeonuWebtoon({
         say={{
           tail: "br",
           box: GYEONU_SAY_BOX["g-river"],
-          lines: [`${callMe(name)}, 시선이`, "강 건너에", "있네요."],
+          // 2줄이 기본, 3줄이 상한. 「강 건너에 / 있네요」처럼 **장소+서술어를 떼면** 기계처럼 들린다.
+          // 자르는 우선순위: 의미 단위 > 문법 단위 > 풍선 실루엣 > 글자수(2026-09-06 확정).
+          lines: [`${callMe(name)}, 시선이`, "강 건너에 있네요."],
         }}
       />
 
@@ -1026,7 +1028,8 @@ export function GyeonuCut({
 }: {
   id: GyeonuCutId;
   alt: string;
-  say: React.ReactNode;
+  /** 없으면 명패·대사 줄을 아예 안 그린다 — 그림만으로 족한 자리가 있다(2026-09-06). */
+  say?: React.ReactNode;
   gap?: number;
   eager?: boolean;
 }) {
@@ -1050,6 +1053,7 @@ export function GyeonuCut({
           style={{ height: "auto" }}
         />
       </div>
+      {say && (
       <figcaption className="px-5 pt-3.5 text-center">
         {/* 명패 — 반전 절단(ReunionCut)과 같은 부품을 밝은 판용으로 뒤집은 것.
             이게 있어야 아래 한 줄이 「사진 설명」이 아니라 「견우가 하는 말」로 읽힌다. */}
@@ -1068,6 +1072,7 @@ export function GyeonuCut({
           {say}
         </p>
       </figcaption>
+      )}
     </figure>
   );
 }
@@ -1566,12 +1571,10 @@ export function ReunionToc({ data }: { data?: Reunion }) {
       <TocGroup from={0} to={4} />
 
       {/* 결제 구역에 와서도 견우가 아직 같이 있다는 자리. 그림은 크게 안 쓴다. */}
-      <GyeonuCut
-        id="g-face-back"
-        alt="별길에서 돌아보는 견우"
-        gap={40}
-        say={<>여기까지 오셨으면, 나머지도 같이 보시죠.</>}
-      />
+      {/* 대사를 뺐다(2026-09-06) — 「보시죠」가 견우 어미 규칙(관찰 ~네요 / 판정 ~습니다 /
+          안내 ~봅니다)에서 혼자 캐릭터극 톤이었다. 바로 아래 목차가 「나머지」를 실물로 보여주므로
+          이 자리는 **돌아보는 그림 한 장**이면 족하다. */}
+      <GyeonuCut id="g-face-back" alt="별길에서 돌아보는 견우" gap={40} />
 
       {/* 5~7장 — 「언제, 무엇을」 */}
       <TocGroup from={4} to={7} gap={40} />
