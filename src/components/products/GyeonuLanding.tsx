@@ -34,6 +34,13 @@ const LINE = "rgba(207,214,230,0.22)";
 /** 히어로 그림 — 견우 확정 얼굴(견우/fin-face.png)을 1080폭 webp 로 구운 것. 원본 png 는 커밋 안 한다.
  *  세로 5:6 인 이유(2026-09-05 실측): 말풍선이 아래 37% 를 덮는다. 3:2 로 자르면 입과 손이 통째로
  *  가려 눈만 남았다. 5:6 으로 키우니 눈·손·고삐끈이 다 살고 첫 CTA 도 폴드(812) 안에 남는다. */
+/** 랜딩 목차에서 **미리 보여줄 네 장**(prompt.ts 아우트라인 순서, 0-based).
+ *  2 그 사람의 지금 · 4 다리가 놓이는 달 · 5 연락의 달 · 7 다시 보고 싶은 사람으로.
+ *  「사기 전에 궁금한 것」 순으로 골랐다 — 그 사람은 어떤지 / 언제인지 / 연락은 어떻게 /
+ *  내가 뭘 바꿔야 하는지. 나머지 여섯 장은 결제부 목차(ReunionToc)가 제목째 편다.
+ *  ⚠ 제목은 여기서 손으로 적지 않는다 — 번호만 고른다(아우트라인이 정본). */
+const TOC_PEEK = [2, 4, 5, 7];
+
 const HERO = "/products/reunion/gyeonu-hero.webp";
 const HERO_W = 1080;
 const HERO_H = 1200;
@@ -298,16 +305,25 @@ export function GyeonuLanding({
             <p className="mb-4 text-center font-myeongjo text-[15px] font-bold" style={{ color: BONE }}>
               받으시는 것 — 열 장
             </p>
+            {/* 열 장을 여기서 다 펼치지 않는다 — **결제부(ReunionToc)가 이미 1~10장을 제목째 편다.**
+                같은 목록을 같은 해상도로 두 번 읽히면 두 번째가 새 정보가 아니게 된다.
+                레퍼런스 실측(2026-09-06): 청월당도 두 번 보여주지만 앞은 「무엇을 해결해 주는가」
+                요약이고 상세 목차는 결제 직전 한 번뿐이다. 타이트는 아예 한 번(미리보기 카드).
+                → 랜딩은 **고르는 데 필요한 넷**만, 번호 없이. 나머지는 결제부에서 본다.
+                고른 기준은 「사기 전에 궁금한 것」 — 그 사람 / 언제 / 연락 / 내가 할 일. */}
             <ul className="space-y-2.5 text-[13px]">
-              {toc.map((t, i) => (
-                <li key={t} className="flex items-baseline gap-3">
-                  <span className="font-myeongjo" style={{ color: STAR }}>
-                    {i + 1}장
+              {TOC_PEEK.map((i) => (
+                <li key={toc[i]} className="flex items-baseline gap-2">
+                  <span aria-hidden style={{ color: STAR, fontSize: 11, lineHeight: "20px" }}>
+                    ·
                   </span>
-                  <span style={{ color: "#cfd0d8" }}>{t}</span>
+                  <span style={{ color: "#cfd0d8" }}>{toc[i]}</span>
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-center text-[12px]" style={{ color: SUB }}>
+              외 여섯 장 — 결제하시면 열 장이 다 열립니다
+            </p>
 
             {/* ── 7. 가격 — 분량 앵커는 안 쓴다. 남기는 앵커는 정가 하나뿐이다 ── */}
             <div className="mt-5 border-t pt-4" style={{ borderColor: LINE }}>
