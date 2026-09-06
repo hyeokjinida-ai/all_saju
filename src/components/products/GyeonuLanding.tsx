@@ -77,6 +77,64 @@ function Narration({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** 견우가 **말하는** 자리 — 작은 얼굴 + 말풍선 카드.
+ *
+ *  왜 만들었나(형님 2026-09-06 「아니 캐릭터가 말해주던지 하면안돼?」):
+ *  랜딩의 설명문이 전부 **화자 없는 UI 텍스트**라 「읽는 글」이었다. 같은 문장이라도
+ *  견우가 말하면 「듣는 말」이 된다 — 글자를 더 지우는 대신 화자를 준다.
+ *
+ *  ⚠ **아무 데나 쓰지 않는다.** 감정·판정 블록에만 쓰고 상품 구조(카드·격자·목차·가격·입력)는
+ *  UI 로 남긴다. 정보를 말풍선에 넣으면 한눈에 볼 것을 읽게 만드는 장식이 된다.
+ *  레퍼런스도 그렇다 — 청월당은 전환점마다 캐릭터 발화를 꽂지만(「제가 함께하겠습니다」,
+ *  「그래서 준비했어요!」) 가격·비교표·장 구성은 말풍선으로 안 만든다.
+ *
+ *  얼굴은 컷마다 다른 것을 쓴다(위로는 눈 내린 컷, 판정은 정면 응시) — 같은 얼굴을 두 번
+ *  붙이면 아바타가 아니라 아이콘으로 읽힌다. objectPosition 은 원형 48px 안에 얼굴이
+ *  들어오도록 컷별로 잡은 값이다. */
+function GyeonuSays({ face, pos, children }: { face: string; pos: string; children: React.ReactNode }) {
+  return (
+    <div className="px-5 py-7">
+      <div className="flex items-start gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/products/reunion/${face}.webp`}
+          alt=""
+          width={48}
+          height={48}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          className="mt-1 shrink-0 select-none"
+          style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", objectPosition: pos, border: `1px solid ${LINE}` }}
+        />
+        <div
+          className="relative flex-1 px-4 py-3.5"
+          style={{ background: "rgba(255,255,255,0.055)", border: `1px solid ${LINE}`, borderRadius: 16 }}
+        >
+          {/* 꼬리 — 카드 왼쪽 위에 붙는 작은 마름모. 얼굴 쪽을 가리켜야 말이 그 사람 것이 된다. */}
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: -6,
+              top: 17,
+              width: 11,
+              height: 11,
+              transform: "rotate(45deg)",
+              background: "rgba(255,255,255,0.055)",
+              borderLeft: `1px solid ${LINE}`,
+              borderBottom: `1px solid ${LINE}`,
+            }}
+          />
+          <p className="font-myeongjo text-[17px] leading-[1.8]" style={{ color: BONE }}>
+            {children}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 은하수 디바이더 — 직녀의 은사(SilverThread)와 같은 자리, 다른 그림(강물 한 줄기)
 function StarStream() {
   return (
@@ -239,16 +297,19 @@ export function GyeonuLanding({
 
         {/* ── 2. 죄책감 해제 — 이 상품의 첫 일이다. 다만 없는 꺾임을 지어내지 않는다는 것까지
                같은 자리에서 말한다(reunion.ts breakupCheck 가 실제로 그렇게 갈린다). ── */}
-        <Narration>
+        {/* 화자 없는 설명문이었다 → **견우가 말한다**(형님 2026-09-06).
+            문장은 한 자도 안 바꿨다. 「꺾여 있지 않았으면…」 한 줄만 앞서 뺐는데,
+            그 약속은 아래 정직 판정 대사가 한다. 얼굴은 눈 내린 컷 — 위로하는 자리다. */}
+        {/* ⚠ 얼굴은 **클로즈업 컷**을 쓴다 — 전신 반신(g-comfort)을 48px 원에 넣으면
+            얼굴이 너무 작아 어두운 덩어리가 된다(로컬 실측 2026-09-06). */}
+        <GyeonuSays face="g-face-smile" pos="50% 30%">
           그날 강이 갈라진 건
           <br />
           <b style={{ color: STAR }}>당신이 모자라서가 아닙니다.</b>
           <br />
           <br />
-          {/* 「꺾여 있지 않았으면, 그렇다고 말합니다」를 뺐다(2026-09-06 형님 「글자만 너무 많다」).
-              바로 아래 정직 판정 카드의 「가능성이 낮으면 낮다고 말합니다」가 같은 약속을 한다. */}
           그 무렵 두 사람 흐름이 같이 꺾여 있었는지부터 봅니다.
-        </Narration>
+        </GyeonuSays>
 
         <StarStream />
 
@@ -288,17 +349,14 @@ export function GyeonuLanding({
         <StarStream />
 
         {/* ── 5. 정직 판정 — 재회 레인 최강 장치의 우리 판(거절 대신 정직 판정 + 다음 길) ── */}
-        <div className="px-5 py-4">
-          <div className="rounded-md p-6" style={{ background: "rgba(0,0,0,0.3)", border: `1px solid ${LINE}` }}>
-            <p className="font-myeongjo text-[19px] leading-[1.75]" style={{ color: BONE }}>
-              가능성이 낮으면
-              <br />
-              <b style={{ color: STAR }}>낮다고 말합니다.</b>
-            </p>
-            {/* 뒤 두 문장을 뺐다 — 이 카드의 일은 「낮으면 낮다고 한다」 한 방이다.
-                「그다음까지 같이 본다」는 목차 9장(강을 건너지 않는다면)이 실물로 보여준다. */}
-          </div>
-        </div>
+        {/* 브랜드 약속은 **화자가 있어야** 약속이 된다 — 화자 없는 카드보다 견우의 말이 낫다.
+            뒤 두 문장은 앞서 뺐다(「그다음까지 같이 본다」는 목차 9장이 실물로 보여준다).
+            얼굴은 정면 응시 — 위로가 아니라 판정하는 자리라 눈을 든 컷을 쓴다. */}
+        <GyeonuSays face="g-face-gaze" pos="50% 26%">
+          가능성이 낮으면
+          <br />
+          <b style={{ color: STAR }}>낮다고 말합니다.</b>
+        </GyeonuSays>
 
         <StarStream />
 
