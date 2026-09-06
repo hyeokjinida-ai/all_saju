@@ -43,7 +43,12 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
-import { SangunBuyCard, TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
+import {
+  SangunBuyCard,
+  SangunReviews,
+  TeaserSalesTail,
+  type SangunReview,
+} from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
 import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
@@ -115,6 +120,12 @@ type Props = {
    * 산군(sangun-sinjeom) 아닌 상품에는 켜도 아무 효과가 없다(inColdOpen · useColdOpen 이 slug 로 한 번 더 가른다).
    */
   coldOpen?: boolean;
+  /**
+   * 승인된 실후기 — 티저 구매 카드 뒤 후기 블록이 쓴다(산군만).
+   * 서버가 이름까지 붙여 내려보낸다(profiles RLS 때문에 클라에서는 못 읽는다).
+   * 3건 미만이면 블록이 스스로 안 그린다 — 여기서 거르지 않는다.
+   */
+  reviews?: SangunReview[];
 };
 
 /** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
@@ -384,6 +395,7 @@ export function SajuWizard({
   demo = null,
   jiknyeoAssets,
   coldOpen = false,
+  reviews = [],
 }: Props) {
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
@@ -1711,6 +1723,7 @@ export function SajuWizard({
                 : undefined
             }
             jiknyeoAssets={jiknyeoAssets}
+            reviews={reviews}
             // 콜드오픈 — 감시점은 티저 안에 있고(타이틀 드랍 직후), 헤더·고정바는 부모가 그린다.
             coldOpen={coldOpen}
             coldOpenDone={coldOpenDone}
@@ -2336,6 +2349,7 @@ function TeaserStep({
   compareAtPrice,
   bundleLine,
   jiknyeoAssets,
+  reviews = [],
   coldOpen = false,
   coldOpenDone = true,
   onColdOpenDone,
@@ -2353,6 +2367,8 @@ function TeaserStep({
   compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
   bundleLine?: string; // 번들 예고 한 줄 — 추천 번들 값은 부모가 만들어 내린다
   jiknyeoAssets?: AssetMap;
+  /** 승인된 실후기(산군). 3건 미만이면 블록이 스스로 안 그린다. */
+  reviews?: SangunReview[];
   /** `?cold=1` — 콜드오픈 판으로 그릴 것인가. false(기본)면 아래 게이트가 전부 옛 판으로 돈다. */
   coldOpen?: boolean;
   /** 산군 콜드오픈이 끝났는가(타이틀 드랍 통과). 산군 외 상품은 기본값 true 라 영향이 없다. */
@@ -3351,6 +3367,12 @@ function TeaserStep({
               onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
             />
           )}
+
+          {/* 후기 — 값을 말한 **직후**. 앞은 등장 절단이라 사이를 벌릴 수 없다(절단과 값은 붙어야 한다).
+              승인된 실후기 3건 이상일 때만 스스로 그린다 — 지금은 0건이라 아무것도 안 나온다.
+              조건을 `imm && !isJiknyeoWorld` 가 아니라 slug 로 쓴 이유: 그 조건은 재회에서도 참이라
+              다른 레인 화면에 산군 색 블록이 끼어든다. */}
+          {isSangunWorld && <SangunReviews reviews={reviews} />}
 
           {/* 여기 있던 정점(p-bridge)·대면(g-greet)·T5 반전 절단은 **웹툰부로 올라갔다**
               (2026-09-05 3차). 절단이 잠금 목록과 구매 카드 사이에 있으면 「끊고 나서도 계속

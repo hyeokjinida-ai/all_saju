@@ -541,8 +541,28 @@ async function buildAndSaveOne(args: {
 async function answerExtraQuestion(service: SupabaseClient, orderUuid: string): Promise<GenerateOutcome> {
   const { data: q } = await service
     .from("extra_questions")
-    .select("id, parent_order_id, question, answer_md, status")
+    .select("id")
     .eq("order_id", orderUuid)
+    .maybeSingle();
+  if (!q) return { ok: false, reason: "no_question" };
+  return answerExtraQuestionById(service, q.id as string);
+}
+
+/**
+ * 질문 한 장에 답한다 — **결제 주문이 아니라 질문 행 id 로** 찾는다.
+ *
+ * 왜 id 로 가르나: 후기 보상 질문(`source='review_reward'`)은 결제가 없어서 `order_id` 가 null 이다.
+ * 유료 질문만 주문에서 거슬러 올 수 있으므로, 공통 몸통은 질문 행을 직접 받는다.
+ * 답변 내용·말투·멱등 처리는 유료와 무료가 **완전히 같다** — 다른 건 값을 냈느냐뿐이다.
+ */
+export async function answerExtraQuestionById(
+  service: SupabaseClient,
+  extraQuestionId: string,
+): Promise<GenerateOutcome> {
+  const { data: q } = await service
+    .from("extra_questions")
+    .select("id, parent_order_id, question, answer_md, status")
+    .eq("id", extraQuestionId)
     .maybeSingle();
   if (!q || !q.question) return { ok: false, reason: "no_question" };
 

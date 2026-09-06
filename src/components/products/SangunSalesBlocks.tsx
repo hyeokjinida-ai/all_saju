@@ -215,6 +215,98 @@ export function SangunBuyCard({
   );
 }
 
+/* ─────────────────────────────────────────────────────────────
+   손님 후기 — 구매 카드 **바로 뒤**, 값을 말한 직후.
+
+   왜 이 자리인가: 두 레퍼런스의 공통 문법이 「무엇인지 보여줌 → 값 → 받아본 증거」다
+   (청월당 연애비책 실측: 07 구매 카드 → 08 후기 카드 3장). 산군은 값 **앞**이 등장 절단이라
+   그 사이를 벌릴 수 없다 — 절단과 값은 붙어 있어야 절단이 값을 민다. 그래서 값 뒤다.
+
+   조판은 견우 판(ReunionReviews)과 같은 부품이다 — 카드 3장 · 사이 22px · 머리 100~130px,
+   한 카드 = 이니셜 원 · 이름 · 별 · 한 줄 제목 · 본문. 날짜·사진은 안 쓴다(두 레퍼런스 다 안 씀).
+   색만 산군 토큰(밤 + 금선). 견우 파일을 불러 쓰지 않는 이유는 그쪽이 다른 레인이라 —
+   같은 파일을 두 레인이 만지면 충돌한다.
+
+   ⚠ **지어내지 않는다.** 여기 오는 건 `reviews` 의 실후기뿐이고, 그중에서도 형님이
+     /admin/reviews 에서 켠 것만 온다(0013 승인 게이트).
+     3건 미만이면 **아무것도 안 그린다** — 빈 상자나 후기 1장은 없느니만 못하다
+     (홈 ReviewRow 와 같은 기준). 조판이 720~820px 짜리 구멍으로 무너지는 것도 막는다.
+   ───────────────────────────────────────────────────────────── */
+export type SangunReview = { id: string; rating: number; content: string; who: string };
+
+/** 후기 한 덩이를 「제목 한 줄 + 본문」으로 가른다 — **첫 문장이 제목이다.**
+ *  손님은 제목을 따로 안 쓴다(작성 폼에 칸이 없다). 그래서 첫 문장을 굵게 올려
+ *  훑는 눈이 걸릴 곳을 만든다(청월당이 후기에서 핵심 문장만 굵게 하는 것과 같은 목적). */
+function splitReview(content: string): { head: string; body: string } {
+  const s = content.trim().replace(/\s+/g, " ");
+  const m = s.match(/^(.{6,60}?[.!?…]|.{6,40}?(?=\s))/);
+  const head = (m?.[1] ?? s.slice(0, 40)).trim();
+  const body = s.slice(head.length).trim();
+  // 짧은 후기는 통째로 제목이다 — 쪼개면 본문에 조각만 남아 더 어색하다.
+  return body.length < 10 ? { head: s, body: "" } : { head, body };
+}
+
+export function SangunReviews({ reviews }: { reviews: SangunReview[] }) {
+  if (reviews.length < 3) return null;
+  return (
+    <section className="mt-14">
+      <p className="font-myeongjo text-[12px]" style={{ color: "var(--gold-soft)", letterSpacing: "0.2em" }}>
+        먼저 받아 본 사람들
+      </p>
+      <p className="font-myeongjo mt-1.5 text-[20px] font-bold leading-[1.35]" style={{ color: "var(--bone)" }}>
+        열어 보고 남기고 간 말이다.
+      </p>
+
+      <div className="mt-6 space-y-[22px]">
+        {reviews.slice(0, 3).map((r) => {
+          const { head, body } = splitReview(r.content);
+          return (
+            <div
+              key={r.id}
+              className="px-4 py-4"
+              style={{ borderRadius: 14, background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="font-myeongjo flex h-8 w-8 shrink-0 items-center justify-center text-[13px] font-bold"
+                  style={{
+                    borderRadius: "50%",
+                    background: "var(--gold-pale)",
+                    border: "1px solid var(--gold-line)",
+                    color: "var(--gold-bright)",
+                  }}
+                  aria-hidden
+                >
+                  {r.who.slice(0, 1)}
+                </span>
+                <span className="font-myeongjo text-[13px]" style={{ color: "var(--bone-faint)" }}>
+                  {r.who}
+                </span>
+                <span
+                  className="text-[12px]"
+                  style={{ color: "var(--gold-bright)", letterSpacing: "0.06em" }}
+                  aria-label={`별 ${r.rating}개`}
+                >
+                  {"★".repeat(r.rating)}
+                  <span style={{ color: "var(--gold-pale)" }}>{"★".repeat(5 - r.rating)}</span>
+                </span>
+              </div>
+              <p className="font-myeongjo mt-3 text-[15px] font-bold leading-[22px]" style={{ color: "var(--bone)" }}>
+                {head}
+              </p>
+              {body && (
+                <p className="mt-1.5 text-[13px] leading-[21px]" style={{ color: "var(--bone-soft)" }}>
+                  {body}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // 티저용 — 목차는 이미 위에 4章 카드로 있으므로 분량 스펙과 가격 앵커만 세운다.
 // (같은 화면에 11줄 목차를 또 깔면 방금 본 4章 카드의 재탕이 된다)
 export function ValueSpecCard({ priceLabel }: { priceLabel: string }) {
