@@ -84,6 +84,11 @@ export default async function WriteReviewPage({
       <header className="mb-10 text-center">
         <p className="font-brush text-gold-soft/60 text-base tracking-[0.3em] mb-2">筆評</p>
         <h1 className="font-myeongjo text-2xl font-semibold tracking-[0.04em] text-bone">후기 작성</h1>
+        {/* 답례를 여기서 한 번 더 말한다 — 결과지 CTA 를 안 거치고 바로 들어오는 길도 있다.
+            한 줄로만: 크게 걸면 대가를 노린 후기가 되고, 그걸 랜딩에 세우면 산 후기가 된다. */}
+        <p className="mt-3 text-sm text-bone-soft leading-relaxed">
+          남겨 주시면 답례로 <b className="text-bone">질문 하나를 무료로</b> 드려요.
+        </p>
         <div className="gold-diamond mx-auto mt-5" />
       </header>
       <Card>

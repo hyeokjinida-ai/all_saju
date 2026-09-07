@@ -8,14 +8,20 @@ import { InkMark } from "./InkMark";
 // ## = 결과지 대제목(상단 1회), ### = 각 챕터(디바이더 + 아이콘 + 본문).
 // 가독성: 어두운 결과지 위에서 본문은 밝게(#ece6ff), 챕터엔 주제 아이콘을 붙인다.
 
-/** 결과지 바탕 톤. night = 밤 카드(기존·산군) / hanji = 한지 판(직녀 章 본문).
+/** 결과지 바탕 톤. night = 밤 카드(기존) / hanji = 한지 판(직녀 章 본문) / ink = 먹빛 한지(산군 장부).
  *  청월당 유료 결과지는 간지만 어둡고 본문은 밝다 — 긴 글의 가독성과 삽화 발색을 같이 얻는 구조다.
- *  색을 두 벌 두는 대신 팔레트 하나로 갈라, 같은 마크다운이 두 배경에서 다 살게 한다. */
-export type BodyTone = "night" | "hanji";
+ *  색을 세 벌 두는 대신 팔레트 하나로 갈라, 같은 마크다운이 세 배경에서 다 살게 한다. */
+export type BodyTone = "night" | "hanji" | "ink";
 
 type Pal = {
   body: string; head: string; strong: string; icon: string; iconBg: string; iconLine: string;
   hlPaint: string; hlText: string; quote: string; quoteBg: string; thText: string; thBg: string;
+  /** 목록 점.
+   *  ⚠ 원래 `before:bg-gold/80` 이었는데 **밤 판에서도 투명이었다**(2026-08-29 실측).
+   *  --gold 가 hex(#e8c96a)라 Tailwind 의 `/80` 이 `rgb(#e8c96a / .8)` 이라는 잘못된 값을 만든다
+   *  — 채널 분해형 변수에만 먹는 문법이다. 그래서 결과지 목록의 마름모 점이 내내 안 보였다.
+   *  팔레트에서 완성된 색으로 주고 클래스는 변수만 읽게 한다. */
+  bullet: string;
   /** 문단 타이포 — 한지(밝은 판)는 글이 주인공이라 호흡을 더 넓게 잡는다(형님 검토 2026-08-25:
    *  "술술 읽히게". 크기 한 단, 문단 사이 한 단, 소제목 존재감 한 단). */
   pClass: string; h4Class: string;
@@ -29,6 +35,7 @@ const PALETTE: Record<BodyTone, Pal> = {
     hlPaint: "rgba(143,43,30,0.62)", hlText: "#ffe9d8",
     quote: "#ded4ff", quoteBg: "rgba(150,90,255,.08)",
     thText: "#dcc8ff", thBg: "rgba(150,90,255,0.12)",
+    bullet: "rgba(232,201,106,0.8)",
     pClass: "my-3.5 text-[15.5px] leading-[1.9]",
     h4Class: "mt-5 mb-2 font-myeongjo text-base font-semibold",
   },
@@ -42,6 +49,25 @@ const PALETTE: Record<BodyTone, Pal> = {
     hlPaint: "rgba(206,164,44,0.62)", hlText: "#1F1809",
     quote: "#3A3348", quoteBg: "rgba(107,76,154,.07)",
     thText: "#4A3C6B", thBg: "rgba(107,76,154,0.10)",
+    bullet: "rgba(107,76,154,0.75)",
+    pClass: "my-[19px] text-[16px] leading-[2.0]",
+    h4Class: "mt-7 mb-2.5 font-myeongjo text-[17px] font-bold",
+  },
+  // 산군의 장부 한 장 — 어두운 신당 안에서 촛불에 비친 종이.
+  // 직녀 hanji 와 갈라 두는 이유: 저쪽은 남보라 먹 + 금빛 형광(그림채 규칙상 화면에 빨강 0)이고,
+  // 산군은 **붉은 먹**이 브랜드다(장부에 동그라미 치는 붉은 붓 = 광고 소재 A4). 같은 톤을 쓰면
+  // 결제 전까지 쌓은 붉은 낙관 문법이 본문에서만 끊긴다.
+  ink: {
+    // 먹빛 — 순검정은 종이에서 튄다. 말풍선 글자(#241d10)와 같은 값이라 화자와 본문이 한 먹이다.
+    body: "#241d10", head: "#1a1309", strong: "#0f0b04",
+    icon: "#8f2b1e", iconBg: "rgba(143,43,30,.08)", iconLine: "rgba(143,43,30,.25)",
+    // 붉은 칠 — 밝은 종이에서는 밤 배경보다 **묽게** 깔고 글자를 먹으로 둔다.
+    // (밤 판은 진한 칠 + 밝은 글자, 종이 판은 묽은 칠 + 먹 글자 — 같은 강도를 반대로 만든다)
+    // 실측 대비 7.8 : 종이에 붉은 물이 든 자리에 먹으로 쓴 것처럼 읽힌다.
+    hlPaint: "rgba(183,64,45,0.34)", hlText: "#241d10",
+    quote: "#33291a", quoteBg: "rgba(143,43,30,.06)",
+    thText: "#4a2a1c", thBg: "rgba(143,43,30,0.08)",
+    bullet: "rgba(143,43,30,0.78)",
     pClass: "my-[19px] text-[16px] leading-[2.0]",
     h4Class: "mt-7 mb-2.5 font-myeongjo text-[17px] font-bold",
   },
@@ -169,7 +195,7 @@ export function makeMarkdownComponents(tone: BodyTone = "night"): Components {
   ul: ({ children }) => <ul className="my-3 space-y-2.5 pl-1">{children}</ul>,
   ol: ({ children }) => <ol className="my-3 space-y-2.5 pl-1">{children}</ol>,
   li: ({ children }) => (
-    <li className="relative pl-5 text-[15.5px] leading-[1.85] before:absolute before:left-0 before:top-[0.62em] before:h-1.5 before:w-1.5 before:rotate-45 before:bg-gold/80" style={{ color: pal.body }}>
+    <li className="relative pl-5 text-[15.5px] leading-[1.85] before:absolute before:left-0 before:top-[0.62em] before:h-1.5 before:w-1.5 before:rotate-45 before:bg-[var(--li-dot)]" style={{ color: pal.body, ["--li-dot" as string]: pal.bullet } as CSSProperties}>
       {withHighlights(children, pal)}
     </li>
   ),

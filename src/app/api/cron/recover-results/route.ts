@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
-import { EXTRA_QUESTION_SLUG, generateResultForOrder, hasRealInterpretation } from "@/lib/saju/generate-result";
+import { EXTRA_QUESTION_SLUG, generateResultForOrder } from "@/lib/saju/generate-result";
+import { countPendingChapters, hasRealInterpretation } from "@/lib/saju/chapters";
 
 // 결과 미생성 복구 크론 — 결제는 됐는데(paid) 결과지가 없거나 미완성인 주문을 찾아
 // 결과지 생성을 재시도한다. luckyloveme/LLM 의 장애로 confirm·자가복구·웹훅이 모두
@@ -84,6 +85,9 @@ async function run(request: NextRequest) {
   const realCount = new Map<string, number>();
   for (const r of results ?? []) {
     if (!hasRealInterpretation(r.interpretation_md as string)) continue;
+    // 자리표시(「준비 중」)가 남은 판은 완성으로 세지 않는다 — 세면 그 장은 영영 안 채워진다.
+    // 본문 길이만 보던 옛 판정이 부분 저장분을 '완료'로 잡아 복구 큐에서 빼던 자리다.
+    if (countPendingChapters(r.interpretation_md as string)) continue;
     realCount.set(r.order_id as string, (realCount.get(r.order_id as string) ?? 0) + 1);
   }
 
@@ -115,9 +119,16 @@ async function run(request: NextRequest) {
       service,
       allowPartial: o.result_attempts >= PARTIAL_AFTER, // 여러 번 실패하면 부분 결과라도 저장
     });
-    outcomes.push({ id: o.id, ok: outcome.ok, reason: outcome.ok ? undefined : outcome.reason });
-    // 실패한 건만 시도 횟수 증가(영구 실패 무한루프 차단). 성공은 결과가 생겨 다음 스캔에서 제외됨.
-    if (!outcome.ok && hasAttemptsCol) {
+    // 「저장은 됐는데 아직 채우는 중」은 성공이 아니다 — 다음 회차에 이어 채워야 한다.
+    const incomplete = !outcome.ok || !!outcome.pending;
+    outcomes.push({
+      id: o.id,
+      ok: outcome.ok && !outcome.pending,
+      reason: outcome.ok ? (outcome.pending ? `미완 ${outcome.pending}장` : undefined) : outcome.reason,
+    });
+    // 끝나지 않은 건만 시도 횟수 증가(영구 실패 무한루프 차단).
+    // ⚠ 미완 저장도 반드시 세야 한다 — 안 세면 결과는 있는데 안 끝난 주문을 크론이 영원히 잡는다.
+    if (incomplete && hasAttemptsCol) {
       await service
         .from("orders")
         .update({ result_attempts: o.result_attempts + 1, result_last_attempt_at: new Date().toISOString() })

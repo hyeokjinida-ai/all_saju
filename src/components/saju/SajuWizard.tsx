@@ -20,20 +20,45 @@ import {
   type ProfileOption,
   type OptionTone,
 } from "@/lib/saju/profile-tags";
+import {
+  REUNION_SLUG,
+  DATING_LENGTH_OPTIONS,
+  WHO_ENDED_OPTIONS,
+  BREAKUP_REASON_OPTIONS,
+  FEELING_OPTIONS,
+  reunionTags,
+  type ReunionInput,
+} from "@/lib/saju/reunion-input";
+import {
+  GyeonuWebtoon,
+  ReunionCalendar,
+  GyeonuMark,
+  GyeonuComfortCut,
+  ReunionReviews,
+  // ReunionBreakupCheck·ReunionRival 은 웹툰부(NightBreakup·NightRival)로 옮겼다 — 2026-09-05 4차.
+  ReunionToc,
+  GyeonuCut,
+} from "@/components/products/gyeonu-teaser";
 import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
-import { TeaserSalesTail } from "@/components/products/SangunSalesBlocks";
+import {
+  SangunBuyCard,
+  SangunReviews,
+  TeaserSalesTail,
+  type SangunReview,
+} from "@/components/products/SangunSalesBlocks";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
-import { T, Val, BrushHead, BigNum, LockRow, LINE, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
+import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
 import { JiknyeoTeaserToc } from "@/components/products/jiknyeo-teaser-toc";
-import { MoonGrid, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
+import { MoonGrid, Moon, GRADE_TO_PHASE } from "@/components/products/JiknyeoForecast";
 import { JiknyeoTeaserPrice } from "@/components/products/jiknyeo-teaser-price";
 import { JiknyeoBuyCard } from "@/components/products/jiknyeo-teaser-buycard";
+import { SayEditPanel } from "@/components/products/jiknyeo-say-edit";
+import { SAY_BOX_DEFAULT } from "@/lib/jiknyeo-say-box";
 import { JiknyeoTeaserPoints } from "@/components/products/jiknyeo-teaser-points";
-import { InkFade } from "@/components/products/jiknyeo-comic-kit";
 import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
@@ -89,6 +114,18 @@ type Props = {
   demo?: DemoPreset | null;
   /** 직녀 에셋 슬롯 — 서버(page.tsx)가 디스크를 훑어 내려보낸다. 없으면 라벨 패널로 선다. */
   jiknyeoAssets?: AssetMap;
+  /**
+   * `?cold=1` — 산군 티저를 **콜드오픈 판**으로 연다(그림 먼저 · 헤더·제목·하단 고정바는
+   * 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). 기본값 false 라 **스위치가 없으면 전과 같다**.
+   * 산군(sangun-sinjeom) 아닌 상품에는 켜도 아무 효과가 없다(inColdOpen · useColdOpen 이 slug 로 한 번 더 가른다).
+   */
+  coldOpen?: boolean;
+  /**
+   * 승인된 실후기 — 티저 구매 카드 뒤 후기 블록이 쓴다(산군만).
+   * 서버가 이름까지 붙여 내려보낸다(profiles RLS 때문에 클라에서는 못 읽는다).
+   * 3건 미만이면 블록이 스스로 안 그린다 — 여기서 거르지 않는다.
+   */
+  reviews?: SangunReview[];
 };
 
 /** ?demo= 로 넘어온 미리보기 값. 지정 안 하면 DEMO_DEFAULT 로 채운다. */
@@ -117,6 +154,8 @@ type FormState = {
   job: string;          // 직업
   concerns: string[];
   concernText: string; // 직접 입력한 고민 한 줄(칩과 별개, 결과지에 정면 답변)
+  /** 재회(견우) 여섯 문항. 이 상품이 아니면 끝까지 빈 객체다 — reunionTags 가 빈 배열을 돌려준다. */
+  reunion: ReunionInput;
 };
 
 // 기본 고민 선택지 — 위저드 STEP 惑
@@ -143,6 +182,16 @@ const CONCERN_BY_SLUG: Record<string, string[]> = {
     "언제쯤 하게 될까 궁금해",
     "결혼 생각에 확신이 안 서",
     "준비를 언제 시작할지 궁금해",
+  ],
+  // 재회(견우) — 칩도 손님이 고르는 말이라 반말이다. 「지금 마음」 5지와 겹치지 않게
+  // **감정이 아니라 묻고 싶은 것**으로 채운다(감정은 心 단계가 이미 받는다).
+  "reunion-saju": [
+    "그 사람 마음이 궁금해",
+    "언제 연락해야 할지 모르겠어",
+    "내가 뭘 잘못했는지 알고 싶어",
+    "다시 만날 수 있을지 궁금해",
+    "이제 놓아야 하는지 모르겠어",
+    "다음 사람은 언제 오는지",
   ],
   // 산군(신점) — 반말 톤 유지
   "sangun-sinjeom": [
@@ -217,18 +266,80 @@ const STEPS_JIKNYEO: typeof STEPS = [
   { hanja: "兆", q: "사주를 먼저 읽어봤어요", help: "여기까지는 무료예요" },
 ];
 
+// 견우(재회) 전용 — 공통 여덟 칸(0~7)은 **자리를 그대로 두고**, 뒤에 재회 문항을 얹는다.
+// 자리를 안 건드리는 이유: PARTNER_STEP·CONCERN_STEP 같은 상수가 네 상품에서 같이 쓰이는데
+// 중간에 끼워 넣으면 그 상수들이 통째로 밀린다. 안 쓰는 칸(4·5·6·7)은 skipped 로 건너뛴다.
+// 말은 견우다 — 담백한 존댓말(~합니다/~요). 직녀의 「달력을 펴 볼게요」 어휘는 안 쓴다.
+const STEPS_GYEONU: typeof STEPS = [
+  { hanja: "名", q: "어떻게 불러드릴까요?", help: "결과지에 이 이름으로 적어 둡니다", optional: true },
+  { hanja: "生", q: "언제 태어나셨나요?", help: "양력인지 음력인지도 같이 골라주세요" },
+  { hanja: "時", q: "태어난 시각도 아시나요?", help: "알면 더 촘촘히 봅니다" },
+  { hanja: "性", q: "성별을 알려주세요", help: "운의 흐름을 읽는 방향이 달라서요" },
+  // 4·5·6·7 — 이 상품은 안 묻는다(skipped). 자리만 지킨다.
+  { hanja: "緣", q: "", help: "" },
+  { hanja: "伴", q: "", help: "" },
+  { hanja: "業", q: "", help: "" },
+  { hanja: "惑", q: "", help: "" },
+  // 여기서부터 재회 여섯 문항. 필수는 「지금 마음」 하나뿐이다.
+  {
+    hanja: "別",
+    q: "언제 헤어지셨나요?",
+    // 왜 묻는지를 그 화면에서 바로 답한다(타이트 실측 — 물음 옆에 이유가 붙으면 이탈이 준다).
+    help: "헤어진 무렵의 흐름을 그 사람 것과 비교해서, 원인까지 짚어드립니다",
+    optional: true,
+  },
+  { hanja: "際", q: "두 분은 얼마나 만나셨나요?", help: "쌓인 시간만큼 흐름을 길게 봅니다", optional: true },
+  { hanja: "告", q: "이별을 먼저 말한 쪽은 누구였나요?", help: "말을 꺼낸 쪽에 따라 다르게 읽습니다", optional: true },
+  { hanja: "因", q: "괜찮다면, 무엇 때문에 갈라졌는지도 알려주세요", help: "가장 가까운 하나만 골라주세요", optional: true },
+  { hanja: "彼", q: "괜찮다면, 그 사람 이야기도 들려주세요", help: "생일을 몰라도 볼 수 있어요", optional: true },
+  { hanja: "心", q: "지금 마음은 어느 쪽에 가까우세요?", help: "이 답으로 결과지가 갈립니다" },
+  { hanja: "問", q: "더 하고 싶은 말이 있으신가요?", help: "적어주시면 그 물음부터 정면으로 답합니다", optional: true },
+  // 감정을 쏟은 직후 한 박자 — 제작비 0 짜리 이탈 방지 장치(타이트 실측).
+  { hanja: "慰", q: "힘드셨을 텐데, 잘 적어 주셨습니다", help: "" },
+  { hanja: "覽", q: "이대로 장부를 펴 보겠습니다", help: "" },
+  // 부제는 **앞을 가리켜야** 한다. 「여기까지는 무료입니다」는 뒤(이미 본 것)를 가리켜서
+  // 이 화면이 끝인 줄 알게 만들었다 — 정작 웹툰 본편이 이 아래에서 시작한다(형님 픽 2026-09-06).
+  // 제목과 부제가 **같은 말을 두 번** 했다 — 손님은 방금 입력을 마치고 무료 결과를 받은
+  // 참이라 「사주를 먼저 읽어봤습니다」는 이미 아는 사실이다(2026-09-06 형님 「글자만 너무 많다」).
+  // 앞을 가리키는 한 줄만 남긴다.
+  { hanja: "兆", q: "이제 왜 그런지 봅니다", help: "" },
+];
+
 const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
   "sangun-sinjeom": STEPS_SANGUN,
   // 인연·결혼은 같은 캐릭터(직녀)라 입력 대사를 공유한다 — 달력 세계관이 같다.
   "inyeon-saju": STEPS_JIKNYEO,
   "marriage-saju": STEPS_JIKNYEO,
+  // 재회는 화자가 견우라 대사를 공유하지 않는다(문항 수도 다르다).
+  "reunion-saju": STEPS_GYEONU,
 };
+
+/**
+ * 묶음 카드의 「몇 개 더 오는지」 — 숫자는 값(가격) 자리에만 쓰므로 수는 말로 적는다.
+ * ⚠ 하나일 때 문구는 **예전 그대로**다(2종 묶음을 파는 산군·인연 시트를 건드리지 않는다).
+ *   2026-09-02 번들 ③(3종)이 붙으면서 「하나 더」가 거짓말이 되는 카드가 생겨 수를 세게 됐다.
+ */
+const KO_COUNT: Record<number, string> = { 2: "두", 3: "세" };
+const moreLabel = (n: number, night: boolean) =>
+  n <= 1
+    ? night ? "결과지 하나 더" : "장부 한 권 더"
+    : night ? `결과지 ${KO_COUNT[n] ?? n} 개 더` : `장부 ${KO_COUNT[n] ?? n} 권 더`;
 
 const TOTAL = STEPS.length;
 const PARTNER_STEP = 4;      // 인연 방향 — 배우자 십성 계산이 여기서 갈린다
 const RELATIONSHIP_STEP = 5; // 연애 상태
 const JOB_STEP = 6;          // 직업
 const PROFILE_STEPS = [PARTNER_STEP, RELATIONSHIP_STEP, JOB_STEP];
+
+// 재회 전용 칸 번호 — STEPS_GYEONU 의 인덱스와 1:1. 다른 상품은 이 번호에 도달하지 않는다.
+const R_BREAKUP_STEP = 8;   // 이별 시기
+const R_DATING_STEP = 9;    // 연애 기간
+const R_WHO_STEP = 10;      // 이별 통보
+const R_REASON_STEP = 11;   // 이별 사유
+const R_PARTNER_STEP = 12;  // 그 사람
+const R_FEELING_STEP = 13;  // 지금 마음(유일한 필수)
+const R_CONCERN_STEP = 14;  // 자유 고민 — 공통 惑(7) 대신 이 자리에서 묻는다
+const R_COMFORT_STEP = 15;  // 위로 한 화면
 
 // 상품이 실제로 쓰는 질문만 묻는다. 안 쓰는 상품에 물으면 순수 마찰이고, 답을 받아놓고 버리는 셈이다.
 // 인연 계산(computeInyeonFacts)을 쓰는 상품은 generate-result.ts 기준 inyeon-saju · sangun-sinjeom 뿐이다.
@@ -241,9 +352,9 @@ const PROFILE_ASK_BY_SLUG: Record<string, number[]> = {
   "wealth-saju": [JOB_STEP],                            // 돈 상품은 하는 일만
   "monthly-luck": [JOB_STEP],
 };
-const CONCERN_STEP = 7;      // 고민
-const CONFIRM_STEP = 8;      // 입력 확인
-const TEASER_STEP = 9;       // 결제 전 무료 티저(개인화) = 결제 화면
+const CONCERN_STEP = 7;      // 고민 — 공통 판. 재회는 R_CONCERN_STEP 을 쓴다.
+// ⚠ 확인·티저 칸은 **상수로 박지 않는다.** 재회가 문항을 여덟 개 더 얹어 배열 길이가 상품마다
+//   다르다 — 두 칸은 언제나 배열의 마지막 둘이므로 길이에서 뽑는다(기존 네 상품은 8·9 그대로).
 /** 로딩 화면 최소 노출 시간 = ritual.mp4 길이(3.17초)에 맞춘다.
  *  실측: 만세력 캐시에 걸리면 응답이 1초대라 그냥 두면 영상이 한 동작도 못 보여주고 사라진다.
  *  영상보다 길게 잡으면 루프가 한 번 더 돌아 이음매(16.1)가 화면에 보인다 — 그래서 딱 맞춘다. */
@@ -283,11 +394,17 @@ export function SajuWizard({
   bgVideo,
   demo = null,
   jiknyeoAssets,
+  coldOpen = false,
+  reviews = [],
 }: Props) {
   const imm = variant === "immersive";
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // 견우(재회) — **직녀 그림은 한 장도 안 쓴다**(다른 인물이다). 밤 무대·달빛 조판만 같이 쓴다.
+  const isReunion = productSlug === REUNION_SLUG;
+  /** 밤 무대 세 상품(인연·결혼·재회)이 공유하는 **껍데기**. 직녀 자산은 isJiknyeoWorld 로만 연다. */
+  const isNight = isJiknyeoWorld || isReunion;
   // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
   const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
   // 직녀 세계관 전체 — 인연·결혼 두 상품이 같은 캐릭터·같은 옷을 쓴다(청월당 백월아씨 방식).
@@ -296,23 +413,61 @@ export function SajuWizard({
   //   산군=금, 직녀=달빛, 그 외=기존 보라. 값은 각 세계관 랜딩의 CTA 와 같은 계열이다.
   const ctaFill = imm
     ? { on: "linear-gradient(135deg,#efe6d2,#e8c96a 60%,#a9861f)", off: "rgba(232,201,106,0.12)", ink: "#241a08", glow: "0 8px 26px rgba(201,162,39,0.35)" }
-    : isJiknyeoWorld
+    : isNight
       ? { on: "linear-gradient(180deg,#efeaf6,#d9c7e8)", off: "rgba(207,214,230,0.15)", ink: "var(--wine-deep)", glow: "0 8px 26px rgba(217,199,232,0.3)" }
       : { on: "linear-gradient(180deg,#ffffff,#f1eaff)", off: "rgba(150,90,255,0.15)", ink: "var(--wine-deep)", glow: "0 0 24px rgba(150,90,255,0.28)" };
   // 결제 시트 카드의 강조색(선택 테두리·가격·배지)
-  const sheetAccent = imm ? "#e8c96a" : isJiknyeoWorld ? "#d9c7e8" : "#c9a8ff";
+  const sheetAccent = imm ? "#e8c96a" : isNight ? "#d9c7e8" : "#c9a8ff";
   /** 선택지 버튼은 **손님이 말하는 자리**라 상품별 말투가 다르다.
-   *  산군=반말 하대(ban) · 직녀=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다. */
-  const optTone: OptionTone = imm ? "ban" : isJiknyeoWorld ? "jik" : "label";
+   *  산군=반말 하대(ban) · 직녀·견우=손님 반말(jik) · 그 외=해요체(label). 저장값(value)은 어느 쪽이든 같다.
+   *  견우는 존댓말로 묻지만 버튼은 그대로 손님 반말이다 — 양쪽 다 존대면 손님이 을이 된다. */
+  const optTone: OptionTone = imm ? "ban" : isNight ? "jik" : "label";
   const optLabel = (o: ProfileOption) => displayOf([o], o.value, optTone);
   const router = useRouter();
   // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
   const [selectedId, setSelectedId] = useState(productId);
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
+  // 칸 번호는 **배열에서 뽑는다.** 재회가 문항을 여덟 개 더 얹어 길이가 상품마다 다르다.
+  // 확인·티저는 언제나 마지막 둘이라 기존 네 상품에서는 예전 값(8·9)과 똑같이 나온다.
+  const total = steps.length;
+  const confirmStep = total - 2;
+  const teaserStep = total - 1;
+  // 고민(자유 입력) 칸 — 재회만 뒤로 옮긴다(사연은 이별 얘기를 다 한 뒤에 나온다).
+  const concernStep = isReunion ? R_CONCERN_STEP : CONCERN_STEP;
   const [step, setStep] = useState(0);
+  // 산군 콜드오픈(`?cold=1` 일 때만) — 웹툰 몰입 실측(2026-09-03) 4작품 만장일치의 도입 문법:
+  // **그림이 먼저**고 이름·설명·UI 는 타이틀 드랍 뒤에 온다. 그때까지는 헤더(이전·진행바)도
+  // 하단 고정바도 아예 **안 그린다** — display 토글이 아니라 미렌더다(숨긴 요소가 자리를
+  // 먹으면 첫 화면이 그만큼 밀려 「그림으로 시작」이 깨진다).
+  // 타이틀 드랍 직후의 감시점(TeaserStep 의 sentinel)을 지나면 켜지고, 그 뒤로 계속 켜져 있다.
+  // 360폰 첫 화면에서 CTA 가 사라지는 것은 **의도된 변경**이다(형님 확정 2026-09-05).
+  // ⚠ 이 판 전체가 `?cold=1` 뒤에 있다 — 스위치가 없으면 아래 게이트가 하나도 안 걸려
+  //   운영 티저의 DOM 이 스위치 이전(937a2af)과 같다. 「기존 건 바꾸지 말고 따로 빼서」(9/5).
+  const [coldOpenDone, setColdOpenDone] = useState(false);
+  const markColdOpenDone = useCallback(() => setColdOpenDone(true), []);
+  /** 지금이 콜드오픈 **판**인가 — 감시점을 지났든 아니든 `?cold=1` 인 산군 티저 화면이면 참.
+   *  「구간」(inColdOpen)과 갈라야 하는 이유: 타이틀 드랍을 지나면 구간은 끝나지만 **판은 계속**이다.
+   *  구간만 있던 때는 감시점을 지나는 순간 제목·헤더가 콜드오픈 블록 **위에** 다시 끼어들어
+   *  문서가 191px 늘고 스크롤 앵커링이 화면을 그만큼 밀었다(2026-09-05 실측: scrollY 1527→1718).
+   *  정점 직후에 화면이 덜컥 밀리면 몰입이 깨진다 — 그래서 판 단위 게이트를 따로 둔다. */
+  const coldOpenLane = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep;
+  /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
+   *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
+  const inColdOpen = coldOpenLane && !coldOpenDone;
+  // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
+  // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
+  // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
+  useEffect(() => {
+    if (!inColdOpen) return;
+    const root = document.documentElement;
+    root.setAttribute("data-cold-open", "");
+    return () => root.removeAttribute("data-cold-open");
+  }, [inColdOpen]);
   const [submitting, setSubmitting] = useState(false);
   const [birthRaw, setBirthRaw] = useState("");
+  // 그 사람 생년월일도 같은 8자리 마스크로 받는다(네이티브 date 는 연도 칸이 6자리까지 먹는다).
+  const [partnerBirthRaw, setPartnerBirthRaw] = useState("");
   const [teaser, setTeaser] = useState<SajuTeaser | null>(null);
   const [pillars, setPillars] = useState<Pillar[] | null>(null);
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
@@ -336,6 +491,8 @@ export function SajuWizard({
     job: demo?.job ?? "",
     concerns: (demo?.concerns ?? initialConcerns ?? []).filter((c) => concernOptions.includes(c)),
     concernText: "",
+    // 재회 여섯 문항 — 다른 상품에서는 끝까지 빈 객체로 남고 태그도 안 만들어진다.
+    reunion: {},
   });
 
   // 로그인 왕복 후 복귀 시 입력 복원 (read-once: 복원하면 즉시 비움)
@@ -353,11 +510,12 @@ export function SajuWizard({
           partner: draft.form.partner ?? "",
           relationship: draft.form.relationship ?? "",
           job: draft.form.job ?? "",
+          reunion: draft.form.reunion ?? {},
         });
         if (draft.guestEmail) setGuestEmail(draft.guestEmail);
         // 티저 단계는 분석 결과가 있어야 성립 → 복귀는 확인 단계까지만
         setStep(
-          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), CONFIRM_STEP) : CONFIRM_STEP,
+          typeof draft.step === "number" ? Math.min(Math.max(0, draft.step), confirmStep) : confirmStep,
         );
       }
     } catch {
@@ -380,8 +538,8 @@ export function SajuWizard({
 
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
-    track("wizard_step", { step: step + 1, total: TOTAL, slug: productSlug });
-    if (step === TOTAL - 1 && !isLoggedIn) {
+    track("wizard_step", { step: step + 1, total, slug: productSlug });
+    if (step === total - 1 && !isLoggedIn) {
       track("checkout_login_wall", { slug: productSlug, value: price });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -390,11 +548,14 @@ export function SajuWizard({
   // 이 상품이 안 묻는 프로필 질문 — 화면에서 통째로 건너뛰고 진행 표시에서도 뺀다
   const skipped = useMemo(() => {
     const ask = PROFILE_ASK_BY_SLUG[productSlug] ?? [];
-    return new Set(PROFILE_STEPS.filter((s) => !ask.includes(s)));
-  }, [productSlug]);
+    const out = new Set(PROFILE_STEPS.filter((s) => !ask.includes(s)));
+    // 재회는 공통 惑(7) 자리를 안 쓴다 — 같은 질문을 R_CONCERN_STEP 에서 뒤늦게 묻는다.
+    if (isReunion) out.add(CONCERN_STEP);
+    return out;
+  }, [productSlug, isReunion]);
   const visibleSteps = useMemo(
-    () => Array.from({ length: TOTAL }, (_, i) => i).filter((i) => !skipped.has(i)),
-    [skipped],
+    () => Array.from({ length: total }, (_, i) => i).filter((i) => !skipped.has(i)),
+    [skipped, total],
   );
 
   const up = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -408,28 +569,49 @@ export function SajuWizard({
   const canNext = useCallback(() => {
     if (step === 1) return !!form.birthDate && !!form.calendar; // 달력을 이 화면이 흡수했다
     if (step === 3) return !!form.gender;
-    if (step === PARTNER_STEP) return !!form.partner; // "아직 모르겠다"도 답이므로 고르긴 해야 한다
+    if (step === PARTNER_STEP && !isReunion) return !!form.partner; // "아직 모르겠다"도 답이므로 고르긴 해야 한다
+    // 재회의 유일한 필수 — 「지금 마음」. 나머지 다섯은 전부 건너뛸 수 있다(청월당 실측).
+    if (isReunion && step === R_FEELING_STEP) return !!form.reunion.feeling;
     return true;
-  }, [step, form.birthDate, form.calendar, form.gender, form.partner]);
+  }, [step, isReunion, form.birthDate, form.calendar, form.gender, form.partner, form.reunion.feeling]);
+
+  /** 재회 여섯 문항 갱신 — 중첩 객체라 얕은 복사를 여기 한 곳에서만 한다. */
+  const upR = <K extends keyof ReunionInput>(k: K, v: ReunionInput[K]) =>
+    setForm((f) => ({ ...f, reunion: { ...f.reunion, [k]: v } }));
+  const upPartner = (patch: Partial<NonNullable<ReunionInput["partner"]>>) =>
+    setForm((f) => ({ ...f, reunion: { ...f.reunion, partner: { ...f.reunion.partner, ...patch } } }));
 
   // 확인 → 티저: 만세력 1콜(생일 캐시 공유 — 이 사람이 결제하면 추가 콜 없음)로
   // 명식 기반 콜드리딩 + "크게 갈리는 해"를 먼저 보여준다. 실패해도 결제는 그대로 진행.
   /** 결제 전에 받은 상황 답 — [프로필] 태그로 실어 보낸다. 티저와 결과지가 같은 값을 쓰게 하는 통로다.
    *  loadTeaser 가 의존하므로 반드시 그보다 위에 선언한다. */
-  const profileTags = useCallback(
-    () =>
-      [
-        form.partner && tag(PROFILE_KEYS.partner, form.partner),
-        form.relationship && tag(PROFILE_KEYS.relationship, form.relationship),
-        form.job && tag(PROFILE_KEYS.job, form.job),
-      ].filter(Boolean) as string[],
-    [form.partner, form.relationship, form.job],
+  const profileTags = useCallback(() => {
+    // 재회는 「인연 방향」을 따로 묻지 않는다 — 그 사람 성별을 이미 받았으므로 그걸 그대로 쓴다.
+    // 이 값이 배우자 십성(관성/재성) 계산을 가르므로 티저·결과지가 같은 값을 봐야 한다.
+    const partnerValue =
+      form.partner ||
+      (isReunion && form.reunion.partner?.gender
+        ? form.reunion.partner.gender === "male"
+          ? "남자"
+          : "여자"
+        : "");
+    return [
+      partnerValue && tag(PROFILE_KEYS.partner, partnerValue),
+      form.relationship && tag(PROFILE_KEYS.relationship, form.relationship),
+      form.job && tag(PROFILE_KEYS.job, form.job),
+    ].filter(Boolean) as string[];
+  }, [form.partner, form.relationship, form.job, isReunion, form.reunion.partner?.gender]);
+
+  /** 재회 여섯 문항 → [프로필] 태그. 다른 상품에서는 빈 배열이라 아무 데도 안 실린다. */
+  const reunionAnswerTags = useCallback(
+    () => (isReunion ? reunionTags(form.reunion) : []),
+    [isReunion, form.reunion],
   );
 
   const loadTeaser = useCallback(async () => {
     const startedAt = Date.now();
     setTeaserLoading(true);
-    setStep(TEASER_STEP);
+    setStep(teaserStep);
     try {
       const res = await fetch("/api/saju/chart", {
         method: "POST",
@@ -443,8 +625,9 @@ export function SajuWizard({
           timeUnknown: form.timeUnknown,
           gender: form.gender || "male",
           calendar: form.calendar || "solar",
-          // 인연 방향이 여기 실려야 티저와 결제 후 결과지가 같은 해를 말한다
-          concerns: profileTags(),
+          // 인연 방향이 여기 실려야 티저와 결제 후 결과지가 같은 해를 말한다.
+          // 재회 여섯 문항도 같은 길로 실린다 — slug 가 reunion-saju 면 서버가 teaser.reunion 을 채운다.
+          concerns: [...profileTags(), ...reunionAnswerTags()],
           slug: productSlug,
           teaser: true,
         }),
@@ -474,13 +657,13 @@ export function SajuWizard({
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
     // → 티저와 결제 후 결과지가 다른 해를 말한다. 반드시 의존성에 남겨둘 것.
-  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags]);
+  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags, reunionAnswerTags, teaserStep]);
 
   const next = useCallback(() => {
-    if (step === CONFIRM_STEP) {
-      // 직녀만 — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
+    if (step === confirmStep) {
+      // 밤 무대 상품(직녀·견우) — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
       // 결제까지 안 가는 손님도 여기서 남는다. 막지는 않는다 — 건너뛰면 그대로 티저로 간다.
-      if (isJiknyeoWorld && !emailGate && !emailSkipped) {
+      if (isNight && !emailGate && !emailSkipped) {
         setEmailGate(true);
         return;
       }
@@ -490,10 +673,10 @@ export function SajuWizard({
     }
     setStep((s) => {
       let n = s + 1;
-      while (n < TOTAL - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
-      return Math.min(n, TOTAL - 1);
+      while (n < total - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
+      return Math.min(n, total - 1);
     });
-  }, [step, loadTeaser, skipped, isJiknyeoWorld, emailGate, emailSkipped]);
+  }, [step, loadTeaser, skipped, isNight, emailGate, emailSkipped, confirmStep, total]);
   const prev = () =>
     setStep((s) => {
       let p = s - 1;
@@ -514,7 +697,7 @@ export function SajuWizard({
   // Enter 키로 다음
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && canNext() && step < TOTAL - 1) next();
+      if (e.key === "Enter" && canNext() && step < total - 1) next();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -523,6 +706,8 @@ export function SajuWizard({
   function payload() {
     const concerns = [
       ...profileTags(),
+      // 재회 답은 [프로필] 태그라 고민 키워드로 새지 않는다(prompt.ts 가 접두사를 안다).
+      ...reunionAnswerTags(),
       ...form.concerns,
       ...(form.concernText.trim() ? [form.concernText.trim()] : []),
     ];
@@ -557,10 +742,15 @@ export function SajuWizard({
   //   무조건 그것을 추천한다. 기혼에게도 어색하지 않다 — 산군 포괄에 인연 챕터가 이미 있고
   //   번들 카피가 "장부 한 권 더"라 세그먼트 중립이다.
   const wantsInyeon = form.relationship === "혼자" || form.relationship === "정리 중" || !form.relationship;
+  // ⚠ 2026-09-02 번들 ③(신점+인연+재회)이 붙으면서 산군·인연 시트의 번들이 **둘**이 됐다.
+  //   그전엔 「하나뿐이니 무조건 추천」이었는데, 둘이 되자 세그먼트가 안 맞는 손님(기혼·만나는
+  //   사람 있음)에게 추천 뱃지가 통째로 사라졌다 — 뱃지는 선택률 장치인데 절반이 못 보게 된다.
+  //   못 고르면 **맨 앞(display_order 가 가장 작은 것)** 으로 되돌린다. 기존 두 상품의 시트는
+  //   그대로 2종 묶음을 추천하고, ③은 추가 카드로만 선다.
   const recommended =
     bundles.length === 1
       ? bundles[0]
-      : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth")));
+      : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth"))) ?? bundles[0];
   const discountPct = (o: BundleOption) =>
     o.compareAtPrice && o.compareAtPrice > o.price
       ? Math.round((1 - o.price / o.compareAtPrice) * 100)
@@ -600,6 +790,21 @@ export function SajuWizard({
 
   const cur = steps[step];
 
+  // 배경(영상 + 그라데이션 + 유리판)을 담는 홀더.
+  //
+  // 입력 단계에서는 껍데기가 한 화면(100svh)이라 `absolute inset-0` 이 곧 화면이었다.
+  // 그런데 **티저 단계에서 껍데기가 14,000px 로 자라면 배경도 같이 자란다** — 실측(2026-09-01):
+  // 산군 w=390 에 video 가 390×14,007 로 그려져, 프레임 가로의 4%만 10배로 늘어난 색 얼룩이 됐다.
+  // 인물이 안 보이니 연출은 이미 소멸했고 GPU 로 흐리는 비용만 남는다(직녀도 같은 병, 12,670px).
+  //
+  // 그래서 티저에서만 홀더를 **화면에 고정**한다. 폰 기둥(ChromeGate 의 max-w-md) 안에 머물도록
+  // 가로를 같은 값으로 묶는다 — `fixed inset-0` 로 두면 PC 에서 배경만 화면 전체로 퍼진다.
+  // (조상에 transform 이 없어야 fixed 가 뷰포트 기준으로 선다 — 껍데기는 flex/overflow 뿐이라 안전)
+  const bgHolderCls =
+    step === teaserStep
+      ? "pointer-events-none fixed left-1/2 top-0 z-0 h-[100svh] w-full max-w-md -translate-x-1/2 overflow-hidden"
+      : "contents";
+
   return (
     <div
       // world-sangun: 공용 --gold-*/--bone-* 토큰이 자수정 보라값이라, 이 클래스로 신당 색을 덮는다.
@@ -615,18 +820,24 @@ export function SajuWizard({
             //    직녀 화면에 산군 색이 들어온다(실측: 「名」과 입력창 테두리가 금색으로 나옴).
             //    직녀 은사판은 `.world-jiknyeo .ap-input` 이 이미 갖고 있고, 그 클래스는 부모에 있다.
             ? "relative flex w-full flex-col overflow-hidden"
-            : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
+            : isReunion
+              // 견우도 같은 밤 무대(전체화면)로 선다. 다만 배경은 인물이 아니라 **강·밤하늘**이다 —
+              // 직녀 영상을 그대로 깔면 다른 인물이 화자인데 직녀 얼굴이 뜬다.
+              // world-jiknyeo 는 **색 토큰**(달빛·은사)이지 직녀 그림이 아니다. 재회 랜딩은 전용
+              // 껍데기가 없어 부모가 이 클래스를 안 붙여 준다 — 안 붙이면 공용 보라로 나온다.
+              ? "world-jiknyeo relative flex w-full flex-col overflow-hidden"
+              : "scene-cosmos relative overflow-hidden rounded-md border border-gold-line min-h-[560px] flex flex-col"
       }
       style={
         imm
           ? { background: "#0a090e", minHeight: "100svh" }
-          : isJiknyeoWorld
+          : isNight
             ? { background: "#0b0f1a", minHeight: "100svh" }
             : undefined
       }
     >
       {imm ? (
-        <>
+        <div className={bgHolderCls}>
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
               지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
               배경 그림이 스토리 3·4장면과 같은 face 라 영상도 face.mp4 를 같이 쓴다(영상 한 편 절약). */}
@@ -648,9 +859,9 @@ export function SajuWizard({
                 "linear-gradient(180deg, rgba(7,6,9,0.58) 0%, rgba(7,6,9,0.22) 36%, rgba(7,6,9,0.90) 74%, rgba(7,6,9,0.96) 100%)",
             }}
           />
-        </>
+        </div>
       ) : isJiknyeoWorld ? (
-        <>
+        <div className={bgHolderCls}>
           {/* 시장 1위 실측(#44·#46) — 캐릭터를 배경에 블러로 세워 두고 한 항목씩 묻는다.
               폼 화면으로 넘어가지 않아 이탈이 줄고, **자유 고민 화면에서만 블러가 풀린다**
               (「이제 진짜 듣는다」 연출).
@@ -665,7 +876,7 @@ export function SajuWizard({
             style={{
               // 어둡게 하는 일은 **아래 그라데이션 한 곳**이 맡는다. 여기서 또 누르면
               // 두 겹이 겹쳐 인물이 통째로 사라진다(실측: 유리판 0.58 + 그라데이션 → 새까만 화면).
-              opacity: step === CONCERN_STEP ? 0.78 : 0.6,
+              opacity: step === concernStep ? 0.78 : 0.6,
               transition: "opacity .6s ease-out",
             }}
           >
@@ -681,8 +892,8 @@ export function SajuWizard({
             className="pointer-events-none absolute inset-0"
             style={{
               // 유리판은 **흐림만** 맡는다(배경색 없음) — 어둡게는 위 opacity + 아래 그라데이션이 한다
-              backdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
-              WebkitBackdropFilter: step === CONCERN_STEP ? "blur(0px)" : "blur(7px)",
+              backdropFilter: step === concernStep ? "blur(0px)" : "blur(7px)",
+              WebkitBackdropFilter: step === concernStep ? "blur(0px)" : "blur(7px)",
               transition: "backdrop-filter .6s ease-out",
             }}
           />
@@ -694,13 +905,76 @@ export function SajuWizard({
                 "linear-gradient(180deg, rgba(11,15,26,0.74) 0%, rgba(11,15,26,0.5) 32%, rgba(11,15,26,0.88) 72%, rgba(11,15,26,0.97) 100%)",
             }}
           />
-        </>
+        </div>
+      ) : isReunion ? (
+        <div className={bgHolderCls}>
+          {/* 입력 18칸 동안은 **강 건너 밤하늘**만 세운다 — CSS 별밭 + 은하수 한 줄.
+              여기에 캐릭터 루프를 까는 건 일부러 안 한다(경쟁사는 깐다): 이 구간은 손님이
+              읽고 고르고 타이핑하는 **작업 구간**이라, 계속 움직이는 배경은 분위기가 아니라
+              잡음이 된다(GPT 자문 2026-09-06 · 지표 보고 다시 판단).
+              ⚠ 직녀 영상(w2.mp4)을 빌려 오면 화자가 견우인데 화면엔 직녀 얼굴이 뜬다 — 금지. */}
+          {teaserLoading ? (
+            // 「장부를 찾는 중」 3.2초 — 손님이 아무것도 안 하고 기다리는 **유일한** 구간이다.
+            // 여기서만 그림이 살아나 「장부를 뒤진다」는 말이 회수된다(산군이 ritual.mp4 로 하는 그 자리).
+            // 파일이 없거나 못 틀면 같은 컷의 webp 로 조용히 내려앉는다.
+            <BgMedia
+              video="/products/reunion/g-ledger.mp4"
+              img="/products/reunion/g-ledger.webp"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-90"
+            />
+          ) : (
+            <>
+              <div className="starfield opacity-45" />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0"
+                style={{
+                  top: "34%",
+                  height: 140,
+                  background:
+                    "linear-gradient(180deg, rgba(207,214,230,0) 0%, rgba(207,214,230,0.14) 48%, rgba(207,214,230,0) 100%)",
+                  filter: "blur(10px)",
+                }}
+              />
+            </>
+          )}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(11,15,26,0.70) 0%, rgba(11,15,26,0.42) 34%, rgba(11,15,26,0.88) 74%, rgba(11,15,26,0.97) 100%)",
+            }}
+          />
+        </div>
       ) : (
         <div className="starfield opacity-30" />
       )}
 
       {/* 상단: 이전 + 진행률 + N/7 (몰입형은 스테이지 상단 바 아래로 여백 확보) */}
-      <div className={`relative z-[2] w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : "pt-5"}`}>
+      {/* 직녀는 무대(JiknyeoStory)가 브랜드 줄을 **화면 상단에 고정**으로 얹는다(top 16~36).
+          위저드가 pt-5 로 시작하면 진행점이 top 28 에 서서 그 글자 위에 정확히 겹친다(운영 실측).
+          무대가 자기 헤더 높이를 알려주는 통로가 없으므로, 세계관으로 갈라 여백을 비운다. */}
+      {/* 산군 콜드오픈 구간에서는 이 헤더를 통째로 안 그린다 — 그림이 먼저다(위 coldOpenDone 주석). */}
+      {/* ⚠ 감시점을 지난 **뒤에도** 이 헤더를 in-flow 로 되돌리면 안 된다. 콜드오픈 블록 위에
+          99px 짜리 헤더가 새로 끼어들어 문서가 늘고, 스크롤 앵커링이 손님 화면을 그만큼
+          밀어 올린다(실측 191px — 타이틀 드랍 직후에 화면이 덜컥 움직였다).
+          그래서 콜드오픈 판에서는 fixed 오버레이로 띄운다: 레이아웃 기여 0 → 밀림 0.
+          배경은 반투명 먹색 + blur — 아래로 흐르는 글이 헤더 글자와 겹쳐 읽히면 안 된다.
+          스위치 없는 판(coldOpenLane=false)은 클래스가 전과 **바이트 단위로 같다**. */}
+      {!inColdOpen && (
+      <div
+        className={`${coldOpenLane ? "fixed inset-x-0 top-0 z-30" : "relative z-[2]"} w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}
+        style={
+          coldOpenLane
+            ? { background: "rgba(7,6,9,0.85)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }
+            : undefined
+        }
+      >
+        {/* 진행 점·「N/M」은 **입력 구간에서만** 그린다.
+            티저 화면에서 「14/14」가 서 있으면 손님은 **과업이 끝났다**고 읽는다 — 그런데
+            그 아래에서 웹툰 본편이 시작한다(GPT 대조 진단 2026-09-06 P0). 끝났다고 말해 놓고
+            더 읽으라 하니 그 자리가 이탈점이 됐다. 뒤로 가기는 남긴다 — 입력을 고칠 길은 있어야 한다. */}
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
@@ -711,40 +985,57 @@ export function SajuWizard({
           >
             ‹
           </button>
-          <div className="flex items-center gap-[7px]">
-            {steps.map((_, i) => (
-              <span
-                key={i}
-                className="h-[7px] rounded-full transition-all duration-300"
-                style={{
-                  width: i === step ? 22 : 7,
-                  background:
-                    i < step
-                      ? "var(--gold-soft)"
-                      : i === step
-                        ? "var(--gold-bright)"
-                        : imm
-                          ? "rgba(232,201,106,0.18)"
-                          : isJiknyeoWorld
-                            ? "rgba(207,214,230,0.2)"
-                            : "rgba(150,90,255,0.2)",
-                  // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
-                  boxShadow: i === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isJiknyeoWorld ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
-                }}
-              />
-            ))}
-          </div>
-          <span className="font-mono text-[11px] text-bone-faint tracking-[0.15em]">
-            {visibleSteps.indexOf(step) + 1}/{visibleSteps.length}
-          </span>
+          {/* 재회 티저 화면에서는 진행 표시를 **지운다**. 「14/14」가 서 있으면 손님은 과업이
+              끝났다고 읽는데, 그 아래에서 웹툰 본편이 시작한다(GPT 대조 진단 2026-09-06 P0).
+              다른 상품은 티저 구조가 달라 그대로 둔다 — 이 세션은 재회만 만진다. */}
+          {!(isReunion && step === teaserStep) && (
+            <>
+            {/* 점은 **실제로 걷는 칸만** 찍는다. steps 를 그대로 돌면 건너뛰는 칸까지 세어
+                오른쪽 「N/M」 과 개수가 어긋나고, 재회(18칸)에서는 폰 가로를 넘긴다. */}
+            <div className="flex items-center gap-[5px]">
+              {visibleSteps.map((s) => (
+                <span
+                  key={s}
+                  className="h-[7px] rounded-full transition-all duration-300"
+                  style={{
+                    width: s === step ? 22 : 7,
+                    background:
+                      s < step
+                        ? "var(--gold-soft)"
+                        : s === step
+                          ? "var(--gold-bright)"
+                          : imm
+                            ? "rgba(232,201,106,0.18)"
+                            : isNight
+                              ? "rgba(207,214,230,0.2)"
+                              : "rgba(150,90,255,0.2)",
+                    // 글로우는 세계관 액센트를 따라간다 — 보라 점에 금 글로우가 붙어 있던 기존 어긋남도 여기서 잡힌다
+                    boxShadow: s === step ? `0 0 8px ${imm ? "rgba(232,200,120,0.6)" : isNight ? "rgba(217,199,232,0.6)" : "rgba(180,140,255,0.55)"}` : "none",
+                  }}
+                />
+              ))}
+            </div>
+            <span className="font-mono text-[11px] text-bone-faint tracking-[0.15em]">
+              {visibleSteps.indexOf(step) + 1}/{visibleSteps.length}
+            </span>
+            </>
+          )}
         </div>
       </div>
+      )}
 
       {/* 중앙: 질문 + 컨트롤 */}
       <div
         key={step}
         className={`svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center${imm ? " overflow-y-auto" : ""}`}
       >
+        {/* 콜드오픈 동안에는 제목·부제도 안 그린다 — 신당 컷보다 위에 글자가 남으면
+            「그림으로 시작」이 깨진다(375폰 실측: 제목 y=30 · 부제 y=74 vs 신당 y=122).
+            다만 「네 장부를 찾는 중이다」는 로딩 표시라 그때는 계속 보여야 한다.
+            ⚠ 게이트가 `coldOpenLane` 인 이유: 감시점을 지난 뒤에 이 블록을 되살리면
+            콜드오픈 블록 **위**에 92px 이 새로 끼어들어 화면이 밀린다. 그리고 애초에
+            제목의 일은 타이틀 드랍(박수무당 레터링)이 이미 다 했다 — 두 번 소개할 이유가 없다. */}
+        {!(coldOpenLane && !teaserLoading) && (
         <div className="text-center mb-7">
           {!imm && (
             <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
@@ -752,20 +1043,25 @@ export function SajuWizard({
             </span>
           )}
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-[1.4]">
-            {step === TEASER_STEP && teaserLoading
+            {step === teaserStep && teaserLoading
               ? imm
                 ? "네 장부를 찾는 중이다"
-                : isJiknyeoWorld
-                  ? "만나는 달을 찾는 중이에요"
-                  : "명식을 계산하고 있어요"
+                : isReunion
+                  ? "다리가 놓이는 달을 찾는 중입니다"
+                  : isJiknyeoWorld
+                    ? "만나는 달을 찾는 중이에요"
+                    : "명식을 계산하고 있어요"
               : emailGate
-                ? "마지막으로 하나만요"
+                ? isReunion
+                  ? "마지막으로 하나만 여쭙습니다"
+                  : "마지막으로 하나만요"
                 : cur.q}
           </p>
-          {cur.help && !(step === TEASER_STEP && teaserLoading) && !emailGate && (
+          {cur.help && !(step === teaserStep && teaserLoading) && !emailGate && (
             <p className="font-myeongjo mt-3 text-[13px] text-bone-soft tracking-[0.06em]">{cur.help}</p>
           )}
         </div>
+        )}
 
         {/* STEP 0 — 이름 */}
         {step === 0 && (
@@ -773,7 +1069,9 @@ export function SajuWizard({
             autoFocus
             className="ap-input text-center"
             type="text"
-            placeholder="홍길동"
+            // 「홍길동」은 서식 예시의 말이라 이 화면에서 손님이 자기를 대입할 이름이 아니다.
+            // 유입은 100% 3040 여성이다(메타) — 그 자리에 그들의 이름을 둔다.
+            placeholder="김지은"
             value={form.name}
             onChange={(e) => up("name", e.target.value)}
             style={{ fontSize: 19 }}
@@ -867,7 +1165,7 @@ export function SajuWizard({
                 {form.timeUnknown ? "✓" : ""}
               </span>
               {/* 이 버튼도 손님 대사다 — 직녀에서만 반말(입력대본 §3/9 원문) */}
-              {isJiknyeoWorld ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
+              {isNight ? "시간은 잘 몰라" : "태어난 시각을 몰라요"}
             </button>
             <p className="font-myeongjo mt-3 text-center text-[11px] text-bone-faint tracking-[0.06em] leading-[1.75]">
               시각을 몰라도 괜찮아요. 시(時) 기둥만 빼고 나머지 흐름을 봐드립니다.
@@ -977,8 +1275,256 @@ export function SajuWizard({
           </div>
         )}
 
+        {/* ── 재회 여섯 문항(8~13) — 이 상품에서만 도달한다 ── */}
+
+        {/* 8 別 — 이별 시기(년·월). 왜 묻는지는 화면 위 help 가 이미 말한다. */}
+        {isReunion && step === R_BREAKUP_STEP && (
+          <div>
+            <input
+              autoFocus
+              className="ap-input text-center"
+              type="text"
+              inputMode="numeric"
+              placeholder="2026"
+              maxLength={4}
+              value={form.reunion.breakupYear ? String(form.reunion.breakupYear) : ""}
+              onChange={(e) => {
+                const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+                upR("breakupYear", d.length === 4 ? Number(d) : undefined);
+              }}
+              style={{ fontSize: 19, letterSpacing: "0.08em" }}
+            />
+            <p className="mt-2 text-center text-[13px] text-bone-faint">헤어진 해를 네 자리로 적어주세요</p>
+            <div className="mt-5 grid grid-cols-6 gap-1.5">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                const on = form.reunion.breakupMonth === m;
+                return (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => upR("breakupMonth", on ? undefined : m)}
+                    className={`py-3 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[13px] text-bone ${on ? "font-bold" : ""}`}>{m}월</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-[13px] text-bone-faint leading-[1.75]">
+              달까지 알면 그 달 하나만 떼어 봅니다. 기억이 흐리면 해만 적으셔도 됩니다.
+            </p>
+          </div>
+        )}
+
+        {/* 9 際 — 연애 기간. 설문 느낌을 지우는 **빈칸 문장형**(청월당 실측 번안).
+            버튼은 값만 짧게 — 고른 값이 위 문장의 빈칸으로 그대로 들어간다. */}
+        {isReunion && step === R_DATING_STEP && (
+          <div>
+            <p className="font-myeongjo text-center text-[19px] leading-[1.7]" style={{ color: "var(--bone)" }}>
+              연애 기간은{" "}
+              <span
+                className="mx-1 inline-block px-2"
+                style={{
+                  borderBottom: "1.5px solid var(--gold)",
+                  color: form.reunion.datingLength ? "var(--gold-bright)" : "var(--bone-faint)",
+                  fontWeight: 700,
+                  minWidth: 92,
+                }}
+              >
+                {form.reunion.datingLength || "     "}
+              </span>{" "}
+              이에요.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
+              {DATING_LENGTH_OPTIONS.map((o) => {
+                const on = form.reunion.datingLength === o.value;
+                return (
+                  <button
+                    type="button"
+                    key={o.value}
+                    onClick={() => {
+                      upR("datingLength", on ? undefined : o.value);
+                      if (!on) setTimeout(next, 220);
+                    }}
+                    className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                      {o.value}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 10 告 — 이별 통보. 버튼은 손님이 말하는 자리라 반말이다. */}
+        {isReunion && step === R_WHO_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {WHO_ENDED_OPTIONS.map((o) => {
+              const on = form.reunion.whoEnded === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("whoEnded", on ? undefined : o.value);
+                    if (!on) setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-5 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 11 因 — 이별 사유 5지. 선택지에서부터 「네 탓 아님」을 깔아 둔다(그 사람의 ~ 프레임 둘). */}
+        {isReunion && step === R_REASON_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {BREAKUP_REASON_OPTIONS.map((o) => {
+              const on = form.reunion.reason === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("reason", on ? undefined : o.value);
+                    if (!on) setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-4 text-left ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 12 彼 — 그 사람. **전부 건너뛸 수 있다.** 생일이 없어도 내 명식 중심으로 결과지가 성립한다. */}
+        {isReunion && step === R_PARTNER_STEP && (
+          <div>
+            <input
+              className="ap-input text-center"
+              type="text"
+              maxLength={12}
+              placeholder="부를 이름 (예: 준호)"
+              value={form.reunion.partner?.name ?? ""}
+              onChange={(e) => upPartner({ name: e.target.value })}
+              style={{ fontSize: 17 }}
+            />
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              {([["male", "남자"], ["female", "여자"]] as const).map(([g, ko]) => {
+                const on = form.reunion.partner?.gender === g;
+                return (
+                  <button
+                    type="button"
+                    key={g}
+                    onClick={() => upPartner({ gender: on ? undefined : g })}
+                    className={`py-4 ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                  >
+                    <span className={`font-myeongjo text-[15px] text-bone tracking-[0.15em] ${on ? "font-bold" : ""}`}>
+                      {ko}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              className="ap-input mt-3 text-center"
+              type="text"
+              inputMode="numeric"
+              placeholder="생년월일 8자리 (19920315)"
+              maxLength={10}
+              value={fmtBirth(partnerBirthRaw)}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                setPartnerBirthRaw(digits);
+                upPartner({
+                  birthDate:
+                    digits.length === 8 && isValidBirth(digits)
+                      ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+                      : undefined,
+                });
+              }}
+              style={{ fontSize: 17, letterSpacing: "0.08em" }}
+            />
+            {/* 시각은 생일을 받은 뒤에만 묻는다 — 생일이 없으면 시주 하나만 있어도 쓸 데가 없다. */}
+            {form.reunion.partner?.birthDate && (
+              <input
+                className="ap-input mt-3 text-center"
+                type="time"
+                value={form.reunion.partner?.birthTime ?? ""}
+                onChange={(e) => upPartner({ birthTime: e.target.value || undefined })}
+                style={{ fontSize: 17 }}
+              />
+            )}
+            <p className="font-myeongjo mt-4 text-center text-[13px] leading-[1.75] text-bone-faint">
+              {form.reunion.partner?.birthDate
+                ? "그 사람 쪽 흐름까지 같이 읽습니다"
+                : "하나도 모르셔도 됩니다 — 그때는 그쪽 얘기를 지어내지 않고, 손님 흐름으로만 봅니다"}
+            </p>
+          </div>
+        )}
+
+        {/* 13 心 — 지금 마음. **유일한 필수.** 뒤 셋을 고르면 결과지 9장(다시 만나지 않는다면)이 두꺼워진다. */}
+        {isReunion && step === R_FEELING_STEP && (
+          <div className="grid grid-cols-1 gap-2.5">
+            {FEELING_OPTIONS.map((o) => {
+              const on = form.reunion.feeling === o.value;
+              return (
+                <button
+                  type="button"
+                  key={o.value}
+                  onClick={() => {
+                    upR("feeling", o.value);
+                    setTimeout(next, 220);
+                  }}
+                  className={`px-3 py-4 text-left ${on ? "border-[1.5px] border-gold bg-gold-pale" : "border border-gold-line"}`}
+                >
+                  <span className={`font-myeongjo text-[15px] text-bone tracking-[0.06em] ${on ? "font-bold" : ""}`}>
+                    {optLabel(o)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 15 慰 — 위로 한 화면. 넘어가기 전 한 박자(타이트 실측: 감정을 쏟은 직후에 이 화면이 있다).
+            비용 0 짜리 이탈 방지 장치라 값도 버튼도 두지 않는다 — 견우가 한 마디 하고 넘어간다. */}
+        {isReunion && step === R_COMFORT_STEP && (
+          <div className="text-center">
+            {/* 견우 도입 컷 — 손님이 이별을 다 적은 직후라 이 화면이 이 퍼널에서
+                견우를 처음 보는 자리다(랜딩 히어로 다음).
+                2026-09-06: 정지 g-greet(장부에 손 얹고 **올려다보는** 컷)에서 **눈을 내린 새 컷 +
+                루프 영상**으로 갈았다. 두 가지가 같이 좋아진다 —
+                  ① 「기다리는 마음은 압니다」와 눈 내린 얼굴이 맞고,
+                  ② 웹툰부 끝(g-greet)에서 **처음 올려다보는** 순간이 그대로 남는다.
+                    같은 컷을 두 번 쓰면 그 시선이 두 번째엔 아무것도 아니게 된다.
+                치수·폴백은 GyeonuComfortCut 안에 있다(영상 없으면 그림). */}
+            <GyeonuComfortCut />
+            <p className="font-myeongjo text-[17px] leading-[1.9]" style={{ color: "var(--bone)" }}>
+              {/* 「바라보는 놈입니다」에서 「놈」을 뺐다(2026-09-06 형님 「말투는 일부러 이렇게 하는거지??」).
+                  견우 어미는 관찰 ~네요·~군요 / 판정 ~습니다 / 안내 ~봅니다 로 고정한다.
+                  고풍스러운 건 **명사만**(강·장부·복채) — 어미까지 사극이 되면 캐릭터가 갈린다. */}
+              저도 일 년에 하루만 만납니다.
+              <br />
+              기다리는 마음은 저도 압니다.
+            </p>
+            <p className="font-myeongjo mt-6 text-[15px] leading-[1.9]" style={{ color: "var(--bone-soft)" }}>
+              이제 장부를 같이 열어 봅니다.
+            </p>
+          </div>
+        )}
+
         {/* STEP 7 — 고민. 산군(포괄)은 카테고리 칩이 상품과 안 맞아(전 영역을 어차피 다룸) 구체 물음 예시 탭으로 대체 */}
-        {step === CONCERN_STEP && (
+        {step === concernStep && (
           <div>
             {productSlug === "sangun-sinjeom" ? (
               <div className="flex flex-wrap justify-center gap-2">
@@ -1031,29 +1577,39 @@ export function SajuWizard({
                 className="ap-input text-center"
                 type="text"
                 maxLength={80}
-                placeholder={imm ? "직접 물어봐도 된다 — 예) 내년에 이직해도 되나" : "직접 적어주셔도 돼요 — 예) 내년에 이직해도 될까요?"}
+                placeholder={
+                  imm
+                    ? "직접 물어봐도 된다 — 예) 내년에 이직해도 되나"
+                    : isReunion
+                      ? "직접 적으셔도 됩니다 — 예) 지금 연락해도 될까요?"
+                      : "직접 적어주셔도 돼요 — 예) 내년에 이직해도 될까요?"
+                }
                 value={form.concernText}
                 onChange={(e) => up("concernText", e.target.value)}
                 style={{ fontSize: 15 }}
               />
               <p className="mt-2 text-center text-[11px] text-bone-faint">
-                {imm ? "적으면 그 물음부터 정면으로 답해준다" : "적어주시면 그 질문부터 정면으로 답해드려요"}
+                {imm
+                  ? "적으면 그 물음부터 정면으로 답해준다"
+                  : isReunion
+                    ? "적어주시면 그 물음부터 정면으로 답합니다"
+                    : "적어주시면 그 질문부터 정면으로 답해드려요"}
               </p>
             </div>
           </div>
         )}
 
-        {/* STEP 8 — 확인 · 직녀는 그 뒤에 이메일 한 화면을 더 둔다 */}
-        {step === CONFIRM_STEP &&
+        {/* STEP 8 — 확인 · 밤 무대 상품(직녀·견우)은 그 뒤에 이메일 한 화면을 더 둔다 */}
+        {step === confirmStep &&
           (emailGate ? (
             <div>
               <p className="font-myeongjo text-center text-[17px] leading-[1.8]" style={{ color: "var(--bone)" }}>
                 다 되면, 어디로 보내 드릴까요?
               </p>
               <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-                지금 화면에서 바로 열려요.
+                {isReunion ? "지금 화면에서 바로 열립니다." : "지금 화면에서 바로 열려요."}
                 <br />
-                이 주소로도 한 부 보내 둘게요.
+                {isReunion ? "이 주소로도 한 부 보내 두겠습니다." : "이 주소로도 한 부 보내 둘게요."}
               </p>
               <input
                 autoFocus
@@ -1101,11 +1657,53 @@ export function SajuWizard({
               imm={imm}
               optTone={optTone}
               skipped={skipped}
+              concernStep={concernStep}
+              // 재회 답도 확인 화면에 세운다 — 여기 없는 답은 손님이 고칠 방법이 없다.
+              extraRows={
+                isReunion
+                  ? ([
+                      [
+                        "이별 시기",
+                        form.reunion.breakupYear
+                          ? `${form.reunion.breakupYear}년${form.reunion.breakupMonth ? ` ${form.reunion.breakupMonth}월` : ""}`
+                          : "—",
+                        R_BREAKUP_STEP,
+                      ],
+                      ["연애 기간", form.reunion.datingLength || "—", R_DATING_STEP],
+                      [
+                        "이별 통보",
+                        form.reunion.whoEnded ? displayOf(WHO_ENDED_OPTIONS, form.reunion.whoEnded, optTone) : "—",
+                        R_WHO_STEP,
+                      ],
+                      [
+                        "이별 사유",
+                        form.reunion.reason ? displayOf(BREAKUP_REASON_OPTIONS, form.reunion.reason, optTone) : "—",
+                        R_REASON_STEP,
+                      ],
+                      [
+                        "그 사람",
+                        [
+                          form.reunion.partner?.name,
+                          form.reunion.partner?.gender === "male" ? "남자" : form.reunion.partner?.gender === "female" ? "여자" : "",
+                          form.reunion.partner?.birthDate?.replace(/-/g, "."),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—",
+                        R_PARTNER_STEP,
+                      ],
+                      [
+                        "지금 마음",
+                        form.reunion.feeling ? displayOf(FEELING_OPTIONS, form.reunion.feeling, optTone) : "—",
+                        R_FEELING_STEP,
+                      ],
+                    ] as [string, string, number][])
+                  : undefined
+              }
             />
           ))}
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
-        {step === TEASER_STEP && (
+        {step === teaserStep && (
           <TeaserStep
             teaser={teaser}
             pillars={pillars}
@@ -1118,7 +1716,18 @@ export function SajuWizard({
             productSlug={productSlug}
             price={price}
             compareAtPrice={compareAtPrice}
+            // 번들 예고 한 줄 — 추천 번들은 이 컴포넌트(부모)만 아니까 문장으로 만들어 내린다.
+            bundleLine={
+              recommended && recommended.includes.length > 1
+                ? `직녀 연애사주까지 묶으면 ${formatKRW(recommended.price)} — 결제할 때 고를 수 있다`
+                : undefined
+            }
             jiknyeoAssets={jiknyeoAssets}
+            reviews={reviews}
+            // 콜드오픈 — 감시점은 티저 안에 있고(타이틀 드랍 직후), 헤더·고정바는 부모가 그린다.
+            coldOpen={coldOpen}
+            coldOpenDone={coldOpenDone}
+            onColdOpenDone={markColdOpenDone}
           />
         )}
       </div>
@@ -1128,12 +1737,12 @@ export function SajuWizard({
           우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
           "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
       <div id="pay" className="relative z-[2] w-full max-w-[560px] mx-auto scroll-mt-6 px-5 pb-7">
-        {teaserLoading || emailGate ? null : step < TOTAL - 1 ? (
+        {teaserLoading || emailGate ? null : step < total - 1 ? (
           <>
             <button
               type="button"
               onClick={next}
-              disabled={!canNext() || (step === CONFIRM_STEP && teaserLoading)}
+              disabled={!canNext() || (step === confirmStep && teaserLoading)}
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
@@ -1146,7 +1755,7 @@ export function SajuWizard({
                   "이거 누르면 결제되는 줄" 알고 멈췄다. 몰입 상품은 값을 뺐지만 겁은 그대로 남는다.
                   버튼은 손님이 누르는 것이라 캐릭터 말투가 아니라 "내가 뭘 얻는지"로 쓴다.
                   "겉장부터 펴봐라"는 겉장이 뭔지 모르면 되짚게 되고, 되짚는 순간 몰입이 끊긴다. */}
-              {step === CONFIRM_STEP ? "무료로 먼저 보기" : "다음"}
+              {step === confirmStep ? "무료로 먼저 보기" : isReunion && step === R_COMFORT_STEP ? "장부 열기" : "다음"}
             </button>
             {cur.optional && (
               <button
@@ -1169,12 +1778,18 @@ export function SajuWizard({
                   const on = o.productId === selected.productId;
                   const pct = discountPct(o);
                   const isRec = !!recommended && o.productId === recommended.productId;
+                  // 재회는 **단품이 주상품**이다 — 묶음과 같은 크기로 나란히 세우면 결제 직전에
+                  // 「어느 걸 사지」를 다시 묻게 된다(GPT 대조 진단 2026-09-06 ⑧).
+                  // 레퍼런스 실측: 청월당은 비교 대상을 작게 두고 자기 상품 하나만 크게 세운다.
+                  // 그래서 여기서는 **단품을 키우고 묶음은 add-on 크기로** 둔다(다른 상품은 그대로).
+                  const isBundleOpt = o.includes.length > 1;
+                  const lead = isReunion && !isBundleOpt;
                   return (
                     <button
                       key={o.productId}
                       type="button"
                       onClick={() => setSelectedId(o.productId)}
-                      className="relative w-full border px-4 py-3 text-left"
+                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
                       style={{
                         borderColor: on
                           ? sheetAccent
@@ -1184,7 +1799,7 @@ export function SajuWizard({
                           : "transparent",
                       }}
                     >
-                      {isRec && (
+                      {isRec && !isReunion && (
                         <span
                           className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
                           style={{ background: sheetAccent, color: imm ? "#241a08" : isInyeon ? "#1a1330" : "#1b1230" }}
@@ -1194,34 +1809,42 @@ export function SajuWizard({
                       )}
                       <div className="flex items-baseline justify-between gap-2">
                         <span
-                          className="font-myeongjo text-[14px] font-bold leading-[1.4]"
-                          style={{ color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)" }}
+                          className="font-myeongjo font-bold leading-[1.4]"
+                          style={{
+                            color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)",
+                            fontSize: isReunion && isBundleOpt ? 12.5 : 14,
+                          }}
                         >
                           {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
                         </span>
                         <span className="shrink-0 text-right">
                           {o.compareAtPrice && o.compareAtPrice > o.price && (
-                            <span className="mr-1.5 text-[11px] line-through" style={{ color: "var(--bone-faint)" }}>
+                            <span className="mr-1.5 text-[12px] line-through" style={{ color: "var(--bone-faint)" }}>
                               {formatKRW(o.compareAtPrice)}
                             </span>
                           )}
                           <span
-                            className="font-myeongjo text-[15px] font-bold"
-                            style={{ color: sheetAccent }}
+                            className="font-myeongjo font-bold"
+                            style={{ color: sheetAccent, fontSize: lead ? 24 : isReunion ? 13 : 15 }}
                           >
                             {formatKRW(o.price)}
                           </span>
                         </span>
                       </div>
                       {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
+                      {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
+                          문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
                       {pct != null && (
                         <p
-                          className="mt-1 text-[11px]"
-                          style={{ color: pct >= 40 && !isInyeon ? "#d8563f" : "var(--bone-faint)" }}
+                          className={`mt-1 ${isReunion && isBundleOpt ? "text-[11px]" : "text-[13px]"}`}
+                          // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
+                          style={{ color: pct >= 40 && !isNight ? "#d8563f" : "var(--bone-faint)" }}
                         >
                           {pct}% 할인
+                          {/* ⚠ 「하나 더」를 고정으로 쓰면 3종 묶음에서 거짓말이 된다(2026-09-02 번들 ③ 신설).
+                              지금 상품을 뺀 나머지 개수를 세어 말한다 — 시트에서 손님이 직접 검산하는 줄이다. */}
                           {o.includes.length > 1 &&
-                            ` · ${formatKRW(o.price - price)} 더 내고 ${isInyeon ? "결과지 하나 더" : "장부 한 권 더"}`}
+                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight)}`}
                         </p>
                       )}
                     </button>
@@ -1292,7 +1915,9 @@ export function SajuWizard({
                 "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
                 19,900 보다 할인가 18,000 을 먼저 누른다 = 결제 의사가 가장 높은 사람만 골라
                 에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
-            <p className="text-[11px] text-bone-faint text-center">
+            {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
+                안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
+            <p className="text-[13px] text-bone-faint text-center">
               {imm
                 ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
                 : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
@@ -1302,7 +1927,7 @@ export function SajuWizard({
           </>
         )}
         {imm && (
-          <p className="mt-3 text-center text-[11px]" style={{ color: "#5b6274" }}>
+          <p className="mt-3 text-center text-[11px]" style={{ color: "#7a8296" }}>
             토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
           </p>
         )}
@@ -1404,22 +2029,35 @@ function LedgerPanel({ children }: { children: React.ReactNode }) {
  * 밝은 박스가 화면을 안 먹어서 어두운 신당이 끝까지 유지된다.
  * 사진은 한쪽(위/아래)이 비어 있게 발주했고(이미지지시서_티저컷 v2), 그 빈 쪽에 앉힌다.
  */
-function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactNode }) {
+/** `invert` = **반전 절단.** 카카오웹툰 「칠흑이 삼킨 여름」 54화 실측(2026-08-29):
+ *  회차 내내 흰 말풍선·먹 글자로 가다가 **마지막 대사 하나만 검정 판 + 흰 글자로 뒤집고 끊는다.**
+ *  같은 옷을 한 번 뒤집는 것만으로 「지금까지와 다른 말」이 된다 — 새 부품보다 세다.
+ *  티저에서 이 자리는 **가린 값을 읽다 끊는 한 줄**(▓▓년 ▓▓월 …여기까지)이다.
+ *  ⚠ 한 판에 딱 한 번. 두 번 쓰면 반전이 평상복이 되고 절단이 사라진다. */
+function CutSay({ at, children, invert = false }: { at: "top" | "bottom"; children: React.ReactNode; invert?: boolean }) {
   return (
     <div className={`absolute inset-x-4 ${at === "top" ? "top-4" : "bottom-4"} z-10`}>
       <div
         className="relative rounded-[5px] px-4 py-3"
-        style={{
-          // 반투명 한지 — 사진이 비쳐 보여야 "그 장면 안의 말"이 된다
-          background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
-          border: "1px solid rgba(201,185,142,0.8)",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
-          backdropFilter: "blur(2px)",
-        }}
+        style={
+          invert
+            ? {
+                background: "linear-gradient(180deg,#14100a,#080605)",
+                border: "1px solid #8f2b1e",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.75)",
+              }
+            : {
+                // 반투명 한지 — 사진이 비쳐 보여야 "그 장면 안의 말"이 된다
+                background: "linear-gradient(180deg,rgba(243,234,214,0.94),rgba(233,222,194,0.92))",
+                border: "1px solid rgba(201,185,142,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.55)",
+                backdropFilter: "blur(2px)",
+              }
+        }
       >
         <span
           className="absolute -top-2.5 right-2.5 rounded-[2px] px-2 pb-[2px] pt-[3px] text-[11px] font-semibold tracking-[0.22em]"
-          style={{ background: "#8f2b1e", color: "#f3e6cf" }}
+          style={invert ? { background: "#f3e6cf", color: "#8f2b1e" } : { background: "#8f2b1e", color: "#f3e6cf" }}
         >
           산군
         </span>
@@ -1429,8 +2067,8 @@ function CutSay({ at, children }: { at: "top" | "bottom"; children: React.ReactN
             그림 위에 얹힌 글은 그림을 따라가야 컷 안에서 비율이 안 깨진다. 본문·표는 고정 px 유지.
             상한 22px: 큰 화면에서 대사가 한 줄을 다 먹어 컷을 가리는 걸 막는다. */}
         <p
-          className="font-myeongjo font-semibold leading-[1.75] text-[#241d10]"
-          style={{ fontSize: "min(4.9cqw, 28px)" }}
+          className="font-myeongjo font-semibold leading-[1.75]"
+          style={{ fontSize: "min(4.9cqw, 28px)", color: invert ? "#f3e6cf" : "#241d10" }}
         >
           {children}
         </p>
@@ -1459,6 +2097,8 @@ function TeaserCut({
   tall,
   say,
   sayAt = "bottom",
+  invert = false,
+  lead = false,
 }: {
   src: string;
   alt: string;
@@ -1469,12 +2109,17 @@ function TeaserCut({
   /** 컷 위에 얹을 대사. 주면 CutSay 로 그리고, 아래 별도 대사 띠를 세울 필요가 없어진다. */
   say?: React.ReactNode;
   sayAt?: "top" | "bottom";
+  /** 대사를 검정 판·흰 글자로 뒤집는다 — **티저 전체에서 딱 한 번**(가린 값을 읽다 끊는 자리) */
+  invert?: boolean;
+  /** 정점 앞 한 박자 — 웹툰은 결정적 컷 앞에서 여백을 크게 벌린다(칠흑 48·54화 실측).
+   *  컷이 줄줄이 붙어 있으면 어느 것이 정점인지 눈이 못 고른다. */
+  lead?: boolean;
 }) {
   return (
     // 위저드 컨테이너의 px-5(20px)를 되물려 컬럼 끝까지 채운다.
     // 티저 본문 판의 좌우 패딩을 0으로 걷었으므로 이제 20px 만 되물리면 된다(전엔 -mx-9 = 20+16).
     <div
-      className={`relative -mx-5 mt-6 overflow-hidden ${tall ? "" : CUT_H[size]}`}
+      className={`relative -mx-5 ${lead ? "mt-14" : "mt-6"} overflow-hidden ${tall ? "" : CUT_H[size]}`}
       // containerType: 대사(CutSay)가 이 컷의 폭을 기준으로 커지게 하는 자다.
       // 없으면 CutSay 의 cqw 가 위쪽 조상 컨테이너를 잡아 엉뚱한 크기가 된다.
       style={{ containerType: "inline-size", ...(tall ? { aspectRatio: "4 / 5" } : {}) }}
@@ -1502,7 +2147,7 @@ function TeaserCut({
           }}
         />
       )}
-      {say && <CutSay at={sayAt}>{say}</CutSay>}
+      {say && <CutSay at={sayAt} invert={invert}>{say}</CutSay>}
     </div>
   );
 }
@@ -1623,6 +2268,71 @@ function DestinyCard({ face }: { face: PartnerFace }) {
   );
 }
 
+/** 콜드오픈 배경 영상 — 정지 그림이 서 있던 자리를 그대로 채우는 무음 클립.
+ *
+ *  ⚠ React 는 `muted` 를 **SSR 마크업에 안 찍는다**(속성이 아니라 프로퍼티로만 붙인다).
+ *    그래서 첫 페인트의 <video> 를 브라우저가 「소리 있는 영상」으로 보고 자동재생을 막아
+ *    poster 만 남는 일이 생긴다. 마운트 때 ref 로 el.muted 를 직접 세운 뒤 play() 를 한 번 부른다.
+ *    거부되면(저전력·데이터 절약 모드) 조용히 삼켜 poster(기존 webp)가 그대로 보이게 둔다 —
+ *    영상이 안 도는 환경에서도 첫 화면은 전과 똑같다.
+ *
+ *  loop=false(신당)면 끝 프레임에서 멈춘다 — 카메라가 계단을 타고 올라가는 컷이라 되감기면 튄다. */
+function ColdOpenVideo({
+  src,
+  poster,
+  loop = false,
+}: {
+  src: string;
+  poster: string;
+  loop?: boolean;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    void el.play().catch(() => {});
+  }, []);
+  // 화면 밖이면 루프를 멈춘다 — 안 멈추면 손님이 티저 본문을 읽는 내내 탱화가 계속 돌아
+  // 폰이 뜨거워진다(BgMedia 가 `/jiknyeo` 실측으로 이미 쓰는 장치, 규칙을 그대로 따른다).
+  // rootMargin 200px — 스크롤로 들어오기 직전에 이미 돌고 있어야 검은 칸이 안 보인다.
+  //
+  // ⚠ loop 인 컷(탱화)에만 건다. 신당은 1회 재생 후 끝 프레임에 서 있는 컷이라,
+  //   되돌아왔을 때 play() 를 부르면 **처음부터 다시 올라가** 도입의 정적이 깨진다.
+  useEffect(() => {
+    if (!loop) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const shown = entries[0]?.isIntersecting ?? true;
+        if (shown) void el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [loop, src]);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop={loop}
+      playsInline
+      preload="auto"
+      aria-hidden
+      tabIndex={-1}
+      disablePictureInPicture
+      draggable={false}
+      className="pointer-events-none h-full w-full select-none object-cover"
+    />
+  );
+}
+
 // 결제 전 무료 티저 — 콜드리딩 3문장 + 크게 갈리는 해(연도만) + 잠긴 줄.
 // 티저를 못 만든 경우(한도·API 장애)에도 결제 흐름은 그대로 살아 있어야 하므로 조용히 비운다.
 function TeaserStep({
@@ -1637,7 +2347,12 @@ function TeaserStep({
   productSlug,
   price,
   compareAtPrice,
+  bundleLine,
   jiknyeoAssets,
+  reviews = [],
+  coldOpen = false,
+  coldOpenDone = true,
+  onColdOpenDone,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -1650,15 +2365,39 @@ function TeaserStep({
   productSlug: string;
   price: number; // 세일즈 꼬리의 가격 앵커용 — 하단 결제 버튼과 같은 값을 쓴다
   compareAtPrice?: number | null; // 정가 — VS 가격판의 취소선
+  bundleLine?: string; // 번들 예고 한 줄 — 추천 번들 값은 부모가 만들어 내린다
   jiknyeoAssets?: AssetMap;
+  /** 승인된 실후기(산군). 3건 미만이면 블록이 스스로 안 그린다. */
+  reviews?: SangunReview[];
+  /** `?cold=1` — 콜드오픈 판으로 그릴 것인가. false(기본)면 아래 게이트가 전부 옛 판으로 돈다. */
+  coldOpen?: boolean;
+  /** 산군 콜드오픈이 끝났는가(타이틀 드랍 통과). 산군 외 상품은 기본값 true 라 영향이 없다. */
+  coldOpenDone?: boolean;
+  /** 콜드오픈 감시점을 지났을 때 부모에게 알린다(헤더·고정바를 그 뒤에 연다). */
+  onColdOpenDone?: () => void;
 }) {
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
+  // 콜드오픈 감시점 — 타이틀 드랍 아래 숨(180px)이 화면에 걸리면 도입이 끝난 것으로 친다.
+  // 훅이라 아래 조기 반환보다 위에 있어야 호출 순서가 안 깨진다(inkRef 와 같은 이유).
+  const { ref: coldRef, inView: coldInView } = useInView<HTMLDivElement>();
+  useEffect(() => {
+    if (coldInView) onColdOpenDone?.();
+  }, [coldInView, onColdOpenDone]);
   // 직녀(인연)판인가 — polite 렌더 경로는 존댓말 상품 4종과 공유라 slug 로만 갈라야 한다.
   const isInyeon = productSlug === "inyeon-saju";
-  // 인연·결혼이 같이 쓰는 껍데기(판·컷·로딩 체크리스트)는 이 가드로 연다.
+  // 산군판 — 콜드오픈·등장 절단·어드민 웹툰 차단이 이 상품에만 걸린다.
+  const isSangunWorld = productSlug === "sangun-sinjeom";
+  /** 콜드오픈 판으로 그릴 것인가 — 산군 **이면서** `?cold=1` 일 때만.
+   *  다섯 자리(어드민 웹툰 차단 · 콜드오픈 블록 · t1 말풍선 · 「복채」 컷 · 등장 절단 · 고정바)가
+   *  전부 이 하나로 열리고 닫힌다. false 면 DOM 이 스위치 이전(937a2af)과 같다. */
+  const useColdOpen = isSangunWorld && coldOpen;
+  // 인연·결혼이 같이 쓰는 껍데기(직녀 컷·목차·구매 카드)는 이 가드로 연다.
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
+  // 견우(재회) — 조판(밝은 판·달빛 부품)은 같이 쓰고 **직녀 그림은 한 장도 안 쓴다**.
+  const isReunion = productSlug === REUNION_SLUG;
+  const isNight = isJiknyeoWorld || isReunion;
   // `?skin=pink` — 옛 분홍 티저를 그대로 본다. 배포를 되돌리지 않고 두 판을 나란히 비교하는 문.
   const pinkSkin = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("skin") === "pink";
 
@@ -1667,10 +2406,14 @@ function TeaserStep({
       <div className="py-8 text-center">
         <span className="font-brush animate-pulse block text-[44px] leading-none text-gold-bright">命</span>
         <p className="font-myeongjo mt-5 text-[13px] text-bone-soft tracking-[0.06em]">
-          {imm ? "만세력에서 네 여덟 글자를 꺼내는 중이다…" : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
+          {imm
+            ? "만세력에서 네 여덟 글자를 꺼내는 중이다…"
+            : isReunion
+              ? "만세력에서 여덟 글자를 꺼내는 중입니다…"
+              : "만세력에서 여덟 글자를 꺼내는 중이에요…"}
         </p>
         {/* 대기를 「기다림」이 아니라 「계산이 도는 증거」로 바꾼다 — 항목은 실제로 도는 계산들이다 */}
-        {isJiknyeoWorld && <LoadingChecklist />}
+        {isNight && <LoadingChecklist />}
       </div>
     );
   }
@@ -1694,13 +2437,112 @@ function TeaserStep({
   // -mx-5: 웹툰도 사진 컷과 같이 컬럼 끝까지 나간다. 전엔 컬럼 안쪽(520)이라 사진 컷(558)보다
   // 좁았고, 대사 크기가 컷 폭 비례라 **같은 말풍선인데 웹툰 쪽만 작게** 나왔다.
   // 규칙: 그림(사진 컷·웹툰 컷)은 끝까지, 판·카드는 한 단 안쪽.
-  const webtoon = cuts.length > 0 && Object.keys(tokens).length > 0
+  // 콜드오픈을 켠 산군만 예외 — 티저 맨 위가 **콜드오픈**이 된다(아래 블록). 어드민 웹툰까지
+  // 같이 얹으면 그림이 두 겹으로 시작해 도입의 정적이 깨진다.
+  // 스위치가 없으면 산군도 다른 상품과 똑같이 어드민 웹툰을 그대로 얹는다.
+  const webtoon = !useColdOpen && cuts.length > 0 && Object.keys(tokens).length > 0
     ? <WebtoonPage cuts={cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
     : null;
 
+  // ════ 콜드오픈 — 그림이 먼저다. 헤더도 제목도 진행바도 아직 없다. ════
+  //
+  // 웹툰 몰입 실측(웹툰_몰입판독_실측_2026-09-03.md) 4작품 만장일치의 도입 문법:
+  //   그림 → 흑숨 → 그림 → 흑숨 → **타이틀 드랍**(세계를 보여준 뒤에야 이름을 준다).
+  // 숨 값(200/160/220/180)은 그 실측의 숨 중앙값 대역(133~284px)에서 고른 것이다.
+  //
+  // ⚠ px 는 전부 **인라인**이다. 이 리포의 dev 는 처음 쓰는 Tailwind 유틸리티를 생성하지
+  //   못한다(mt-11 실측 0px 사고 — 아래 4章 카드 주석과 같은 병). 재야 하는 값은 인라인으로.
+  // ⚠ 컷은 TeaserCut 과 같은 풀블리드 규칙(-mx-5)을 쓰되, 비율이 4:5 도 띠도 아니라
+  //   (941/1672 · 1122/1402) aspectRatio 를 직접 준다.
+  //
+  // ⚠ 래퍼가 **먹색 판**이다. 이 판이 없으면 컷과 컷 사이의 숨(200/160/220/180)이 그냥 투명이라
+  //   위저드의 **고정 배경 레이어**(제단 앞 산군 뒷모습 face.mp4, opacity .7)가 그대로 비쳐,
+  //   「타이틀 드랍 전엔 사람을 안 보여준다」는 도입 원칙이 첫 화면부터 깨진다
+  //   (2026-09-05 실측: 나레이션도 타이틀도 산군 뒷모습 위에 떠 있었다).
+  //   시안(design/sangun/티저시안_콜드오픈_2026-09-03.html)의 그 자리는 순수 #070609 다.
+  // ⚠ 래퍼가 -mx-5 로 컬럼 패딩을 되물어 **화면 끝까지** 먹색이 되므로, 안쪽 컷·레터링의
+  //   -mx-5 는 뺀다(두 번 되물면 375 가 아니라 415 로 나가 옆이 잘린다). 글자 두 줄만 px-5 로
+  //   원래의 335 글상자를 되돌려 준다 — 줄바꿈 폭이 전과 같아야 한다.
+  // ⚠ 본문 구간은 이 판 **바깥**이다. 감시점을 지난 뒤 장부·구매 카드에는 전처럼 배경이 비친다.
+  // ⚠ paddingTop 20 / marginTop -20 은 **레이아웃을 안 바꾸는 덮개**다. 컬럼(중앙 div)의 py-5 때문에
+  //   판이 y=20 에서 시작해 화면 맨 위 20px 띠만 먹색 밖이었다(그 자리에 배경 영상이 비쳤다).
+  //   패딩으로 판을 위로 20 늘리고 같은 값의 음수 마진으로 되물리면 뒤 컷들의 y 는 그대로다(신당 20 유지).
+  const coldOpenBlock = useColdOpen ? (
+    <div
+      className="-mx-5"
+      style={{ background: "#070609", position: "relative", zIndex: 1, paddingTop: 20, marginTop: -20 }}
+    >
+      {/* 화면1 — 밤 산길 아래에서 올려다본 신당. 글자 0. 세로 풀블리드로 화면을 채운다.
+          카메라가 계단을 타고 올라가는 7초 컷이라 **루프 없이** 한 번 돌고 끝 프레임에서 선다
+          (되감으면 올라가던 계단이 다시 아래로 떨어져 도입의 정적이 깨진다).
+          poster 는 전에 쓰던 정지 그림 그대로 — 영상이 안 도는 환경에서 첫 화면이 변하지 않는다. */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: "941 / 1672" }}>
+        <ColdOpenVideo src="/products/sangun/t0-shrine-dyn.mp4" poster="/products/sangun/t0-shrine.webp" />
+      </div>
+      <div style={{ height: 200 }} />
+      {/* 어둠 위 공수 한 줄 — 기존 t1 대사의 **앞줄**이 여기로 올라왔다(t1 은 뒷줄만 남는다). */}
+      <p
+        className="font-myeongjo px-5 text-center"
+        style={{ fontSize: 19, lineHeight: 1.9, color: "#e9dfc9" }}
+      >
+        가만있어 봐라.
+        <br />
+        …여기 있군.
+      </p>
+      <div style={{ height: 160 }} />
+      {/* 화면2 — 산군의 기척(신당 벽 호랑이 탱화). 아직 사람은 안 준다. 글자 0. */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: "1122 / 1402" }}>
+        {/* 이쪽은 촛불만 흔들리는 무이음 루프라 계속 돈다(loop). 그라데이션은 그대로 위에 얹는다. */}
+        <ColdOpenVideo src="/products/sangun/t0-tiger-loop.mp4" poster="/products/sangun/t0-tiger.webp" loop />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg,rgba(7,6,9,0.35),rgba(7,6,9,0) 22%,rgba(7,6,9,0) 70%,rgba(7,6,9,0.6))",
+          }}
+        />
+      </div>
+      {/* ════ 타이틀 드랍 — 세계를 먼저 보여준 뒤에야 이름을 준다 ════ */}
+      <div style={{ height: 220 }} />
+      {/* 44 는 **화면 끝** 기준이다 — 컬럼 패딩은 이미 래퍼의 -mx-5 가 되물었으므로 여기선 안 쓴다
+          (한 번 더 되물면 415 로 나가고, 안 되물린 채 두면 20+44=64 가 되어 레터링이 262px 로 쪼그라든다, 실측). */}
+      <div style={{ padding: "0 44px" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/products/sangun/lettering-baksu-brush.webp"
+          alt="박수무당"
+          className="w-full select-none"
+          draggable={false}
+          style={{ filter: "drop-shadow(0 6px 22px rgba(232,201,106,0.28))" }}
+        />
+      </div>
+      <p
+        className="font-myeongjo px-5 text-center"
+        style={{
+          marginTop: 22,
+          fontSize: 12,
+          letterSpacing: "0.5em",
+          textIndent: "0.5em",
+          color: "rgba(215,206,188,0.6)",
+        }}
+      >
+        명운록
+      </p>
+      {/* 감시점 — 이 숨에 손님이 닿으면 콜드오픈이 끝난다(헤더·하단 고정바가 그때 열린다). */}
+      <div ref={coldRef} aria-hidden style={{ height: 180 }} />
+    </div>
+  ) : null;
+
   return (
     <>
+    {coldOpenBlock}
     {webtoon}
+    {/* 재회 웹툰부 — **밝은 판보다 먼저** 온다(2026-09-05 3차, 형님 실측 「그림 끼운 랜딩이다」).
+        컷 일곱 장과 반전 절단이 자기 밤 배경 위에서 한 장면으로 이어지고, 절단이 끊은 뒤에야
+        아래 밝은 판(상품부)이 시작한다 — 청월당 재회 티저의 「웹툰 먼저, 상품 나중」 그대로다.
+        판 바깥이라 여기 컷은 **컬럼 끝까지**(-20) 나간다. 판 안의 컷(g-farewell·p-close)은 -16 이다. */}
+    {isReunion && teaser?.reunion && <GyeonuWebtoon data={teaser.reunion} name={name} />}
     {/* 티저는 "펴놓은 장부" 한 장으로 앉힌다. 배경에 박수 사진이 opacity .7 로 깔려 있어서
         글자만 얹으면 얼굴·촛불 무늬가 표와 문장 사이로 비쳐 읽기가 힘들어진다.
         사진은 판 바깥으로만 보이게 두면 몰입은 유지되면서 본문은 종이처럼 읽힌다. */}
@@ -1712,9 +2554,9 @@ function TeaserStep({
       //   그래서 밝기는 유지하고 색만 달빛으로 옮겨 **밤 위에 뜬 판**으로 만들었다.
       //   `-mx-5` 를 뺀 이유: 화면 폭을 꽉 채우면 판이 아니라 그냥 배경이 된다 — 좌우 여백이 있어야 뜬다.
       //   되돌리려면 `?skin=pink` (globals.css `.teaser-pink`).
-      className={isJiknyeoWorld ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
+      className={isNight ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
       style={
-        imm && !isJiknyeoWorld
+        imm && !isNight
           ? {
               background: "rgba(7,6,9,0.86)",
               border: "1px solid var(--gold-pale)",
@@ -1735,14 +2577,23 @@ function TeaserStep({
       {imm && (
         <>
           {/* 장부를 펴 든 손. 대사는 컷 위에 — 밝은 박스를 아래에 쌓지 않아야 신당이 어둡게 유지된다.
-              말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다"). 무당은 손님한테
-              설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리). */}
+              옛 판(스위치 없음): 말투는 혼잣말 → 손님으로 전환("가만있어 봐라" → "네 여덟 글자다").
+              무당은 손님한테 설명하기 전에 자기가 보면서 먼저 반응한다(타이트 "흥미롭네"·"흠.." 자리).
+              콜드오픈 판(`?cold=1`): 혼잣말은 **콜드오픈 나레이션이 가져간다** — 여기 남기면 같은
+              문장이 한 페이지 안에 두 번 나온다. 손님에게 건네는 뒷줄만 남기고 글자 수도
+              하드코딩하지 않는다(시각 모름이면 여섯 — 바로 아래 원국 판의 「이 날에서 나온 여섯 글자」와 같은 말). */}
           <TeaserCut
             src="/products/sangun/t1-open.webp"
             alt="옛 장부를 펴 든 손"
             tall
             sayAt="top"
-            say={<>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>}
+            say={
+              useColdOpen ? (
+                <>네 {GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`} 글자다.</>
+              ) : (
+                <>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>
+              )
+            }
           />
         </>
       )}
@@ -1753,14 +2604,38 @@ function TeaserStep({
         <InyeonCut
           id="j1"
           assets={jiknyeoAssets}
-          sayAt="top"
+          // 좌하단 치마 위 — 얼굴(y8~40)과 세로로 완전히 갈린다. 꼬리는 위쪽 얼굴을 가리킨다.
+          sayBox={SAY_BOX_DEFAULT.j1}
           say={
-            <ComicSay side="left" tail="down">
+            <ComicSay tail="up" point="right">
               <span>{name ? `${name}님 사주,` : "사주,"}</span>
               <span>방금 다 읽었어요.</span>
             </ComicSay>
           }
         />
+      )}
+
+      {/* T1 = 달력. 「언제」를 파는 상품이라 상품부의 첫 블록이 달력이다(기획서 §6-T1).
+          아래 원국표·콜드리딩이 「이 달력이 어디서 나왔는지」를 뒤이어 증명한다. */}
+      {/* 56 → 48: 이 블록의 마지막이 등불 컷이던 시절의 눈금이었다. 컷은 웹툰부로 올라갔고
+          지금 마지막은 글 두 줄이라, 글 → 글 사이 기본 눈금(48)로 되돌린다.
+          ⚠ 인라인인 이유: `mb-12` 는 이 리포에 없던 클래스라 dev 의 Tailwind 가 생성을
+            놓친다(실측 — 바꿔도 높이가 1px 도 안 움직였다. 위 marginTop:44 주석과 같은 병). */}
+      {isReunion && teaser?.reunion && (
+        <div style={{ marginBottom: 48 }}>
+          <ReunionCalendar data={teaser.reunion} name={name} />
+        </div>
+      )}
+
+      {/* 상품부 머리 셋 중 둘째 — **재회에만** 붙인다(GPT 대조 진단 2026-09-06).
+          여기서부터 원국 → 방금 계산 발췌 → 콜드리딩이 이어지는데, 손님 눈에는
+          「명식표 · 아바타 · 노란 카드 · 세 줄」이 **서로 무관한 UI 넉 장**으로 나열된다.
+          이 한 줄이 그 넷을 「왜 그 답이 나왔는지」라는 한 가지 이유로 묶는다.
+          앞(열두 달)과 뒤(목차) 머리와 같은 옷이라 세 구획이 같은 문법으로 읽힌다. */}
+      {isReunion && shown.length > 0 && (
+        <div className="mt-10 mb-1">
+          <BrushHead lines={["왜 그렇게 나왔는지도", "같이 봅니다."]} />
+        </div>
       )}
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
@@ -1794,7 +2669,9 @@ function TeaserStep({
         >
           {birthDate && (
             <p
-              className="font-myeongjo text-center text-[11px] tracking-[0.06em]"
+              // 11 → 13px. 표의 머리글인데 표 안 어떤 글자보다도 작았다 — 「내 생일로 계산했다」를
+              // 증명하는 유일한 줄이라, 증거 화면에서 이게 제일 작으면 증거가 안 선다.
+              className="font-myeongjo text-center text-[13px] tracking-[0.06em]"
               // 이 줄은 표의 머리글 역할(어느 날짜에서 나온 글자인지)인데 가장 흐린 색이었다.
               style={imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
             >
@@ -1809,10 +2686,15 @@ function TeaserStep({
               타이트는 戊 바로 위에 「일간(나)」, 바로 아래에 「정인」을 붙여 눈으로 잇는다.
               용어 자체는 타이트도 안 풀어준다 — 목표는 이해가 아니라 "내 생일로 진짜 계산했다"는 증거다. */}
           <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
+          {/* 재회 전용 — 12칸 격자 → 원국 → 콜드리딩 → 잠긴 줄 → 가격이 **사람 없이 2,000px 넘게**
+              이어지던 자리다(2026-09-06 운영 실측). 경쟁사 티저는 상품 UI 를 1~2개 지나면
+              캐릭터를 다시 세운다 — 그래야 상세페이지가 아니라 이야기로 읽힌다.
+              그림은 38px 자국이면 충분하다. 여기서 컷을 키우면 원국의 증거 기능을 잡아먹는다. */}
+          {isReunion && <GyeonuMark>이 여섯 글자로 열두 달을 세었습니다.</GyeonuMark>}
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
-          {/* 인연은 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
-          {!isJiknyeoWorld && (
+          {/* 인연·재회는 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
+          {!isNight && (
             <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
               {imm
                 ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
@@ -1824,7 +2706,9 @@ function TeaserStep({
               13px 로 키우고, 무엇의 목록인지 한 줄 얹는다(타이트는 이걸 표 맨 아랫줄에 넣는다). */}
           {teaser && teaser.sinsal.length > 0 && (
             <div className="mt-3">
-              <p className="font-myeongjo text-center text-[11px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 라벨 11 → 13px. 바로 아래 배지가 17px 인데 「무엇의 목록인지」를 말하는 줄이
+                  11px 이면, 손님은 배지만 보고 이게 뭔지 모른 채 지나간다(실측 대비도 3.0 이었다). */}
+              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
               </p>
               {/* 배지 13 → 17px (형님: "살 부분이 더 크게 보이면 좋겠어").
@@ -1839,7 +2723,7 @@ function TeaserStep({
                     style={{
                       border: "1px solid var(--gold-line)",
                       // 직녀는 세계관 토큰에 맡긴다(은사). 산군은 기존 금색 값을 그대로 둔다.
-                      background: isJiknyeoWorld ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
+                      background: isNight ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
                       color: "var(--gold-bright)",
                     }}
                   >
@@ -1851,19 +2735,23 @@ function TeaserStep({
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
           {teaser && teaser.chartRows.length > 0 && (
-            // 11 → 13px. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야 기능한다 —
-            // 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 11 → 13 → **15px**. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야
+            // 기능한다 — 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
+            // 13px 도 여전히 본문(15) 아래였다. 이건 각주가 아니라 **아래 콜드리딩 전체의 근거 선언**이라
+            // 본문과 같은 눈금에 세운다.
             <p
-              className="font-myeongjo mt-2.5 text-center text-[13px] leading-[1.75]"
+              className="font-myeongjo mt-2.5 text-center text-[15px] leading-[1.75]"
               style={imm ? { color: "rgba(215,206,188,0.78)" } : undefined}
             >
               {/* 「장부」는 산군의 물건이다 — 직녀 화면에서 이 단어를 쓰면 다른 캐릭터의 말이 된다.
                   하필 이 줄이 아래 콜드리딩 전체의 근거 선언이라 여기가 흔들리면 신뢰가 흔들린다. */}
               {imm
                 ? "읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고, 아래 말은 전부 여기서 나왔다."
-                : isJiknyeoWorld
-                  ? "읽을 줄 모르셔도 돼요. 이게 사주의 원본이고, 아래 말은 전부 여기서 나왔어요."
-                  : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
+                : isReunion
+                  ? "읽을 줄 모르셔도 됩니다. 이게 사주의 원본이고, 위 달력도 아래 말도 전부 여기서 나왔습니다."
+                  : isJiknyeoWorld
+                    ? "읽을 줄 모르셔도 돼요. 이게 사주의 원본이고, 아래 말은 전부 여기서 나왔어요."
+                    : "읽을 줄 모르셔도 돼요. 이게 장부의 원본이고, 아래 말은 전부 여기서 나왔어요."}
             </p>
           )}
         </div>
@@ -1924,7 +2812,7 @@ function TeaserStep({
                 );
               })}
             </LedgerPanel>
-          ) : isInyeon ? (
+          ) : isInyeon || isReunion ? (
             /* 「방금 계산 발췌」 — 청월당은 결과지 일부를 크림 카드로 떠서 실물을 보여준다.
                걔넨 예시 발췌지만 우리는 **이 손님 계산**이라 같은 카드가 더 세게 먹는다.
                밤 무대 위 밝은 종이 한 장이라 시선이 여기서 멈춘다. */
@@ -1947,8 +2835,12 @@ function TeaserStep({
                   </p>
                 ))}
               </div>
-              <p className="mt-2.5 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
-                * 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 {name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.
+              {/* 11 → 13px. 각주 지위는 유지하되(별표 그대로) 읽을 수는 있어야 한다 —
+                  콜드리딩 세 줄이 맞았을 때 「어떻게 알았지」의 답이 여기 있다. */}
+              <p className="mt-2.5 text-center text-[13px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+                {isReunion
+                  ? `* 이름도, 적어주신 물음도 안 썼습니다 — 방금 계산된 ${name ? `${name}님` : "손님"} 사주에서만 나온 문장입니다.`
+                  : `* 이름도, 적어주신 물음도 안 썼어요 — 방금 계산된 ${name ? `${name}님` : "당신"} 사주에서만 나온 문장이에요.`}
               </p>
             </div>
           ) : (
@@ -1984,7 +2876,8 @@ function TeaserStep({
                 say={teaser.judgeInvite}
               />
             ) : (
-              !isInyeon && (
+              // 재회는 바로 아래 T2(이별 무렵 채점)가 같은 일을 **버튼으로** 한다 — 두 번 묻지 않는다.
+              !isInyeon && !isReunion && (
                 <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone-faint">{teaser.judgeInvite}</p>
               )
             ))}
@@ -1995,9 +2888,11 @@ function TeaserStep({
             <InyeonCut
               id="w3"
               assets={jiknyeoAssets}
-              sayAt="top"
+              // 클로즈업이라 빈 모서리가 없다 — 유일하게 눈·입이 없는 **턱 아래**로 내린다.
+              // 여기 있던 좌상단 자리가 왼쪽 눈을 정통으로 덮고 있었다(운영 실측).
+              sayBox={SAY_BOX_DEFAULT.w3}
               say={
-                <ComicSay side="left" tail="down">
+                <ComicSay tail="up" point="right">
                   {/* 원본 문자열에 개행이 들어 있다(2줄 강제) — 그대로 두면 한 줄로 붙는다 */}
                   {teaser.judgeInvite.split(String.fromCharCode(10)).map((line, i) => (
                     <span key={i} className="block">
@@ -2019,15 +2914,20 @@ function TeaserStep({
               「글 블록 두 개를 연달아 쌓지 않는다」는 우리 조판 규칙을 정면으로 어긴 화면이었다(형님 지적).
               j2 = 직녀가 **달력을 내려다보는 옆모습**. 대사가 "아래 달력"을 가리키므로 시선이 맞물린다. */}
           {productSlug === "inyeon-saju" && (
-            <div className="mt-6">
+            // ⚠ 여기에 mt-* 를 주면 **밝은 판(teaser-light)이 그 틈으로 드러나 흰 가로 띠**가 된다.
+            //    컷은 자기 밤 배경을 갖고 있으므로 간격은 컷 **안쪽**(InyeonCut 의 padTop)에서 준다.
+            <div>
               {/* 말풍선은 **2줄**까지만(청월당 실측). 넘치면 원이 깨지고 자막이 된다.
                   j2 는 직녀가 왼쪽에서 달력을 내려다보는 옆모습 → 말풍선은 오른쪽 빈 자리, 꼬리는 아래로. */}
               <InyeonCut
                 id="j2"
                 assets={jiknyeoAssets}
-                sayAt="top"
+                padTop={24}
+                // 우하단 옷자락 — 왼쪽 아래 두루마리(대사가 가리키는 「아래 달력」)를 살린다.
+                // 꼬리는 왼쪽 위 옆얼굴을 가리킨다.
+                sayBox={SAY_BOX_DEFAULT.j2}
                 say={
-                  <ComicSay side="right" tail="down">
+                  <ComicSay tail="up" point="left">
                     <span>인연이 없진 않아요.</span>
                     <span>날을 몰랐을 뿐이에요.</span>
                   </ComicSay>
@@ -2039,8 +2939,24 @@ function TeaserStep({
                   className="font-myeongjo mt-2 px-1 text-[15.5px] leading-[1.8]"
                   style={{ color: "var(--bone-soft)" }}
                 >
-                  자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —{" "}
-                  <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  {/* 대시에서 줄을 끊는다. 예전엔 이어 흘려서 「— 아래」까지 앞줄에 걸리고
+                      하이라이트가 두 줄로 꺾였다 — 강조 상자가 반 토막 나면 강조가 아니라 사고로 보인다.
+                      block 두 개로 갈라 **하이라이트가 자기 줄을 통째로** 쓰게 한다. */}
+                  {/* 죄책감 해제 3단 — 4사가 예외 없이 쓰는 블록인데 우리는 마지막 단(「자책은
+                      여기서」)만 갖고 있었다. 앞의 두 단이 없으면 그 말이 위로가 아니라 훈수가 된다:
+                      ① 네 탓이 아니다 → ② 원인은 명식의 구간이다 → ③ 그러니 여기서 끝내라.
+                      ②의 연도는 지어내지 않는다 — 과거 검증에 실제로 잡힌 해(pastYear)를 그대로 쓰고,
+                      없으면 그 줄을 통째로 안 그린다. */}
+                  <span className="block">지금 인연이 안 닿는 건 부족해서가 아니에요.</span>
+                  <span className="mt-1.5 block">
+                    {teaser.pastYear
+                      ? `${teaser.pastYear}년부터 들어온 흐름이 눌러 놓은 구간이라 그래요.`
+                      : "타고난 흐름이 눌러 놓은 구간이라 그래요."}
+                  </span>
+                  <span className="mt-3 block">자책은 여기서 끝내셔도 돼요. 그때가 맞았다면 —</span>
+                  <span className="mt-1.5 block">
+                    <Hi>아래 달력도 같은 사주에서 나온 거예요.</Hi>
+                  </span>
                 </p>
               )}
             </div>
@@ -2051,6 +2967,18 @@ function TeaserStep({
           {productSlug === "inyeon-saju" && teaser.inyeon && (
             <InyeonCalendar data={teaser.inyeon} />
           )}
+
+          {/* 재회 델타 — 여기 남은 건 T4 환승 하나다.
+              **T2 채점·T3 연적은 웹툰부로 올라갔다**(2026-09-05 4차, gyeonu-teaser 의 NightBreakup·NightRival).
+              경쟁사 티저 둘(타이트·청월당)은 컷 ↔ 카드 **교차**인데 우리만 컷을 다 보여준 뒤 상품을
+              통째로 내밀고 있었다. 이야기가 물으면 그 자리에서 답이 나와야 한다 —
+              「봤습니다」 뒤에 채점, 「따로 있습니다」 뒤에 연적이 붙는다.
+              ⚠ 여기에 다시 넣으면 같은 카드가 두 번 뜬다. 옮기려면 저쪽에서 빼고 옮길 것.
+              (T1 달력은 맨 위 오프닝, T5 반전 절단은 구매 카드 직전) */}
+          {/* 환승(T4)은 **목차 안으로 옮겼다**(2026-09-05 5차, ReunionToc). 경쟁사 티저는
+              목차를 Chapter → 캐릭터 → 결과 → Chapter 로 끊는다 — 여기 두면 목차가 통째로
+              3,000px 짜리 UI 덩어리가 되고 그 지점부터 상세페이지로 되돌아간다.
+              ⚠ 여기에 되살리면 같은 블록이 두 번 뜬다. */}
         </>
       )}
 
@@ -2082,6 +3010,10 @@ function TeaserStep({
             alt="엽전 꾸러미를 장부 위로 내리는 손"
             tall
             sayAt="top"
+            // 여기가 티저의 정점이다 — 값을 읽어 주다가 가린 자리에서 끊는 한 줄.
+            // 웹툰이 회차 마지막 대사만 뒤집어 끊는 그 문법을 이 한 곳에만 쓴다(CutSay invert 주석).
+            invert
+            lead
             say={
               <>
                 돈부터 볼까. 다들 그것부터 묻더군.
@@ -2130,21 +3062,25 @@ function TeaserStep({
       {teaser?.turningYear && (
         <div
           ref={inkRef}
-          className="mb-9 mt-9 px-4 py-7 text-center"
+          // mt-9 → mt-14(56px): 칠흑 판독의 「정점 앞 큰 숨」을 티저에 번역(2026-09-02 형님
+          // 「여백 활용을 못한다」 지적). 실측 36px 로 앞 컷에 붙어 있어 붉은 해가 묻혔다.
+          // 눈금은 결과지에서 이미 검증한 사다리(기본 24 · 정점 56 · 최대 64)를 그대로 쓴다.
+          className="mb-9 mt-14 px-4 py-7 text-center"
           style={
-            isInyeon
+            isNight
               ? { background: "rgba(217,199,232,0.08)", border: "1px solid var(--gold-line)", borderRadius: 6 }
               : { background: "rgba(143,43,30,0.10)", border: "1px solid rgba(143,43,30,0.55)" }
           }
         >
           {/* 직녀 화면엔 산군의 장부도, 빨강도 없다(형님 확정 금기). 같은 연출을 은사 색으로만 옮긴다. */}
+          {/* 라벨 11 → 13px. 이 카드의 40px 숫자가 무엇의 연도인지 말하는 유일한 줄이다. */}
           <p
-            className="font-myeongjo text-[11px] tracking-[0.15em]"
-            style={{ color: isInyeon ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
+            className="font-myeongjo text-[13px] tracking-[0.15em]"
+            style={{ color: isNight ? "var(--gold-soft)" : "rgba(216,140,120,0.85)" }}
           >
             {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
                 손님이 되짚으면 어긋난다. 결과지 8장 제목과 같은 말로 둬 티저→결과지가 호응한다. */}
-            {isInyeon ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
+            {isNight ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
           </p>
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
@@ -2161,7 +3097,7 @@ function TeaserStep({
             <p
               className="text-[40px] font-bold leading-none"
               style={{
-                color: isInyeon ? "var(--gold-bright)" : "#e8695a",
+                color: isNight ? "var(--gold-bright)" : "#e8695a",
                 fontFamily: "var(--font-brush), 'Nanum Brush Script', cursive",
               }}
             >
@@ -2192,15 +3128,15 @@ function TeaserStep({
                 </mask>
                 {/* 먹의 농담 — 붓을 댄 쪽이 짙고, 들어올리는 끝이 옅다 (직녀는 은사 농담) */}
                 <linearGradient id="ink-tone" x1="1" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isInyeon ? "#6f61a8" : "#b0301d"} />
-                  <stop offset="42%" stopColor={isInyeon ? "#a596e0" : "#d24430"} />
-                  <stop offset="100%" stopColor={isInyeon ? "#5b4f8c" : "#8f2b1e"} />
+                  <stop offset="0%" stopColor={isNight ? "#6f61a8" : "#b0301d"} />
+                  <stop offset="42%" stopColor={isNight ? "#a596e0" : "#d24430"} />
+                  <stop offset="100%" stopColor={isNight ? "#5b4f8c" : "#8f2b1e"} />
                 </linearGradient>
               </defs>
               {/* 번짐 — 종이에 먹이 스민 자국. 본획보다 먼저 깔린다 */}
               <path
                 d={INK_STROKE}
-                fill={isInyeon ? "#5b4f8c" : "#8f2b1e"}
+                fill={isNight ? "#5b4f8c" : "#8f2b1e"}
                 opacity={0.45}
                 mask="url(#ink-reveal)"
                 style={{ filter: "blur(1.1px)" }}
@@ -2208,9 +3144,15 @@ function TeaserStep({
               <path d={INK_STROKE} fill="url(#ink-tone)" mask="url(#ink-reveal)" />
             </svg>
           </span>
-          <p className="font-myeongjo mt-3 text-[13px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
+          {/* 13 → 15px. 40px 붓글씨 연도의 **뜻**을 말하는 줄(「37세에 한 번 크게 갈리세요」)인데
+              각주 크기였다 — 카드의 펀치라인이라 본문 눈금에 세운다. */}
+          <p className="font-myeongjo mt-3 text-[15px] leading-[1.75] text-bone">{teaser.turningYear.line}</p>
         </div>
       )}
+
+      {/* 여기 있던 까치 컷(p-magpie)은 **웹툰부로 올라갔다**(2026-09-05 3차).
+          잠금 목록을 「오는 것 목록」으로 뒤집는 일은 그대로지만, 이야기 컷이 표와 표 사이에
+          한 장씩 끼어 있는 게 「그림 끼운 랜딩」의 정체였다 — 컷은 절단 위쪽에 모아 둔다. */}
 
       {/* 받을 장부의 목차 — 타이트 결과지 실측(2026-08-03)에서 가져온 형식.
           잠긴 줄 5개는 "안 주는 게 많다"로 읽혔다. 결과지 9장과 1:1 인 목차 카드로 바꾸고,
@@ -2223,21 +3165,47 @@ function TeaserStep({
         <>
           {/* 결제 전환도 캐릭터 대사로 — 타이트의 "복채는 준비해왔어?" 자리.
               정면 대면 컷: 여기서 처음으로 산군이 손님을 마주 본다(돈 얘기는 마주 보고 한다). */}
-          {imm && teaser.chapters.length > 0 && (
+          {/* 콜드오픈 판(`?cold=1`)에서만 이 컷을 뺀다(2026-09-05) — 대사가 붙은 컷은 설명이고,
+              웹툰의 절단은 **대사 0**이다. 같은 정면 대면을 목차 뒤·구매 카드 앞으로 옮겨 말 없이
+              노려보는 컷으로 세운다(견우와선녀 4화 「등장 절단」 번역, 아래 블록).
+              스위치가 없으면 이 컷이 **원래 자리(목차 앞)에 원래 대사로** 선다. */}
+          {imm && !useColdOpen && teaser.chapters.length > 0 && (
             <TeaserCut
-              src="/products/sangun/teaser-face.webp"
+              // ⚠ 2026-09-06 교체: 여기 있던 `teaser-face.webp` 는 **정본 이전 컷**이었다(형님 지적).
+              //    같은 페이지의 다른 박수 컷 일곱 장은 검정 두루마기·오방색 띠·흰 바탕 꽃무늬 소맷단인데
+              //    그 한 장만 화려한 활옷에 무지개 만장, 갓 모양까지 달라 앵커 다섯 중 넷이 어긋났다.
+              //    `cut-gaze-h` 는 콜드오픈 판이 쓰는 정면 대면 컷이고, 이 기본 판에서는 안 쓰이던 컷이라
+              //    겹치지 않는다.
+              // ⚠ `size="md"`(260px 띠) 가 아니라 `tall` 이다 — 이 컷이 **4:5 원본**(840×1050)이라
+              //    TeaserCut 이 그 비율 그대로 세우는 모드가 이미 있다(위 tall 주석). 띠로 자르면
+              //    얼굴이 정확히 말풍선 뒤로 들어간다(실측: 260px 띠에서 얼굴이 y112~136, 말풍선이 0~110).
+              //    비율대로 세우면 388×485 가 되어 말풍선 아래로 갓·그림자 얼굴·흰 동정이 다 선다.
+              src="/products/sangun/cut-gaze-h.webp"
               alt="정면으로 마주 앉은 산군"
-              pos="center 42%"
-              size="md"
+              tall
               sayAt="top"
-              say={<>이제 복채 얘기를 하자.</>}
+              // 「이제 복채 얘기를 하자」는 요구가 먼저 오는 문장이었다 — 모의구매 5/6이 결제
+              // 시트의 「복채」를 「갖다 바치는 느낌」이라 했던 그 결이 여기서 시작된다(:1289 주석).
+              // 「복채」 자체는 캐릭터의 값이라 지키고, 순서만 뒤집는다: 요구 앞에 제안을 세운다.
+              // 바로 아래 4章 카드가 그 「값어치」고, 그다음 카드가 「값을 말하마」로 받는다.
+              say={
+                <>
+                  복채 얘기를 하자.
+                  <br />
+                  뭘 주는지 먼저 보여주마.
+                </>
+              }
             />
           )}
           {teaser.chapters.length > 0 ? (
             /* 4章 카드 — 타이트 목차 실측을 부품 단위로 옮긴 것.
                간지 배너(붉은 박스) + 등급 태그 + 도발 부제 + 불릿의 회색→굵은흰색 명암.
                배경은 형님이 뽑은 먹 한지 + 붉은 잉크판 텍스처(ganji.webp) — 타이트의 붉은 잉크판 대응. */
-            <div className="mt-4">
+            /* 16px → 44px: 복채 선언 컷에 붙어 「말 끝나기도 전에 진열」이었다.
+               선언 뒤 한 박자 쉬고 목차가 펼쳐져야 보여주는 동작이 된다(칠흑 여백 번역).
+               인라인인 이유: mt-11 은 이 리포 최초 사용이라 dev 의 Tailwind 가 생성을
+               놓쳤다(실측 0px — min-h-[44px]와 같은 병). 재야 하는 값은 인라인으로 박는다. */
+            <div style={{ marginTop: 44 }}>
               <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.15em]">
                 네 장부의 차례
               </p>
@@ -2325,16 +3293,20 @@ function TeaserStep({
             /* 존댓말 상품은 기존 잠긴 줄 유지 — 인연만 달력과 안 겹치는 목록으로 바꿔 든다.
                인연은 밑줄 리스트가 아니라 **줄마다 판**이다: 얇은 줄 다섯 개를 쌓으면
                다섯 개 전부 가벼워 보인다(형님 「밤티」 지적의 그 병). 값은 대사 크기(17)로 세운다. */
-            <div className={isJiknyeoWorld ? "mt-4 space-y-2" : "mt-4"}>
+            <div className={isNight ? "mt-4 space-y-2" : "mt-4"}>
               {(productSlug === "marriage-saju"
                 ? MARRIAGE_LOCKED
                 : isInyeon && teaser.inyeon
                   ? teaser.inyeon.locked
-                  : teaser.locked
+                  : isReunion && teaser.reunion
+                    ? teaser.reunion.locked
+                    : teaser.locked
               ).map((row, i) =>
-                isJiknyeoWorld ? (
-                  // 밝은 티저의 잠금 — 원본은 어두운 네온 박스가 아니라 **얇은 줄 + ████** 이다.
-                  // 행간을 24 가 아니라 16 으로 조이는 것까지 실측값이다.
+                isNight ? (
+                  // 밝은 티저의 잠금 — 얇은 줄 + 가려진 값.
+                  // ⚠ 가리개는 회색 ████ 이 아니라 NeonMask 다(LockRow 주석 참조):
+                  //    회색 막대는 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다(2026-08-25 실측 대비 1.4).
+                  //    바로 위 열린 달 카드가 쓰는 가리개와 같은 것이라, 한 화면에서 잠금 문법이 하나로 선다.
                   <LockRow key={i} label={row.label} />
                 ) : (
                   <div key={i} className="flex items-center justify-between gap-3 border-b border-gold-pale py-2.5">
@@ -2348,14 +3320,106 @@ function TeaserStep({
             </div>
           )}
 
+          {/* ════ 등장 절단 — 큰 숨 뒤, 산군이 손님을 정면으로 노려본다. 대사는 없다. ════
+              견우와선녀 4화(공감 46,462 베댓 인증)의 문법: 독자를 정면으로 보는 컷 + 대사 0 →
+              설명이 끊긴 자리에 곧바로 값(구매 카드)이 온다. 페이지당 정점 문법은 하나라
+              반전 절단은 같이 쓰지 않는다.
+              marginTop 96 은 인라인 — 「정점 앞 큰 숨」이 확실히 서야 하는 값이다(아래 4章 주석). */}
+          {useColdOpen && teaser.chapters.length > 0 && (
+            <div
+              className="relative -mx-5 overflow-hidden"
+              style={{ marginTop: 96, aspectRatio: "4 / 5" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/products/sangun/cut-gaze-h.webp"
+                alt="정면으로 마주 앉아 손님을 보는 산군"
+                className="h-full w-full select-none object-cover"
+                draggable={false}
+              />
+              {/* 컷 아래를 페이지 배경색으로 녹인다 — 끊기는 자리라 테두리가 보이면 안 된다. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{ background: "linear-gradient(180deg,rgba(7,6,9,0) 62%,rgba(7,6,9,0.8))" }}
+              />
+            </div>
+          )}
+
           {/* 목차 — 청월당 POINT 4 구간. 원본은 장마다 풀이 줄을 펴서 약 30줄을 **전량 공개**한다.
               다 보여줘야 분량이 믿기고, 잠글 것은 값이지 목차가 아니다. */}
           {/* 가격 1타 — 원본은 티저 **중반**에서 한 번 치고 맨 끝에서 또 친다.
               우리는 마지막 한 번뿐이었다. 분량을 먼저 세우고(리본) 값을 말하는 순서까지 원본 그대로. */}
+          {/* 산군 본문 가격 1타 — 직녀와 같은 자리(목차 뒤)에 세운다.
+              여기가 없어서 산군은 16.4화면 동안 살 자리가 없었다(2026-09-01 실측). */}
+          {imm && !isJiknyeoWorld && (
+            <SangunBuyCard
+              priceLabel={formatKRW(price)}
+              compareLabel={compareAtPrice && compareAtPrice > price ? formatKRW(compareAtPrice) : undefined}
+              discountPct={
+                compareAtPrice && compareAtPrice > price
+                  ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+                  : undefined
+              }
+              // 다음 상품 떡밥 한 줄(청월당이 잠금 목록 끝에 쓰는 문법) — 값은 결제 시트의
+              // 추천 번들에서 그대로 받는다. 번들이 없으면 줄 자체가 안 나온다.
+              bundleLine={bundleLine}
+              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            />
+          )}
+
+          {/* 후기 — 값을 말한 **직후**. 앞은 등장 절단이라 사이를 벌릴 수 없다(절단과 값은 붙어야 한다).
+              승인된 실후기 3건 이상일 때만 스스로 그린다 — 지금은 0건이라 아무것도 안 나온다.
+              조건을 `imm && !isJiknyeoWorld` 가 아니라 slug 로 쓴 이유: 그 조건은 재회에서도 참이라
+              다른 레인 화면에 산군 색 블록이 끼어든다. */}
+          {isSangunWorld && <SangunReviews reviews={reviews} />}
+
+          {/* 여기 있던 정점(p-bridge)·대면(g-greet)·T5 반전 절단은 **웹툰부로 올라갔다**
+              (2026-09-05 3차). 절단이 잠금 목록과 구매 카드 사이에 있으면 「끊고 나서도 계속
+              읽히는」 절단이라 아무것도 못 끊는다 — 절단은 이야기의 끝에 서야 절단이다.
+              지금 이 자리는 절단 **뒤**, 값을 말하는 구간이다. */}
+          {/* 후기 자리 — 「무엇을 받는지」를 다 보여준 뒤, **값을 말하기 직전**이다.
+              두 레퍼런스의 공통 문법(상품 → 받아본 증거 → 가격)에서 증거가 서는 자리다.
+              지금은 후기가 0개라 아무것도 안 그린다(컴포넌트가 스스로 null 을 낸다). */}
+          {isReunion && <ReunionReviews />}
+          {isReunion && (
+            <JiknyeoBuyCard
+              title="견우의 재회예보"
+              // 분량 앵커(쪽수·시간)는 안 쓴다(2026-09-02 지시). 받는 것의 정점 하나만 말한다.
+              volume="열두 달 전부 + 연락의 달"
+              bullets={[
+                "다시 이어지는 달 — 열두 달 중 어디인지",
+                "연락해도 되는 달",
+                "먼저 연락하면 안 되는 달",
+                "재회 가능성 — 높음·보통·낮음",
+                "그날 갈라진 진짜 이유",
+                "그 사람에게 보낼 첫 줄",
+                "매달릴 때 하면 안 되는 것 셋",
+                "다시 만나지 않는다면 다음에 올 사람",
+              ]}
+              priceLabel={formatKRW(price)}
+              compareLabel={compareAtPrice ? formatKRW(compareAtPrice) : undefined}
+              discountPct={
+                compareAtPrice && compareAtPrice > price
+                  ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+                  : undefined
+              }
+              discountLabel="첫 손님 할인"
+              ctaText="할인받고 재회운 보러가기"
+              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            />
+          )}
+
+          {/* 목차 — 구매 카드가 「아래 목차에서 확인하세요」라고 가리키는 자리다.
+              잠긴 줄은 위 공용 블록이 이미 세웠다(teaser.reunion.locked) — 여기서 또 세우면 두 번 읽힌다. */}
+          {isReunion && <ReunionToc data={teaser?.reunion ?? undefined} />}
+
           {isJiknyeoWorld && (
             <JiknyeoBuyCard
-              title={productSlug === "marriage-saju" ? "정통 결혼운 사주풀이" : "정통 연애운 사주풀이"}
-              volume="A4 여덟 장 분량! + 내 고민 맞춤 답변"
+              title={productSlug === "marriage-saju" ? "직녀의 결혼예보" : "직녀의 연애예보"}
+              // 분량 리본(A4 몇 쪽)은 형님 지시로 걷어냈다(2026-09-02) — 리본은 받는 것의
+              // 정점 하나만 말한다. 열두 달 전량 공개가 우리 차별점(경쟁은 5개만 열고 잠근다).
+              volume="열두 달 전부 + 내 고민 맞춤 답변"
               bullets={
                 productSlug === "marriage-saju"
                   ? [
@@ -2395,7 +3459,7 @@ function TeaserStep({
           {isJiknyeoWorld && (
             <>
               {/* 세계관 한 컷 — 조판이 길게 이어지는 구간이라 그림으로 한 번 끊는다(글·사진 교차). */}
-              <div className="mt-14">
+              <div>
                 <InyeonCut id="t06" assets={jiknyeoAssets} />
               </div>
 
@@ -2406,7 +3470,14 @@ function TeaserStep({
               <InyeonCut
                 id="t14"
                 assets={jiknyeoAssets}
-                say={<ComicSay>{productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}</ComicSay>}
+                // 좌상단 은하수 — 이 컷의 전부인 **내민 손**(y72~95)에서 최대한 멀리 띄운다.
+                // 아래쪽에 있던 자리가 손을 통째로 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.t14}
+                say={
+                  <ComicSay tail="down" point="right">
+                    {productSlug === "marriage-saju" ? "같이 볼까요?" : "같이 볼까요?"}
+                  </ComicSay>
+                }
               />
 
               {/* 가격은 목차 **뒤**에 온다 — 원본도 분량을 먼저 보여주고 값을 말한다(POINT 4 → 5). */}
@@ -2418,26 +3489,29 @@ function TeaserStep({
               {/* 배웅 — 값을 다 말한 뒤 마지막 한 컷. 원본도 맨 끝을 캐릭터로 닫는다. */}
               <InyeonCut id="t15" assets={jiknyeoAssets} />
 
-              {/* 밝은 티저 → 어두운 결제 영역. 칼같이 자르면 두 페이지를 붙인 것처럼 보인다 —
-                  원본은 섹션 사이에 먹 번짐 한 장(04.png)을 끼워 녹인다. 우린 그라데이션으로 흉내낸다. */}
-              <div className="mt-14">
-                <InkFade from="#E2D9F0" to="#0b0f1a" height={80} />
-              </div>
+              {/* ⚠ 여기 있던 「밝은 판 → 검은 결제」 먹 번짐(InkFade)을 걷어냈다.
+                  이 자리는 판의 끝이 아니다 — 뒤에 금기 카드·배웅 컷·마감 펀치가 **아직 밝은 판 안에서**
+                  이어진다. 그래서 그라데가 판 한가운데 보라→검정 띠로 박혀 있었다(운영 실측).
+                  판은 둥근 모서리로 자기 끝을 이미 말하고 있으므로 녹일 것이 없다. */}
             </>
           )}
 
           {/* 결제 직전 마지막 한 마디.
               타이트 대조에서 배운 것: 그들은 밑밥을 작게 깔고 펀치만 크게·붉게 세운다.
               두 박자로 끊고 뒷줄만 키운다. 손해 회피가 이득 추구보다 세게 움직이므로
-              붉은 줄에 멈춤(엎드릴 달)을 둔다.
+              붉은 줄에 멈춤(조심할 달)을 둔다.
               "해야 할 것과 하면 안 되는 것을 날짜까지 적어 뒀다"는 웹툰 마지막 말풍선과
               토씨까지 같아서 교체(형님 지적과 같은 중복 유형) — 행동 축(무엇을) 대신
-              시기 축(언제)으로 바꿔 서로 다른 말이 되게 했다. "엎드릴 달"은 목차 6장
-              ("움직일 때인지, 엎드릴 때인지")의 집 어휘, "박아 뒀다"는 4章 카드("확답부터
-              박는다")의 집 어휘다. "날짜"는 타이트가 구조적으로 못 하는 차별점이라 유지
+              시기 축(언제)으로 바꿔 서로 다른 말이 되게 했다.
+              ⚠ 처음엔 "엎드릴 달"이었는데 형님이 잡았다(2026-09-02 「말이 어렵지 않냐」) —
+              사극 말이라 1초 낭독 테스트 탈락. "조심할 달"은 목차 7장 제목 그대로라
+              새 약속도 아니고 새 어휘도 아니다. "박아 뒀다"는 4章 카드("확답부터
+              박는다")의 집 어휘. "날짜"는 타이트가 구조적으로 못 하는 차별점이라 유지
               (그들 26,198자 중 달 언급 1회). */}
           {productSlug === "sangun-sinjeom" && (
-            <div className="mt-5 text-center">
+            /* mt-5 → mt-14(56px): 마지막 한마디는 판을 닫는 정점인데 구매 카드에 20px 로
+               붙어 「카드의 각주」로 읽혔다. 한 숨 쉬고 낮은 목소리로 닫는다. */
+            <div className="mt-14 text-center">
               <p className="font-myeongjo text-[13px] leading-[1.75]" style={{ color: "var(--bone-faint)" }}>
                 눈앞에 펼쳐 놓고 말해주마
               </p>
@@ -2447,7 +3521,7 @@ function TeaserStep({
               >
                 움직일 달과
                 <br />
-                <span style={{ color: "#d8563f" }}>엎드릴 달</span>을
+                <span style={{ color: "#d8563f" }}>조심할 달</span>을
                 <br />
                 날짜로 박아 뒀다
               </p>
@@ -2457,12 +3531,16 @@ function TeaserStep({
           {/* B8 하지 말 것 — 잠금 줄 바로 위. 두 개는 지금 쓸 수 있게 주고 세 번째만 잠근다. */}
           {isInyeon && teaser.inyeon && (
             <div
-              className="mt-6 rounded-md px-4 py-5"
+              // mt-6 → mt-14(56px): 금기 카드는 「읽어 주다 멈추는」 정점인데 24px 로 붙어
+              // 있었다. 밝은 판 위 여백 = 종이의 침묵(칠흑 번역 눈금 56).
+              className="mt-14 rounded-md px-4 py-5"
               // 검은 판을 하드코딩해 뒀더니 밝은 티저 안에서 이 판만 딴 페이지가 됐다(실측 1건).
               // 토큰으로 그려 어두운 무대·밝은 티저 양쪽에서 같은 역할을 하게 한다.
               style={{ background: "var(--gold-pale)", border: "1px solid var(--gold-line)" }}
             >
-              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {/* 제목 13 → 15px. 아래 목록이 15px 인데 제목이 13px 이라 위계가 뒤집혀 있었다
+                  (제목이 본문보다 작으면 카드가 아니라 각주 뭉치로 읽힌다). */}
+              <p className="font-myeongjo text-center text-[15px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 지금 이것만은 하지 마세요
               </p>
               <ol className="mt-4 space-y-3.5">
@@ -2497,8 +3575,14 @@ function TeaserStep({
               <InyeonCut
                 id="w7"
                 assets={jiknyeoAssets}
+                // 배웅 정점인데 금기 카드에 0px 로 붙어 있었다(실측). 간격은 밤 배경 안에서
+                // 준다 — 바깥 margin 은 밝은 판이 드러나 흰 띠가 된다(padTop 주석 참조).
+                padTop={48}
+                // 좌상단 달·창 — 달력 짚는 손가락(y45~57)과 얼굴(x55~80)을 둘 다 피한다.
+                // 우상단에 있던 자리가 그 손가락과 공책 모서리를 덮고 있었다(운영 실측).
+                sayBox={SAY_BOX_DEFAULT.w7}
                 say={
-                  <ComicSay side="right" tail="up">
+                  <ComicSay tail="down" point="right">
                     <span>{name ? `${name}님 달력,` : "달력,"}</span>
                     <span>여기까지 폈어요.</span>
                   </ComicSay>
@@ -2509,16 +3593,21 @@ function TeaserStep({
                   <p className="font-gothic text-[11px] font-bold tracking-[0.2em]" style={{ color: "var(--bone-faint)" }}>
                     계산은 끝났어요
                   </p>
+                  {/* ⚠ 여기 `text-moonlit`(흰→달빛 그라데 글자)이 걸려 있었다. 그건 **검은 무대**용이라
+                      밝은 달빛 판 위에서는 흰 글자가 판에 묻혀 첫 줄이 통째로 안 보였다(운영 실측).
+                      마감 펀치는 이 페이지에서 손님이 마지막으로 읽는 두 줄이다 — 토큰 먹색으로 세운다. */}
                   <p
-                    className="font-gothic text-moonlit mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
-                    style={{ fontWeight: 900 }}
+                    className="font-gothic mt-3 text-[34px] leading-[1.3] tracking-[-0.02em]"
+                    style={{ color: "var(--bone)", fontWeight: 900 }}
                   >
                     달 이름만,
                   </p>
                   <p className="mt-2">
                     <span
                       className="font-gothic inline-block rounded-[6px] px-3 py-1 text-[30px] leading-[1.25] tracking-[-0.02em]"
-                      style={{ background: "var(--gold-bright)", color: "#1a1330", fontWeight: 900 }}
+                      // 밝은 판에서 --gold-bright 는 진보라(#6B4C9A)로 뒤집힌다. 먹색 글자를 얹으면
+                      // 대비가 2.6:1 까지 떨어져 강조가 아니라 얼룩이 된다 — 흰 글자로 받는다.
+                      style={{ background: "var(--gold-bright)", color: "#ffffff", fontWeight: 900 }}
                     >
                       아직이에요
                     </span>
@@ -2526,6 +3615,16 @@ function TeaserStep({
                 </GlowBand>
               </div>
             </>
+          ) : isReunion ? (
+            /* 마감 컷 — 목차 뒤. 판을 **그림으로** 닫는다.
+               전엔 여기가 11px 잔글씨 한 줄(「여기까지는 무료로 보여드립니다…」)이었다.
+               아홉 컷으로 읽어 온 화면이 각주 한 줄로 끝나면 웹툰이 아니라 상세페이지로 되돌아간다 —
+               장부를 덮는 손이 그 말을 대신한다(같은 말을 두 번 하지 않으려고 잔글씨는 걷었다). */
+            <GyeonuCut
+              id="p-close"
+              alt="펼쳐 둔 장부를 손으로 덮는 견우"
+              say="오늘은 여기서 덮습니다. 나머지는 결과지에 다 적어 두었습니다."
+            />
           ) : (
             <p className="font-myeongjo mt-3.5 text-center text-[11px] text-bone-faint tracking-[0.06em]">
               {teaser.note}
@@ -2541,8 +3640,49 @@ function TeaserStep({
         바꾸면서 손님 동선에서 빠졌다 — 그래서 여기로 옮겼다(2026-08-11).
         장부 판(위 검은 박스) 바깥에 두는 이유: 이건 산군의 장부가 아니라 상품 설명이다. */}
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
-    {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다. */}
-    {isJiknyeoWorld && teaser?.inyeon?.nearest && <NearestMonthBar nearest={teaser.inyeon.nearest} />}
+    {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다.
+        2026-09-01: 값만 말하고 살 수는 없던 자리에 버튼을 같이 태웠다(위 StickyBuyBar 주석). */}
+    {isJiknyeoWorld && teaser?.inyeon?.nearest && (
+      <StickyBuyBar
+        note={
+          <>
+            가장 가까운 열리는 달,{" "}
+            <b className="font-bold" style={{ color: "var(--gold-bright)" }}>
+              {teaser.inyeon.nearest.month}월
+            </b>{" "}
+            — 지나가면 빠져요
+          </>
+        }
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
+    {/* 재회판 고정바 — 유일하게 공짜로 연 값(먼저 연락하면 안 되는 달)을 그대로 데리고 다닌다.
+        재촉하지 않는다: 사실 한 줄 + 버튼이다(가짜 타이머 금지 규칙 그대로). */}
+    {isReunion && teaser?.reunion?.revealed && (
+      <ReunionStickyBar
+        /* 카피가 짧아진 이유: 이 바는 이제 **복채 선언 뒤에만** 뜬다(useReunionBarGate).
+           그 시점엔 손님이 열린 달을 이미 봤고 「여기부터는 복채를 받습니다」도 들은 뒤라,
+           무료로 연 달을 바에서 또 설명할 필요가 없다. 사실 한 줄 + 버튼만 남긴다. */
+        note={<>나머지 열한 달은 결과지에</>}
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
+    {/* 산군은 이 바가 아예 없어 16.4화면 동안 살 자리가 없었다. 마감으로 재촉하지는 않는다 —
+        가짜 타이머 대신 「이미 다 적혀 있다」는 사실만 말하고 버튼을 붙인다. */}
+    {/* 콜드오픈(`?cold=1`) 동안은 이 바도 안 그린다 — 첫 화면에 가격이 서 있으면 도입이 광고가 된다.
+        스위치가 없으면 옛 판대로 티저 내내 서 있다. */}
+    {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && (
+      <StickyBuyBar
+        dark
+        note={<>네 장부 11장, 이미 다 적혀 있다</>}
+        buyLabel={`${formatKRW(price)} 열기`}
+        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      />
+    )}
+    {/* 말풍선 자리 편집 — `?edit=say` 에서만 뜬다(손님 화면엔 없다) */}
+    {isJiknyeoWorld && <SayEditPanel />}
     </>
   );
 }
@@ -2599,6 +3739,10 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
   // ★ 숫자가 튀는 건 크기 때문이 아니라 **주변이 전부 무채색인데 혼자 컬러**라서다(실측 판독).
   //   그래서 이 블록에서 핑크는 숫자 하나뿐이다. 여기저기 칠하면 그 효과가 사라진다.
   const { ref, inView } = useInView<HTMLDivElement>();
+  // 격자에 **실제로 그려진 것**을 센다. openCount(●+◎ 합)를 그대로 쓰면 노란 보름달 개수와
+  // 어긋나 손님이 세어 봤을 때 틀린 숫자가 된다.
+  const fullCount = data.calendar.filter((c) => c.grade === "●").length;
+  const halfCount = data.calendar.filter((c) => c.grade === "◎").length;
   return (
     <div className="mt-8">
       {/* 12칸 예보 격자 — 열두 달 등급을 **하나도 가리지 않고** 편다.
@@ -2611,53 +3755,74 @@ function InyeonCalendar({ data }: { data: NonNullable<SajuTeaser["inyeon"]> }) {
         />
       </div>
 
+      {/* 집계 = 이 구간의 표지이자 정보다.
+          ⚠ 예전엔 붓 헤드가 「이 달들을 놓치지 마세요!」(정보 0 인 명령)였고, 그 아래 「나의 인연
+             기회: 5회」가 따로 있었다. 그 5 는 **보름(●) + 반달(◎)** 합인데 화면에서 세면 노란
+             보름달은 3 개뿐이라, 읽는 법을 못 박는 순간 숫자가 거짓말로 보인다. 그래서 등급별로
+             갈라 적는다 — 세는 것과 보이는 것이 일치해야 증거가 증거로 산다.
+          느낌표를 뺀 것도 의도다(직녀 보이스 1번: 재촉하지 않는다, 대신 달을 못 박는다). */}
       <div ref={ref} className="text-center">
-        <T>앞으로 열두 달,</T>
+        <T>앞으로 열두 달</T>
         <div
-          className="mt-1"
+          className="mt-2"
           style={{
             opacity: inView ? 1 : 0,
             transform: inView ? "translateY(0)" : "translateY(6px)",
             transition: "opacity .5s ease, transform .5s ease",
           }}
         >
-          <BrushHead lines={["이 달들을 놓치지 마세요!"]} />
+          <BrushHead lines={[`크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount}`]} />
         </div>
-        <p className="mt-5 flex items-center justify-center gap-1.5">
-          <span className="text-[18px] leading-[27px]" style={{ color: BODY, fontWeight: 500 }}>
-            나의 인연 기회:
-          </span>
-          <BigNum value={data.openCount} unit="회" />
-        </p>
+        {halfCount > 0 && (
+          <p className="mt-3 text-[15.5px] leading-[24px]" style={{ color: BODY }}>
+            자리가 생기는 달 {KO_NUM[halfCount] ?? halfCount}
+          </p>
+        )}
       </div>
 
-      {/* 연월 목록 — 가장 가까운 하나만 열고 나머지는 잠근다.
-          ⚠ 잠긴 줄에 실값을 넣지 않는다. 흐리게만 하면 소스에서 그대로 읽힌다 —
-          openList 에 애초에 공개분만 담겨 온다. */}
-      <div className="mt-6">
-        {data.openList.map((m, i) => (
-          <div key={i} className="py-3" style={{ borderBottom: `1px solid ${LINE}` }}>
-            <Val>
-              {m.year}년 {m.month}월
-            </Val>
-            <p className="mt-1 text-[16px] leading-[24px]" style={{ color: BODY }}>
-              {m.desc}
-            </p>
-          </div>
-        ))}
-        {Array.from({ length: data.restOpen }, (_, i) => (
-          <LockRow key={`lock-${i}`} label="○○○○년 ○월" mask="████████" />
-        ))}
-      </div>
+      {/* 열린 달 = 이 화면의 결론. 잠긴 달은 **그 카드 안에** 붙여 「같은 종류의 값이 몇 개 더
+          가려져 있다」로 읽히게 한다.
+          ⚠ 잠긴 줄에 실값을 넣지 않는다 — openList 에 애초에 공개분만 담겨 온다.
+          ⚠ 회색 막대(LockRow)를 여기서 걷어냈다. 스켈레톤과 모양이 같아 「로딩 중」으로 읽혔다 —
+             잠금은 금기 카드와 같은 NeonMask(발광 테두리 + 흐린 글자)로 통일한다. 다만
+             **맨 아래 항목 목록의 회색 막대는 그대로 둔다**: 발광이 일곱 개면 아무것도 안 빛난다. */}
+      {data.openList.map((m, i) => (
+        <OpenMonthCard
+          key={i}
+          year={m.year}
+          month={m.month}
+          desc={m.desc}
+          note={
+            i === 0
+              // 「여기까지 무료」는 판 맨 위 「여기까지는 무료예요」와 겹치고, 붙이면 대시에서
+              // 줄이 꺾여 「여기까지 무료」만 다음 줄에 떨어진다. 한 줄에 드는 만큼만 적는다.
+              ? `크게 열리는 달 ${KO_NUM[fullCount] ?? fullCount} 중 가장 가까운 달이에요`
+              : undefined
+          }
+          moon={<Moon phase="full" size={30} />}
+          locks={
+            i === 0
+              ? Array.from({ length: data.restOpen }, (_, k) => ({
+                  // 라벨은 위 격자 범례에서 쓰는 말 그대로다 — 새 약속을 만들지 않는다.
+                  label: k === 0 ? "두 번째로 큰 달" : "자리가 생기는 달",
+                }))
+              : undefined
+          }
+        />
+      ))}
 
       {data.restOpen > 0 && (
-        <p className="mt-4 text-center text-[16px] leading-[24px]" style={{ color: INK, fontWeight: 700 }}>
-          + 이런 풀이를 더 해드려요!
+        <p className="mt-8 text-center text-[17px] leading-[26px]" style={{ color: INK, fontWeight: 700 }}>
+          이런 풀이를 더 해드려요
         </p>
       )}
     </div>
   );
 }
+
+/** 개수를 **말로** 적는다 — 「3」은 표의 숫자고 「셋」은 사람이 하는 말이다.
+ *  이 화면에서 아라비아 숫자는 정점(카드의 「10월」) 하나만 쓴다: 숫자가 둘이면 둘 다 안 크다. */
+const KO_NUM: Record<number, string> = { 0: "없어요", 1: "하나", 2: "둘", 3: "셋", 4: "넷", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟" };
 
 /**
  * 로딩 체크리스트 — 항목은 **실제로 도는 계산**만 적는다(안 하는 걸 적으면 그게 거짓말이 된다).
@@ -2713,7 +3878,92 @@ function LoadingChecklist() {
  *  ③ 우리에겐 **진짜 마감**이 이미 있다. 만세력 월운 창이 매달 미끄러져서 지나간 달은 다음 계산에서
  *     실제로 빠진다(상세페이지에 이미 박아 둔 확정 카피와 같은 말). 사실이고 그 손님 달력에서 나온 값이다.
  */
-function NearestMonthBar({ nearest }: { nearest: { year: number; month: number } }) {
+/**
+ * 하단 고정바 — **값을 말하면서 동시에 살 수 있는 자리**.
+ *
+ * 여기 있던 30분 카운트다운을 걷어낸 판단은 그대로다(가짜 마감은 안 쓴다). 다만 걷어내면서
+ * 바가 「정보만」 남아, 티저 내내 눌러서 살 곳이 없어졌다 — 실측(2026-09-01): 직녀는 중반 CTA
+ * 와 결제 시트 사이가 7,700px(9.2화면), 산군은 바 자체가 없어 16.4화면이 비어 있었다.
+ * 경쟁 4사가 예외 없이 하단 고정 CTA 를 쓰는 자리이기도 하다.
+ *
+ * 그래서 **진짜 마감(월운 창은 실제로 미끄러진다)을 말하면서 버튼을 같이 태운다.**
+ */
+/** 재회 고정 결제바의 **노출 시점**을 정하는 게이트.
+ *
+ *  왜 필요한가(GPT 대조 진단 2026-09-06, 남은 최대 누수): 바가 첫 화면부터 끝까지 떠 있었다.
+ *  65px 은 폰 화면의 8~10% 인데, 강·등불·까치·오작교가 감정을 쌓는 내내 가격 UI 가 따라다니면
+ *  정작 견우가 「여기부터는 복채를 받고 펼쳐 드립니다」라고 말하는 **그 사건이 약해진다**.
+ *  경쟁사(타이트·청월당)도 CTA 를 이르게 두지만 그건 서사가 아니라 광고 UI 구간이다.
+ *
+ *  그래서 두 지점으로 연다:
+ *    · 켜기 = 복채 컷(`g-greet`)이 화면에 절반 넘게 들어온 뒤. UI 의 값과 이야기의 값이 같은 순간.
+ *    · 끄기 = 큰 구매 카드(`[data-buycard]`)가 화면에 있는 동안. 한 화면에 CTA 둘이 서지 않게.
+ *  결제 시트(#pay)까지 내려가면 그 자리의 최종 버튼이 주인공이라 역시 끈다.
+ *
+ *  ⚠ 관찰 대상은 티저가 그려진 **뒤에** 생긴다 — 그래서 폴링으로 붙을 때까지 기다린다
+ *    (마운트 시점엔 querySelector 가 null 이라 옵저버가 헛돈다). */
+function useReunionBarGate(enabled: boolean) {
+  const [armed, setArmed] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    if (!enabled || typeof IntersectionObserver === "undefined") return;
+    let armedIo: IntersectionObserver | null = null;
+    let blockIo: IntersectionObserver | null = null;
+    let stop = false;
+    const attach = () => {
+      if (stop) return;
+      const gate = document.querySelector('figure[data-panel="g-greet"]');
+      const cards = document.querySelectorAll("[data-buycard], #pay");
+      if (gate && !armedIo) {
+        armedIo = new IntersectionObserver(
+          (es) => {
+            if (es.some((e) => e.isIntersecting)) {
+              setArmed(true);
+              armedIo?.disconnect();
+            }
+          },
+          { threshold: 0.5 },
+        );
+        armedIo.observe(gate);
+      }
+      if (cards.length && !blockIo) {
+        const seen = new Set<Element>();
+        blockIo = new IntersectionObserver((es) => {
+          for (const e of es) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target);
+          setBlocked(seen.size > 0);
+        });
+        cards.forEach((c) => blockIo!.observe(c));
+      }
+      if (!armedIo || !blockIo) setTimeout(attach, 400);
+    };
+    attach();
+    return () => {
+      stop = true;
+      armedIo?.disconnect();
+      blockIo?.disconnect();
+    };
+  }, [enabled]);
+  return enabled ? armed && !blocked : true;
+}
+
+/** 재회 고정바 — 게이트를 안에서 돌린다(훅은 조건부로 못 부른다). */
+function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBuy: () => void }) {
+  const show = useReunionBarGate(true);
+  if (!show) return null;
+  return <StickyBuyBar {...props} />;
+}
+
+function StickyBuyBar({
+  note,
+  buyLabel,
+  dark,
+  onBuy,
+}: {
+  note: React.ReactNode;
+  buyLabel: string;
+  dark?: boolean;
+  onBuy: () => void;
+}) {
   // createPortal 은 SSR 에 document 가 없다 — 마운트 후에만 그린다.
   const [mounted, setMounted] = useState(false);
   // 바닥 여백은 **재서** 맞춘다. 375px 에서 이 문장은 두 줄로 감겨 69px 가 되는데 고정값 46px 을
@@ -2726,8 +3976,11 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
   //   연출은 공용이라 못 건드리므로 바만 포털로 꺼낸다.
   return (
     <>
-    {/* 고정바가 마지막 줄(환불 안내)을 덮지 않게 그만큼 바닥을 띄운다 */}
-    <div aria-hidden style={{ height: barH }} />
+    {/* 바닥 여백도 **포털로 body 끝에** 붙인다.
+        ⚠ 예전엔 이 자리(티저 컴포넌트 안)에 그냥 뒀는데, 티저 **뒤에** 결제 시트가 이어지므로
+        여백이 시트 앞에 끼어 아무 일도 안 했다 — 맨 끝의 결제 버튼과 「한 번만 결제돼요」가
+        고정바에 그대로 덮여 있었다(운영 실측). body 마지막 자식이어야 문서 끝이 밀린다. */}
+    {createPortal(<div aria-hidden style={{ height: barH }} />, document.body)}
     {createPortal(
     <div
       ref={(el) => { if (el) setBarH(el.offsetHeight); }}
@@ -2737,17 +3990,36 @@ function NearestMonthBar({ nearest }: { nearest: { year: number; month: number }
       // teaser-light 를 같이 붙여 토큰(값=먹색·강조=핑크)이 안에서 그대로 먹게 한다.
       // mx-auto+max-w-md: 포털이 body 로 나가 ChromeGate 폰 기둥 밖이므로 폭을 스스로 죈다
       // (fixed 는 뷰포트 기준 — 안 죄면 PC 에서 이 바만 모니터 전폭으로 뻗는다). 홈 고정 헤더와 같은 공식.
-      className="world-jiknyeo teaser-light fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md px-4 py-2.5 text-center"
-      style={{ background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }}
+      className={`${dark ? "world-sangun" : "world-jiknyeo teaser-light"} fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-md items-center gap-2.5 px-3 py-2.5`}
+      style={
+        dark
+          ? { background: "rgba(10,9,14,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.5)" }
+          : { background: "rgba(255,255,255,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)" }
+      }
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
-      <span className="font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "var(--bone-soft)" }}>
-        가장 가까운 열리는 달,{" "}
-        <span className="font-bold" style={{ color: "var(--gold-bright)" }}>
-          {nearest.month}월
-        </span>{" "}
-        — 지나가면 다음 계산에서 빠져요
+      <span
+        className="font-myeongjo min-w-0 flex-1 text-left text-[13px] leading-[1.45]"
+        style={{ color: "var(--bone-soft)" }}
+      >
+        {note}
       </span>
+      <button
+        type="button"
+        onClick={onBuy}
+        className="shrink-0 whitespace-nowrap px-3.5 text-[13px] font-bold"
+        style={{
+          fontFamily: "var(--font-serif-kr), serif",
+          background: "var(--gold-bright)",
+          color: dark ? "#17120c" : "#ffffff",
+          // 탭 타깃 44px — 스크롤 중에 엄지로 누르는 자리라 제일 놓치기 쉽다.
+          // 인라인으로 두는 이유: 유틸리티 클래스(min-h-[44px])는 이 버튼에서 실측 20px 로
+          // 떨어졌다(2026-09-02 DOM 실측 minHeight:auto). 값이 확실히 서야 하는 자리다.
+          minHeight: 44,
+        }}
+      >
+        {buyLabel}
+      </button>
     </div>,
     document.body,
     )}
@@ -2763,6 +4035,8 @@ function ConfirmStep({
   imm,
   optTone,
   skipped,
+  concernStep = CONCERN_STEP,
+  extraRows,
 }: {
   form: FormState;
   onEdit: (s: number) => void;
@@ -2771,6 +4045,10 @@ function ConfirmStep({
   imm: boolean; // 몰입 상품(산군)은 여기서 가격을 꺼내지 않는다
   optTone: OptionTone; // 손님이 고른 문장을 **고를 때와 같은 말투로** 되보여준다
   skipped: Set<number>; // 이 상품이 안 묻는 질문 — 확인 화면에서도 뺀다
+  /** 고민 화면 번호 — 재회만 뒤로 밀려 있다(「수정」이 엉뚱한 화면으로 가면 안 된다) */
+  concernStep?: number;
+  /** 상품 전용 답 줄 — 재회 여섯 문항이 여기로 온다. [라벨, 값, 수정할 화면] */
+  extraRows?: [string, string, number][];
 }) {
   const concernAll = [...form.concerns, ...(form.concernText.trim() ? [form.concernText.trim()] : [])];
   const rows: [string, string, number][] = [
@@ -2784,7 +4062,8 @@ function ConfirmStep({
     ["인연 방향", form.partner ? displayOf(PARTNER_OPTIONS, form.partner, optTone) : "—", PARTNER_STEP],
     ["연애 상태", form.relationship ? displayOf(RELATIONSHIP_OPTIONS, form.relationship, optTone) : "—", RELATIONSHIP_STEP],
     ["직업", form.job ? displayOf(JOB_OPTIONS, form.job, optTone) : "—", JOB_STEP],
-    ["고민", concernAll.length ? concernAll.join(" · ") : "—", CONCERN_STEP],
+    ...(extraRows ?? []),
+    ["고민", concernAll.length ? concernAll.join(" · ") : "—", concernStep],
   ].filter(([, , s]) => !skipped.has(s as number)) as [string, string, number][]; // 안 물은 질문은 확인 화면에서도 뺀다
 
   return (
@@ -2801,7 +4080,10 @@ function ConfirmStep({
               <button
                 type="button"
                 onClick={() => onEdit(s)}
-                className="ml-2.5 font-myeongjo text-[11px] text-gold tracking-[0.15em] underline underline-offset-2"
+                // 글자는 11px 그대로 두고 **누를 면적만** 넓힌다(실측 23×17 → 44 이상).
+                // 값을 고치려고 온 손님이 제일 놓치기 쉬운 자리인데 화면에서 가장 작았다.
+                // -my-3 로 늘어난 높이를 도로 먹여 줄 간격은 그대로 유지한다.
+                className="-my-3 ml-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center font-myeongjo text-[11px] text-gold tracking-[0.15em] underline underline-offset-2"
               >
                 수정
               </button>

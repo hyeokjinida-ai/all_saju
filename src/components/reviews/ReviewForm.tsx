@@ -33,8 +33,17 @@ export function ReviewForm({ orderId, productName }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "후기 저장 실패");
-      toast.success("후기가 등록되었습니다");
-      router.push("/mypage/reviews");
+
+      // 답례로 질문권이 붙었으면 **결과지의 질문 칸으로 바로 보낸다.**
+      // 마이페이지로 보내면 「질문권이 생겼다」는 말만 남고 쓸 자리는 손님이 찾아야 한다 —
+      // 그 한 칸이 비면 답례가 그냥 안내 문구가 된다.
+      if (json.creditGranted && json.resultId) {
+        toast.success("후기 고맙습니다 — 질문 하나가 생겼어요");
+        router.push(`/results/${json.resultId}#ask`);
+      } else {
+        toast.success("후기가 등록되었습니다");
+        router.push("/mypage/reviews");
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");

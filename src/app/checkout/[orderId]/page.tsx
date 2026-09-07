@@ -5,6 +5,7 @@ import { TrustStrip } from "@/components/saju/TrustStrip";
 import { LoginNudge } from "@/components/checkout/LoginNudge";
 import { formatKRW } from "@/lib/utils";
 import { MEMBER_DISCOUNT, MIN_CHARGE, chargeFor } from "@/lib/pricing";
+import { worldOfSlug, worldClass, worldBg } from "@/lib/world";
 
 export const metadata = { title: "결제" };
 
@@ -73,9 +74,12 @@ export default async function CheckoutPage({
   // 전엔 산군이 「이제 복채 얘기를 하자 / 신당에 몸소 들면 5만~20만」 같은 문장을 달고 있었고
   // 직녀도 그걸 따라 붙였는데, 형님 「말할 필요 없는 말」「다른 데만큼만 해」로 걷어냈다.
   // 세계관은 **색으로만** 이어간다(.world-* 스킨) — 글은 다른 데만큼.
-  const slug = product?.slug ?? "";
-  const world = slug.includes("sangun") ? "world-sangun" : slug === "inyeon-saju" || slug === "marriage-saju" ? "world-jiknyeo" : "";
-  const bg = world === "world-sangun" ? "#0a0908" : world === "world-jiknyeo" ? "#0b0f1a" : "#000000";
+  const slug = product?.slug ?? ""; // 아래 한 줄 설명(desc) 표에서도 쓴다
+  // 재회(견우)도 같은 밤 무대 색을 쓴다 — world-jiknyeo 는 그림이 아니라 **색 토큰**이다.
+  // 판정은 lib/world.ts 한 곳에서만 한다: 여기와 결제 후 대기 화면이 규칙을 따로 들고 있다가
+  // 대기 화면만 재회·번들을 못 알아보는 병이 났다(2026-09-07).
+  const world = worldOfSlug(slug);
+  const bg = worldBg(world);
 
   // ── 영수증 산수 ────────────────────────────────────────────────
   // ⚠ 판매가를 상품 테이블에서 다시 읽어 계산하지 않는다. 주문을 만든 뒤 가격을 바꾸면
@@ -109,8 +113,8 @@ export default async function CheckoutPage({
   // 한 줄 설명 — 티저·랜딩이 쓰는 분량 표기와 같은 말. 없는 상품은 비운다.
   const desc: Record<string, string> = {
     "sangun-sinjeom": "장부 열한 장 · 앞으로 12개월",
-    "inyeon-saju": "열두 달 예보 · 여덟 장",
-    "marriage-saju": "결혼하는 해와 달 · 여덟 장",
+    "inyeon-saju": "열두 달 예보 · 내 고민 답변",
+    "marriage-saju": "결혼하는 해와 달 · 내 고민 답변",
   };
 
   const Row = ({ k, v, sub, strong }: { k: React.ReactNode; v: React.ReactNode; sub?: string; strong?: boolean }) => (
@@ -124,7 +128,7 @@ export default async function CheckoutPage({
   );
 
   return (
-    <div className={`${world} min-h-screen`} style={{ background: bg }}>
+    <div className={`${worldClass(world)} min-h-screen`} style={{ background: bg }}>
       <div className="mx-auto max-w-md px-5 py-10">
         <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">{name} 결제 안내</h1>
 

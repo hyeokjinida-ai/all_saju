@@ -5,6 +5,8 @@ import { buildResultView, type ResultView } from "@/lib/saju/result-view";
 import { buildTeaser } from "@/lib/saju/teaser";
 import { buildWebtoonTokens } from "@/lib/saju/webtoon-tokens";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
+import { computeReunionFacts, type ReunionFacts } from "@/lib/saju/reunion";
+import { REUNION_SLUG, hasPartnerChart, parseReunionTags, partnerBirthInfo } from "@/lib/saju/reunion-input";
 import { publicEnv } from "@/lib/env";
 
 // 무료 분석(⑥)용 — 명식 + 오행 + 영역별 점수까지(LLM 없이). 결제 후 상세 풀이는 별도.
@@ -114,7 +116,31 @@ export async function POST(request: NextRequest) {
       try {
         // 인연 방향은 유료 결과지와 같은 값을 써야 티저와 결과지가 같은 해를 말한다
         const { partnerSex } = parseProfileTags(body.concerns);
-        teaser = buildTeaser(analysis, body.gender, body.slug === "sangun-sinjeom" ? "sangun" : "polite", partnerSex);
+        // 재회 티저 — 결제 후 결과지와 **같은 계산**을 여기서 미리 돌린다.
+        // 상대 명식은 생일을 받았을 때만 1콜 더(source=demo, 캐시 히트면 0콜). 실패하면
+        // 상대 없이 계속 간다 — 티저 하나 때문에 결제 화면을 못 띄우는 게 훨씬 나쁘다.
+        let reunionFacts: ReunionFacts | null = null;
+        if (body.slug === REUNION_SLUG) {
+          const reunionInput = parseReunionTags(body.concerns);
+          let partnerAnalysis: SajuAnalysisResponse | null = null;
+          const pbi = hasPartnerChart(reunionInput) ? partnerBirthInfo(reunionInput, body.gender) : null;
+          if (pbi) {
+            try {
+              const pa = await fetchSajuAnalysis(pbi, [], { source: "demo" });
+              partnerAnalysis = pa.ganji ? pa : null;
+            } catch {
+              partnerAnalysis = null;
+            }
+          }
+          reunionFacts = computeReunionFacts(analysis, body.gender, reunionInput, { partnerAnalysis, partnerSex });
+        }
+        teaser = buildTeaser(
+          analysis,
+          body.gender,
+          body.slug === "sangun-sinjeom" ? "sangun" : "polite",
+          partnerSex,
+          reunionFacts,
+        );
       } catch {
         teaser = null; // 티저는 부가물 — 실패해도 명식/결제 흐름을 막지 않는다
       }

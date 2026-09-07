@@ -33,12 +33,12 @@ export function JiknyeoTeaserPrice({
       </div>
 
       {/* 가로 스크롤 카드열 — 좁은 화면에서 줄바꿈으로 뭉개지지 않게 옆으로 흘린다(원본도 잘려 나간다) */}
-      <div className="-mx-5 mt-6 overflow-x-auto px-5">
-        <div className="flex w-max gap-3">
-          <VsCard label="철학관·점집 대면" from="5만원" to="30만원" />
-          <VsCard label="전화 상담" from="3만원" to="10만원" />
-          <VsCard label="사주 앱 구독" from="월 9천원" to="월 3만원" />
-        </div>
+      {/* ⚠ 「사주 앱 구독(월 9천원~)」을 뺐다(형님 지시 2026-08-24). 우리 값(17,900원)보다 싼
+          숫자를 앵커 옆에 세우면 비교표가 **우리를 비싸 보이게** 만든다. 대면·전화만 남기면
+          세 칸이 두 칸이 되어 가로 스크롤도 사라진다(잘려 보이던 세 번째 카드 문제도 같이 해결). */}
+      <div className="mt-6 flex justify-center gap-3">
+        <VsCard label="철학관·점집 대면" from="10만원" to="30만원" />
+        <VsCard label="전화 상담" from="3만원" to="10만원" />
       </div>
 
       <p className="mt-8 text-center">
@@ -72,8 +72,11 @@ export function JiknyeoTeaserPrice({
             내 사주풀이에 <span style={{ color: PINK, fontWeight: 700 }}>+</span>{" "}
             {isMarriage ? "결혼하는 해와 그 해의 달까지!" : "인연이 열리는 달과 만나는 자리까지!"}
           </>,
+          // 분량 앵커(A4 몇 쪽·몇 자)는 형님 지시로 걷어냈다(2026-09-02) —
+          // 경쟁사는 2~5만 자로 파는 자리라 우리 숫자를 꺼내는 순간 지는 싸움이다.
+          // 대신 결과지에 실제로 있는 장(6장 신호 셋)을 세운다 — 목차에 없는 걸 적으면 들통난다.
           <>
-            읽어도 읽어도 끝이 없는 <span style={{ color: PINK, fontWeight: 700 }}>A4 여덟 장 분량</span>
+            그 사람을 <span style={{ color: PINK, fontWeight: 700 }}>알아보는 신호 셋</span>까지 같이
           </>,
           <>
             한 번 사면 <span style={{ color: PINK, fontWeight: 700 }}>마이페이지에 계속 보관</span>
