@@ -12,12 +12,21 @@ import { Gowun_Batang, Nanum_Brush_Script, Nanum_Myeongjo, Noto_Serif_KR, Noto_S
 import localFont from "next/font/local";
 
 // 제목·대사·본문의 축. 이 프로젝트에서 제일 많이 쓰는 글씨체다.
+//
+// ⚠ preload 를 끈 이유(2026-09-07 실측). 한글 폰트는 Google 이 유니코드 레인지로
+// 수십 조각을 내 두는데, `preload: true` 는 그 조각들을 **unicode-range 도 display:swap 도
+// 무시하고 전부** 첫 화면에서 받게 만든다. 산군 랜딩 실측: 게이트가 실제로 쓰는 폰트는
+// 2종(이것 + Pretendard)인데 <link rel=preload as=font> 가 **94건 · 1,459KB** 걸려 있었다.
+// 그 대역폭이 CSS·JS 를 밀어내 첫 글자가 뜨는 시간(FCP)이 4G·CPU4배에서 3.0초 늦었다
+// (6,964ms → 폰트 차단 시 3,973ms, 3회 반복 재현).
+// 끈다고 폰트를 안 받는 게 아니다 — 브라우저가 **실제 필요한 조각만** 나중에 받는다.
+// `display: "swap"` 이라 그동안 글자는 대체 글씨체로 먼저 떠 있다.
 export const gowunBatang = Gowun_Batang({
   weight: ["400", "700"],
   subsets: ["latin"],
   display: "swap",
   variable: "--font-myeongjo",
-  preload: true,
+  preload: false,
 });
 
 // 財 · 緣 · 命 — 티저의 장(章) 글자와 .font-brush
