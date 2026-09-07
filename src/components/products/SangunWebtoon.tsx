@@ -2,7 +2,7 @@
 
 // "박수무당 사주" 포괄 메인 랜딩 — 타이트 MZ무당사주 구조 이식(2026-07-28 형님 지시).
 // 스크롤 설득문이 아니라 "입장 의식": 사운드 게이트 → 신당 입장 → 박수 대면 → 장부 티저 → 페이월.
-// 사운드는 파일 없이 Web Audio 합성(저음 바람 + 방울 딸랑) — 자산 의존 제거.
+// 사운드는 Flow(Veo) 로 뽑은 실제 신당 소리 2개(shrine-gate/shrine-bed.m4a) — 아래 useShrineAmbience 참고.
 import { useEffect, useRef, useState } from "react";
 import { StoryFooter } from "@/components/products/StoryFooter";
 import { BgMedia } from "@/components/products/BgMedia";
@@ -19,72 +19,50 @@ const RED = "#8f2b1e";
 const SUB = "#9aa3b8";
 const P = { color: "#a4552c" };
 
-// ── Web Audio 신당 앰비언스(바람 + 방울) ─────────────────────────
+// ── 신당 앰비언스 — Flow(Veo) 로 뽑은 실제 소리 2개 ────────────────
+// 2026-09-07 교체. 예전엔 Web Audio 사인파 합성(2450/3100/3900Hz + 노이즈 바람)이었는데
+// **순수 사인파라 방울이 아니라 전자음으로 들렸다**(형님 "소리가 너무 별로").
+// 지금은 Flow 원본 오디오를 **가공 없이**(ffmpeg -c:a copy, 48kHz 139kbps 그대로) 쓴다:
+//   shrine-gate.m4a = 문 열림 + 발소리 8.0초 → 켤 때 **한 번만**
+//   shrine-bed.m4a  = 신당 공기 7.0초 → 그 뒤로 **계속 루프**
+// 왜 두 개인가: gate 는 첫 0.3초(-11.2dB)와 끝 0.3초(-22.3dB)의 단차가 11.1dB 라
+// 루프하면 8초마다 문소리가 다시 나서 튄다. bed 는 단차가 0.8dB 라 원본 그대로 이어도 안 튄다.
 function useShrineAmbience() {
-  const ctxRef = useRef<AudioContext | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const introRef = useRef<HTMLAudioElement | null>(null);
+  const bedRef = useRef<HTMLAudioElement | null>(null);
   const [on, setOn] = useState(false);
 
   const stop = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    ctxRef.current?.close().catch(() => {});
-    ctxRef.current = null;
+    for (const r of [introRef, bedRef]) {
+      r.current?.pause();
+      r.current = null;
+    }
     setOn(false);
   };
 
   const start = () => {
-    if (ctxRef.current) return;
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    ctxRef.current = ctx;
-    const master = ctx.createGain();
-    master.gain.value = 0.16;
-    master.connect(ctx.destination);
+    if (introRef.current ?? bedRef.current) return;
 
-    // 바람 — 루프 노이즈 버퍼 + 저역 필터
-    const len = ctx.sampleRate * 4;
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-    const noise = ctx.createBufferSource();
-    noise.buffer = buf;
-    noise.loop = true;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 240;
-    const windGain = ctx.createGain();
-    windGain.gain.value = 0.5;
-    noise.connect(lp).connect(windGain).connect(master);
-    noise.start();
+    const bed = new Audio("/products/sangun/shrine-bed.m4a");
+    bed.loop = true;
+    bed.volume = 0.5;
+    bed.preload = "auto";
+    bedRef.current = bed;
 
-    // 방울 — 불규칙하게 딸랑(고음 사인 3개, 짧은 감쇠)
-    const jingle = () => {
-      const c = ctxRef.current;
-      if (!c) return;
-      const t0 = c.currentTime;
-      [2450, 3100, 3900].forEach((f, i) => {
-        const o = c.createOscillator();
-        const g = c.createGain();
-        o.frequency.value = f + Math.random() * 120;
-        g.gain.setValueAtTime(0, t0);
-        g.gain.linearRampToValueAtTime(0.10 - i * 0.025, t0 + 0.012 + i * 0.03);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9 + i * 0.18);
-        o.connect(g).connect(master);
-        o.start(t0);
-        o.stop(t0 + 1.4);
-      });
-    };
-    jingle();
-    timerRef.current = setInterval(() => {
-      if (Math.random() < 0.55) jingle();
-    }, 2600);
+    const intro = new Audio("/products/sangun/shrine-gate.m4a");
+    intro.volume = 0.5;
+    // 문 소리가 끝나야 신당 공기로 넘긴다(겹치면 발소리 위에 공기가 이중으로 깔린다)
+    intro.addEventListener("ended", () => void bedRef.current?.play().catch(() => {}));
+    introRef.current = intro;
+
+    // 버튼 터치가 사용자 제스처라 자동재생 정책을 통과한다.
+    // 그래도 막히면 조용히 넘어가고 베드만 시도한다(소리 없이도 화면은 정상).
+    void intro.play().catch(() => void bed.play().catch(() => {}));
     setOn(true);
   };
 
   useEffect(() => stop, []);
-  return { on, toggle: () => (ctxRef.current ? stop() : start()) };
+  return { on, toggle: () => ((introRef.current ?? bedRef.current) ? stop() : start()) };
 }
 
 // ── 공용 조각(웹툰 랜딩 문법 재사용) ─────────────────────────────
@@ -302,8 +280,13 @@ export function SangunStory({
   if (stage === "gate") {
     return (
       <div className="world-sangun story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
+        {/* 문 통과 8초가 끝나면 제단 앞 아이들 루프로 갈아탄다(2026-09-07, 형님 "마지막에 서 있는데 영상으로는 못해?").
+            예전엔 마지막 프레임 정지였다. gate-idle.mp4 = gate.mp4 의 **진짜 끝 프레임**을 시드로 뽑아
+            되감기(팔린드롬)로 이은 10초 루프 — 연결부 Δ2.52 · 루프 이음매 Δ0.77 로 전환도 되감김도 안 보인다.
+            루프를 지정 이미지로 만들면 연결부가 벌어진다(형님이 Flow 로 뽑은 판은 Δ7.84 라 못 썼다). */}
         <BgMedia
           video="/products/sangun/gate.mp4"
+          loopVideo="/products/sangun/gate-idle.mp4"
           img="/products/sangun/gate.webp"
           alt="신당 문을 지나 제단 앞으로 들어가는 장면"
           className="absolute inset-0 h-full w-full object-cover opacity-95"
