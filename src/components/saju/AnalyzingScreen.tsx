@@ -71,17 +71,20 @@ export function AnalyzingScreen({
     >
       {sangun ? (
         <>
-          {/* 산군 — 결제 직전 위저드가 틀던 **바로 그 영상**을 이어 튼다.
-              예전엔 같은 컷의 정지 이미지(face.webp)였는데, 결제 순간 신당이 멈춰 버려
-              「산군이 붓을 들었다」는 말과 화면이 어긋났다(형님 지적 2026-09-07).
-              직녀·재회는 이미 영상이라 산군만 혼자 정지컷이기도 했다.
-              위저드와 같은 파일이라 손님 브라우저 캐시에 이미 있어 새로 받는 무게도 없다.
-              못 틀면 BgMedia 가 같은 컷의 webp 로 조용히 내려앉는다(=예전 화면). */}
+          {/* 산군 — 부채를 들고 굿을 하는 판(형님 픽 2026-09-08).
+              처음엔 정지 이미지(face.webp)라 결제 순간 신당이 멈춰 버렸고, 다음엔 위저드와
+              같은 face.mp4(서서 향만 피우는 컷)를 이어 틀었다. 형님이 9/6에 뽑아 둔
+              역동판 중 「문틀 부채도약」으로 교체 — 대기 중에 산군이 **일하고 있는 게 보인다**.
+              ⚠ 위저드(입력 12칸)는 face.mp4 를 그대로 둔다. 손님이 생년월일을 타이핑하는
+                 구간의 큰 움직임은 분위기가 아니라 잡음이다(재회 위저드가 캐릭터 루프를
+                 일부러 안 까는 것과 같은 판단). 그래서 **대기 화면 전용 파일**로 따로 둔다.
+              직녀가 loading.mp4 를 쓰는 것과 같은 이름 규칙이다.
+              못 틀면 BgMedia 가 같은 컷의 webp 로 조용히 내려앉는다. */}
           <div className="pointer-events-none absolute inset-0 z-0" style={{ opacity: 0.5 }}>
             <BgMedia
-              video="/products/sangun/face.mp4"
-              img="/products/sangun/face.webp"
-              alt="신당에 선 박수무당"
+              video="/products/sangun/loading.mp4"
+              img="/products/sangun/loading.webp"
+              alt="부채를 들고 굿을 하는 박수무당"
               // object-top: 예전 정지판이 backgroundPosition "center top" 이었다.
               // 기본값(center)으로 두면 세로로 긴 컷이라 갓과 어깨가 잘려 다른 그림이 된다.
               className="absolute inset-0 h-full w-full object-cover object-top"
