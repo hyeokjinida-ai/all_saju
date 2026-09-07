@@ -13,6 +13,7 @@
 #  3) dpr3 통짜는 1170×73,000 = 8,500만 픽셀로 PIL 폭탄 한도에 붙는다 → 창을 나눠 찍는다.
 #
 # 산출 → marketing/소재/산군/재료/캡처/seo/
+import argparse
 import json
 import os
 import subprocess
@@ -24,7 +25,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 MAT = os.path.join(ROOT, "marketing", "소재", "산군", "재료")
 OUT = os.path.join(MAT, "캡처", "seo")
 TMP = os.path.join(os.environ.get("TEMP", "/tmp"), "seo_cap")
-URL = "http://localhost:3000/dev/sangun-result?case=seoyun"
+URL = "http://localhost:3000/dev/sangun-result?case=seoyun"   # --case 로 바꾼다(v7 가짜 직언 카드 = seoyun_v7)
+JIKEON_RE = "미련은 남아 있지만"   # 9장 직언을 찾는 정규식 본문 — --jikeon-re 로 바꾼다(v7: 같은 실수를 반복한다)
 CAP_PAGE = os.path.join(ROOT, "marketing", "tools", "cap_page.mjs")
 Image.MAX_IMAGE_PIXELS = 250_000_000
 os.makedirs(OUT, exist_ok=True)
@@ -108,7 +110,7 @@ RECTS_JS = r"""
 def cap(prefix, dpr, wait=15000, y0=None, y1=None, chunk=1200):
     cmd = ["node", CAP_PAGE, "--url", URL, "--out", prefix, "--w", "390",
            "--dpr", str(dpr), "--wait", str(wait), "--maxh", "60000",
-           "--chunk", str(chunk), "--rects", RECTS_JS]
+           "--chunk", str(chunk), "--rects", RECTS_JS.replace("미련은 남아 있지만", JIKEON_RE)]
     if y0 is not None:
         cmd += ["--y0", str(int(y0)), "--y1", str(int(y1))]
     r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -158,13 +160,31 @@ BLOCKS = [
 
 
 def main():
-    skip = "--skip-cap" in sys.argv
+    global URL, JIKEON_RE
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--skip-cap", action="store_true")
+    ap.add_argument("--no-full", action="store_true")
+    ap.add_argument("--case", default="seoyun")
+    ap.add_argument("--only", default="",
+                    help="예 jikeon,jikeon_t — 이 블록만 자른다. 나머지 카드·플립·인덱스는 건드리지 않는다(2026-09-06 v7)")
+    ap.add_argument("--suffix", default="", help="저장 파일명 뒤에 붙일 것(예 _v7) — 8/23 캡처를 덮어쓰지 않으려고")
+    ap.add_argument("--jikeon-re", default=JIKEON_RE)
+    a = ap.parse_args()
+    URL = f"http://localhost:3000/dev/sangun-result?case={a.case}"
+    JIKEON_RE = a.jikeon_re
+    only = set(filter(None, a.only.split(",")))
+    blocks = [b for b in BLOCKS if not only or b[0] in only]
+    skip = a.skip_cap
+
+    def outname(name):
+        return name[:-4] + a.suffix + ".png"
+
     saved, meta = {}, {}
-    for i, (a, b) in enumerate(WINDOWS):
+    for i, (wa, wb) in enumerate(WINDOWS):
         p = os.path.join(TMP, f"w{i}")
         if not skip:
-            log(f"window{i} capturing css {a}~{b} …")
-            cap(p, dpr=3, y0=a, y1=b)
+            log(f"window{i} capturing css {wa}~{wb} …")
+            cap(p, dpr=3, y0=wa, y1=wb)
         im, j, wy0 = stitch(p)
         if im is None:
             log(f"window{i} empty (page shorter) — skip")
@@ -175,7 +195,8 @@ def main():
         page_h = (rects.get("__page") or [0, 0, 0, 0])[3]
         log(f"window{i} {im.size} css {top:.0f}~{bot:.0f} (page {page_h})")
         meta.setdefault("partner_src", rects.get("partner_src"))
-        for key, name, fullw, padt, padb in BLOCKS:
+        for key, name, fullw, padt, padb in blocks:
+            name = outname(name)
             if name in saved:
                 continue
             rc = rects.get(key)
@@ -191,18 +212,29 @@ def main():
             crop.save(os.path.join(OUT, name))
             saved[name] = (crop.size, [round(v) for v in rc])
             log("  saved", name, crop.size, "css", [round(v) for v in rc])
-        # 플립 원본은 가장 큰 창 하나로 쓰지 않는다 — 아래에서 통짜를 따로 만든다
-        im.save(os.path.join(TMP, f"win{i}.png"))
+        if not only:
+            # 플립 원본은 가장 큰 창 하나로 쓰지 않는다 — 아래에서 통짜를 따로 만든다
+            im.save(os.path.join(TMP, f"win{i}.png"))
+        if only and all(outname(b[1]) in saved for b in blocks):
+            log("only 블록 전부 확보 — 남은 창은 안 찍는다")
+            break
 
-    missing = [n for _, n, _, _, _ in BLOCKS if n not in saved]
+    missing = [outname(n) for _, n, _, _, _ in blocks if outname(n) not in saved]
     if missing:
         log("MISSING:", missing)
+
+    if only:
+        json.dump({"saved": {k: v[0] for k, v in saved.items()}, "css": {k: v[1] for k, v in saved.items()},
+                   "missing": missing, "case": a.case},
+                  open(os.path.join(OUT, f"seo_caps_index{a.suffix}.json"), "w", encoding="utf-8"),
+                  ensure_ascii=False, indent=1)
+        log("done(only) ->", OUT, sorted(saved))
+        return
 
     # 얼굴 블러 2종
     fp = os.path.join(OUT, "seo_partner_face.png")
     if os.path.exists(fp):
-        Image.open(fp).convert("RGB").filter(ImageFilter.GaussianBlur(18)) \
-            .save(os.path.join(OUT, "seo_partner_face_blur.png"))
+        Image.open(fp).convert("RGB").filter(ImageFilter.GaussianBlur(18))             .save(os.path.join(OUT, "seo_partner_face_blur.png"))
         log("  saved seo_partner_face_blur.png")
     cp = os.path.join(OUT, "seo_partner_card.png")
     if os.path.exists(cp) and "seo_partner_card.png" in saved and "seo_partner_face.png" in saved:
@@ -220,7 +252,7 @@ def main():
 
     # 플립 18장 — 통짜(dpr1) 한 번 더. 0.34초씩 넘어가므로 dpr1 로 충분하다.
     pf = os.path.join(TMP, "full1")
-    if "--no-full" in sys.argv:
+    if a.no_full:
         log("skip full pass (--no-full)")
         pf = None
     elif not skip:

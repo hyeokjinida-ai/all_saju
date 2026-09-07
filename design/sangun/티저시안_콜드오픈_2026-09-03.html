@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>산군 티저 시안 — 콜드오픈 + 등장 절단 (2026-09-03)</title>
+<!--
+  ── 시안. 운영 코드 무접촉. ──
+  웹툰 몰입 실측(웹툰_몰입판독_실측_2026-09-03.md)의 번역 후보 2개를 실제 조판으로 세워 본 것:
+    ① 콜드오픈 도입 — 4작품 만장일치: 그림 먼저, 제목·설명은 나중(타이틀 드랍).
+       도입 흑숨 140~220px = 웹툰 숨 중앙값 대역(133~284px 실측).
+    ② 등장 절단 — 견우와선녀 4화(공감 46,462 베댓 인증): 독자를 정면으로 보는 컷 + 대사 0 → 즉시 미끼.
+       반전 절단은 안 쓴다(페이지당 정점 문법 하나).
+  본문 구간은 기존 티저의 검증 눈금 그대로(기본24 · 정점44/56 · 컷 풀블리드 · 타이포 15/19).
+  카피는 전부 기존 운영 문장 그대로(?demo=1 실물 + SajuWizard/teaser.ts 원문) — 새 카피 0줄.
+  값(원국·신살·연도)은 운영 데모 표본(1994-06-01 여, 박지수)의 실제 계산값.
+  글씨체는 시안 근사: 명조=Nanum Myeongjo, 붓=Nanum Brush Script (운영은 자체 폰트).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Brush+Script&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #070609; }
+  body {
+    width: 390px; margin: 0 auto;
+    font-family: "Nanum Myeongjo", serif;
+    color: #d7cebc;
+    overflow-x: hidden;
+  }
+  img { display: block; width: 100%; user-select: none; }
+
+  /* ── 부품 ── */
+  .cut { position: relative; width: 390px; overflow: hidden; }
+  .cut img { height: 100%; object-fit: cover; }
+  .say {
+    position: absolute; left: 16px; right: 16px; z-index: 2;
+    background: linear-gradient(180deg, rgba(243,234,214,0.94), rgba(233,222,194,0.92));
+    border: 1px solid rgba(201,185,142,0.8);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+    border-radius: 5px; padding: 12px 16px;
+  }
+  .say p { font-size: 19px; font-weight: 600; line-height: 1.75; color: #241d10; }
+  .say .tag {
+    position: absolute; top: -10px; right: 10px;
+    background: #8f2b1e; color: #f3e6cf;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.22em;
+    padding: 3px 8px 2px; border-radius: 2px;
+  }
+  .shade-b { position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(0deg, rgba(8,7,6,0.62) 0%, rgba(8,7,6,0.15) 38%, rgba(8,7,6,0) 60%); }
+  .shade-t { position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg, rgba(8,7,6,0.62) 0%, rgba(8,7,6,0.15) 38%, rgba(8,7,6,0) 60%); }
+
+  .narr { text-align: center; font-size: 19px; line-height: 1.9; color: #e9dfc9; }
+  .panel-wrap { padding: 0 20px; }
+
+  .hanja-head { text-align: center; margin-top: 44px; }
+  .hanja-head span {
+    font-size: 34px; font-weight: 800; color: #c8452f;
+    text-shadow: 0 0 24px rgba(143,43,30,0.45); letter-spacing: 0.1em;
+  }
+
+  /* 붓 마스킹(가린 값) — 운영 InkMask 재현: 먹붓 자국 + 단위 글자만 남김 */
+  .ink {
+    display: inline-block; width: 2.1em; height: 1.02em; vertical-align: middle;
+    background: linear-gradient(97deg, #2b100b, #4a1a10 30%, #33120b 62%, #1d0b07);
+    border-radius: 2px 7px 3px 8px / 6px 3px 7px 2px;
+    transform: rotate(-1.6deg);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.55), 0 0 1px rgba(122,35,23,0.4);
+  }
+  .ink.s { width: 1.6em; transform: rotate(1.2deg);
+    border-radius: 7px 2px 8px 3px / 3px 6px 2px 7px; }
+</style>
+</head>
+<body>
+
+<!-- ════════ 콜드오픈 — 그림 먼저. 헤더도, 제목도, 진행바도 없다. ════════ -->
+<!-- 화면1: 밤 산길 아래에서 올려다본 신당(신작 컷). 글자 0. 세로 풀블리드로 화면을 채운다. -->
+<div class="cut" style="width:390px; aspect-ratio: 941 / 1672; overflow:hidden;">
+  <img src="sangun-open-shrine.png" alt="" />
+</div>
+
+<!-- 흑숨 → 어둠 위 공수 한 줄 (칠흑 「그리고…」 자리. 기존 t1 대사의 앞줄) -->
+<div style="height: 200px;"></div>
+<p class="narr">가만있어 봐라.<br />…여기 있군.</p>
+<div style="height: 160px;"></div>
+
+<!-- 화면2: 산군의 기척 — 신당 벽 호랑이 탱화(신작 컷). 아직 사람은 안 준다. 글자 0. -->
+<div class="cut" style="width:390px; aspect-ratio: 1122 / 1402; overflow:hidden;">
+  <img src="sangun-tiger.png" alt="" />
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,6,9,0.35),rgba(7,6,9,0) 22%,rgba(7,6,9,0) 70%,rgba(7,6,9,0.6));"></div>
+</div>
+
+<!-- ════════ 타이틀 드랍 — 세계를 먼저 보여준 뒤에야 이름을 준다(붓글씨 신작) ════════ -->
+<div style="height: 220px;"></div>
+<div style="padding: 0 44px;">
+  <img src="title-baksu.png" alt="박수무당" style="filter: drop-shadow(0 6px 22px rgba(232,201,106,0.28));" />
+</div>
+<p style="margin-top: 22px; text-align: center; font-size: 12px; letter-spacing: 0.5em; text-indent: 0.5em; color: rgba(215,206,188,0.6);">명운록</p>
+<div style="height: 180px;"></div>
+
+<!-- ════════ 본문 — 여기부터는 기존 티저의 검증 눈금 그대로 ════════ -->
+
+<!-- 장부를 펴 든 손 + 대사(기존 뒷줄만 — 앞줄은 콜드오픈이 가져갔다) -->
+<div class="cut" style="aspect-ratio: 4 / 5;">
+  <img src="../../public/products/sangun/t1-open.webp" alt="" />
+  <div class="shade-t"></div>
+  <div class="say" style="top: 16px;">
+    <span class="tag">산군</span>
+    <p>네 사주가, 여기 다 있다.</p>
+  </div>
+</div>
+
+<!-- 원국 증거 판 (실물 데모값: 1994-06-01 여 · 시각 모름 = 여섯 글자) -->
+<div class="panel-wrap" style="margin-top: 24px;">
+  <div style="background: linear-gradient(180deg,#0b0a0e,#08070a); border: 1px solid rgba(232,201,106,0.16); border-radius: 8px; padding: 18px 14px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.45);">
+    <p style="text-align:center; font-size:11px; letter-spacing:0.06em; color:rgba(215,206,188,0.82);">1994.06.01 — 이 날에서 나온 여섯 글자</p>
+    <table style="width:100%; margin-top:14px; border-collapse:collapse; text-align:center;">
+      <tr style="font-size:11px; color:rgba(215,206,188,0.6);">
+        <td style="padding:4px;">해</td><td>달</td><td>나</td>
+      </tr>
+      <tr style="font-size:26px; font-weight:700; color:#efe6d2;">
+        <td style="padding:6px 4px 0;">甲</td><td>己</td><td>戊</td>
+      </tr>
+      <tr style="font-size:26px; font-weight:700; color:#efe6d2;">
+        <td style="padding:0 4px 6px;">戌</td><td>巳</td><td>午</td>
+      </tr>
+      <tr style="font-size:11px; color:rgba(215,206,188,0.6);">
+        <td style="padding:2px;">갑술</td><td>기사</td><td>무오</td>
+      </tr>
+      <tr style="font-size:12px; color:#c9b98e;">
+        <td style="padding:6px 4px 2px;">비견</td><td>편인</td><td>정인</td>
+      </tr>
+      <tr style="font-size:12px; color:rgba(215,206,188,0.7);">
+        <td style="padding:2px;">묘</td><td>건록</td><td>제왕</td>
+      </tr>
+    </table>
+    <p style="margin-top:14px; text-align:center; font-size:13px; line-height:1.75; color:#c9c0ae;">아래는 네 이름도, 네 물음도 쓰지 않았다.<br />이 글자에서만 나왔다.</p>
+    <p style="margin-top:12px; text-align:center; font-size:11px; letter-spacing:0.15em; color:#c9b98e;">네 글자에 붙어 있는 것</p>
+    <p style="margin-top:10px; text-align:center;">
+      <span style="display:inline-block; border:1px solid rgba(232,201,106,0.45); background:rgba(232,201,106,0.10); color:#e8c96a; border-radius:3px; padding:8px 16px; font-size:17px; font-weight:700;">도화살</span>
+      <span style="display:inline-block; margin-left:8px; border:1px solid rgba(232,201,106,0.45); background:rgba(232,201,106,0.10); color:#e8c96a; border-radius:3px; padding:8px 16px; font-size:17px; font-weight:700;">화개살</span>
+    </p>
+    <p style="margin-top:12px; text-align:center; font-size:13px; line-height:1.75; color:rgba(215,206,188,0.78);">읽을 줄 몰라도 된다. 이것이 네 장부의 원본이고,<br />아래 말은 전부 여기서 나왔다.</p>
+  </div>
+</div>
+
+<!-- 정면으로 기울이는 산군 + 기존 대사 -->
+<div class="cut" style="margin-top: 24px; aspect-ratio: 4 / 5;">
+  <img src="../../public/products/sangun/t2-read.webp" alt="" />
+  <div class="shade-b"></div>
+  <div class="say" style="bottom: 16px;">
+    <span class="tag">산군</span>
+    <p>네 답은 아직 들춰 보지도 않았다.<br />그런데 벌써 보이는군.</p>
+  </div>
+</div>
+
+<!-- 장부 판 — 콜드리딩 (실물 문장 그대로, 2022 크게) -->
+<div class="panel-wrap">
+  <div style="position:relative; margin-top:40px; padding:24px 20px 24px 28px; background: linear-gradient(180deg,rgba(26,20,14,0.92),rgba(14,11,8,0.96)), url(../../public/products/sangun/ganji.webp) center/cover; border:1px solid rgba(232,201,106,0.34); box-shadow: inset 0 0 40px rgba(0,0,0,0.5);">
+    <span style="position:absolute; top:12px; bottom:12px; left:12px; width:2px; background:linear-gradient(180deg,rgba(143,43,30,0.25),rgba(143,43,30,0.95) 12%,rgba(143,43,30,0.95) 88%,rgba(143,43,30,0.25));"></span>
+    <p style="font-size:15px; line-height:1.75; color:#d7cebc;">너는 남의 짐까지 받아 안고는 정작 네 얘기는 안 하는 사람이다.</p>
+    <p style="margin-top:14px; font-size:15px; line-height:1.75; color:#f3ead6;"><span style="font-size:23px; font-weight:700; color:#e8c96a;">2022년</span> 어름에 네 판이 한 번 통째로 바뀌었다. 그때 옮긴 자리가 지금 자리다.</p>
+    <p style="margin-top:14px; font-size:15px; line-height:1.75; color:#d7cebc;">제일 가까운 사람한테서 제일 크게 흔들린다. 밖에선 티도 안 낸다.</p>
+  </div>
+</div>
+
+<!-- 전신 대면 + 판정 대사 (정점 앞 숨 56px) -->
+<div class="cut" style="margin-top: 56px; aspect-ratio: 4 / 5;">
+  <img src="../../public/products/sangun/stand.webp" alt="" style="object-position: center 16%;" />
+  <div class="shade-b"></div>
+  <div class="say" style="bottom: 16px;">
+    <span class="tag">산군</span>
+    <p>맞으면 나머지를 열어라. 틀렸으면 여기서 닫아라.<br />나는 틀린 값은 안 받는다.</p>
+  </div>
+</div>
+
+<!-- 財 -->
+<div class="hanja-head"><span>財</span></div>
+<div class="cut" style="margin-top: 20px; aspect-ratio: 4 / 5;">
+  <img src="../../public/products/sangun/t4-money.webp" alt="" />
+  <div class="shade-t"></div>
+  <div class="say" style="top: 16px;">
+    <span class="tag">산군</span>
+    <p>돈부터 볼까. 다들 그것부터 묻더군.<br />들어오는 달이 보인다 — <span class="ink"></span><span style="font-size:0.92em;">년</span> <span class="ink s"></span><span style="font-size:0.92em;">월</span>. &nbsp;…여기까지.</p>
+  </div>
+</div>
+
+<!-- 장부에 붉게 표시된 해 (정점 앞 숨 56px — 기존 눈금) -->
+<div class="panel-wrap" style="margin-top: 56px;">
+  <div style="background: rgba(143,43,30,0.10); border: 1px solid rgba(143,43,30,0.55); padding: 28px 16px; text-align: center;">
+    <p style="font-size:11px; letter-spacing:0.15em; color:rgba(216,140,120,0.85);">장부에 붉게 표시된 해</p>
+    <span style="position:relative; display:inline-block; margin-top:8px; padding:8px 24px;">
+      <span style="font-family:'Nanum Brush Script',cursive; font-size:46px; font-weight:700; color:#e8695a; line-height:1;">2030년</span>
+      <svg viewBox="0 0 120 56" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;">
+        <ellipse cx="60" cy="28" rx="56" ry="24" fill="none" stroke="#c0392b" stroke-width="3.2" opacity="0.85" transform="rotate(-3 60 28)" stroke-linecap="round" stroke-dasharray="245 40" />
+      </svg>
+    </span>
+    <p style="margin-top:12px; font-size:13px; line-height:1.75; color:#d7cebc;">너는 37세에 한 번 크게 갈린다.</p>
+  </div>
+</div>
+
+<!-- 목차 — 四章 카드 하나만(붉은 표시). 기존 카피 그대로 -->
+<div class="panel-wrap" style="margin-top: 44px;">
+  <p style="text-align:center; font-size:11px; letter-spacing:0.15em; color:rgba(215,206,188,0.6);">네 장부의 차례</p>
+  <div style="margin-top:10px; background: #0c0a08 url(../../public/products/sangun/ganji.webp) center/cover; border: 1px solid rgba(232,201,106,0.28); padding: 16px;">
+    <p style="text-align:center;">
+      <span style="display:inline-block; background:#7a2317; color:#f3e6cf; font-family:'Nanum Brush Script',cursive; font-size:17px; letter-spacing:0.22em; text-indent:0.28em; padding:5px 12px 3px;">四章</span>
+      <span style="display:inline-block; margin-left:6px; border:1px solid rgba(232,201,106,0.45); color:#c9b98e; font-size:11px; letter-spacing:0.06em; padding:4px 8px;">붉은 표시</span>
+    </p>
+    <p style="margin-top:12px; text-align:center; font-size:15px; font-weight:700; line-height:1.5; color:#efe6d2;">장부에 붉게 적힌 해가 있다.<br />이것만 미리 보여주마</p>
+    <div style="margin:12px auto 0; height:1px; width:96px; background:linear-gradient(90deg,transparent,rgba(232,201,106,0.55),transparent);"></div>
+    <ul style="margin-top:14px; list-style:none; text-align:left;">
+      <li style="display:flex; gap:10px; align-items:center;">
+        <span style="width:6px; height:6px; transform:rotate(45deg); background:rgba(232,201,106,0.75); flex:none;"></span>
+        <span style="font-size:13px; font-weight:700; color:#f3ead6;">네 인생이 크게 바뀌는 해 — 2030년, 37세</span>
+      </li>
+      <li style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+        <span style="width:6px; height:6px; transform:rotate(45deg); background:rgba(232,201,106,0.75); flex:none;"></span>
+        <span style="font-size:13px; font-weight:700; color:#f3ead6;">네가 적어 보낸 물음에 확답부터 박는다</span>
+      </li>
+      <li style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+        <span style="width:6px; height:6px; transform:rotate(45deg); background:rgba(232,201,106,0.75); flex:none;"></span>
+        <span style="font-size:13px; color:#c9c0ae;">돈이 들어오는 달 <span class="ink s" style="height:0.95em;"></span>월 · 새는 달 <span class="ink s" style="height:0.95em; width:1.2em;"></span>월</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════ 등장 절단 — 큰 숨 96px → 산군이 손님을 정면으로 노려본다(신작 응시 컷). 대사 없음. ════════ -->
+<div style="height: 96px;"></div>
+<div class="cut" style="width:390px; aspect-ratio: 4 / 5; overflow:hidden;">
+  <img src="sangun-varH.png" alt="" />
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,6,9,0) 62%,rgba(7,6,9,0.8));"></div>
+</div>
+
+<!-- 끊자마자 미끼 — 페이월 카드 (기존 카피·가격 그대로) -->
+<div class="panel-wrap" style="margin-top: 24px; padding-bottom: 72px;">
+  <div style="background: linear-gradient(180deg,#14100a,#0a0806); border: 1px solid rgba(232,201,106,0.4); border-radius: 8px; padding: 24px 18px; text-align:center; box-shadow: 0 18px 48px rgba(0,0,0,0.6);">
+    <p style="font-size:17px; font-weight:700; line-height:1.6; color:#efe6d2;">지금까지는 맛보기다.</p>
+    <p style="margin-top:6px; font-size:13px; line-height:1.7; color:#c9c0ae;">진짜 풀이는 지금부터다. 몇 분이면 네 장부가 나온다.</p>
+    <p style="margin-top:16px;">
+      <span style="font-size:13px; color:rgba(215,206,188,0.5); text-decoration:line-through;">29,900원</span>
+      <span style="margin-left:8px; font-size:23px; font-weight:800; color:#e8c96a;">19,900원</span>
+      <span style="margin-left:6px; font-size:11px; color:#e8695a; border:1px solid rgba(143,43,30,0.6); padding:2px 6px;">33% 할인</span>
+    </p>
+    <div style="margin-top:16px; background:linear-gradient(180deg,#e8c96a,#c9a84a); color:#241d10; font-size:17px; font-weight:800; letter-spacing:0.12em; padding:16px 0; border-radius:4px; box-shadow:0 6px 24px rgba(232,201,106,0.25);">내 장부 전체 열기 →</div>
+    <p style="margin-top:12px; font-size:11px; color:rgba(215,206,188,0.55);">한 번만 받는다. 다달이 빠져나가는 것이 아니다.</p>
+  </div>
+  <p style="margin-top:12px; text-align:center; font-size:11px; color:#5b6274;">토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불</p>
+</div>
+
+</body>
+</html>
