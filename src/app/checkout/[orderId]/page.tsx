@@ -130,7 +130,12 @@ export default async function CheckoutPage({
   return (
     <div className={`${worldClass(world)} min-h-screen`} style={{ background: bg }}>
       <div className="mx-auto max-w-md px-5 py-10">
-        <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">{name} 결제 안내</h1>
+        {/* 산군은 반말 세계다. 여기서 「결제 안내」로 받으면 신당이 갑자기 쇼핑몰이 된다(2026-09-08).
+            ⚠ 바꾸는 건 **제목과 CTA 뿐**이다 — 금액·동의·연락처·토스·환불은 현실 언어로 남긴다.
+            캐릭터의 말과 사업자의 약속은 섞으면 둘 다 약해진다. */}
+        <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">
+          {world === "sangun" ? "여기서부터 네 장부 전체를 연다" : `${name} 결제 안내`}
+        </h1>
 
         {/* 총 할인 배너 — 타이트 결제 모달의 「총 13,200원 할인받았어요!」 자리 */}
         {totalOff > 0 && (
@@ -158,6 +163,9 @@ export default async function CheckoutPage({
           <Row k="결제금액" v={formatKRW(order.amount)} strong />
         </div>
 
+        {/* 티저 유료 CTA 가 「19,900원 내고 장부 전체 열기」인데 결제 버튼만 「결제하기」라
+            손님 머릿속 행동이 「장부 열기 → 결제하기 → 장부」로 끊겼다. 같은 말로 잇는다.
+            금액은 그대로 앞에 세워 둔다 — 무엇을 내는지 한 번도 안 놓치게. */}
         <div className="mt-7">
           <CheckoutForm
             orderId={order.order_id}
@@ -167,7 +175,11 @@ export default async function CheckoutPage({
             productSlug={product?.slug ?? null}
             customerEmail={email}
             defaultPhone={memberPhone}
-            ctaLabel={`${formatKRW(order.amount)} 결제하기`}
+            ctaLabel={
+              world === "sangun"
+                ? `${formatKRW(order.amount)} 내고 내 장부 전체 열기`
+                : `${formatKRW(order.amount)} 결제하기`
+            }
           />
         </div>
 
