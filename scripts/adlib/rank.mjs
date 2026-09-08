@@ -13,8 +13,12 @@ const LONG_DAYS = parseInt(opt('--long', '90'), 10);
 const outPath = opt('--out', join(dir, `보고서_${asOf.toISOString().slice(0, 10)}.md`));
 
 const here = dirname(fileURLToPath(import.meta.url));
-const kwCfg = JSON.parse(readFileSync(join(here, 'keywords.json'), 'utf8'));
-const catFit = Object.fromEntries(kwCfg.categories.map((c) => [c.id, { name: c.name, fit: c.fit }]));
+const catFit = {};
+for (const f of ['keywords.json', 'keywords-commerce.json']) {
+  try {
+    for (const c of JSON.parse(readFileSync(join(here, f), 'utf8')).categories) catFit[c.id] = { name: c.name, fit: c.fit };
+  } catch { /* 세트가 없으면 건너뛴다 */ }
+}
 
 // ---------- 로드 ----------
 const files = readdirSync(dir).filter((f) => /^adlib_.*\.json$/.test(f) && !/요약/.test(f));

@@ -1,7 +1,21 @@
 # 메타 광고 라이브러리 전카테고리 스윕 키트
 
-> 목적: 「사주」 하나만 보던 광고 라이브러리 조사를 **16 카테고리 · 135 키워드**로 넓혀, 소규모 광고주가
-> **오래·많이** 돌리는(=돈이 되는) 카테고리와 착지 상품을 찾는다. 계획서: `메타광고_전카테고리_탐색_계획_2026-09-08.md`
+> 목적: 소규모 광고주가 **오래·많이** 돌리는(=돈이 되는) 카테고리와 착지 상품을 찾는다.
+> 계획서: `메타광고_전카테고리_탐색_계획_2026-09-08.md`
+
+## 분류표가 두 개다 — 목적이 다르다
+
+| 세트 | 파일 | 규모 | 무엇을 보나 |
+|---|---|---|---|
+| `saju` (기본) | `keywords.json` | 16 카테고리 · 135 | **운세 시장 안쪽.** 레인별 지형·경쟁사 델타 |
+| **`commerce`** | `keywords-commerce.json` | 16 도메인 · 119 | **사주와 무관한 돈.** 건기식·뷰티·교육·리드젠·B2B·진단리포트 등 |
+
+빌드도 따로 한다. 둘은 별개의 유저스크립트이므로 **한 번에 하나만** 활성화할 것(둘 다 켜면 패널이 두 개 뜬다).
+```bash
+node scripts/adlib/build.mjs                 # → dist/adlib-sweep.user.js          (운세 시장)
+node scripts/adlib/build.mjs --set commerce  # → dist/adlib-sweep-commerce.user.js (비-사주)
+```
+`rank.mjs` 는 두 분류표를 다 읽으므로 어느 쪽으로 수집했든 그대로 집계된다.
 
 ## 왜 크롬에서 돌리나
 - 광고 라이브러리는 API 가 정치 광고만 준다. 상업 광고는 웹 화면뿐이다.
@@ -55,9 +69,11 @@ node scripts/adlib/rank.mjs ~/Downloads/adlib --date 2026-09-09 --out 메타광�
 ## 파일
 | 파일 | 역할 |
 |---|---|
-| `keywords.json` | 16 카테고리 · 135 키워드 · tier · 적합도(fit) — **단일 정본** |
+| `keywords.json` | 운세 시장 세트 — 16 카테고리 · 135 키워드 · tier · fit |
+| `keywords-commerce.json` | **비-사주 세트** — 16 도메인 · 119 키워드 (건기식·뷰티·교육·리드젠·B2B·진단리포트 등) |
 | `collector.user.template.js` | 유저스크립트 본문 (키워드 자리 비움) |
+| `test/run-fixture.mjs` · `test/fixture.html` | 모사 페이지 파서 검증 18항목 (`npm i -D playwright-core` 후 실행) |
 | `build.mjs` | keywords.json 을 박아 `dist/adlib-sweep.user.js` 생성 |
-| `dist/adlib-sweep.user.js` | **Tampermonkey 에 붙여넣는 파일** |
+| `dist/adlib-sweep.user.js` · `dist/adlib-sweep-commerce.user.js` | **Tampermonkey 에 붙여넣는 파일** (목적에 맞는 쪽 하나) |
 | `rank.mjs` | 집계·랭킹 → 마크다운 + JSON |
 | `data/datalab_2026-09-08.json` | 네이버 데이터랩 수요 비율(사주 대비) — 후보 선별 보조 |
