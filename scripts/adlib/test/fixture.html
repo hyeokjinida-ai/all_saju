@@ -1,0 +1,62 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>광고 라이브러리 모사</title>
+<style>.card{border:1px solid #ccc;margin:12px;padding:8px;width:420px}.grid{display:flex;flex-wrap:wrap}</style></head>
+<body>
+<div role="main">
+<div>결과 ~1,500개</div>
+<div class="grid" id="grid">
+<div class="card">
+  <div>활성</div>
+  <div>라이브러리 ID: 1234567890001</div>
+  <div>게재 시작일: 2026. 4. 15.</div>
+  <div>플랫폼</div><div><span>fb</span><span>ig</span></div>
+  <div>광고 6개에서 이 크리에이티브 및 문구를 사용합니다</div>
+  <div role="button">광고 세부 정보 보기</div>
+  <div><a href="https://www.facebook.com/sajutight/">TIGHT 사주</a></div>
+  <div>후원</div>
+  <div>소름끼치는 인생스포 사주</div>
+  <div>올해 만날 연애 상대 외모까지 맞춥니다. 63,000원 → 29,900원 (53% 할인)</div>
+  <video width="400" height="300"></video>
+  <div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fsajutight.me%2Fmzmudang%3Futm_source%3Dfb%26fbclid%3Dabc&h=AT0x">SAJUTIGHT.ME</a></div>
+  <div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fsajutight.me%2Fmzmudang%3Futm_source%3Dfb&h=AT0x">더 알아보기</a></div>
+</div>
+<div class="card">
+  <div>활성</div>
+  <div>라이브러리 ID: 1234567890002</div>
+  <div>게재 시작일: 2025. 4. 11.</div>
+  <div>플랫폼</div>
+  <div role="button">광고 세부 정보 보기</div>
+  <div><a href="https://www.facebook.com/tami/">tami_real_love</a> 페이지는 <a href="https://www.facebook.com/sajutight/">TIGHT 사주</a>과(와) 함께합니다</div>
+  <div>후원</div>
+  <div>다음 연애상대 얼굴 스포;;</div>
+  <div>신점보다 용한 4세대 무당사주 #광고</div>
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" width="400" height="400">
+  <div><a href="https://www.facebook.com/sajutight/">지금 신청하기</a></div>
+</div>
+<div class="card">
+  <div>활성</div>
+  <div>라이브러리 ID: 1234567890003</div>
+  <div>게재 시작일: 2026. 8. 30.</div>
+  <div>플랫폼</div>
+  <div>이 광고에는 여러 버전이 있습니다</div>
+  <div role="button">광고 세부 정보 보기</div>
+  <div><a href="https://www.facebook.com/forceteller/">무료 운세 포스텔러</a></div>
+  <div>후원</div>
+  <div>내가 생각한 나… 남들은 완전 다르게 본다고?</div>
+  <div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.forceteller&h=x">PLAY.GOOGLE.COM</a></div>
+  <div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.forceteller&h=x">앱 설치</a></div>
+</div>
+</div>
+<div role="button" id="more" style="padding:20px;background:#eee">더 보기</div>
+</div>
+<script>
+let extra=0;
+document.getElementById('more').addEventListener('click',()=>{
+  extra++;
+  const g=document.getElementById('grid');
+  for(let i=0;i<2;i++){const id=1234567890100+extra*10+i;const d=document.createElement('div');d.className='card';
+   d.innerHTML=`<div>활성</div><div>라이브러리 ID: ${id}</div><div>게재 시작일: 2026. ${extra}. ${10+i}.</div><div>플랫폼</div><div>광고 ${extra+1}개에서 이 크리에이티브 및 문구를 사용합니다</div><div role="button">광고 세부 정보 보기</div><div><a href="https://www.facebook.com/eunha/">은하의 사주</a></div><div>후원</div><div>고작 990원에 강력한 연애 타이밍</div><div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Feunha-saju.com%2Fsolo%2F%3Fref%3Dfb">EUNHA-SAJU.COM</a></div><div><a href="https://l.facebook.com/l.php?u=https%3A%2F%2Feunha-saju.com%2Fsolo%2F">더 알아보기</a></div>`;
+   g.appendChild(d);}
+  if(extra>=2) document.getElementById('more').remove();
+});
+</script>
+</body></html>
