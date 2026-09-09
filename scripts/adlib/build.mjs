@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const setArg = (() => { const i = process.argv.indexOf('--set'); return i >= 0 ? process.argv[i + 1] : 'saju'; })();
-const SETS = { saju: ['keywords.json', 'adlib-sweep.user.js'], commerce: ['keywords-commerce.json', 'adlib-sweep-commerce.user.js'] };
+const SETS = {
+  saju: ['keywords.json', 'adlib-sweep.user.js'],
+  commerce: ['keywords-commerce.json', 'adlib-sweep-commerce.user.js'],
+  v2: ['keywords-v2.json', 'adlib-sweep-v2.user.js'],
+};
 const picked = SETS[setArg];
 if (!picked) { console.error(`알 수 없는 --set ${setArg}. 가능: ${Object.keys(SETS).join(', ')}`); process.exit(1); }
 const [srcFile, outFile] = picked;

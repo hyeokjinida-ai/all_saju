@@ -14,7 +14,7 @@ const outPath = opt('--out', join(dir, `보고서_${asOf.toISOString().slice(0, 
 
 const here = dirname(fileURLToPath(import.meta.url));
 const catFit = {};
-for (const f of ['keywords.json', 'keywords-commerce.json']) {
+for (const f of ['keywords.json', 'keywords-commerce.json', 'keywords-v2.json']) {
   try {
     for (const c of JSON.parse(readFileSync(join(here, f), 'utf8')).categories) catFit[c.id] = { name: c.name, fit: c.fit };
   } catch { /* 세트가 없으면 건너뛴다 */ }
