@@ -20,6 +20,7 @@ import {
   registerDbStyle,
 } from "@/lib/saju/prompt";
 import { countPendingChapters, hasRealInterpretation, mergeCompletedChapters } from "@/lib/saju/chapters";
+import { twelveMonthStyle } from "@/lib/saju/month-gate";
 import {
   buildMonthPlan,
   generateBlueprint,
@@ -453,6 +454,12 @@ async function buildAndSaveOne(args: {
   // 산군·인연·결혼·재회만 태운다(확정값이 여러 장에 걸치는 상품). 설계도 실패는 결과지를 막지 않는다.
   const plan = await buildChapterPlan(slug, chart.rawAnalysis, input, keyFacts, reunionFacts);
 
+  // 열두 달 장부 — 손님마다 목차가 다르다(결제한 달부터 열두 달).
+  // 전역 registerDbStyle 로는 동시 생성 시 남의 달이 박히므로 요청에 실어 보낸다.
+  // 기준 시각은 **지금**이다 — 이 결과지가 만들어지는 순간이 곧 첫 달이고,
+  // 결과지 created_at 과 같은 달이라야 화면의 잠금(gateChapters)과 어긋나지 않는다.
+  const styleOverride = slug === "monthly-luck" ? twelveMonthStyle(new Date()) : null;
+
   const { title, chapters } = buildChapterPrompts({
     productSlug: slug,
     productName,
@@ -469,6 +476,7 @@ async function buildAndSaveOne(args: {
     monthPlan: plan.monthPlan,
     pastBlock: plan.pastBlock,
     prescriptionBlock: plan.prescriptionBlock,
+    styleOverride,
   });
   const llm = await generateByChapters(title, chapters);
 

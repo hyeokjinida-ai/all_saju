@@ -287,7 +287,15 @@ export default async function ResultPage({
               <div className="mb-3 px-1" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", color: "#c9a8ff" }}>
                 {displayName} · 상세 풀이
               </div>
-              <ResultChapters markdown={result.interpretation_md} />
+              {/* 열두 달 장부만 월 잠금이 걸린다. 다른 상품은 monthLock 이 null 이라 지금 그대로. */}
+              <ResultChapters
+                markdown={result.interpretation_md}
+                monthLock={
+                  slug === "monthly-luck" && result.created_at
+                    ? { createdAt: result.created_at as string }
+                    : null
+                }
+              />
             </div>
           </>
         )}

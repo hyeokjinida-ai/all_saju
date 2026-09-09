@@ -31,6 +31,11 @@ export type PromptInput = {
   pastBlock?: string | null;
   // '산군의 처방' 확정값 — 용신 처방표와 같은 값(buildPrescriptionBlock). 산군 전용.
   prescriptionBlock?: string | null;
+  // 이 요청에만 쓰는 설계 덮어쓰기.
+  // ⚠ registerDbStyle(모듈 전역)로는 못 하는 경우가 있다 — **손님마다 목차가 다른 상품**이다.
+  //   열두 달 장부는 결제한 달부터 열두 달이라 9월 손님과 10월 손님의 장 제목이 다르다.
+  //   전역 맵에 넣으면 동시 생성 시 서로 덮어써 남의 달이 박힌다. 그래서 요청에 실어 보낸다.
+  styleOverride?: SlugStyle | null;
 };
 
 // 형광펜 지시 — 타이트 실측: 문단 속 핵심 한 문장만 붉게 칠해, 긴 글을 안 읽어도
@@ -574,7 +579,7 @@ export function buildChapterPrompts(input: PromptInput): {
   title: string;
   chapters: ChapterPrompt[];
 } {
-  const style = resolveStyle(input.productSlug);
+  const style = input.styleOverride ?? resolveStyle(input.productSlug);
   const m = input.myeongsik;
   const pillar = (p: { cheongan: string; jiji: string } | null) =>
     p ? `${p.cheongan}${p.jiji}` : "(시 미상)";
