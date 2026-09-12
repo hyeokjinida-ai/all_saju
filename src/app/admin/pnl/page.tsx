@@ -5,7 +5,8 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { formatKRW } from "@/lib/utils";
 import { buildPnlRows, isPnlSchemaReady, kstDaysAgo, kstToday, totalRow, type PnlRow } from "@/lib/pnl";
 import { PG_RATE, VAT_LABEL, VAT_MODE, META_CAMPAIGN_PREFIX } from "@/config/pnl";
-import { saveManualAdSpend, toggleExcludeFromPnl } from "./actions";
+import { isMetaAdsConfigured } from "@/lib/meta-ads";
+import { saveManualAdSpend, syncNow, toggleExcludeFromPnl } from "./actions";
 
 export const metadata = { title: "관리자 - 일별 손익" };
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function AdminPnlPage({ searchParams }: { searchParams: Sea
 
   // 0013 적용 여부 — 적용 전에는 광고비를 저장해도 사라진다. 그 사실을 화면이 먼저 말한다.
   const schemaReady = await isPnlSchemaReady(service);
+  const metaReady = isMetaAdsConfigured();
 
   // 손익에서 뺀 주문 + 뺄 후보(최근 결제) — 형님 테스트 결제를 골라내는 자리.
   // 0013 전에는 exclude_from_pnl 컬럼이 없어 select 전체가 깨진다 → 컬럼 없이 폴백한다.
@@ -90,6 +92,13 @@ export default async function AdminPnlPage({ searchParams }: { searchParams: Sea
             사라지고 광고비·환불·토큰 원가가 전부 살아납니다.
           </span>
         </div>
+      )}
+
+      {schemaReady && !metaReady && (
+        <p className="mb-4 text-[12px] text-body">
+          광고비는 지금 <b>직접 입력</b>입니다. 메타에서 자동으로 받으려면 <span className="font-mono">META_ADS_TOKEN</span> 이
+          필요합니다(비즈니스 설정 인증이 풀린 뒤 발급). 토큰이 생기면 「지금 받아오기」가 칸을 채웁니다.
+        </p>
       )}
 
       {loadError && (
@@ -340,7 +349,13 @@ function Shell({ children, span }: { children: React.ReactNode; span: number }) 
             {d}일
           </Link>
         ))}
-        <a href={`/api/admin/pnl/csv?days=${span}`} className="ml-auto text-body underline underline-offset-2 hover:text-ink">
+        <form action={syncNow} className="ml-auto">
+          <input type="hidden" name="days" value={span} />
+          <button type="submit" className="text-body underline underline-offset-2 hover:text-ink">
+            지금 받아오기
+          </button>
+        </form>
+        <a href={`/api/admin/pnl/csv?days=${span}`} className="text-body underline underline-offset-2 hover:text-ink">
           CSV 내려받기
         </a>
       </nav>

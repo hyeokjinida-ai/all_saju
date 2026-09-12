@@ -33,6 +33,26 @@ export async function saveManualAdSpend(formData: FormData): Promise<void> {
 }
 
 /**
+ * 광고비·PG 실수수료·환불을 지금 받아온다 — 자정 크론을 기다리지 않고.
+ * 토큰이 없거나 실패하면 **아무것도 안 쓴다**(0 으로 덮지 않는다).
+ */
+export async function syncNow(formData: FormData): Promise<void> {
+  if (!(await isAdminAuthenticated())) return;
+
+  const span = Math.min(180, Math.max(7, Number(formData.get("days")) || 30));
+  const { kstDaysAgo, kstToday } = await import("@/lib/pnl");
+  const { syncExternal } = await import("@/lib/pnl-sync");
+
+  const service = createServiceClient();
+  try {
+    await syncExternal(service, kstDaysAgo(span - 1), kstToday());
+  } catch {
+    /* 실패는 화면의 「미수신」 상태로 그대로 드러난다 */
+  }
+  revalidatePath("/admin/pnl");
+}
+
+/**
  * 주문 하나를 손익에서 빼거나 되돌린다 — 형님 테스트 결제가 매출·ROAS 를 부풀리는 걸 막는다.
  */
 export async function toggleExcludeFromPnl(formData: FormData): Promise<void> {

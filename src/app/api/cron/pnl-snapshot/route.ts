@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { serverEnv } from "@/lib/env";
 import { kstDaysAgo, kstToday, snapshotFacts } from "@/lib/pnl";
+import { syncExternal } from "@/lib/pnl-sync";
 
 // 일별 손익 스냅샷 — 자정 조금 지나 어제까지를 확정해 daily_pnl 에 적는다.
 //
@@ -33,8 +34,11 @@ async function run(request: NextRequest) {
   const to = kstToday();
 
   try {
+    // 1) 밖에서 오는 것 먼저 — 환불이 orders 에 적혀야 아래 집계가 그걸 반영한다.
+    const sync = await syncExternal(service, from, to);
+    // 2) DB 안의 사실 집계
     const saved = await snapshotFacts(service, from, to);
-    return NextResponse.json({ ok: true, from, to, saved });
+    return NextResponse.json({ ok: true, from, to, saved, sync });
   } catch (e) {
     // 테이블이 아직 없으면(0013 미적용) 여기로 온다 — 화면은 그래도 돈다.
     return NextResponse.json({ ok: false, from, to, error: e instanceof Error ? e.message : String(e) });
