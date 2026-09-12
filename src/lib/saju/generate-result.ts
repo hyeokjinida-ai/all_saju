@@ -476,6 +476,27 @@ async function buildAndSaveOne(args: {
     .single();
 
   if (saveErr || !result) return { ok: false, reason: "save", detail: saveErr?.message };
+
+  // 토큰 기록 — 손익 표(/admin/pnl)가 LLM 원가를 사실로 잡는 자리.
+  //
+  // ⚠ **위 upsert 에 합치지 않는다.** 0013 마이그레이션이 아직 안 돌아간 서버에서는 그 컬럼들이
+  //   없어 upsert 전체가 실패한다 = 돈 낸 손님의 결과지가 저장되지 않는다. 원가 집계 하나 때문에
+  //   결제 경로를 걸 수는 없다. 결과지를 먼저 확정하고, 토큰은 실패해도 그만인 별도 update 로.
+  if (llm.usage && (llm.usage.prompt > 0 || llm.usage.completion > 0)) {
+    try {
+      await service
+        .from("saju_results")
+        .update({
+          prompt_tokens: llm.usage.prompt,
+          cached_tokens: llm.usage.cached,
+          completion_tokens: llm.usage.completion,
+        })
+        .eq("id", result.id);
+    } catch {
+      /* 컬럼이 없거나 일시 장애 — 손익 표는 상품별 상수로 추정한다(config/pnl.ts) */
+    }
+  }
+
   return { ok: true, resultId: result.id, pending: stillPending };
 }
 

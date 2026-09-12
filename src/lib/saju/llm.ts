@@ -21,7 +21,21 @@ export type LlmResponse = {
   totalCount?: number; // 전체 챕터 수
   /** 끝내 못 채워 자리표시가 들어간 챕터 번호(0-based). 출고 게이트와 복구 크론이 이걸 본다. */
   pendingIdx?: number[];
+  /** 실제로 쓴 토큰 — 결과지 1장의 **원가**다(/admin/pnl 이 이걸로 LLM 비용을 잡는다).
+   *  단가 상수로 추정하면 프롬프트가 바뀔 때마다 값이 틀어져서 사실을 남긴다. */
+  usage?: LlmUsage;
 };
+
+/** 한 번의 생성에 들어간 토큰. cached 는 prompt 에 **포함된** 수다(따로 더하지 말 것). */
+export type LlmUsage = { prompt: number; cached: number; completion: number };
+
+/** 누적기 — 실패해서 다시 던진 것도 돈은 나갔으므로 전부 더한다. */
+function addUsage(acc: LlmUsage, u?: LlmUsage) {
+  if (!u) return;
+  acc.prompt += u.prompt;
+  acc.cached += u.cached;
+  acc.completion += u.completion;
+}
 
 export type LlmProvider = "openai" | "deepseek" | "anthropic" | "gemini";
 
@@ -91,11 +105,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function genWithBackoff(
   c: { system: string; user: string },
   waits: number[] = [0, 1500, 4000],
+  spent?: LlmUsage,
 ): Promise<LlmResponse | null> {
   for (const w of waits) {
     if (w) await sleep(w + Math.floor(Math.random() * 600));
     try {
       const r = await generateInterpretation(c);
+      // 버린 응답도 토큰은 나갔다 — 원가에 넣어야 손익이 맞는다.
+      if (spent) addUsage(spent, r.usage);
       // 되물음("자료를 보내주세요")은 200 으로 떨어지지만 본문이 아니다 — 여기서 실패로 보고
       // 다시 던진다. 출고 직전에 걷어내는 것보다, 다시 뽑아 장을 채우는 쪽이 손님에게 낫다.
       if (r.text.trim() && !looksLikeDataRequest(r.text)) return r;
@@ -135,6 +152,9 @@ export async function generateByChapters(
   title: string,
   chapters: { system: string; user: string; heading?: string }[],
 ): Promise<LlmResponse> {
+  // 이 결과지 한 장에 들어간 토큰 전부(실패분·재시도분 포함) — 저장돼 손익 표의 원가가 된다.
+  const spent: LlmUsage = { prompt: 0, cached: 0, completion: 0 };
+
   const genOne = async (c: { system: string; user: string }) => {
     try {
       // 챕터 하나가 죽으면 그 장이 결과지에서 조용히 사라진다 — 티저 목차가 약속한 장이라
@@ -142,12 +162,13 @@ export async function generateByChapters(
       // ⚠ 즉시 재시도는 무력하다 — 죽는 이유가 '동시 호출이 몰려서'이면 다시 던져도 같은 벽이다
       //   (2026-08-24 실측: 4장 연속 생성에서 10장 중 6장만 나왔고, 같은 장을 나중에 혼자
       //    부르니 4/4 성공했다). 그래서 **쉬었다가** 던진다.
-      const r = await genWithBackoff(c);
+      const r = await genWithBackoff(c, undefined, spent);
       if (!r) return { text: "", provider: "", model: "" };
       let out = r;
       if (findFamilyAssertions(out.text).length > 0) {
         try {
           const retry = await generateInterpretation({ system: c.system, user: c.user + FAMILY_RETRY_NOTE });
+          addUsage(spent, retry.usage);
           if (retry.text.trim()) out = retry;
         } catch {
           /* 재시도 실패 시 원본 유지 → 아래에서 문장 제거 */
@@ -204,6 +225,7 @@ export async function generateByChapters(
     successCount: succeeded.length,
     totalCount: chapters.length,
     pendingIdx,
+    usage: spent,
   };
 }
 
@@ -255,7 +277,16 @@ async function callOpenAICompatible(
     ...(model.startsWith("gpt-5.6") ? {} : { temperature: 0.7 }),
   });
   const text = completion.choices[0]?.message?.content ?? "";
-  return { text, provider, model };
+  // 토큰 — 손익 표(/admin/pnl)가 LLM 원가를 사실로 잡는 자리.
+  // 캐시 히트 필드명이 갈린다: 딥시크 prompt_cache_hit_tokens / OpenAI prompt_tokens_details.cached_tokens.
+  const u = (completion.usage ?? {}) as unknown as Record<string, unknown>;
+  const details = (u.prompt_tokens_details ?? {}) as Record<string, number>;
+  const usage: LlmUsage = {
+    prompt: Number(u.prompt_tokens ?? 0),
+    cached: Number(u.prompt_cache_hit_tokens ?? 0) || Number(details.cached_tokens ?? 0),
+    completion: Number(u.completion_tokens ?? 0),
+  };
+  return { text, provider, model, usage };
 }
 
 async function callAnthropic(req: LlmRequest, model: string, key: string | undefined): Promise<LlmResponse> {

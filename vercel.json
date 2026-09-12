@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/recover-results",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/pnl-snapshot",
+      "schedule": "30 15 * * *"
     }
   ]
 }

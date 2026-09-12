@@ -28,6 +28,15 @@ export default async function AdminHome() {
       <ul className="divide-y divide-hairline border-y border-hairline mt-8">
         <li>
           <Link
+            href="/admin/pnl"
+            className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
+          >
+            <span>일별 손익 <span className="text-mute text-xs">· 매출 − 광고비 − 원가 − 부가세</span></span>
+            <span className="text-mute">→</span>
+          </Link>
+        </li>
+        <li>
+          <Link
             href="/admin/analytics"
             className="flex items-center justify-between py-4 text-[15px] font-medium text-ink hover:text-body"
           >

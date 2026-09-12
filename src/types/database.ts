@@ -89,6 +89,10 @@ type OrderRow = {
   phone: string | null;
   marketing_opt_in: boolean;
   marketing_opt_in_at: string | null;
+  // 0013 손익 — 환불은 정산보다 먼저 잡고, 테스트 결제는 손익에서 뺀다
+  refunded_amount: number;
+  refunded_at: string | null;
+  exclude_from_pnl: boolean;
 };
 
 type SajuInputRow = {
@@ -115,6 +119,33 @@ type SajuResultRow = {
   // 0010 — 패키지 주문은 한 order_id 에 구성품 수만큼 행이 생긴다. unique(order_id, product_slug).
   product_slug: string;
   created_at: string;
+  // 0013 — 이 결과지 한 장에 실제로 들어간 토큰. 손익 표의 LLM 원가가 여기서 나온다.
+  prompt_tokens: number | null;
+  cached_tokens: number | null;
+  completion_tokens: number | null;
+};
+
+// 0013 — 일별 손익. 사실만 쌓고 파생값(부가세·순손익)은 읽을 때 계산한다.
+// ⚠ ad_spend 의 null 은 0 이 아니라 **미수신**이다.
+type DailyPnlRow = {
+  day: string;
+  orders_count: number;
+  revenue: number;
+  refund_count: number;
+  refund_amount: number;
+  results_count: number;
+  llm_cost: number;
+  llm_cost_estimated: boolean;
+  manseryeok_calls: number;
+  ad_spend: number | null;
+  ad_spend_source: string | null;
+  ad_spend_manual: number | null;
+  ad_spend_other: number | null;
+  meta_purchases: number | null;
+  pg_fee: number | null;
+  pg_fee_source: string | null;
+  note: string | null;
+  updated_at: string;
 };
 
 // 0010 — 추가질문권. 유료(결제)와 보상(리뷰 작성 시 무료)을 한 테이블로 처리.
@@ -312,6 +343,31 @@ export type Database = {
           source?: string | null;
         };
         Update: Partial<SajuApiCallRow>;
+        Relationships: [];
+      };
+      daily_pnl: {
+        Row: DailyPnlRow;
+        Insert: {
+          day: string;
+          orders_count?: number;
+          revenue?: number;
+          refund_count?: number;
+          refund_amount?: number;
+          results_count?: number;
+          llm_cost?: number;
+          llm_cost_estimated?: boolean;
+          manseryeok_calls?: number;
+          ad_spend?: number | null;
+          ad_spend_source?: string | null;
+          ad_spend_manual?: number | null;
+          ad_spend_other?: number | null;
+          meta_purchases?: number | null;
+          pg_fee?: number | null;
+          pg_fee_source?: string | null;
+          note?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<DailyPnlRow>;
         Relationships: [];
       };
       saju_analysis_cache: {
