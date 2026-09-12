@@ -61,9 +61,16 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const checkoutSet = new Set<string>();
   const purchaseSet = new Set<string>();
   const loginWallSet = new Set<string>();
+  // 세션 → 광고 소재 꼬리표(utm_content). analytics.ts 가 모든 이벤트에 실어 보낸다.
+  // 빈 문자열은 「꼬리표 없음」이라 담지 않는다 — 소재 표에서 빠진다.
+  const creativeOf = new Map<string, string>();
+  const sessionsAll = new Set<string>();
   for (const e of events) {
     const sid = e.session_id;
     if (!sid) continue; // 세션 식별 불가 이벤트는 세션 단위 퍼널 집계에서 제외
+    sessionsAll.add(sid);
+    const utm = (e.props as { utm?: unknown } | null)?.utm;
+    if (typeof utm === "string" && utm && !creativeOf.has(sid)) creativeOf.set(sid, utm);
     if (e.event === "wizard_step") {
       const step = Number((e.props as { step?: unknown })?.step) || 0;
       maxStep.set(sid, Math.max(maxStep.get(sid) ?? 0, step));
@@ -73,18 +80,53 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   }
   const stepSessions = (n: number) => [...maxStep.values()].filter((v) => v >= n).length;
 
+  // ⚠ 라벨은 SajuWizard 의 STEPS 순서 그대로다(名生時性緣伴業惑覽兆 = 10단계).
+  //    예전엕 8칸이었고 5~8번 이름이 실제 질문과 어긋나 있었다(5번을 「양/음력」이라 불렀으나
+  //    실제로는 「마음이 가는 쪽」이다). 그대로 두면 「3번에서 빠졌다」를 엉뚟한 질문으로 읽는다.
+  //    위저드의 STEPS 를 고치면 여기도 같이 고칠 것.
+  // 세션의 **최대** 단계로 세므로, 상품이 안 묻는 질문(伴·業 등)을 건너뛴 세션도
+  //    그 칸에 포함된다 — 「여기까지 왔다」는 뜻이라 퍼널 의미로는 맞다.
+  const TEASER_STEP = 10; // 마지막 칸(兆) = 결제 직전 개인화 티저
   const FUNNEL = [
-    { label: "위저드 노출", n: stepSessions(1) },
+    { label: "이름", n: stepSessions(1) },
     { label: "생년월일", n: stepSessions(2) },
     { label: "출생시각", n: stepSessions(3) },
     { label: "성별", n: stepSessions(4) },
-    { label: "양/음력", n: stepSessions(5) },
-    { label: "고민 선택", n: stepSessions(6) },
-    { label: "입력 확인", n: stepSessions(7) },
-    { label: "무료 티저", n: stepSessions(8) }, // 결제 직전 개인화 티저 — 여기서 빠지면 티저가 안 먹힌 것
+    { label: "인연 방향", n: stepSessions(5) },
+    { label: "연애 상태", n: stepSessions(6) },
+    { label: "직업", n: stepSessions(7) },
+    { label: "고민·물음", n: stepSessions(8) },
+    { label: "입력 확인", n: stepSessions(9) },
+    { label: "무료 티저", n: stepSessions(TEASER_STEP) }, // 여기서 빠지면 티저가 안 먹힌 것
     { label: "결제 시작", n: checkoutSet.size },
     { label: "결제 완료", n: purchaseSet.size },
   ];
+
+  // 소재별 퍼널 — 같은 단계를 꼬리표로 나눴 다시 센다.
+  // 이게 있어야 「설화 영상은 위저드는 들어가는데 티저에서 다 빠진다」 같은 진단이 된다.
+  const creativeSessions = new Map<string, Set<string>>();
+  for (const sid of sessionsAll) {
+    const c = creativeOf.get(sid);
+    if (!c) continue; // 꼬리표 없는 세션(직접·자연 유입)은 소재 표에서 뺀다
+    if (!creativeSessions.has(c)) creativeSessions.set(c, new Set());
+    creativeSessions.get(c)!.add(sid);
+  }
+  const creativeRows = [...creativeSessions.entries()]
+    .map(([creative, set]) => {
+      const sids = [...set];
+      const reached = (n: number) => sids.filter((s) => (maxStep.get(s) ?? 0) >= n).length;
+      const buys = sids.filter((s) => purchaseSet.has(s)).length;
+      return {
+        creative,
+        sessions: sids.length,
+        wizard: reached(1),
+        teaser: reached(TEASER_STEP),
+        checkout: sids.filter((s) => checkoutSet.has(s)).length,
+        buys,
+        cvr: pct(buys, sids.length),
+      };
+    })
+    .sort((a, b) => b.sessions - a.sessions);
   const funnelTop = FUNNEL[0].n || 1;
   const purchases = purchaseSet.size;
   const convRate = pct(purchases, sessions);
@@ -199,7 +241,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                 const drop = i > 0 ? prev - f.n : 0;
                 return (
                   <div key={f.label} className="flex items-center gap-3">
-                    <div className="w-20 shrink-0 text-xs text-body text-right">{f.label}</div>
+                    <div className="w-24 shrink-0 text-xs text-body text-right">{f.label}</div>
                     <div className="flex-1 h-7 rounded bg-canvas border border-hairline overflow-hidden relative">
                       <div
                         className="h-full bg-ink/80"
@@ -226,6 +268,48 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
               <p className="text-xs text-mute mt-3">
                 ※ 비로그인으로 결제 직전에서 막힌 세션: <strong className="text-ink">{loginWallSet.size.toLocaleString()}</strong> — 로그인 마찰로 이탈했을 수 있어요.
               </p>
+            )}
+          </section>
+
+          {/* 소재별 퍼널 — 광고 링크의 utm_content 로 가른다 */}
+          <section className="mb-8">
+            <h2 className="text-sm font-semibold mb-1">광고 소재별 퍼널</h2>
+            <p className="text-xs text-mute mb-4">
+              광고 링크 끝의 <code>utm_content</code> 로 세션을 묶었습니다. 꼬리표가 없는 세션(직접·자연 유입)은 빠집니다.
+            </p>
+            {creativeRows.length === 0 ? (
+              <p className="text-xs text-mute">
+                아직 꼬리표가 붙은 유입이 없습니다. 광고를 켜면 여기에 소재별로 나뉘어 쌓입니다.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-hairline text-mute">
+                      <th className="text-left font-medium py-2 pr-3">소재</th>
+                      <th className="text-right font-medium py-2 px-2">세션</th>
+                      <th className="text-right font-medium py-2 px-2">위저드</th>
+                      <th className="text-right font-medium py-2 px-2">무료 티저</th>
+                      <th className="text-right font-medium py-2 px-2">결제 시작</th>
+                      <th className="text-right font-medium py-2 px-2">구매</th>
+                      <th className="text-right font-medium py-2 pl-2">구매율</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {creativeRows.map((r) => (
+                      <tr key={r.creative} className="border-b border-hairline/60">
+                        <td className="py-2 pr-3 text-body">{r.creative}</td>
+                        <td className="py-2 px-2 text-right tabular-nums">{r.sessions.toLocaleString()}</td>
+                        <td className="py-2 px-2 text-right tabular-nums">{r.wizard.toLocaleString()}</td>
+                        <td className="py-2 px-2 text-right tabular-nums">{r.teaser.toLocaleString()}</td>
+                        <td className="py-2 px-2 text-right tabular-nums">{r.checkout.toLocaleString()}</td>
+                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-ink">{r.buys.toLocaleString()}</td>
+                        <td className="py-2 pl-2 text-right tabular-nums">{r.cvr}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
 

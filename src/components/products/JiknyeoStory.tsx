@@ -12,6 +12,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { SlotCut, Narration } from "@/components/products/jiknyeo-ui";
+import { StoryFooter } from "@/components/products/StoryFooter";
 import type { AssetMap } from "@/lib/jiknyeo-slots";
 
 /** 만화 말풍선 — 청월당 실측 문법(흰 박스 + 명패). 티저(SajuWizard)의 ComicSay 와 같은 옷이다. */
@@ -254,6 +255,17 @@ export function JiknyeoStory({
       {/* Fragment 로 감싸 키를 준다 — 위저드 엘리먼트는 page.tsx 에서 만들어져 내려오는데,
           그대로 두면 React 가 이 자리를 리스트로 보고 key 경고를 낸다(실측). */}
       <React.Fragment key="wizard">{wizard}</React.Fragment>
+
+      {/* 법정 표기 — 2026-08-30 신설.
+          ChromeGate 가 `/products/inyeon-saju` 를 bare 로 두어 사이트 푸터가 안 붙는데,
+          여기(무대)가 자체 푸터를 안 그리고 있었다. **결과: 착지·입력·티저·결제 시트 전 구간에
+          사업자 정보·약관·개인정보·환불정책이 하나도 없었다**(운영 실측: 티저 257블록 전수 검색에서
+          「환불」 0건 · 「사업자」 0건). 산군·돈·인연 구판은 셋 다 StoryFooter 를 그린다 — 직녀만 빠져 있었다.
+          같은 푸터가 가평한석봉 라이선스의 출처 표기도 함께 진다.
+          ⤷ 이상적인 자리는 티저 꼬리다(산군은 `TeaserSalesTail` 이 티저에서만 이걸 문다).
+             그쪽은 SajuWizard 를 건드려야 하는데 지금 다른 세션이 미커밋으로 물고 있어,
+             전 스테이지 공통인 이 자리에 먼저 세운다. 입력 화면에선 첫 화면 아래로 밀린다. */}
+      <StoryFooter />
     </div>
   );
 }

@@ -38,7 +38,13 @@ const TOC_INYEON: { title: string; items: string[] }[] = [
   { title: "7장. 조심할 달", items: ["연애를 시작하면 안 되는 시기는?", "그 시기에 대신 할 일"] },
   { title: "8장. 크게 바뀌는 해", items: ["내 삶이 크게 갈리는 해는?", "그 해에 무엇이 달라지나"] },
   { title: "9장. 내 고민, 정면으로 답해요", items: ["적어주신 물음에 대한 답"] },
-  { title: "10장. 이번 주에 할 것 3가지", items: ["당장 이번 주에 움직일 것", "하지 말아야 할 것"] },
+  // 제목이 「3가지」인데 줄이 둘이면 그 자리에서 하나가 비어 보인다.
+  // prompt.ts 의 이 장 지시는 실제로 셋을 쓰게 하고 「셋 중 하나는 가장 가까운 좋은 달과 연결」이라
+  // 못박혀 있다 — 세 번째 줄은 새 약속이 아니라 이미 쓰고 있는 것을 적는 것이다.
+  {
+    title: "10장. 이번 주에 할 것 3가지",
+    items: ["당장 이번 주에 움직일 것", "하지 말아야 할 것", "가장 가까운 달에 맞춰 준비할 것"],
+  },
 ];
 
 const TOC_MARRIAGE: { title: string; items: string[] }[] = [
@@ -51,7 +57,13 @@ const TOC_MARRIAGE: { title: string; items: string[] }[] = [
   { title: "7장. 피해야 할 시기", items: ["결혼을 서두르면 안 되는 시기는?", "그 시기에 대신 할 일"] },
   { title: "8장. 결혼 전에 정리할 것", items: ["결혼 전에 반드시 정리할 것", "미루면 나중에 커지는 것"] },
   { title: "9장. 내 고민, 정면으로 답해요", items: ["적어주신 물음에 대한 답"] },
-  { title: "10장. 이번 주에 할 것 3가지", items: ["당장 이번 주에 움직일 것", "하지 말아야 할 것"] },
+  // 제목이 「3가지」인데 줄이 둘이면 그 자리에서 하나가 비어 보인다.
+  // prompt.ts 의 이 장 지시는 실제로 셋을 쓰게 하고 「셋 중 하나는 가장 가까운 좋은 달과 연결」이라
+  // 못박혀 있다 — 세 번째 줄은 새 약속이 아니라 이미 쓰고 있는 것을 적는 것이다.
+  {
+    title: "10장. 이번 주에 할 것 3가지",
+    items: ["당장 이번 주에 움직일 것", "하지 말아야 할 것", "가장 가까운 달에 맞춰 준비할 것"],
+  },
 ];
 
 /** 장 사이 캐릭터 코멘트 — 원본은 좌우를 번갈아 앉힌다.
@@ -158,8 +170,42 @@ export function JiknyeoTeaserToc({
         </HanjiCard>
       </div>
 
+      {/* 실물 한 쪽 — 목차로 「열 장이 있다」고 말한 바로 뒤에 그 장이 어떻게 생겼는지 보여준다.
+          경쟁 2사가 같은 자리에서 결과지 스크린샷을 쓴다(청월당 12구간 · 타이트 공통부품 ③).
+          그림을 새로 그리지 않았다 — /dev/jiknyeo-result 표본을 폰 390 으로 그대로 찍었다.
+          아래는 잘라 페이드로 닫는다: 한 쪽이 다 보이면 「이게 전부」로 읽힌다. */}
+      {/* 20px → 44px: 목차 각주에 붙어 「목차 스택의 연장」으로 읽혔다.
+          실물은 목차와 다른 물건(증거)이니 한 숨 쉬고 등장한다(칠흑 여백 번역, 컷 눈금 44).
+          인라인인 이유: mt-11 은 dev Tailwind 가 생성을 놓친다(SajuWizard 같은 자리 주석). */}
+      <div style={{ marginTop: 44 }}>
+        <div className="relative overflow-hidden rounded-[12px]" style={{ height: 320, border: "1px solid var(--gold-line)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/products/jiknyeo/sample-page.webp"
+            alt="직녀 결과지 한 쪽 — 짝 카드와 첫 장 본문"
+            width={780}
+            height={2300}
+            loading="lazy"
+            draggable={false}
+            className="w-full select-none object-cover object-top"
+            style={{ height: 320 }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-20"
+            style={{ background: "linear-gradient(180deg, rgba(247,244,251,0) 0%, rgba(247,244,251,0.94) 88%)" }}
+          />
+        </div>
+        {/* 면책 — 값이 든 화면을 예시로 쓰는 자리엔 반드시 붙인다(청월당도 샘플 블록마다 붙인다).
+            안 붙이면 「저 얼굴이 내 짝」으로 읽힐 수 있다. */}
+        <div className="mt-2">
+          <Cap>* 예시 화면이에요. 얼굴도 풀이도 결제 후 내 사주에서 다시 나와요.</Cap>
+        </div>
+      </div>
+
       <div className="mt-4">
-        <Cap>A4 여덟 장 · 다 읽는 데 열다섯 분 · 마이페이지에 계속 보관돼요</Cap>
+        {/* 분량(A4·분)은 형님 지시로 걷어냄(2026-09-02) — 보관·재열람만 남긴다. */}
+        <Cap>마이페이지에 계속 보관돼요 · 언제든 다시 열어볼 수 있어요</Cap>
       </div>
     </section>
   );

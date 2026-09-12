@@ -1,0 +1,540 @@
+{
+  "url": "https://webtoon.kakao.com/viewer/%EC%B9%A0%ED%9D%91%EC%9D%B4-%EC%82%BC%ED%82%A8-%EC%97%AC%EB%A6%84-001/308942",
+  "width": 390,
+  "screenH": 844,
+  "docH": 22257,
+  "unloadedImgs": 0,
+  "strip": {
+    "top": 0,
+    "bottom": 20700,
+    "h": 20700,
+    "screens": 24.5,
+    "tiles": 41
+  },
+  "tileHeights": [
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    496,
+    500,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    522,
+    524,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    495,
+    500
+  ],
+  "flatPct": 16,
+  "cutCount": 18,
+  "cutHeights": [
+    4366,
+    1079,
+    173,
+    595,
+    546,
+    1057,
+    155,
+    42,
+    193,
+    1775,
+    1502,
+    804,
+    110,
+    2567,
+    932,
+    279,
+    1012,
+    212
+  ],
+  "cuts": [
+    {
+      "y": 0,
+      "h": 4366
+    },
+    {
+      "y": 4546,
+      "h": 1079
+    },
+    {
+      "y": 5744,
+      "h": 173
+    },
+    {
+      "y": 6011,
+      "h": 595
+    },
+    {
+      "y": 6729,
+      "h": 546
+    },
+    {
+      "y": 7369,
+      "h": 1057
+    },
+    {
+      "y": 8489,
+      "h": 155
+    },
+    {
+      "y": 8694,
+      "h": 42
+    },
+    {
+      "y": 9015,
+      "h": 193
+    },
+    {
+      "y": 9661,
+      "h": 1775
+    },
+    {
+      "y": 11543,
+      "h": 1502
+    },
+    {
+      "y": 13348,
+      "h": 804
+    },
+    {
+      "y": 14246,
+      "h": 110
+    },
+    {
+      "y": 14457,
+      "h": 2567
+    },
+    {
+      "y": 17142,
+      "h": 932
+    },
+    {
+      "y": 18222,
+      "h": 279
+    },
+    {
+      "y": 18686,
+      "h": 1012
+    },
+    {
+      "y": 20243,
+      "h": 212
+    }
+  ],
+  "flats": [
+    {
+      "y": 4366,
+      "len": 180,
+      "tone": 253,
+      "kind": "백"
+    },
+    {
+      "y": 5625,
+      "len": 119,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 5917,
+      "len": 94,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 6606,
+      "len": 123,
+      "tone": 251,
+      "kind": "백"
+    },
+    {
+      "y": 7275,
+      "len": 94,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 8426,
+      "len": 63,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 8644,
+      "len": 50,
+      "tone": 0,
+      "kind": "흑"
+    },
+    {
+      "y": 8736,
+      "len": 279,
+      "tone": 0,
+      "kind": "흑"
+    },
+    {
+      "y": 9208,
+      "len": 453,
+      "tone": 1,
+      "kind": "흑"
+    },
+    {
+      "y": 11436,
+      "len": 107,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 13045,
+      "len": 303,
+      "tone": 246,
+      "kind": "백"
+    },
+    {
+      "y": 14152,
+      "len": 94,
+      "tone": 253,
+      "kind": "백"
+    },
+    {
+      "y": 14356,
+      "len": 101,
+      "tone": 247,
+      "kind": "백"
+    },
+    {
+      "y": 17024,
+      "len": 118,
+      "tone": 251,
+      "kind": "백"
+    },
+    {
+      "y": 18074,
+      "len": 148,
+      "tone": 251,
+      "kind": "백"
+    },
+    {
+      "y": 18501,
+      "len": 185,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 19698,
+      "len": 545,
+      "tone": 255,
+      "kind": "백"
+    },
+    {
+      "y": 20455,
+      "len": 54,
+      "tone": 254,
+      "kind": "백"
+    },
+    {
+      "y": 20518,
+      "len": 182,
+      "tone": 255,
+      "kind": "백"
+    }
+  ],
+  "breaths": [
+    {
+      "atScreen": 5.2,
+      "len": 180,
+      "kind": "백",
+      "tone": 253
+    },
+    {
+      "atScreen": 6.7,
+      "len": 119,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 7,
+      "len": 94,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 7.8,
+      "len": 123,
+      "kind": "백",
+      "tone": 251
+    },
+    {
+      "atScreen": 8.6,
+      "len": 94,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 10,
+      "len": 63,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 10.2,
+      "len": 50,
+      "kind": "흑",
+      "tone": 0
+    },
+    {
+      "atScreen": 10.4,
+      "len": 279,
+      "kind": "흑",
+      "tone": 0
+    },
+    {
+      "atScreen": 10.9,
+      "len": 453,
+      "kind": "흑",
+      "tone": 1
+    },
+    {
+      "atScreen": 13.5,
+      "len": 107,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 15.5,
+      "len": 303,
+      "kind": "백",
+      "tone": 246
+    },
+    {
+      "atScreen": 16.8,
+      "len": 94,
+      "kind": "백",
+      "tone": 253
+    },
+    {
+      "atScreen": 17,
+      "len": 101,
+      "kind": "백",
+      "tone": 247
+    },
+    {
+      "atScreen": 20.2,
+      "len": 118,
+      "kind": "백",
+      "tone": 251
+    },
+    {
+      "atScreen": 21.4,
+      "len": 148,
+      "kind": "백",
+      "tone": 251
+    },
+    {
+      "atScreen": 21.9,
+      "len": 185,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 23.3,
+      "len": 545,
+      "kind": "백",
+      "tone": 255
+    },
+    {
+      "atScreen": 24.2,
+      "len": 54,
+      "kind": "백",
+      "tone": 254
+    },
+    {
+      "atScreen": 24.3,
+      "len": 182,
+      "kind": "백",
+      "tone": 255
+    }
+  ],
+  "tailFlat": 182,
+  "gapToNextSection": 1345,
+  "lastCutH": 212,
+  "lumCurve": [
+    {
+      "screen": 1,
+      "lum": 59,
+      "whitePct": 2,
+      "blackPct": 14
+    },
+    {
+      "screen": 2,
+      "lum": 142,
+      "whitePct": 5,
+      "blackPct": 3
+    },
+    {
+      "screen": 3,
+      "lum": 163,
+      "whitePct": 11,
+      "blackPct": 3
+    },
+    {
+      "screen": 4,
+      "lum": 123,
+      "whitePct": 7,
+      "blackPct": 3
+    },
+    {
+      "screen": 5,
+      "lum": 123,
+      "whitePct": 3,
+      "blackPct": 4
+    },
+    {
+      "screen": 6,
+      "lum": 191,
+      "whitePct": 47,
+      "blackPct": 1
+    },
+    {
+      "screen": 7,
+      "lum": 197,
+      "whitePct": 44,
+      "blackPct": 2
+    },
+    {
+      "screen": 8,
+      "lum": 195,
+      "whitePct": 37,
+      "blackPct": 4
+    },
+    {
+      "screen": 9,
+      "lum": 198,
+      "whitePct": 21,
+      "blackPct": 4
+    },
+    {
+      "screen": 10,
+      "lum": 183,
+      "whitePct": 9,
+      "blackPct": 2
+    },
+    {
+      "screen": 11,
+      "lum": 53,
+      "whitePct": 13,
+      "blackPct": 67
+    },
+    {
+      "screen": 12,
+      "lum": 38,
+      "whitePct": 9,
+      "blackPct": 72
+    },
+    {
+      "screen": 13,
+      "lum": 101,
+      "whitePct": 11,
+      "blackPct": 11
+    },
+    {
+      "screen": 14,
+      "lum": 158,
+      "whitePct": 31,
+      "blackPct": 11
+    },
+    {
+      "screen": 15,
+      "lum": 106,
+      "whitePct": 0,
+      "blackPct": 2
+    },
+    {
+      "screen": 16,
+      "lum": 144,
+      "whitePct": 29,
+      "blackPct": 13
+    },
+    {
+      "screen": 17,
+      "lum": 147,
+      "whitePct": 27,
+      "blackPct": 20
+    },
+    {
+      "screen": 18,
+      "lum": 177,
+      "whitePct": 10,
+      "blackPct": 1
+    },
+    {
+      "screen": 19,
+      "lum": 41,
+      "whitePct": 0,
+      "blackPct": 61
+    },
+    {
+      "screen": 20,
+      "lum": 108,
+      "whitePct": 13,
+      "blackPct": 24
+    },
+    {
+      "screen": 21,
+      "lum": 123,
+      "whitePct": 14,
+      "blackPct": 13
+    },
+    {
+      "screen": 22,
+      "lum": 119,
+      "whitePct": 25,
+      "blackPct": 19
+    },
+    {
+      "screen": 23,
+      "lum": 118,
+      "whitePct": 14,
+      "blackPct": 31
+    },
+    {
+      "screen": 24,
+      "lum": 244,
+      "whitePct": 74,
+      "blackPct": 0
+    },
+    {
+      "screen": 25,
+      "lum": 244,
+      "whitePct": 94,
+      "blackPct": 0
+    }
+  ]
+}

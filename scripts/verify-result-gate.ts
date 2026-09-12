@@ -91,6 +91,11 @@ async function main() {
   if (core.length >= 4) ok("산군 핵심 장", `${core.map((i) => i + 1).join(",")} (총 ${core.length}장)`);
   else bad("산군 핵심 장이 너무 적다", String(core.length));
 
+  // 재회는 필수 장이 상수로 못 박혀 있다(prompt.ts REUNION_CORE_CHAPTERS): 2·4·5·6·9.
+  // 티저가 파는 장이라 이 중 하나가 비면 손님이 산 물건과 다른 물건이 나간다.
+  // 목차 문구를 손보다 ★ 하나를 빠뜨려도 여기서 잡힌다.
+  eq("재회 핵심 장", coreChapterIndexes("reunion-saju").map((i) => i + 1).join(","), "2,4,5,6,9");
+
   console.log("\n7) 소제목에 장 번호가 붙어 나가지 않는가");
   const { normalizeResultVoice, countSubheadingNumbers } = await import("../src/lib/saju/normalize-voice");
   const subs = [

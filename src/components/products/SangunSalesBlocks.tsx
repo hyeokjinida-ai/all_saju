@@ -22,6 +22,29 @@ export function SampleCard({ noTitle }: { noTitle?: boolean } = {}) {
       <p className="mb-4 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         예시 · 1993년생 여성의 실제 결과지에서
       </p>
+      {/* 실물 한 쪽 — 텍스트 발췌만으로는 「분량과 조판」이 안 보인다.
+          경쟁 2사가 티저에서 결과지 **스크린샷**을 쓰는 자리다(청월당 12구간·타이트 ③).
+          우리는 그림을 새로 그리지 않고 /dev/sangun-result 표본을 그대로 찍어 쓴다 —
+          손님이 결제 후 받는 화면과 **같은 픽셀**이라 과장이 성립하지 않는다.
+          아래를 잘라 페이드로 닫는다: 한 쪽이 다 보이면 「이게 전부」로 읽힌다. */}
+      <div className="relative mb-4 overflow-hidden" style={{ height: 300, border: "1px solid var(--gold-pale)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/products/sangun/sample-page.webp"
+          alt="산군 장부 본문 한 쪽 — 한지에 적힌 풀이와 붉은 표시"
+          width={780}
+          height={2300}
+          loading="lazy"
+          draggable={false}
+          className="w-full select-none object-cover object-top"
+          style={{ height: 300 }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+          style={{ background: "linear-gradient(180deg, rgba(7,6,9,0) 0%, rgba(7,6,9,0.92) 88%)" }}
+        />
+      </div>
       <div className="space-y-3 text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
         <p className="font-myeongjo text-[15px] font-bold" style={{ color: "var(--gold)" }}>
           3. 돈이 들어오는 달
@@ -57,7 +80,9 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
     ["3. 올해 오는 것, 떠나는 것", "올해 네게서 빠져나갈 것 하나"],
     ["4. 돈이 들어오는 달", "몇 월인지 · 어디로 새는지"],
     ["5. 인연이 들어오는 달", "네 짝이 지나가는 달"],
-    ["6. 일과 자리의 시기", "지금 움직일 때인지, 엎드릴 때인지"],
+    // 「엎드릴 때인지」는 사극 말이라 걷었다(형님 지적) — prompt.ts 가 이 장에 실제로 시키는
+    // 말(「밀어붙일 때와 기다릴 때」)을 그대로 쓴다. 파는 말 = 만드는 말.
+    ["6. 일과 자리의 시기", "지금 밀어붙일 때인지, 기다릴 때인지"],
     ["7. 조심할 달", "네가 흔들리는 달 — 미리 알고 넘겨라"],
     ["8. 인생이 크게 바뀌는 해", "몇 살에 갈리는지, 그때 뭐가 달라지는지"],
     ["9. 네 물음의 답", "하라 · 말라로 답을 정해서"],
@@ -81,34 +106,15 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
           </li>
         ))}
       </ul>
-      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
     </div>
   );
 }
 
-// 분량 앵커 — 시장 1위(타이트 MZ범산도령)가 티저에서 "5만 자 · 100페이지 · 읽는데 2시간"으로
-// 미는 자리다. 우리는 그 수를 못 이긴다. 그런데 그건 사고가 아니라 설계다 — prompt.ts 의
-// 산군 규격이 "3040 모바일 완독선"을 노리고 타이트 플래그십의 절반으로 일부러 잡았다.
-// 그래서 같은 자리에서 '양'이 아니라 '완독'으로 싸운다.
-//
-// ⚠ 숫자 근거(2026-08-17 정정). 처음엔 "A4 열 장"이라 적었는데 그 근거였던 9,835자는
-//    /dev/sangun-result **렌더 화면**의 글자수(명식표·카드·UI 라벨 포함)였다.
-//    손님이 값으로 치는 건 풀이 본문이고, 본문 실측은 한글 7,905~8,836자다(11장, 같은 모델 3회).
-//    A4 환산은 리포 관례(prompt.ts: 1,000자 ≈ A4 1장) → **여덟 장**, 500자/분이면 **열다섯 분**.
-//    최저값으로 적는다 — 분량은 밑으로 약속하고 위로 지키는 쪽이 안전하다.
-function LengthAnchorLine() {
-  return (
-    <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--gold-pale)" }}>
-      <p className="text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-        A4 <b style={{ color: "var(--gold)" }}>여덟 장</b> · 다 읽는 데{" "}
-        <b style={{ color: "var(--gold)" }}>열다섯 분</b>
-        <br />
-        백 장을 던져 주는 자들도 있다만, 나는 네가 끝까지 읽기를 바란다.
-      </p>
-    </div>
-  );
-}
+// 분량 앵커(A4 몇 쪽·몇 자·몇 분)는 형님 지시로 통째로 걷어냈다(2026-09-02).
+// 경쟁사는 이 자리를 2~5만 자로 파는데 우리 실측은 8천 자대다 — 숫자를 꺼내는 순간
+// 지는 싸움이고, 「일부러 짧게 썼다」는 변명은 파는 문장이 아니다. 분량은 말하지 않고
+// 내용물(章·확답·거를 사람)과 실물 스크린샷으로만 판다.
 
 // 상향 앵커 — "점심 한 번 값"은 뺐다(4050 에게 '싸다'는 '부실하다'로 읽힌다, 모의구매 3/3 이 거슬려 함).
 // 같은 리포의 재물 랜딩(WealthWebtoon.tsx:269)처럼 철학관 가격으로 위에서 눌러 준다.
@@ -118,6 +124,186 @@ function PriceAnchorLine({ priceLabel }: { priceLabel: string }) {
       신당에 몸소 들면 복채가 <b style={{ color: "var(--gold)" }}>5만에서 20만</b>이다. 나는 서고에서 장부를 읽어 주니{" "}
       <b style={{ color: "var(--gold)" }}>{priceLabel}</b>만 받는다 — 몇 분 안에 도착 · 마이페이지에 계속 보관
     </p>
+  );
+}
+
+// 티저 **본문** 구매 카드 — 4章 카드 바로 뒤, 판 한가운데.
+//
+// 왜 세웠나(2026-09-01 실측): 산군 티저는 14,007px(16.6화면)인데 클릭 가능한 구매 버튼이
+// y=13,865 **딱 하나**였다. 즉 16.4화면을 내려오는 동안 사고 싶어져도 살 자리가 없었다.
+// 직녀는 같은 자리에 중반 카드(JiknyeoBuyCard, y=4,629)가 있어 두 번 친다 — 산군만 없었다.
+//
+// 앵커는 **내부만** 쓴다(정가 취소선 → 지금 값). 외부 앵커(신당 복채 5만~20만)는 꼬리의
+// ValueSpecCard 가 이미 들고 있어서, 여기서 또 꺼내면 한 화면에 숫자가 셋(5만·20만·19,900)이
+// 겹쳐 어느 것이 값인지 흐려진다. 본문=내부 앵커, 꼬리=외부 앵커로 갈라 둔다.
+export function SangunBuyCard({
+  priceLabel,
+  compareLabel,
+  discountPct,
+  bundleLine,
+  onBuy,
+}: {
+  priceLabel: string;
+  compareLabel?: string;
+  discountPct?: number;
+  /** 번들 예고 한 줄(청월당 잠금 목록 끝 문법) — 없으면 안 그린다 */
+  bundleLine?: string;
+  onBuy: () => void;
+}) {
+  return (
+    // mt-5 → mt-16(64px): 판 전체의 전환 정점인데 목차에 20px 로 붙어 있었다(실측).
+    // 칠흑 판독 — 정점 앞 큰 숨이 다섯 번뿐이라 정점이 선다. 이 카드가 그 「최대 정점」이라
+    // 결과지 간지급 눈금(64px)을 쓴다. 검은 배경이라 여백 자체가 어둠의 숨이 된다.
+    <div
+      className="mt-16 rounded-md p-6"
+      style={{ background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
+    >
+      {/* 카피는 쉬운 말만(형님 지시 2026-09-02) — 멋 부린 문장 금지, 운세위키의
+          「여기까지가 맛보기 / 진짜 풀이는 지금부터」 문법을 산군 반말로 옮긴 것.
+          (「여기까지가 공짜다」는 아래 마감 펀치가 같은 말을 쓰므로 여기선 피한다) */}
+      <p className="text-center font-myeongjo text-[19px] font-bold leading-[1.5]" style={{ color: "var(--bone)" }}>
+        지금까지는 맛보기다.
+      </p>
+      <p className="mt-2 text-center text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
+        진짜 풀이는 지금부터다. 몇 분이면 네 장부가 나온다.
+      </p>
+      {/* ⚠ 「받는 것 — 11장 · 확답 일곱…」은 여기 쓰지 않는다. 꼬리의 ValueSpecCard 가 같은 말을
+          하고 있어서, 넣으면 한 페이지에서 같은 문장을 두 번 읽게 된다(실측으로 확인하고 걷어냈다).
+          본문 카드의 일은 **지금 살 수 있게 하는 것**이고, 무엇을 받는지는 바로 위 4章 카드가
+          이미 章별로 펴 놓았다. */}
+      {/* 값 — 40px 숫자 하나가 정점이다. 옆에 취소선·할인율을 붙여 「지금 값」이 어느 것인지 못 박는다. */}
+      <div className="mt-6 flex items-end justify-center gap-2.5">
+        {compareLabel && (
+          <span className="pb-1.5 text-[15px] line-through" style={{ color: "var(--bone-faint)" }}>
+            {compareLabel}
+          </span>
+        )}
+        <span className="font-myeongjo text-[40px] font-bold leading-none" style={{ color: "var(--gold-bright)" }}>
+          {priceLabel}
+        </span>
+        {typeof discountPct === "number" && discountPct > 0 && (
+          <span
+            className="mb-1.5 px-2 py-1 text-[13px] font-bold"
+            style={{ background: "#7a2317", color: "#f3e6cf" }}
+          >
+            {discountPct}% 할인
+          </span>
+        )}
+      </div>
+      {/* 버튼 문구는 결제 시트의 확정 문구(「장부 전체 열기」)와 같은 말 — 새 말을 만들지 않는다. */}
+      <button
+        type="button"
+        onClick={onBuy}
+        className="mt-5 w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.12em]"
+        style={{
+          fontFamily: "var(--font-serif-kr), serif",
+          background: "var(--gold-bright)",
+          color: "#17120c",
+        }}
+      >
+        내 장부 전체 열기 →
+      </button>
+      <p className="mt-3 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
+        한 번만 받는다. 다달이 빠져나가는 것이 아니다.
+      </p>
+      {bundleLine && (
+        <p className="mt-2 text-center text-[13px]" style={{ color: "var(--bone-soft)" }}>
+          {bundleLine}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   손님 후기 — 구매 카드 **바로 뒤**, 값을 말한 직후.
+
+   왜 이 자리인가: 두 레퍼런스의 공통 문법이 「무엇인지 보여줌 → 값 → 받아본 증거」다
+   (청월당 연애비책 실측: 07 구매 카드 → 08 후기 카드 3장). 산군은 값 **앞**이 등장 절단이라
+   그 사이를 벌릴 수 없다 — 절단과 값은 붙어 있어야 절단이 값을 민다. 그래서 값 뒤다.
+
+   조판은 견우 판(ReunionReviews)과 같은 부품이다 — 카드 3장 · 사이 22px · 머리 100~130px,
+   한 카드 = 이니셜 원 · 이름 · 별 · 한 줄 제목 · 본문. 날짜·사진은 안 쓴다(두 레퍼런스 다 안 씀).
+   색만 산군 토큰(밤 + 금선). 견우 파일을 불러 쓰지 않는 이유는 그쪽이 다른 레인이라 —
+   같은 파일을 두 레인이 만지면 충돌한다.
+
+   ⚠ **지어내지 않는다.** 여기 오는 건 `reviews` 의 실후기뿐이고, 그중에서도 형님이
+     /admin/reviews 에서 켠 것만 온다(0013 승인 게이트).
+     3건 미만이면 **아무것도 안 그린다** — 빈 상자나 후기 1장은 없느니만 못하다
+     (홈 ReviewRow 와 같은 기준). 조판이 720~820px 짜리 구멍으로 무너지는 것도 막는다.
+   ───────────────────────────────────────────────────────────── */
+export type SangunReview = { id: string; rating: number; content: string; who: string };
+
+/** 후기 한 덩이를 「제목 한 줄 + 본문」으로 가른다 — **첫 문장이 제목이다.**
+ *  손님은 제목을 따로 안 쓴다(작성 폼에 칸이 없다). 그래서 첫 문장을 굵게 올려
+ *  훑는 눈이 걸릴 곳을 만든다(청월당이 후기에서 핵심 문장만 굵게 하는 것과 같은 목적). */
+function splitReview(content: string): { head: string; body: string } {
+  const s = content.trim().replace(/\s+/g, " ");
+  const m = s.match(/^(.{6,60}?[.!?…]|.{6,40}?(?=\s))/);
+  const head = (m?.[1] ?? s.slice(0, 40)).trim();
+  const body = s.slice(head.length).trim();
+  // 짧은 후기는 통째로 제목이다 — 쪼개면 본문에 조각만 남아 더 어색하다.
+  return body.length < 10 ? { head: s, body: "" } : { head, body };
+}
+
+export function SangunReviews({ reviews }: { reviews: SangunReview[] }) {
+  if (reviews.length < 3) return null;
+  return (
+    <section className="mt-14">
+      <p className="font-myeongjo text-[12px]" style={{ color: "var(--gold-soft)", letterSpacing: "0.2em" }}>
+        먼저 받아 본 사람들
+      </p>
+      <p className="font-myeongjo mt-1.5 text-[20px] font-bold leading-[1.35]" style={{ color: "var(--bone)" }}>
+        열어 보고 남기고 간 말이다.
+      </p>
+
+      <div className="mt-6 space-y-[22px]">
+        {reviews.slice(0, 3).map((r) => {
+          const { head, body } = splitReview(r.content);
+          return (
+            <div
+              key={r.id}
+              className="px-4 py-4"
+              style={{ borderRadius: 14, background: "rgba(0,0,0,0.34)", border: "1px solid var(--gold-line)" }}
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="font-myeongjo flex h-8 w-8 shrink-0 items-center justify-center text-[13px] font-bold"
+                  style={{
+                    borderRadius: "50%",
+                    background: "var(--gold-pale)",
+                    border: "1px solid var(--gold-line)",
+                    color: "var(--gold-bright)",
+                  }}
+                  aria-hidden
+                >
+                  {r.who.slice(0, 1)}
+                </span>
+                <span className="font-myeongjo text-[13px]" style={{ color: "var(--bone-faint)" }}>
+                  {r.who}
+                </span>
+                <span
+                  className="text-[12px]"
+                  style={{ color: "var(--gold-bright)", letterSpacing: "0.06em" }}
+                  aria-label={`별 ${r.rating}개`}
+                >
+                  {"★".repeat(r.rating)}
+                  <span style={{ color: "var(--gold-pale)" }}>{"★".repeat(5 - r.rating)}</span>
+                </span>
+              </div>
+              <p className="font-myeongjo mt-3 text-[15px] font-bold leading-[22px]" style={{ color: "var(--bone)" }}>
+                {head}
+              </p>
+              {body && (
+                <p className="mt-1.5 text-[13px] leading-[21px]" style={{ color: "var(--bone-soft)" }}>
+                  {body}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -131,7 +317,6 @@ export function ValueSpecCard({ priceLabel }: { priceLabel: string }) {
         <br />
         앞으로 12개월 전부
       </p>
-      <LengthAnchorLine />
       <PriceAnchorLine priceLabel={priceLabel} />
     </div>
   );

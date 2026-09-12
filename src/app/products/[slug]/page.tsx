@@ -15,7 +15,9 @@ import { SangunStory } from "@/components/products/SangunWebtoon";
 import { JiknyeoStory } from "@/components/products/JiknyeoStory";
 import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
 import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
+import { GyeonuLanding } from "@/components/products/GyeonuLanding";
 import { readJiknyeoAssets } from "@/lib/jiknyeo-assets";
+import { getProductReviews, type ProductReview } from "@/lib/home-data";
 import { formatKRW, formatDate } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/env";
 import { productsSeed } from "@/config/products.seed";
@@ -53,6 +55,14 @@ export async function generateMetadata({
     p = s ? { name: s.name, description: s.description } : null;
   }
   if (!p) return { title: "상품" };
+  // 공유 썸네일 — 없으면 카톡·메타에 링크가 **그림 없이 글자만** 뜬다(2026-09-06 운영 실측: og:image 0건).
+  // 유입이 광고라 링크가 사람 손으로 돌아다니는데, 그 자리에서 상품이 안 보이면 클릭이 안 산다.
+  // 파일은 `public/og/<slug>.png`(1200×630, scratchpad `bake-og.mjs` 가 대표 컷 + 붓글씨 제목으로 구움).
+  // ⚠ 있는 상품만 건다 — 없는 경로를 넘기면 크롤러가 깨진 그림을 물어 간다.
+  const OG_SLUGS = new Set(["sangun-sinjeom", "inyeon-saju", "reunion-saju"]);
+  const ogImage = OG_SLUGS.has(slug)
+    ? [{ url: `/og/${slug}.png`, width: 1200, height: 630, alt: p.name }]
+    : undefined;
   return {
     title: p.name,
     description: p.description,
@@ -61,8 +71,14 @@ export async function generateMetadata({
       description: p.description,
       type: "website",
       locale: "ko_KR",
+      ...(ogImage ? { images: ogImage } : {}),
     },
-    twitter: { card: "summary_large_image", title: p.name, description: p.description },
+    twitter: {
+      card: "summary_large_image",
+      title: p.name,
+      description: p.description,
+      ...(ogImage ? { images: ogImage.map((i) => i.url) } : {}),
+    },
   };
 }
 
@@ -119,10 +135,16 @@ export default async function ProductDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string; view?: string; demo?: string; from?: string }>;
+  searchParams: Promise<{ c?: string; view?: string; demo?: string; from?: string; cold?: string }>;
 }) {
   const { slug } = await params;
-  const { c: concernPreset, view, demo: demoParam, from } = await searchParams;
+  const { c: concernPreset, view, demo: demoParam, from, cold } = await searchParams;
+
+  // `?cold=1` — 산군 티저의 **콜드오픈 판**을 켠다(그림으로 시작 · 헤더·제목·하단 고정바는
+  // 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). `?skin=pink` 와 같은 「두 판을 나란히 보는 문」이라,
+  // 스위치가 없으면 운영 티저는 전과 **완전히 같다**. 산군 외 상품에는 켜도 효과가 없다
+  // (위저드가 slug 로 한 번 더 가른다 — SajuWizard 의 inColdOpen · useColdOpen).
+  const coldOpen = cold === "1";
 
   // `?demo=` — 입력 10단계를 건너뛰고 결제 전 티저로 바로 들어간다(화면 확인용).
   //   ?demo=1              기본 표본(1994-06-01 여, 시각 모름)
@@ -133,71 +155,95 @@ export default async function ProductDetailPage({
 
   let product: Product | null;
   let reviews: Review[] | null = null;
+  // 티저 구매 카드 뒤 후기 블록이 쓸 것 — 위 `reviews` 와 달리 **이름이 붙어 있다**.
+  // profiles 는 "본인만 select" RLS 라 anon 클라이언트로는 이름이 안 딸려 온다(조용히 0건).
+  // 그래서 홈과 같은 service 경로(getProductReviews)로 따로 읽는다.
+  let teaserReviews: ProductReview[] = [];
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let webtoonCuts: WebtoonCutData[] = [];
   let bundles: BundleOption[] = [];
   let dbPitch: unknown = null;
 
   if (isSupabaseConfigured()) {
+    // ⚡ 여기 조회는 **단계마다 한 번에 모아서** 친다(2026-08-30 실측 뒤 개편).
+    //
+    // 왜: 이 파일이 Supabase 를 순차로 7번 + getCurrentUser 1번, 총 여덟 왕복을 돌고 있었다.
+    // 유입 100% 가 메타 모바일이라 그 지연이 **광고 클릭마다 그대로 붙는다** —
+    // 운영 실측 TTFB `/products/sangun-sinjeom` 2.17~3.58초 · `/products/inyeon-saju` 1.96~2.45초
+    // (DB 를 안 쓰는 `/jiknyeo` 는 0.29~0.42초. 차이가 전부 이 왕복이었다.)
+    //
+    // 왕복을 못 줄이는 자리는 딱 둘뿐이다: ① 상품 행이 있어야 id 를 알고 ② 번들을 받아야
+    // 구성품 slug 를 안다. 나머지는 서로 안 물리므로 한 뭉치로 묶는다. 8왕복 → 3단계.
+    //
+    // ⚠ 조회를 **합치지는 않았다.** upsell(0010)·builder(0011) 는 마이그레이션 전이면 error 로
+    //    떨어져 조용히 null 이 되는 게 설계다 — 한 select 로 합치면 컬럼 하나가 없을 때
+    //    상품 행 전체가 같이 죽는다. 병렬이라 어차피 왕복 비용은 하나다.
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      // 0010 컬럼(compare_at_price·is_addon)은 여기서 안 읽는다 —
-      // 마이그레이션 전 배포에서도 **상품 페이지만은 반드시 살아 있어야** 하기 때문이다.
-      // 업셀 정보는 아래에서 따로, 실패해도 조용히 비는 방식으로 읽는다.
-      .select("id, slug, name, description, price")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .maybeSingle();
+    // 로그인 조회는 상품과 아무 상관이 없다 → 첫 왕복에 같이 태운다.
+    const [{ data }, currentUser] = await Promise.all([
+      supabase
+        .from("products")
+        // 0010 컬럼(compare_at_price·is_addon)은 여기서 안 읽는다 —
+        // 마이그레이션 전 배포에서도 **상품 페이지만은 반드시 살아 있어야** 하기 때문이다.
+        // 업셀 정보는 아래에서 따로, 실패해도 조용히 비는 방식으로 읽는다.
+        .select("id, slug, name, description, price")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle(),
+      getCurrentUser(),
+    ]);
     product = data;
+    user = currentUser;
 
     if (product) {
-      // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
-      const { data: upsell } = await supabase
-        .from("products")
-        .select("compare_at_price, is_addon")
-        .eq("id", product.id)
-        .maybeSingle();
-      // 상품 빌더(0011)로 채운 랜딩 카피 — 없으면(마이그레이션 전이거나 코드 상품이면)
-      // 조용히 null 이 되고 아래에서 PRODUCT_PITCH 코드 표로 내려앉는다.
-      const { data: builder } = await supabase
-        .from("products")
-        .select("pitch")
-        .eq("id", product.id)
-        .maybeSingle();
+      const [{ data: upsell }, { data: builder }, { data: r }, { data: wt }, { data: bundleRows }, tRev] =
+        await Promise.all([
+          // 업셀 정보(정가 앵커 · 애드온 여부) — 0010 미적용이면 error 로 떨어져 null 이 된다.
+          supabase.from("products").select("compare_at_price, is_addon").eq("id", product.id).maybeSingle(),
+          // 상품 빌더(0011)로 채운 랜딩 카피 — 없으면(마이그레이션 전이거나 코드 상품이면)
+          // 조용히 null 이 되고 아래에서 PRODUCT_PITCH 코드 표로 내려앉는다.
+          supabase.from("products").select("pitch").eq("id", product.id).maybeSingle(),
+          supabase
+            .from("reviews")
+            .select("id, rating, content, created_at")
+            .eq("product_id", product.id)
+            .eq("is_public", true)
+            // 승인 게이트(0013) — 형님이 /admin/reviews 에서 켠 것만 보인다.
+            // 0010 미적용 DB 면 이 줄 때문에 error 로 떨어져 r 이 null 이 된다(= 후기 없음).
+            // **안 나오는 쪽으로 실패**하는 게 맞다 — 위 upsell·builder 와 같은 방침이다.
+            .eq("is_approved", true)
+            .order("created_at", { ascending: false })
+            .limit(5),
+          // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
+          // (webtoon_pages 는 읽기 공개 RLS라 anon 클라이언트로 충분)
+          supabase
+            .from("webtoon_pages")
+            .select("cuts")
+            .eq("product_id", product.id)
+            .eq("kind", "teaser")
+            .eq("is_published", true)
+            .maybeSingle(),
+          // 결제 시트에 함께 세울 패키지 — 이 상품을 구성품으로 포함하는 번들만.
+          // 구성품 이름은 카드에 "산군 + 인연"처럼 그대로 찍힌다.
+          supabase
+            .from("products")
+            .select("id, slug, name, price, compare_at_price, bundle_slugs")
+            .eq("is_active", true)
+            .contains("bundle_slugs", [product.slug])
+            .order("display_order", { ascending: true }),
+          // 티저 후기 블록 — **같은 왕복에 태운다.** 뒤에 따로 await 하면 광고 클릭마다
+          // 왕복 하나가 그대로 더 붙는다(이 Promise.all 을 만든 이유가 그것이다).
+          // 산군 티저에만 블록이 있으므로 다른 상품에서는 조회 자체를 안 한다.
+          slug === "sangun-sinjeom" ? getProductReviews(product.id, 3) : Promise.resolve([]),
+        ]);
+
       dbPitch = (builder as { pitch?: unknown } | null)?.pitch ?? null;
       // 번들·추가질문권엔 상세 랜딩이 없다 → 없는 페이지로 돌린다.
       if ((upsell as { is_addon?: boolean } | null)?.is_addon) notFound();
       product.compare_at_price = (upsell as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
-
-      const { data: r } = await supabase
-        .from("reviews")
-        .select("id, rating, content, created_at")
-        .eq("product_id", product.id)
-        .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .limit(5);
       reviews = r;
-
-      // 결제 직전 티저에 얹을 웹툰 — 어드민에서 "손님에게 보이는 중"으로 켠 것만 내려온다.
-      // (webtoon_pages 는 읽기 공개 RLS라 anon 클라이언트로 충분)
-      const { data: wt } = await supabase
-        .from("webtoon_pages")
-        .select("cuts")
-        .eq("product_id", product.id)
-        .eq("kind", "teaser")
-        .eq("is_published", true)
-        .maybeSingle();
+      teaserReviews = tRev;
       if (Array.isArray(wt?.cuts)) webtoonCuts = wt.cuts as WebtoonCutData[];
-
-      // 결제 시트에 함께 세울 패키지 — 이 상품을 구성품으로 포함하는 번들만.
-      // 구성품 이름은 카드에 "산군 + 인연"처럼 그대로 찍힌다.
-      const { data: bundleRows } = await supabase
-        .from("products")
-        .select("id, slug, name, price, compare_at_price, bundle_slugs")
-        .eq("is_active", true)
-        .contains("bundle_slugs", [product.slug])
-        .order("display_order", { ascending: true });
 
       const memberSlugs = [...new Set((bundleRows ?? []).flatMap((b) => b.bundle_slugs ?? []))];
       const { data: memberRows } = memberSlugs.length
@@ -214,10 +260,26 @@ export default async function ProductDetailPage({
         includes: ((b.bundle_slugs as string[] | null) ?? []).map((s) => memberName.get(s) ?? s),
       }));
     }
-    user = await getCurrentUser();
   } else {
+    // DB 미설정(데모 모드) — 코드 표만으로 화면을 세운다.
     const seed = productsSeed.find((p) => p.slug === slug && p.is_active);
     product = seed ? { id: seed.slug, ...seed } : null;
+    // 번들도 코드 표에서 세운다. 안 그러면 데모 모드에서 **결제 시트가 단품 한 장**으로 나와
+    // 시트 구성(단품 ↔ 묶음)을 눈으로 확인할 방법이 없다(DB 있는 환경과 화면이 갈린다).
+    if (product) {
+      const mine = product.slug;
+      bundles = productsSeed
+        .filter((b) => b.is_active && (b.bundle_slugs ?? []).includes(mine))
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((b) => ({
+          productId: b.slug,
+          slug: b.slug,
+          name: b.name,
+          price: b.price,
+          compareAtPrice: b.compare_at_price ?? null,
+          includes: (b.bundle_slugs ?? []).map((x) => productsSeed.find((p) => p.slug === x)?.name ?? x),
+        }));
+    }
   }
 
   if (!product) notFound();
@@ -231,9 +293,12 @@ export default async function ProductDetailPage({
   const isSangunStory = product.slug === "sangun-sinjeom";
   // 직녀 2번째 상품(결혼) — 랜딩은 청월당 시공법 클론. 위저드를 이 페이지가 소유한다.
   const isMarriage = product.slug === "marriage-saju";
+  // 견우(재회) — 광고 착지. 공용 보라 템플릿엔 세계관이 한 줄도 없어 손님이 티저에서야
+  // 화자를 처음 만났다(2026-09-04). 랜딩이 위저드를 소유하고 CTA 는 #start 로 내린다.
+  const isReunion = product.slug === "reunion-saju";
   // 풀스크린 랜딩(웹툰·몰입·클론)은 공용 컨테이너(좌우 여백 + max-w-2xl)를 쓰지 않는다 —
   // 감싸면 풀블리드 섹션이 안쪽으로 밀려 카드 여백 규격이 통째로 어긋난다(실측: 20px 설계가 44px).
-  const isWealth = !!Story || isSangunStory || isMarriage;
+  const isWealth = !!Story || isSangunStory || isMarriage || isReunion;
 
   // 사실 기반 시의성(가짜 타이머 X) — 오늘(한국 시간) 기준 흐름 반영
   const today = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" }).format(new Date());
@@ -277,6 +342,7 @@ export default async function ProductDetailPage({
         isLoggedIn={!!user}
         initialConcerns={concernPreset ? [concernPreset] : undefined}
         webtoonCuts={webtoonCuts}
+        coldOpen={coldOpen}
         variant={isSangun ? "immersive" : undefined}
         bgImage={isSangun ? "/products/sangun/face.webp" : undefined}
         // ?demo= 는 산군 분기에만 연결돼 있어서 정작 티저를 자주 봐야 하는 직녀에서 안 먹었다.
@@ -363,10 +429,32 @@ export default async function ProductDetailPage({
             isLoggedIn={!!user}
             initialConcerns={concernPreset ? [concernPreset] : undefined}
             webtoonCuts={webtoonCuts}
+            coldOpen={coldOpen}
             demo={demo}
             jiknyeoAssets={jiknyeoAssets}
           />
         </JiknyeoDetail>
+      ) : isReunion ? (
+        // 견우: 광고 착지 스크롤 랜딩(히어로→죄책감 해제→약속→12칸 보기→정직 판정→목차→가격→CTA).
+        // 게이트는 두지 않는다 — 이미 「헤어졌다」는 자각을 안고 온 손님이라 한 겹 더 두면 잃기만 한다.
+        <GyeonuLanding
+          priceLabel={formatKRW(product.price)}
+          compareLabel={product.compare_at_price ? formatKRW(product.compare_at_price) : undefined}
+        >
+          <SajuWizard
+            productId={product.id}
+            productSlug={product.slug}
+            productName={product.name}
+            price={product.price}
+            compareAtPrice={product.compare_at_price ?? null}
+            bundles={bundles}
+            isLoggedIn={!!user}
+            initialConcerns={concernPreset ? [concernPreset] : undefined}
+            webtoonCuts={webtoonCuts}
+            coldOpen={coldOpen}
+            demo={demo}
+          />
+        </GyeonuLanding>
       ) : isJiknyeoStory ? (
         // 직녀: 산군과 같은 풀스크린 스테이지. 랜딩은 웹툰 한 편이고 오퍼는 뒤로 뺀다
         // (청월당 캐릭터 랜딩 두 편 판독의 결론). 그림은 전부 슬롯이라 0장이어도 성립한다.
@@ -386,6 +474,7 @@ export default async function ProductDetailPage({
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
               webtoonCuts={webtoonCuts}
+              coldOpen={coldOpen}
               demo={demo}
               jiknyeoAssets={jiknyeoAssets}
             />
@@ -413,9 +502,11 @@ export default async function ProductDetailPage({
               isLoggedIn={!!user}
               initialConcerns={concernPreset ? [concernPreset] : undefined}
               webtoonCuts={webtoonCuts}
+              coldOpen={coldOpen}
               variant="immersive"
               bgImage="/products/sangun/face.webp"
               demo={demo}
+              reviews={teaserReviews}
             />
           }
         />

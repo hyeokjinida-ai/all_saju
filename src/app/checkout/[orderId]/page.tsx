@@ -5,6 +5,7 @@ import { TrustStrip } from "@/components/saju/TrustStrip";
 import { LoginNudge } from "@/components/checkout/LoginNudge";
 import { formatKRW } from "@/lib/utils";
 import { MEMBER_DISCOUNT, MIN_CHARGE, chargeFor } from "@/lib/pricing";
+import { worldOfSlug, worldClass, worldBg } from "@/lib/world";
 
 export const metadata = { title: "결제" };
 
@@ -73,9 +74,12 @@ export default async function CheckoutPage({
   // 전엔 산군이 「이제 복채 얘기를 하자 / 신당에 몸소 들면 5만~20만」 같은 문장을 달고 있었고
   // 직녀도 그걸 따라 붙였는데, 형님 「말할 필요 없는 말」「다른 데만큼만 해」로 걷어냈다.
   // 세계관은 **색으로만** 이어간다(.world-* 스킨) — 글은 다른 데만큼.
-  const slug = product?.slug ?? "";
-  const world = slug.includes("sangun") ? "world-sangun" : slug === "inyeon-saju" || slug === "marriage-saju" ? "world-jiknyeo" : "";
-  const bg = world === "world-sangun" ? "#0a0908" : world === "world-jiknyeo" ? "#0b0f1a" : "#000000";
+  const slug = product?.slug ?? ""; // 아래 한 줄 설명(desc) 표에서도 쓴다
+  // 재회(견우)도 같은 밤 무대 색을 쓴다 — world-jiknyeo 는 그림이 아니라 **색 토큰**이다.
+  // 판정은 lib/world.ts 한 곳에서만 한다: 여기와 결제 후 대기 화면이 규칙을 따로 들고 있다가
+  // 대기 화면만 재회·번들을 못 알아보는 병이 났다(2026-09-07).
+  const world = worldOfSlug(slug);
+  const bg = worldBg(world);
 
   // ── 영수증 산수 ────────────────────────────────────────────────
   // ⚠ 판매가를 상품 테이블에서 다시 읽어 계산하지 않는다. 주문을 만든 뒤 가격을 바꾸면
@@ -109,8 +113,8 @@ export default async function CheckoutPage({
   // 한 줄 설명 — 티저·랜딩이 쓰는 분량 표기와 같은 말. 없는 상품은 비운다.
   const desc: Record<string, string> = {
     "sangun-sinjeom": "장부 열한 장 · 앞으로 12개월",
-    "inyeon-saju": "열두 달 예보 · 여덟 장",
-    "marriage-saju": "결혼하는 해와 달 · 여덟 장",
+    "inyeon-saju": "열두 달 예보 · 내 고민 답변",
+    "marriage-saju": "결혼하는 해와 달 · 내 고민 답변",
   };
 
   const Row = ({ k, v, sub, strong }: { k: React.ReactNode; v: React.ReactNode; sub?: string; strong?: boolean }) => (
@@ -124,9 +128,14 @@ export default async function CheckoutPage({
   );
 
   return (
-    <div className={`${world} min-h-screen`} style={{ background: bg }}>
+    <div className={`${worldClass(world)} min-h-screen`} style={{ background: bg }}>
       <div className="mx-auto max-w-md px-5 py-10">
-        <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">{name} 결제 안내</h1>
+        {/* 산군은 반말 세계다. 여기서 「결제 안내」로 받으면 신당이 갑자기 쇼핑몰이 된다(2026-09-08).
+            ⚠ 바꾸는 건 **제목과 CTA 뿐**이다 — 금액·동의·연락처·토스·환불은 현실 언어로 남긴다.
+            캐릭터의 말과 사업자의 약속은 섞으면 둘 다 약해진다. */}
+        <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">
+          {world === "sangun" ? "여기서부터 네 장부 전체를 연다" : `${name} 결제 안내`}
+        </h1>
 
         {/* 총 할인 배너 — 타이트 결제 모달의 「총 13,200원 할인받았어요!」 자리 */}
         {totalOff > 0 && (
@@ -154,6 +163,9 @@ export default async function CheckoutPage({
           <Row k="결제금액" v={formatKRW(order.amount)} strong />
         </div>
 
+        {/* 티저 유료 CTA 가 「19,900원 내고 장부 전체 열기」인데 결제 버튼만 「결제하기」라
+            손님 머릿속 행동이 「장부 열기 → 결제하기 → 장부」로 끊겼다. 같은 말로 잇는다.
+            금액은 그대로 앞에 세워 둔다 — 무엇을 내는지 한 번도 안 놓치게. */}
         <div className="mt-7">
           <CheckoutForm
             orderId={order.order_id}
@@ -163,7 +175,11 @@ export default async function CheckoutPage({
             productSlug={product?.slug ?? null}
             customerEmail={email}
             defaultPhone={memberPhone}
-            ctaLabel={`${formatKRW(order.amount)} 결제하기`}
+            ctaLabel={
+              world === "sangun"
+                ? `${formatKRW(order.amount)} 내고 내 장부 전체 열기`
+                : `${formatKRW(order.amount)} 결제하기`
+            }
           />
         </div>
 

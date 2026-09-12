@@ -52,13 +52,26 @@ export function ResultReviewCTA({
         textAlign: "center",
       }}
     >
+      {/* 말투는 결과지를 따라간다 — 산군(ink) 은 반말이다. 여기만 존대면 딴사람이 말을 건다. */}
       <div className="font-myeongjo" style={{ fontSize: 17, fontWeight: 700, color: "#EFE7FA", lineHeight: 1.45 }}>
-        읽어 보시니 어떠셨어요?
+        {tone === "ink" ? "장부 값을 했느냐" : "읽어 보시니 어떠셨어요?"}
       </div>
+      {/* 답례는 **한 줄로만** 말한다. 크게 내걸면 후기가 대가를 노린 말이 되고,
+          그 후기를 랜딩에 세우는 순간 우리가 산 후기가 된다(업셀 계획 §2-2 의 경계). */}
       <p style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.75, color: s.sub }}>
-        맞은 것도, 빗나간 것도 그대로 알려주세요.
-        <br />
-        다음 손님의 풀이가 그만큼 정확해집니다.
+        {tone === "ink" ? (
+          <>
+            맞은 것도, 빗나간 것도 그대로 적어라.
+            <br />
+            적고 나면 답례로 하나는 복채 없이 봐주마.
+          </>
+        ) : (
+          <>
+            맞은 것도, 빗나간 것도 그대로 알려주세요.
+            <br />
+            남겨 주시면 답례로 질문 하나를 무료로 드려요.
+          </>
+        )}
       </p>
       <Link
         href={`/mypage/orders/${orderId}/review`}

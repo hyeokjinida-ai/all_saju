@@ -142,7 +142,7 @@ export function Em({ children }: { children: React.ReactNode }) {
  *   달빛(#EDE7F6)이라 같은 회색이 대비 2.14 로 깔렸다(실측 2026-08-24, 기준선 4.5).
  *   이 파일 머리의 규칙(값은 스킨 토큰에만 둔다)을 이 한 줄이 어기고 있었다 → MUTE 로 되돌린다.
  *   크기도 12 → 13: 여기 걸리는 문장 중엔 각주가 아닌 것이 섞여 있다
- *   (「A4 여덟 장 · 다 읽는 데 열다섯 분」은 분량을 파는 값이다). */
+ *   (「A4 여덟 쪽 · 다 읽는 데 열다섯 분」은 분량을 파는 값이다). */
 export function Cap({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-center text-[13px] leading-[19px]" style={{ color: MUTE, letterSpacing: "normal" }}>

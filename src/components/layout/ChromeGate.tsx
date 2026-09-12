@@ -15,8 +15,13 @@ const isBare = (p: string) =>
   p.startsWith("/results") ||
   p.startsWith("/checkout") ||
   // 몰입형 웹툰 랜딩 — 자체 배경·자체 푸터를 가지므로 사이트 크롬 제거
+  // 직녀 리타겟 랜딩 — 광고 트래픽에 사이트 헤더(상품·로그인)가 새면 몰입이 깨진다(8/24)
+  p === "/jiknyeo" ||
   p === "/products/wealth-saju" ||
   p === "/products/inyeon-saju" ||
+  // 견우 재회 랜딩 — 인연·산군과 같은 광고 착지다. 크롬을 떼는 대신
+  // 법정 표기는 랜딩 자체가 StoryFooter 로 세운다(GyeonuLanding 하단).
+  p === "/products/reunion-saju" ||
   p === "/products/sangun-sinjeom";
 
 export function ChromeGate({

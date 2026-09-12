@@ -1,259 +1,55 @@
-"use client";
+import { createServiceClient } from "@/lib/supabase/server";
+import { worldOfSlug, type World } from "@/lib/world";
+import { SuccessClient } from "./success-client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { track } from "@/lib/analytics";
-import { AnalyzingScreen } from "@/components/saju/AnalyzingScreen";
-import { LAST_ORDER_SLUG_KEY } from "@/components/checkout/TossWidget";
-
-export default function CheckoutSuccessPage() {
-  return (
-    <Suspense>
-      <CheckoutSuccessInner />
-    </Suspense>
-  );
+// 결제 후 대기 화면의 세계관을 **서버에서** 정한다 (2026-09-07).
+//
+// 토스 리다이렉트가 주는 건 paymentKey·orderId·amount 뿐이라 상품이 안 실려 온다.
+// 그래서 예전엔 결제 시작점이 sessionStorage 에 심어 둔 slug 를 브라우저에서 읽었는데,
+// 그 읽기는 하이드레이션 뒤에야 돌아서 **첫 페인트가 무조건 기본 화면**이었다.
+// 운영 실측(390px · 4G · CPU 4배): 결제 직후 보라 나경반 + 존댓말이 2.7초.
+// 재회·번들은 아예 분기가 없어 대기 내내 그랬다.
+//
+// 주문은 결제 **전**에 만들어지므로(`/api/orders/create`) 주문번호만 있으면 상품을 알 수 있다.
+// 조회가 어떤 이유로든 실패하면 null 로 흘려보낸다 — 클라이언트가 sessionStorage 로 한 번 더
+// 시도하고, 그것도 없으면 기본 화면. **결제 승인 자체는 이 조회와 무관하다.**
+//
+// ⚠ 조인을 쓰지 않는 이유는 confirm 라우트와 같다: 생성 타입의 Relationships 가 비어 있어
+//    `products(slug)` 가 타입 단계에서 깨진다. id 로 한 건 더 읽는 편이 싸고 안전하다.
+async function worldOfOrder(orderId?: string): Promise<World | null> {
+  if (!orderId) return null;
+  try {
+    const service = createServiceClient();
+    const { data: order } = await service
+      .from("orders")
+      .select("product_id")
+      .eq("order_id", orderId)
+      .maybeSingle();
+    if (!order?.product_id) return null;
+    const { data: product } = await service
+      .from("products")
+      .select("slug")
+      .eq("id", order.product_id)
+      .maybeSingle();
+    return worldOfSlug(product?.slug);
+  } catch {
+    // 키 누락·네트워크 등 — 화면은 폴백으로 서고 결제 흐름은 그대로 간다
+    return null;
+  }
 }
 
-function CheckoutSuccessInner() {
-  const router = useRouter();
-  const search = useSearchParams();
-  const [state, setState] = useState<"loading" | "ready" | "ok" | "error">("loading");
-  const [message, setMessage] = useState("");
-  const [resultId, setResultId] = useState<string | null>(null);
-  // 비회원은 마이페이지에 못 들어간다. 결과지가 보류된 채 이 탭을 닫으면 돌아올 길이
-  // 완전히 사라진다(메일도 RESEND 미설정이면 안 감) — 돈만 내고 아무것도 못 받는 상태.
-  // 그래서 비회원에겐 마이페이지 대신 **이 페이지 주소**를 쥐여 준다.
-  // 이 URL 은 paymentKey·orderId 를 들고 있고 confirm 이 멱등이라, 나중에 다시 열면
-  // 그때 완성된 결과지로 그대로 들어간다.
-  const [isGuest, setIsGuest] = useState(false);
-  const [copied, setCopied] = useState(false);
-  // 대기 화면 테마 — 결제 시작점(TossWidget)이 심어둔 slug 로 판별.
-  // 토스 리다이렉트엔 상품 정보가 없고, confirm 응답은 결과 생성이 끝난 뒤에야 오므로
-  // 로딩 화면 테마엔 못 쓴다. sessionStorage 읽기가 실패하거나 값이 없으면
-  // undefined → 기본(보라) 테마로 내려앉아 흐름은 안 깨진다.
-  const [screenTheme, setScreenTheme] = useState<"sangun" | undefined>(undefined);
-  // 직녀는 색은 기본(보라)이고 진행 항목의 말만 연애 축으로 바뀐다 — 방금 산 상품에 '돈'이 나오면 갸웃한다.
-  const [screenProduct, setScreenProduct] = useState<"inyeon" | undefined>(undefined);
-  useEffect(() => {
-    try {
-      const slug = sessionStorage.getItem(LAST_ORDER_SLUG_KEY);
-      if (slug === "sangun-sinjeom") setScreenTheme("sangun");
-      else if (slug === "inyeon-saju") setScreenProduct("inyeon");
-    } catch {
-      // 접근 불가 환경 — 기본 테마
-    }
-  }, []);
-
-  // 결제 완료 전환 추적. 금액·통화만, 개인정보 없음.
-  //
-  // ⚠️ 예전엔 resultId 가 생겨야만 보냈다. 그런데 결제는 됐는데 결과지가 보류되면
-  //    (selfHeal 64초 실패 → state "ok") resultId 가 끝내 안 잡혀 Purchase 가 **영영 안 나갔다**.
-  //    유입이 100% 메타라 이건 곧 "메타가 구매자를 못 배운다" = 광고비 손실이다.
-  //    → 돈이 잡힌 시점(confirm 200)에 보낸다. 결과지 생성은 전환과 별개 문제다.
-  //
-  // 중복 방지가 두 겹인 이유: confirm 은 멱등이라 비회원이 저장해 둔 이 주소를 나중에
-  // 다시 열면 또 200 이 온다. ref 는 같은 탭만 막으므로 orderId 키로 localStorage 에도 남긴다.
-  const purchaseSent = useRef(false);
-  const sendPurchase = useCallback((orderId: string, amount: number, slug?: string | null) => {
-    if (purchaseSent.current) return;
-    const key = `mr_purchase_${orderId}`;
-    try {
-      if (localStorage.getItem(key)) {
-        purchaseSent.current = true;
-        return;
-      }
-      localStorage.setItem(key, "1");
-    } catch {
-      // 스토리지 차단(프라이빗·웹뷰) — 아래 ref 로 같은 탭 중복만 막는다
-    }
-    purchaseSent.current = true;
-    // slug 를 실어야 메타가 **어느 상품이 팔렸는지** 안다(analytics.ts 가 content_ids 로 바꾼다).
-    // 성공 URL 에는 상품이 없어서 이 경로뿐이고, 메타 쪽에서는 「맞춤 전환」으로만 갈린다.
-    track("purchase", {
-      value: amount > 0 ? amount : undefined,
-      currency: "KRW",
-      slug: slug ?? undefined,
-    });
-  }, []);
-
-  useEffect(() => {
-    const paymentKey = search.get("paymentKey");
-    const orderId = search.get("orderId");
-    const amount = Number(search.get("amount"));
-    if (!paymentKey || !orderId || !amount) {
-      setState("error");
-      setMessage("필수 파라미터가 누락되었습니다.");
-      return;
-    }
-    // 결제 보류 시 결과지 생성을 몇 차례 재시도(자가복구) — 사용자가 떠나기 전에
-    // 일시적 API/LLM 장애를 흡수한다. 끝내 실패하면 크론/웹훅이 백업으로 마무리.
-    // 폴링 창은 **생성 시간보다 넉넉해야** 한다. 예전 6초×4=24초는 gpt-4o-mini(8~19초)
-    // 기준이었는데, 루나 11장 결과지는 실측 평균 26초·최대 36초다(15인 배치) — 그대로 두면
-    // 정상 생성인데도 "보류" 화면을 보게 된다. 8초×8=64초로 늘려 첫 화면에서 끝내게 한다.
-    // (그래도 못 받으면 기존대로 크론·웹훅이 백업)
-    const selfHeal = async (oid: string): Promise<boolean> => {
-      for (let i = 0; i < 8; i++) {
-        await new Promise((r) => setTimeout(r, 8000));
-        try {
-          const r = await fetch("/api/orders/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: oid, paymentKey }),
-          });
-          const j = await r.json();
-          if (typeof j.guest === "boolean") setIsGuest(j.guest);
-          if (j.resultId) {
-            setResultId(j.resultId);
-            setState("ready");
-            return true;
-          }
-        } catch {
-          // 폴링 일시 실패는 무시하고 다음 시도
-        }
-      }
-      return false;
-    };
-
-    (async () => {
-      try {
-        const res = await fetch("/api/orders/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentKey, orderId, amount }),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");
-        // 여기가 돈이 잡힌 시점 — 결과지 생성 성공 여부와 무관하게 전환 1회 전송.
-        //
-        // ⚠ 가상계좌는 예외다. confirm 은 200 을 주지만 토스 상태가 DONE 이 아니면
-        //   **아직 돈이 안 들어온 것**이다(reason: "awaiting_deposit"). 여기서 Purchase 를 쏘면
-        //   메타가 「입금 안 한 사람」을 구매자로 학습한다 — ROAS 가 부풀고 타깃이 틀어진다.
-        //   유입이 100% 메타라 이 거짓 신호는 광고비를 그대로 잘못된 사람에게 태운다.
-        //
-        //   입금이 실제로 들어오면 토스 웹훅·복구 크론이 마무리하는데, 그 경로엔 이 화면이 없어
-        //   그 전환은 지금 구조에선 놓친다. **놓치는 쪽이 거짓 신호보다 낫다** —
-        //   회수는 서버 CAPI 를 붙일 때 한다(주 50전환 쌓인 뒤).
-        if (json.reason !== "awaiting_deposit") sendPurchase(orderId, amount, json.productSlug);
-        const guest = json.guest === true;
-        if (guest) setIsGuest(true);
-        if (json.resultId) {
-          setResultId(json.resultId);
-          setState("ready");
-          return;
-        }
-        // 결제는 완료, 결과지는 보류 → 자가복구 폴링
-        const healed = await selfHeal(orderId);
-        if (!healed) {
-          setState("ok");
-          setMessage(
-            guest
-              ? "결제는 완료됐어요. 결과지는 곧 자동으로 완성됩니다 — 아래 주소를 저장해 두셨다가 잠시 후 다시 열어 주세요."
-              : "결제는 완료됐어요. 결과지는 곧 자동으로 완성되어 마이페이지에 도착해요. 잠시 후 마이페이지에서 확인해 주세요.",
-          );
-        }
-      } catch (err) {
-        setState("error");
-        setMessage(err instanceof Error ? err.message : "결제 승인 중 오류가 발생했습니다.");
-      }
-    })();
-  }, [router, search, sendPurchase]);
-
-  // ── 대기 화면: 분석 중 — 풀스크린. 산군이면 신당 테마로 세계관을 이어간다 ──
-  if (state === "loading") {
-    return <AnalyzingScreen variant="paid" theme={screenTheme} product={screenProduct} />;
-  }
-
-  // ── 생성 완료 ──
-  if (state === "ready" && resultId) {
-    return (
-      <div className="container py-20 max-w-md text-center">
-        <p className="font-brush text-gold-soft/60 text-2xl tracking-[0.3em] mb-3">受</p>
-        <h1 className="font-myeongjo text-2xl font-semibold text-bone glow-bone leading-snug">
-          결과지가
-          <br />
-          완성되었어요!
-        </h1>
-        <p className="mt-3 text-sm text-bone-soft">정성껏 풀어드린 내 사주 기록, 지금 확인해보세요.</p>
-        <div className="gold-diamond mx-auto mt-6" />
-        <div className="mt-7">
-          <Link
-            href={`/results/${resultId}`}
-            className="inline-flex items-center justify-center gap-2 w-full max-w-xs mx-auto py-4 font-bold text-base tracking-[0.1em]"
-            style={{
-              fontFamily: "var(--font-serif-kr), serif",
-              background: "linear-gradient(180deg,#ffffff,#f1eaff)",
-              color: "var(--wine-deep)",
-              boxShadow: "0 0 24px rgba(150,90,255,0.3)",
-            }}
-          >
-            결과지 확인하기
-            <span className="font-brush text-xl">覽</span>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 보류/오류 ──
-  const guestPending = state === "ok" && isGuest;
-  return (
-    <div className="container py-16 max-w-md">
-      <Card>
-        <CardHeader>
-          <CardTitle>{state === "error" ? "결제 처리 실패" : "결제 완료"}</CardTitle>
-          <CardDescription>{message}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {guestPending && (
-            <>
-              {/* 비회원의 유일한 귀환 경로 — 주문번호까지 같이 보여 준다(문의할 때 필요) */}
-              <div className="rounded-md border border-gold-line p-3">
-                <p className="text-xs text-bone-faint">내 결과지 주소 (저장해 두세요)</p>
-                <p className="mt-1 break-all text-[11px] leading-relaxed text-bone-soft">
-                  {typeof window !== "undefined" ? window.location.href : ""}
-                </p>
-                <p className="mt-2 text-[11px] text-bone-faint">
-                  주문번호 {search.get("orderId")}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(window.location.href);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  } catch {
-                    // 클립보드 차단 환경 — 주소가 위에 그대로 보이므로 흐름은 안 깨진다
-                  }
-                }}
-                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-              >
-                {copied ? "복사했어요" : "주소 복사하기"}
-              </button>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-              >
-                지금 다시 확인하기
-              </button>
-            </>
-          )}
-          {!guestPending && (
-            <Link
-              href={state === "error" ? "/products" : "/mypage/orders"}
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-            >
-              {state === "error" ? "상품으로" : "마이페이지에서 확인"}
-            </Link>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+// 토스가 준 파라미터도 여기서 읽어 내려 준다.
+//
+// ⚠ 클라이언트가 useSearchParams() 를 쓰면 <Suspense> 경계가 필요한데, 서버 컴포넌트
+//    아래에서는 그 경계가 **끝내 안 닫힌다** — 대기 화면만 뜬 채 결제 승인 요청이 영영
+//    안 나갔다(2026-09-07 실측: 10초가 지나도 confirm 0건 · 진행바도 8%에서 멈춤).
+//    어차피 여기서 orderId 를 읽고 있으니 셋 다 props 로 넘겨 훅 자체를 없앤다.
+export default async function CheckoutSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string }>;
+}) {
+  const { paymentKey, orderId, amount } = await searchParams;
+  const world = await worldOfOrder(orderId);
+  return <SuccessClient world={world} paymentKey={paymentKey} orderId={orderId} amount={amount} />;
 }

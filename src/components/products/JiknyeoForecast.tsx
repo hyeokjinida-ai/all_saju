@@ -171,7 +171,7 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
   return (
     <div className="px-4 py-6">
       <Plate>
-        <PlateTitle sub="앞으로 열두 달 · 만세력 계산 결과">인연 예보</PlateTitle>
+        <PlateTitle sub="예시 화면 — 생일을 넣으면 내 열두 달로 바뀌어요">인연 예보</PlateTitle>
 
         <div className="mt-5 grid grid-cols-4 gap-2">
           {months.map(({ m, p }) => {
@@ -192,7 +192,7 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
                 <div className="my-1.5 flex justify-center">
                   <Moon phase={p} />
                 </div>
-                <p className="text-[11px] font-bold" style={{ color: big ? "#5B3F8F" : "#8A82A2" }}>
+                <p className="text-[11px] font-bold" style={{ color: big ? "#5B3F8F" : "#756E8A" }}>
                   {GRADE[p]}
                 </p>
               </div>
@@ -214,12 +214,21 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
         </div>
       </Plate>
 
-      {/* 잠금 — 계산은 다 보여줬으니, 가리는 건 명사 하나뿐이다 */}
-      <div className="mt-6 space-y-3">
+      {/* 경계 문장 — 무료(계산)/유료(읽기)의 선을 긋는 유일한 문장이라 잠금 **위**에 세운다.
+          잠금 밑에 두면 손님이 가려진 줄부터 만나 "무료야 유료야"를 스스로 풀어야 했다(8/24 처음눈 검수 ②). */}
+      <p className="mt-6 text-center font-myeongjo text-[15px] leading-relaxed" style={{ color: BONE }}>
+        계산은 다 보여드렸어요.
+        <br />
+        읽어 드리는 건, 여기서부터예요.
+      </p>
+
+      {/* 잠금 — 계산은 다 보여줬으니, 가리는 건 명사 하나뿐이다.
+          ⚠ 뼈대는 읽혀야 한다: 「██살」이 나이로 읽히던 3번 줄을 신살이 보이게 폈다(원문은 직녀/티저_12블록_전문.md). */}
+      <div className="mt-5 space-y-3">
         {[
           <>크게 열리는 달은 <b style={{ color: BONE }}>세 번</b>, 첫 달은 <Mask w={78} /></>,
           <>그 사람은 <Mask w={56} />에서 처음 마주쳐요</>,
-          <><Mask w={30} />살, 그게 매번 같은 자리를 끊어요</>,
+          <>자꾸 어긋났던 이유 — 명식에 「<Mask w={34} />살」이 하나 있어요</>,
         ].map((line, i) => (
           <p key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed" style={{ color: "#d8d2e8" }}>
             <i className="mt-2 block h-[5px] w-[5px] flex-none rounded-full" style={{ background: "#8B6FC4" }} />
@@ -227,12 +236,6 @@ export function ForecastBoard({ months = SAMPLE }: { months?: { m: string; p: Ph
           </p>
         ))}
       </div>
-
-      <p className="mt-6 text-center font-myeongjo text-[14px] leading-relaxed" style={{ color: SUB }}>
-        계산은 다 보여드렸어요.
-        <br />
-        읽어 드리는 건, 여기서부터예요.
-      </p>
     </div>
   );
 }
@@ -254,12 +257,18 @@ function Mask({ w }: { w: number }) {
 /* ── 2. 원국 증거표 ────────────────────────────────── */
 
 type El = "wood" | "fire" | "earth" | "metal" | "water";
+// 타일 색 — **흰 글자가 서는 명도**로 잡는다.
+// 그전에는 그라데이션의 밝은 쪽 끝에서 흰 글자가 무너졌다(2026-08-30 실측: 金 1.90 · 土 2.10 ·
+// 木 2.07 — 26px 한자도 11px 독음도 같이 죽는다). 원국표는 「내 여덟 글자」를 증거로 내미는
+// 자리라 여기서 안 읽히면 개인화 증명이 통째로 그림이 된다.
+// 오행의 색 정체성(목=청 · 화=적 · 토=황 · 금=백 · 수=흑)은 유지하고 명도만 내렸다 —
+// 값은 대비를 재서 4.5 를 넘는 첫 지점으로 잡았고, 먹빛 담채 톤과도 오히려 맞는다.
 const EL_BG: Record<El, string> = {
-  wood: "linear-gradient(150deg,#8FBFA0,#5E8F6E)",
-  fire: "linear-gradient(150deg,#E08098,#B4526B)",
-  earth: "linear-gradient(150deg,#D6AC76,#A8804A)",
-  metal: "linear-gradient(150deg,#BDB9D6,#8A86A8)",
-  water: "linear-gradient(150deg,#6E7BB8,#3E4A80)",
+  wood: "linear-gradient(150deg,#5D7C68,#456450)",
+  fire: "linear-gradient(150deg,#A86072,#8A3F55)",
+  earth: "linear-gradient(150deg,#8B704D,#6E5436)",
+  metal: "linear-gradient(150deg,#757385,#5C5A6E)",
+  water: "linear-gradient(150deg,#6672AB,#3E4A80)",
 };
 
 type Cell = { han: string; kor: string; el: El; isDay?: boolean };

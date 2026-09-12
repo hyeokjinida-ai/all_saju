@@ -2,11 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { EXTRA_QUESTION_SLUG } from "@/lib/saju/generate-result";
+import { EXTRA_QUESTION_SLUG, answerExtraQuestionById } from "@/lib/saju/generate-result";
+
+// 후기 답례 질문은 여기서 **LLM 을 바로 태운다**(결제 왕복이 없으니 기다릴 곳이 여기뿐이다).
+// 유료 경로는 예전대로 주문만 만들고 끝나므로 이 값이 놀고 있어도 손해가 없다.
+export const maxDuration = 300;
 
 // 추가질문권 — 결과지를 다 본 자리에서 하나 더 묻는다(0010 업셀).
-// 여기서는 '질문 접수 + 결제 주문 생성'까지만 한다. 답변 생성은 결제 승인 후
+// 유료면 '질문 접수 + 결제 주문 생성'까지만 하고, 답변 생성은 결제 승인 후
 // generateResultForOrder → answerExtraQuestion 이 맡는다(다른 상품과 같은 경로).
+// **후기 답례 질문권**이 있으면 결제를 건너뛰고 여기서 바로 답을 만든다.
 //
 // 소유 증명은 결과지 페이지와 **같은 모델**을 쓴다:
 //  - 회원 주문: 로그인 사용자와 order.user_id 가 같아야 한다.
@@ -52,6 +57,35 @@ export async function POST(request: NextRequest) {
     if (!user || user.id !== parentOrder.user_id) {
       return NextResponse.json({ error: "본인 결과지에만 질문할 수 있습니다" }, { status: 403 });
     }
+  }
+
+  // ── 후기 답례 질문권이 있으면 결제를 건너뛴다 ────────────────────────
+  // 여기가 유료 분기보다 **위**에 있어야 한다. 아래로 내려가면 질문권을 가진 손님에게도
+  // 결제창이 뜬다(답례를 주고 다시 돈을 받는 꼴). 상품 행이 없거나 내려가 있어도
+  // 답례는 유효하다 — 그건 우리가 이미 준 권리지 지금 파는 물건이 아니다.
+  const { data: credit } = await service
+    .from("extra_questions")
+    .select("id")
+    .eq("parent_order_id", parentOrder.id)
+    .eq("source", "review_reward")
+    .eq("status", "credited")
+    .limit(1)
+    .maybeSingle();
+
+  if (credit) {
+    // 질문을 적어 넣고 답을 만든다. 결제 왕복이 없으니 손님은 이 요청 하나를 기다린다.
+    await service.from("extra_questions").update({ question, status: "pending" }).eq("id", credit.id);
+    const outcome = await answerExtraQuestionById(service, credit.id as string);
+    if (!outcome.ok) {
+      // ⚠ 반드시 되돌린다 — 안 그러면 **답도 못 받고 질문권도 사라진다**(손님에겐 강탈이다).
+      //   question 은 남겨 둔다. 다시 눌렀을 때 적은 것이 살아 있는 편이 낫다.
+      await service.from("extra_questions").update({ status: "credited" }).eq("id", credit.id);
+      return NextResponse.json(
+        { error: "답을 만들지 못했어요. 질문권은 그대로 있으니 잠시 후 다시 눌러 주세요" },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({ free: true, resultId: outcome.resultId });
   }
 
   const { data: product } = await service

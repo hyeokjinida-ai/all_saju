@@ -767,6 +767,13 @@
     linear-gradient(180deg, #171130, #0b0f1a);
 }
 
+/* 산군 콜드오픈 — 타이틀 드랍 전에는 껍데기의 브랜드 줄도 지운다(그림이 먼저다).
+   위저드(SajuWizard)가 html 에 data-cold-open 을 켜고 여기서 받는다 — 껍데기는 위저드를
+   ReactNode 로만 받아 prop 을 못 내려보낸다. 절대배치라 자리를 안 먹으므로 display:none 으로 충분. */
+html[data-cold-open] .sangun-brand-line {
+  display: none;
+}
+
 /* 몰입 위저드(산군) — 카드 부품의 보라 잔재를 먹빛+금으로 통일 */
 .wizard-immersive .ap-input {
   background: rgba(10, 9, 14, 0.72);

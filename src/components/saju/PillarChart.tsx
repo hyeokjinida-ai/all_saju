@@ -79,9 +79,13 @@ export function PillarChart({ shown, rows }: { shown: Pillar[]; rows: ChartRow[]
         ))}
         {/* 한글 읽기(갑술·기사·무오) — 11px bone-faint 는 표 안에서 가장 안 보이는 줄이었다.
             한자를 못 읽는 사람이 유일하게 붙잡는 줄이라 여기서 흐리면 표 전체가 그림이 된다.
-            12px + 또렷한 색으로. (13 으로 올리면 아래 십성 줄과 위계가 뒤집힌다) */}
+            12px + 또렷한 색으로. (13 으로 올리면 아래 십성 줄과 위계가 뒤집힌다)
+            ⚠ 그 색을 크림으로 **박아** 두었더니 밝은 티저 판에서 도로 죽었다 — 직녀 실측
+            (2026-09-01) 대비 **1.36**. 밤 무대 시절 값이 종이 판에 그대로 남은 자리다
+            (8/25 가독성 수리에서 토큰 밖 하드코딩이 죽었던 것과 같은 병).
+            토큰으로 돌리면 산군은 지금 색 그대로고(--bone-soft = #d8ccb4) 밝은 판에서만 먹으로 뒤집힌다. */}
         {cols.map(({ p }, i) => (
-          <span key={`r-${i}`} className="font-myeongjo text-[12px]" style={{ color: "rgba(215,206,188,0.86)" }}>
+          <span key={`r-${i}`} className="font-myeongjo text-[12px]" style={{ color: "var(--bone-soft)" }}>
             {p.gan.read}
             {p.ji.read}
           </span>

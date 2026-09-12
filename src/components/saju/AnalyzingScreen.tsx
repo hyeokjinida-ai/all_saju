@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { BgMedia } from "@/components/products/BgMedia";
 import { Naegyeongban } from "@/components/landing/saju-lab/Naegyeongban";
+import type { World } from "@/lib/world";
 
 // 진행바(pct)에 맞춰 하나씩 체크되는 실제 작업 단계. 실제로 서버가 하는 일 순서 그대로다.
 const WORKING_STEPS: { at: number; label: string }[] = [
@@ -15,10 +16,16 @@ const WORKING_STEPS: { at: number; label: string }[] = [
   { at: 78, label: "적어주신 물음에 답을 적는 중" },
 ];
 
-/** 방금 산 상품과 다른 말이 나오면 반 박자 갸웃한다 — 연애 상품에는 '돈'을 꺼내지 않는다. */
-const INYEON_STEP_LABEL: Record<string, string> = {
-  "돈과 인연이 들어오는 달을 셈하는 중": "만나는 달을 달력에서 셈하는 중",
+/** 방금 산 상품과 다른 말이 나오면 반 박자 갸웃한다 — 연애 상품에는 '돈'을 꺼내지 않는다.
+    세 번째 항목만 상품마다 다르다. 나머지 셋은 실제로 서버가 똑같이 하는 일이라 그대로 둔다.
+    ⚠ 여기 쓰는 말은 **그 상품이 이미 쓰던 말**이어야 한다 — 재회의 「다리가 놓이는 달」은
+    위저드·티저·결과지가 다 쓰는 견우 자기 용어다(새 카피가 아니다). */
+const STEP3_BY_WORLD: Record<World, string | null> = {
+  sangun: null, // 산군은 장부 상품이라 '돈과 인연' 그대로가 맞다
+  inyeon: "만나는 달을 달력에서 셈하는 중",
+  reunion: "다리가 놓이는 달을 셈하는 중",
 };
+const STEP3_DEFAULT = "돈과 인연이 들어오는 달을 셈하는 중";
 
 // 산군 금색 — 위저드의 gold-bright(#e8c96a) 계열. 결제 직전 화면과 같은 색이어야 세계관이 이어진다.
 const SANGUN_GOLD = "#e8c96a";
@@ -26,17 +33,17 @@ const SANGUN_GOLD = "#e8c96a";
 export function AnalyzingScreen({
   name,
   variant = "paid",
-  theme,
-  product,
+  world = null,
   onBack,
 }: {
   name?: string | null;
   variant?: "paid" | "free";
-  // "sangun": 박수무당 사주 전용 — 결제 직전까지 검정+금+반말(신당 세계관)인데 대기 화면만
-  // 보라 나경반+존댓말이면 세계관이 끊긴다(타이트는 결제 후 로딩에도 같은 캐릭터가 말을 건다).
-  theme?: "sangun";
-  /** "inyeon": 직녀의 연애예보 — 색은 기본(보라)이되 진행 항목의 말만 연애 축으로 바꾼다 */
-  product?: "inyeon";
+  /** 방금 산 상품의 세계관. **결제 후 화면은 이 값이 서버에서 와야 한다** —
+   *  클라이언트에서 정하면 첫 페인트가 무조건 기본(보라 나경반 + 존댓말)으로 나가고,
+   *  결제 직후 2.7초 동안 세계관 밖 화면이 뜬다(2026-09-07 운영 실측).
+   *  - sangun: 결제 직전까지 검정+금+반말(신당)인데 대기 화면만 보라+존댓말이면 끊긴다.
+   *  - inyeon / reunion: 색은 같은 밤 무대, 배경 그림과 세 번째 항목의 말만 다르다. */
+  world?: World | null;
   onBack?: () => void;
 }) {
   const [pct, setPct] = useState(8);
@@ -49,7 +56,7 @@ export function AnalyzingScreen({
 
   const who = name?.trim() ? `${name.trim()}님` : "회원님";
   const paid = variant === "paid";
-  const sangun = theme === "sangun";
+  const sangun = world === "sangun";
   // 포인트 색 — 기본은 보라, 산군은 금. 구조는 같고 칠만 갈아입는다.
   const accent = sangun ? SANGUN_GOLD : "#c9a8ff";
 
@@ -64,32 +71,44 @@ export function AnalyzingScreen({
     >
       {sangun ? (
         <>
-          {/* 산군 얼굴 — 결제 직전 위저드와 같은 배경을 이어받아 세계관을 유지 */}
-          <div
-            className="pointer-events-none absolute inset-0 z-0"
-            style={{
-              backgroundImage: "url(/products/sangun/face.webp)",
-              backgroundSize: "cover",
-              backgroundPosition: "center top",
-              opacity: 0.5,
-            }}
-          />
+          {/* 산군 — 부채를 들고 굿을 하는 판(형님 픽 2026-09-08).
+              처음엔 정지 이미지(face.webp)라 결제 순간 신당이 멈춰 버렸고, 다음엔 위저드와
+              같은 face.mp4(서서 향만 피우는 컷)를 이어 틀었다. 형님이 9/6에 뽑아 둔
+              역동판 중 「문틀 부채도약」으로 교체 — 대기 중에 산군이 **일하고 있는 게 보인다**.
+              ⚠ 위저드(입력 12칸)는 face.mp4 를 그대로 둔다. 손님이 생년월일을 타이핑하는
+                 구간의 큰 움직임은 분위기가 아니라 잡음이다(재회 위저드가 캐릭터 루프를
+                 일부러 안 까는 것과 같은 판단). 그래서 **대기 화면 전용 파일**로 따로 둔다.
+              직녀가 loading.mp4 를 쓰는 것과 같은 이름 규칙이다.
+              못 틀면 BgMedia 가 같은 컷의 webp 로 조용히 내려앉는다. */}
+          <div className="pointer-events-none absolute inset-0 z-0" style={{ opacity: 0.5 }}>
+            <BgMedia
+              video="/products/sangun/loading.mp4"
+              img="/products/sangun/loading.webp"
+              alt="부채를 들고 굿을 하는 박수무당"
+              // object-top: 예전 정지판이 backgroundPosition "center top" 이었다.
+              // 기본값(center)으로 두면 세로로 긴 컷이라 갓과 어깨가 잘려 다른 그림이 된다.
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+          </div>
           {/* 어두운 그라데이션 — 글자 자리 가독 확보. 위저드 오버레이 값 그대로 */}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{ background: "linear-gradient(rgba(7,6,9,0.58) 0%, rgba(7,6,9,0.22) 36%, rgba(7,6,9,0.9) 74%)" }}
           />
         </>
-      ) : product === "inyeon" ? (
+      ) : world === "inyeon" || world === "reunion" ? (
         <>
           {/* 직녀 — 은하수 아래 베틀의 직녀가 멀리서 실을 잣는 앰비언트 루프.
               "풀이를 짜는 중"을 그림으로 말한다. 산군이 face.webp 로 세계관을 잇듯 직녀도 게이트 장면을 잇는다.
-              파일이 없거나 못 틀면 BgMedia 가 j3.webp 로 내려앉는다. */}
+              재회(견우)는 같은 자리에 **장부 클로즈업**을 건다 — 위저드가 「장부를 찾는 중」
+              3.2초에 트는 바로 그 컷이라, 결제 후 대기가 그 장면의 이어보기가 된다.
+              ⚠ 직녀 영상을 재회에 빌려 오면 화자는 견우인데 화면엔 직녀가 뜬다 — 금지(위저드와 같은 규칙).
+              파일이 없거나 못 틀면 BgMedia 가 같은 컷의 webp 로 내려앉는다. */}
           <div className="pointer-events-none absolute inset-0 z-0" style={{ opacity: 0.62 }}>
             <BgMedia
-              video="/products/jiknyeo/loading.mp4"
-              img="/products/jiknyeo/j3.webp"
-              alt="은하수 아래 베틀에 앉은 직녀"
+              video={world === "reunion" ? "/products/reunion/g-ledger.mp4" : "/products/jiknyeo/loading.mp4"}
+              img={world === "reunion" ? "/products/reunion/g-ledger.webp" : "/products/jiknyeo/j3.webp"}
+              alt={world === "reunion" ? "별빛이 내려앉은 장부" : "은하수 아래 베틀에 앉은 직녀"}
               className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
@@ -182,8 +201,8 @@ export function AnalyzingScreen({
                 ? s.label === "적어주신 물음에 답을 적는 중"
                   ? "네 물음에 답을 적는 중"
                   : s.label
-                : product === "inyeon"
-                  ? INYEON_STEP_LABEL[s.label] ?? s.label
+                : s.label === STEP3_DEFAULT && world
+                  ? STEP3_BY_WORLD[world] ?? s.label
                   : s.label;
               return (
                 <div

@@ -131,7 +131,8 @@ export const SANGUN_VOICE: { match: RegExp; say: string; src?: string; alt?: str
     alt: "엽전 꾸러미를 든 손과 펼친 장부",
     say: "돈 얘기다. 몇 월인지까지 적어 뒀다.",
   },
-  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "움직일 때와 엎드릴 때가 갈린다." },
+  // 「엎드릴 때」는 사극 말(형님 지적 2026-09-02) — 티저·목차와 같은 말로 통일.
+  { match: /일과 자리/, src: "/products/sangun/t3-snap.webp", alt: "부채를 접어 쥔 손", say: "밀어붙일 때와 기다릴 때가 갈린다." },
   {
     match: /인연이 들어오는/,
     src: "/products/sangun/t5-thread.webp",
@@ -377,12 +378,14 @@ export function SangunPrologue({
   monthCount: number;
   concern: string | null;
 }) {
-  // A4 한 장 ≈ 1,050자(본문 실측 7,905~8,836자가 판매 카피의 「A4 여덟 장」과 맞는 눈금).
-  // 저쪽처럼 부풀리지 않는다 — 손님이 세어 볼 수 있는 숫자다.
-  const pages = Math.max(1, Math.round(charCount / 1050));
+  // A4 분량 칸은 형님 지시로 걷어냈다(2026-09-02) — 파는 화면에서 분량 앵커(A4·글자 수)를
+  // 전부 뺐으므로 받은 물건에서도 같은 자를 안 꺼낸다. 그 칸은 「앞으로 12달」로 —
+  // 파는 카피의 「앞으로 12개월 전부」와 같은 말이라 새 어휘가 아니다.
+  // charCount 는 시그니처 호환으로만 남긴다(호출부를 안 건드리는 값싼 쪽).
+  void charCount;
   const facts = [
     { v: `${entries.length}장`, k: "장부의 장" },
-    { v: `A4 ${pages}장`, k: "적힌 분량" },
+    { v: "12달", k: "앞으로 전부" },
     { v: `${monthCount}개`, k: "짚어 둔 달" },
   ];
 

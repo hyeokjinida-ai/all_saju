@@ -12,6 +12,8 @@ import type { Myeongsik } from "@/lib/saju/manseryeok";
 import { buildResultView } from "@/lib/saju/result-view";
 import { buildChartRows } from "@/lib/saju/teaser";
 import { parseProfileTags } from "@/lib/saju/profile-tags";
+import { REUNION_SLUG } from "@/lib/saju/reunion-input";
+import { REUNION_CHAPTER_BADGES } from "@/lib/saju/prompt";
 import {
   computeInyeonFacts,
   computeWealthFacts,
@@ -79,6 +81,18 @@ export default async function ResultPage({
     .eq("parent_order_id", result.order_id)
     .eq("status", "answered")
     .order("created_at", { ascending: true });
+
+  // 후기 답례로 받아 둔 질문권(아직 안 쓴 것) — 있으면 CTA 가 값 대신 「답례」를 말하고
+  // 결제창을 안 거친다. 없으면 예전 그대로 유료다.
+  const { data: freeCreditRow } = await service
+    .from("extra_questions")
+    .select("id")
+    .eq("parent_order_id", result.order_id)
+    .eq("source", "review_reward")
+    .eq("status", "credited")
+    .limit(1)
+    .maybeSingle();
+  const hasFreeCredit = !!freeCreditRow;
 
   // 값이 없으면(시드 전·비활성) 블록을 통째로 렌더하지 않는다 — 가격 없는 CTA 는 내보내지 않는다.
   const { data: questionProduct } = await service
@@ -155,7 +169,9 @@ export default async function ResultPage({
   // 직녀(연애예보·결혼예보) — 산군처럼 **전용 결과지**로 간다.
   // 공용 템플릿은 보라 세계관에 재물·직업·건강까지 실어서, 밤하늘 티저에서 넘어온 손님에게
   // 다른 상품처럼 보였다(안 판 것을 보여주면 상품이 흐려진다).
-  const isJiknyeo = slug === "inyeon-saju" || slug === "marriage-saju";
+  // 재회(견우)도 같은 조판을 쓴다 — 직녀 얼굴이 나오는 요소만 컴포넌트 안에서 꺼진다(isReunion).
+  const isReunion = slug === REUNION_SLUG;
+  const isJiknyeo = slug === "inyeon-saju" || slug === "marriage-saju" || isReunion;
 
   return (
     <div
@@ -166,13 +182,13 @@ export default async function ResultPage({
         flexDirection: "column",
         alignItems: "center",
         background: isJiknyeo
-          ? "radial-gradient(ellipse 120% 50% at 50% 0%,#241C46 0%,rgba(36,28,70,0) 58%)," +
-            "linear-gradient(180deg,#0D0B1C 0%,#12112A 46%,#0B0F1A 100%)"
+          ? "radial-gradient(ellipse 120% 42% at 50% 0%,rgba(36,28,70,.10) 0%,rgba(36,28,70,0) 60%)," +
+            "linear-gradient(180deg,#F7F3EA 0%,#FBF8F1 40%,#F4EFE4 100%)"
           : isSangun
           ? "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)"
           : "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
         padding: "30px 12px 64px",
-        color: "#fff",
+        color: isJiknyeo ? "#2A2434" : "#fff",
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
@@ -226,6 +242,9 @@ export default async function ResultPage({
                 : null
             }
             isMarriage={slug === "marriage-saju"}
+            isReunion={isReunion}
+            // 장 제목 옆 한자 근거 배지 — 재회 10장에만 단다(청월당 목차 공식).
+            badges={isReunion ? REUNION_CHAPTER_BADGES : undefined}
             reviewOrderId={ownerId ? result.order_id : null}
             recordedAt={result.created_at as string | null}
           />
@@ -279,10 +298,13 @@ export default async function ResultPage({
 
         {/* 추가질문권 — 다른 상품으로 넘기기 전에 '같은 상담을 이어가는' 업셀을 먼저 둔다.
             문턱이 제일 낮고(5,000원), 무당 컨셉에서는 '복채를 더 내고 하나 더 묻는' 것이라 세계관 그대로다. */}
-        {questionPrice != null && (
+        {/* 답례 질문권이 있으면 가격이 없어도(상품을 내려도) 블록을 세운다 —
+            이미 준 권리는 상품 판매 여부와 상관없이 쓸 수 있어야 한다. */}
+        {(questionPrice != null || hasFreeCredit) && (
           <ExtraQuestions
             resultId={result.id}
             price={questionPrice}
+            freeCredit={hasFreeCredit}
             answered={(extraQuestions ?? []).map((q) => ({
               id: q.id as string,
               question: (q.question as string) ?? "",
