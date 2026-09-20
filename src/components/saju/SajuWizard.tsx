@@ -475,6 +475,11 @@ export function SajuWizard({
   const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
   const guestEmailRef = useRef<HTMLInputElement>(null);
+  // teaser_view 는 「풀이 데이터가 도착했다」이고 그 뒤 로딩이 최소 3.2초 더 있다.
+  // 손님이 **실제로 풀이를 본** 순간은 여기다 — 뜻이 다르니 이름을 따로 둔다.
+  // ⚠ teaser_view 는 메타 AddToCart 로 나가므로 발화 시점을 건드리면 안 된다(9/19 분석 3단계).
+  //    teaser_shown 은 자체 DB 전용(META_STANDARD 에 없음).
+  const teaserShownFired = useRef(false);
   // 이메일 없이 결제 버튼을 눌렀을 때 뜨는 한 줄. 전엔 버튼이 꺼져 있어(disabled) 눌리지도
   // 않았고 왜 못 누르는지 아무 데도 안 적혀 있었다(2026-09-20 ㉮-2).
   const [payHint, setPayHint] = useState(false);
@@ -726,6 +731,12 @@ export function SajuWizard({
       concerns,
     };
   }
+
+  useEffect(() => {
+    if (teaserLoading || !teaser || teaserShownFired.current) return;
+    teaserShownFired.current = true;
+    track("teaser_shown", { slug: productSlug });
+  }, [teaserLoading, teaser, productSlug]);
 
   const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
 

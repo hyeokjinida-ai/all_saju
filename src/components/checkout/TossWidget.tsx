@@ -56,14 +56,22 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
       if (canceled) return;
       widgetsRef.current = widgets;
       await widgets.setAmount({ currency: "KRW", value: amount });
-      await Promise.all([
-        widgets.renderPaymentMethods({ selector: "#payment-methods", variantKey: "DEFAULT" }),
-        widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
-      ]);
+      // 결제수단 UI 는 토스 상점관리자에서 형님이 만든 `new` 판을 쓴다(2026-09-21 형님 지정).
+      // ⚠ variantKey 가 없거나 잘못되면 renderPaymentMethods 가 던지고 **버튼이 영영 안 켜진다**
+      //   (아래 disabled={!ready}). 그래서 실패하면 조용히 DEFAULT 로 한 번 더 그린다.
+      let variant = "new";
+      try {
+        await widgets.renderPaymentMethods({ selector: "#payment-methods", variantKey: "new" });
+      } catch {
+        variant = "DEFAULT";
+        track("checkout_variant_fallback", { orderId });
+        await widgets.renderPaymentMethods({ selector: "#payment-methods", variantKey: "DEFAULT" });
+      }
+      await widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" });
       setReady(true);
       // 여기까지 와야 결제 버튼이 켜진다. 실패하면 버튼이 영구히 잠기므로(아래 disabled)
       // 미결제 손님이 「버튼을 못 찾은 것」인지 「버튼이 죽은 것」인지 이 두 줄로 갈린다.
-      track("checkout_widget_ready", { orderId });
+      track("checkout_widget_ready", { orderId, variant });
     })().catch((e) => {
       track("checkout_widget_fail", { orderId, reason: e instanceof Error ? e.message.slice(0, 80) : "unknown" });
       toast.error(e instanceof Error ? e.message : "결제 위젯 로드 실패");

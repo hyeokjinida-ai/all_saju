@@ -260,6 +260,16 @@ export function SangunStory({
     track("product_view", { slug: "sangun-sinjeom" });
   }, [stage]);
 
+  // 입장 문이 실제로 그려진 순간. 문 앞에서 돌아선 사람은 지금까지 기록이 0이라
+  // 「랜딩 도달 → 문 통과」를 메타 이벤트로만 어림잡아 왔다(9/19 분석의 최대 미지수).
+  // gate_view ÷ product_view 로 문 통과율을 우리 자로 직접 잰다.
+  const gateSeen = useRef(false);
+  useEffect(() => {
+    if (stage !== "gate" || gateSeen.current) return;
+    gateSeen.current = true;
+    track("gate_view", { slug: "sangun-sinjeom" });
+  }, [stage]);
+
   // (setStage("main") 로 가는 화면 안 경로는 없다 — 세일즈 페이지 입구는 ?view=detail 하나뿐이다)
   const toInput = () => {
     setStage("input");
