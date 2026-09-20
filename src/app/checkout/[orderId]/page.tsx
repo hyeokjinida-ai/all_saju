@@ -129,7 +129,8 @@ export default async function CheckoutPage({
 
   return (
     <div className={`${worldClass(world)} min-h-screen`} style={{ background: bg }}>
-      <div className="mx-auto max-w-md px-5 py-10">
+      {/* py-10 → py-7: 결제 버튼을 폰 첫 화면(844) 안으로 올리기 위한 여백 절약(2026-09-20 ㉯-1) */}
+      <div className="mx-auto max-w-md px-5 py-7">
         {/* 산군은 반말 세계다. 여기서 「결제 안내」로 받으면 신당이 갑자기 쇼핑몰이 된다(2026-09-08).
             ⚠ 바꾸는 건 **제목과 CTA 뿐**이다 — 금액·동의·연락처·토스·환불은 현실 언어로 남긴다.
             캐릭터의 말과 사업자의 약속은 섞으면 둘 다 약해진다. */}
@@ -147,7 +148,7 @@ export default async function CheckoutPage({
           </p>
         )}
 
-        <div className="mt-6 divide-y divide-hairline border-y border-hairline">
+        <div className="mt-5 divide-y divide-hairline border-y border-hairline">
           <Row k={name} sub={desc[slug]} v={formatKRW(listPrice)} />
           {saleOff > 0 && (
             <Row
@@ -166,7 +167,7 @@ export default async function CheckoutPage({
         {/* 티저 유료 CTA 가 「19,900원 내고 장부 전체 열기」인데 결제 버튼만 「결제하기」라
             손님 머릿속 행동이 「장부 열기 → 결제하기 → 장부」로 끊겼다. 같은 말로 잇는다.
             금액은 그대로 앞에 세워 둔다 — 무엇을 내는지 한 번도 안 놓치게. */}
-        <div className="mt-7">
+        <div className="mt-5">
           <CheckoutForm
             orderId={order.order_id}
             amount={order.amount}
