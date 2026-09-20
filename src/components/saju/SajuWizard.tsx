@@ -483,6 +483,14 @@ export function SajuWizard({
   // 이메일 없이 결제 버튼을 눌렀을 때 뜨는 한 줄. 전엔 버튼이 꺼져 있어(disabled) 눌리지도
   // 않았고 왜 못 누르는지 아무 데도 안 적혀 있었다(2026-09-20 ㉮-2).
   const [payHint, setPayHint] = useState(false);
+  // 결제 팝업 — 풀이 어디서든 구매 버튼을 누르면 여기로 연다(맨 끝까지 안 내려가도 된다).
+  const [payOpen, setPayOpen] = useState(false);
+  // 결제 칸 도달을 세는 자는 두 갈래다 — 인라인은 usePayInView(#pay 가 보임), 팝업은 여기.
+  // 한쪽만 세면 팝업 전환 뒤 pay_view 가 통째로 사라져 퍼널이 끊긴다.
+  const openPaySheet = useCallback(() => {
+    setPayOpen(true);
+    track("pay_view", { slug: productSlug, via: "sheet" });
+  }, [productSlug]);
   // 직녀 전용 이메일 화면(확인 → 이메일 → 티저). 단계 인덱스를 늘리지 않는다 —
   // STEPS 배열을 건드리면 산군·존댓말 4종의 건너뛰기 계산이 통째로 밀린다.
   const [emailGate, setEmailGate] = useState(false);
@@ -767,6 +775,214 @@ export function SajuWizard({
     bundles.length === 1
       ? bundles[0]
       : bundles.find((b) => (wantsInyeon ? b.slug.includes("inyeon") : b.slug.includes("wealth"))) ?? bundles[0];
+
+  // 결제 칸 내용 — **인라인(#pay)과 팝업이 같은 것을 쓴다.**
+  // 경쟁 2사 실측(2026-09-21): 타이트는 풀이에 결제 칸이 아예 없고 하단 고정 버튼 →
+  // 아래에서 올라오는 팝업 하나로 끝낸다. 청월당도 하단 버튼 → 별도 결제 화면이다.
+  // 우리만 17화면 맨 끝까지 내려와야 살 수 있었다 — 구매 버튼 6개가 전부 「맨 끝으로 스크롤」.
+  // ⚠ 둘을 동시에 그리면 guest-email id·ref 가 겹친다 → 팝업이 열리면 인라인은 안 그린다.
+  // ⚠ **함수다.** 변수(JSX)로 두면 위저드 10단계 내내 매 렌더마다 평가돼서,
+  //   아직 상품·티저가 없는 단계에서 터진다(실측: 에러 바운더리 「잠시 길이 엉켰어요」).
+  const renderPayPanel = () => (
+    <>
+            {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
+                할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
+                패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
+            {bundles.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {checkoutOptions.map((o) => {
+                  const on = o.productId === selected.productId;
+                  const pct = discountPct(o);
+                  const isRec = !!recommended && o.productId === recommended.productId;
+                  // 재회는 **단품이 주상품**이다 — 묶음과 같은 크기로 나란히 세우면 결제 직전에
+                  // 「어느 걸 사지」를 다시 묻게 된다(GPT 대조 진단 2026-09-06 ⑧).
+                  // 레퍼런스 실측: 청월당은 비교 대상을 작게 두고 자기 상품 하나만 크게 세운다.
+                  // 그래서 여기서는 **단품을 키우고 묶음은 add-on 크기로** 둔다(다른 상품은 그대로).
+                  const isBundleOpt = o.includes.length > 1;
+                  const lead = isReunion && !isBundleOpt;
+                  return (
+                    <button
+                      key={o.productId}
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(o.productId);
+                        track("plan_select", { slug: productSlug, plan: o.productId, price: o.price });
+                      }}
+                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
+                      style={{
+                        borderColor: on
+                          ? sheetAccent
+                          : imm ? "rgba(232,201,106,0.22)" : isInyeon ? "rgba(207,214,230,0.28)" : "rgba(150,90,255,0.28)",
+                        background: on
+                          ? imm ? "rgba(232,201,106,0.10)" : isInyeon ? "rgba(217,199,232,0.14)" : "rgba(150,90,255,0.14)"
+                          : "transparent",
+                      }}
+                    >
+                      {isRec && !isReunion && (
+                        <span
+                          className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
+                          style={{ background: sheetAccent, color: imm ? "#241a08" : isInyeon ? "#1a1330" : "#1b1230" }}
+                        >
+                          추천
+                        </span>
+                      )}
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span
+                          className="font-myeongjo font-bold leading-[1.4]"
+                          style={{
+                            color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)",
+                            fontSize: isReunion && isBundleOpt ? 12.5 : 14,
+                          }}
+                        >
+                          {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
+                        </span>
+                        <span className="shrink-0 text-right">
+                          {o.compareAtPrice && o.compareAtPrice > o.price && (
+                            <span className="mr-1.5 text-[12px] line-through" style={{ color: "var(--bone-faint)" }}>
+                              {formatKRW(o.compareAtPrice)}
+                            </span>
+                          )}
+                          <span
+                            className="font-myeongjo font-bold"
+                            style={{ color: sheetAccent, fontSize: lead ? 24 : isReunion ? 13 : 15 }}
+                          >
+                            {formatKRW(o.price)}
+                          </span>
+                        </span>
+                      </div>
+                      {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
+                      {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
+                          문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
+                      {pct != null && (
+                        <p
+                          className={`mt-1 ${isReunion && isBundleOpt ? "text-[11px]" : "text-[13px]"}`}
+                          // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
+                          style={{ color: pct >= 40 && !isNight ? "#d8563f" : "var(--bone-faint)" }}
+                        >
+                          {pct}% 할인
+                          {/* ⚠ 「하나 더」를 고정으로 쓰면 3종 묶음에서 거짓말이 된다(2026-09-02 번들 ③ 신설).
+                              지금 상품을 뺀 나머지 개수를 세어 말한다 — 시트에서 손님이 직접 검산하는 줄이다. */}
+                          {o.includes.length > 1 &&
+                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight)}`}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+                {/* 중복 반론 — "산군에도 인연 달이 나오잖아"에 세계관으로 답한다 */}
+                {selected.includes.length > 1 && imm && (
+                  <p className="font-myeongjo pt-1 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
+                    겉장은 내가 봤다. 장부 통째는 다른 얘기다.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isLoggedIn ? (
+          <button
+            type="button"
+            onClick={createOrder}
+            disabled={submitting}
+            className="w-full min-h-[58px] border-none font-bold text-[17px] tracking-[0.15em] flex items-center justify-center gap-3 disabled:opacity-70"
+            style={{
+              fontFamily: "var(--font-serif-kr), serif",
+              background: ctaFill.on,
+              color: ctaFill.ink,
+              boxShadow: ctaFill.glow,
+            }}
+          >
+            {submitting
+              ? "주문 생성 중…"
+              : imm
+                ? `${formatKRW(Math.max(0, effectivePrice - 1900))} 내고 장부 전체 열기`
+                : `${formatKRW(Math.max(0, effectivePrice - 1900))} 결제하러 가기 (회원 할인 적용)`}
+            {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
+          </button>
+            ) : (
+          <div className="space-y-2.5">
+            {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
+            {/* 라벨을 칸 **위에** 세운다 — 전엔 흐린 placeholder 뿐이라 입력칸인지 안 읽혔고
+                자동완성 속성이 없어 폰이 이메일을 채워 주지도 않았다(2026-09-20 ㉮-3). */}
+            <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
+              {imm ? "장부 받을 이메일" : "결과 받을 이메일"}
+            </label>
+            <input
+              id="guest-email"
+              ref={guestEmailRef}
+              className="ap-input text-center"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="you@naver.com"
+              value={guestEmail}
+              onChange={(e) => {
+                setGuestEmail(e.target.value);
+                if (payHint) setPayHint(false);
+              }}
+              onFocus={() => track("pay_email_focus", { slug: productSlug })}
+              onBlur={() => {
+                if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim())) track("pay_email_valid", { slug: productSlug });
+              }}
+              style={{ fontSize: 15 }}
+            />
+            {/* ⚠ 늘 켜 둔다. 전엔 이메일이 없으면 disabled + 투명도 45% 라 **눌리지 않았고**,
+                왜 못 누르는지 알려 주는 문장도 없었다(안내는 createOrder 안에 있었는데 버튼이
+                꺼져 있어 영영 안 떴다). 이제 눌리면 이메일 칸으로 데려간다. */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!guestEmailValid) {
+                  track("pay_blocked_tap", { slug: productSlug });
+                  setPayHint(true);
+                  guestEmailRef.current?.focus();
+                  guestEmailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  return;
+                }
+                createOrder();
+              }}
+              disabled={submitting}
+              className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
+              style={{
+                fontFamily: "var(--font-serif-kr), serif",
+                background: ctaFill.on,
+                color: ctaFill.ink,
+                boxShadow: ctaFill.glow,
+              }}
+            >
+              {/* '복채'는 뺐다 — 모의구매 5/6이 "돈 내는 게 아니라 갖다 바치는 걸로 들린다"고 했다.
+                산군은 끝까지 반말이되 돈 얘기만 평범한 한국어로 내려온다. */}
+            {submitting
+                ? "주문 생성 중…"
+                : imm
+                  ? `${formatKRW(effectivePrice)} 내고 장부 전체 열기`
+                  : `${formatKRW(effectivePrice)} 결제하고 전체 보기`}
+            </button>
+            {/* 카카오 로그인 넛지는 제거했다 — provider 가 아직 안 열려서, 누르면 고객에게
+                "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
+                19,900 보다 할인가 18,000 을 먼저 누른다 = 결제 의사가 가장 높은 사람만 골라
+                에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
+            {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
+                안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
+            {payHint && (
+              <p className="text-center text-[13px]" style={{ color: "var(--gold-bright)" }}>
+                {imm ? "장부 보낼 이메일부터 적어라." : "결과 받을 이메일부터 적어 주세요."}
+              </p>
+            )}
+            <p className="text-[13px] text-bone-faint text-center">
+              {imm
+                ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
+                : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
+            </p>
+          </div>
+            )}
+          {imm && (
+            <p className="mt-3 text-center text-[11px]" style={{ color: "#7a8296" }}>
+              토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
+            </p>
+          )}
+    </>
+  );
+
   const discountPct = (o: BundleOption) =>
     o.compareAtPrice && o.compareAtPrice > o.price
       ? Math.round((1 - o.price / o.compareAtPrice) * 100)
@@ -1749,6 +1965,7 @@ export function SajuWizard({
             coldOpen={coldOpen}
             coldOpenDone={coldOpenDone}
             onColdOpenDone={markColdOpenDone}
+            onBuyClick={openPaySheet}
           />
         )}
       </div>
@@ -1788,206 +2005,14 @@ export function SajuWizard({
               </button>
             )}
           </>
-        ) : (
-          <>
-            {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
-                할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
-                패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
-            {bundles.length > 0 && (
-              <div className="mb-4 space-y-2">
-                {checkoutOptions.map((o) => {
-                  const on = o.productId === selected.productId;
-                  const pct = discountPct(o);
-                  const isRec = !!recommended && o.productId === recommended.productId;
-                  // 재회는 **단품이 주상품**이다 — 묶음과 같은 크기로 나란히 세우면 결제 직전에
-                  // 「어느 걸 사지」를 다시 묻게 된다(GPT 대조 진단 2026-09-06 ⑧).
-                  // 레퍼런스 실측: 청월당은 비교 대상을 작게 두고 자기 상품 하나만 크게 세운다.
-                  // 그래서 여기서는 **단품을 키우고 묶음은 add-on 크기로** 둔다(다른 상품은 그대로).
-                  const isBundleOpt = o.includes.length > 1;
-                  const lead = isReunion && !isBundleOpt;
-                  return (
-                    <button
-                      key={o.productId}
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(o.productId);
-                        track("plan_select", { slug: productSlug, plan: o.productId, price: o.price });
-                      }}
-                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
-                      style={{
-                        borderColor: on
-                          ? sheetAccent
-                          : imm ? "rgba(232,201,106,0.22)" : isInyeon ? "rgba(207,214,230,0.28)" : "rgba(150,90,255,0.28)",
-                        background: on
-                          ? imm ? "rgba(232,201,106,0.10)" : isInyeon ? "rgba(217,199,232,0.14)" : "rgba(150,90,255,0.14)"
-                          : "transparent",
-                      }}
-                    >
-                      {isRec && !isReunion && (
-                        <span
-                          className="font-myeongjo absolute -top-2 right-3 px-2 py-[1px] text-[10px] font-bold tracking-[0.1em]"
-                          style={{ background: sheetAccent, color: imm ? "#241a08" : isInyeon ? "#1a1330" : "#1b1230" }}
-                        >
-                          추천
-                        </span>
-                      )}
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span
-                          className="font-myeongjo font-bold leading-[1.4]"
-                          style={{
-                            color: on ? (imm ? "#efe6d2" : isInyeon ? "#efe6ef" : "#efe6ff") : "var(--bone-soft)",
-                            fontSize: isReunion && isBundleOpt ? 12.5 : 14,
-                          }}
-                        >
-                          {o.includes.length > 1 ? o.includes.join(" + ") : o.name}
-                        </span>
-                        <span className="shrink-0 text-right">
-                          {o.compareAtPrice && o.compareAtPrice > o.price && (
-                            <span className="mr-1.5 text-[12px] line-through" style={{ color: "var(--bone-faint)" }}>
-                              {formatKRW(o.compareAtPrice)}
-                            </span>
-                          )}
-                          <span
-                            className="font-myeongjo font-bold"
-                            style={{ color: sheetAccent, fontSize: lead ? 24 : isReunion ? 13 : 15 }}
-                          >
-                            {formatKRW(o.price)}
-                          </span>
-                        </span>
-                      </div>
-                      {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
-                      {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
-                          문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
-                      {pct != null && (
-                        <p
-                          className={`mt-1 ${isReunion && isBundleOpt ? "text-[11px]" : "text-[13px]"}`}
-                          // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
-                          style={{ color: pct >= 40 && !isNight ? "#d8563f" : "var(--bone-faint)" }}
-                        >
-                          {pct}% 할인
-                          {/* ⚠ 「하나 더」를 고정으로 쓰면 3종 묶음에서 거짓말이 된다(2026-09-02 번들 ③ 신설).
-                              지금 상품을 뺀 나머지 개수를 세어 말한다 — 시트에서 손님이 직접 검산하는 줄이다. */}
-                          {o.includes.length > 1 &&
-                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight)}`}
-                        </p>
-                      )}
-                    </button>
-                  );
-                })}
-                {/* 중복 반론 — "산군에도 인연 달이 나오잖아"에 세계관으로 답한다 */}
-                {selected.includes.length > 1 && imm && (
-                  <p className="font-myeongjo pt-1 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
-                    겉장은 내가 봤다. 장부 통째는 다른 얘기다.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {isLoggedIn ? (
-          <button
-            type="button"
-            onClick={createOrder}
-            disabled={submitting}
-            className="w-full min-h-[58px] border-none font-bold text-[17px] tracking-[0.15em] flex items-center justify-center gap-3 disabled:opacity-70"
-            style={{
-              fontFamily: "var(--font-serif-kr), serif",
-              background: ctaFill.on,
-              color: ctaFill.ink,
-              boxShadow: ctaFill.glow,
-            }}
-          >
-            {submitting
-              ? "주문 생성 중…"
-              : imm
-                ? `${formatKRW(Math.max(0, effectivePrice - 1900))} 내고 장부 전체 열기`
-                : `${formatKRW(Math.max(0, effectivePrice - 1900))} 결제하러 가기 (회원 할인 적용)`}
-            {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
-          </button>
-            ) : (
-          <div className="space-y-2.5">
-            {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
-            {/* 라벨을 칸 **위에** 세운다 — 전엔 흐린 placeholder 뿐이라 입력칸인지 안 읽혔고
-                자동완성 속성이 없어 폰이 이메일을 채워 주지도 않았다(2026-09-20 ㉮-3). */}
-            <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
-              {imm ? "장부 받을 이메일" : "결과 받을 이메일"}
-            </label>
-            <input
-              id="guest-email"
-              ref={guestEmailRef}
-              className="ap-input text-center"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="you@naver.com"
-              value={guestEmail}
-              onChange={(e) => {
-                setGuestEmail(e.target.value);
-                if (payHint) setPayHint(false);
-              }}
-              onFocus={() => track("pay_email_focus", { slug: productSlug })}
-              onBlur={() => {
-                if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim())) track("pay_email_valid", { slug: productSlug });
-              }}
-              style={{ fontSize: 15 }}
-            />
-            {/* ⚠ 늘 켜 둔다. 전엔 이메일이 없으면 disabled + 투명도 45% 라 **눌리지 않았고**,
-                왜 못 누르는지 알려 주는 문장도 없었다(안내는 createOrder 안에 있었는데 버튼이
-                꺼져 있어 영영 안 떴다). 이제 눌리면 이메일 칸으로 데려간다. */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!guestEmailValid) {
-                  track("pay_blocked_tap", { slug: productSlug });
-                  setPayHint(true);
-                  guestEmailRef.current?.focus();
-                  guestEmailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  return;
-                }
-                createOrder();
-              }}
-              disabled={submitting}
-              className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
-              style={{
-                fontFamily: "var(--font-serif-kr), serif",
-                background: ctaFill.on,
-                color: ctaFill.ink,
-                boxShadow: ctaFill.glow,
-              }}
-            >
-              {/* '복채'는 뺐다 — 모의구매 5/6이 "돈 내는 게 아니라 갖다 바치는 걸로 들린다"고 했다.
-                산군은 끝까지 반말이되 돈 얘기만 평범한 한국어로 내려온다. */}
-            {submitting
-                ? "주문 생성 중…"
-                : imm
-                  ? `${formatKRW(effectivePrice)} 내고 장부 전체 열기`
-                  : `${formatKRW(effectivePrice)} 결제하고 전체 보기`}
-            </button>
-            {/* 카카오 로그인 넛지는 제거했다 — provider 가 아직 안 열려서, 누르면 고객에게
-                "(관리자: Supabase에서 Kakao 활성화 필요)" 토스트가 그대로 떴다. 게다가 4050 은
-                19,900 보다 할인가 18,000 을 먼저 누른다 = 결제 의사가 가장 높은 사람만 골라
-                에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
-            {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
-                안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
-            {payHint && (
-              <p className="text-center text-[13px]" style={{ color: "var(--gold-bright)" }}>
-                {imm ? "장부 보낼 이메일부터 적어라." : "결과 받을 이메일부터 적어 주세요."}
-              </p>
-            )}
-            <p className="text-[13px] text-bone-faint text-center">
-              {imm
-                ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
-                : "한 번만 결제돼요. 매달 빠져나가지 않아요."}
-            </p>
-          </div>
-            )}
-          </>
-        )}
-        {imm && (
-          <p className="mt-3 text-center text-[11px]" style={{ color: "#7a8296" }}>
-            토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
-          </p>
+        ) : payOpen ? null : (
+          renderPayPanel()
         )}
       </div>
+
+      <PaySheet open={payOpen} onClose={() => setPayOpen(false)} dark={imm}>
+        {renderPayPanel()}
+      </PaySheet>
 
       {/* 법정 표기는 **결제 칸 아래**다. 위에 있으면 결제 칸에 닿기 전에 페이지가 끝난 것처럼
           보인다(2026-09-20 ㉮-1). 티저 꼬리(TeaserSalesTail)에서 여기로 옮겨 왔다. */}
@@ -2413,6 +2438,7 @@ function TeaserStep({
   coldOpen = false,
   coldOpenDone = true,
   onColdOpenDone,
+  onBuyClick,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -2435,6 +2461,8 @@ function TeaserStep({
   coldOpenDone?: boolean;
   /** 콜드오픈 감시점을 지났을 때 부모에게 알린다(헤더·고정바를 그 뒤에 연다). */
   onColdOpenDone?: () => void;
+  /** 구매 버튼·고정 띠 → 결제 팝업 열기(부모가 연다). 없으면 옛 동작(맨 끝으로 스크롤). */
+  onBuyClick?: () => void;
 }) {
   // 결제 칸이 보이면 하단 고정 띠를 숨긴다(㉮-4) + 결제 칸 도달 계측(pay_view)
   const payInView = usePayInView(productSlug);
@@ -3428,7 +3456,8 @@ function TeaserStep({
               bundleLine={bundleLine}
               onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
             />
           )}
@@ -3473,7 +3502,8 @@ function TeaserStep({
               ctaText="할인받고 재회운 보러가기"
               onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
             />
           )}
@@ -3522,7 +3552,8 @@ function TeaserStep({
               ctaText={productSlug === "marriage-saju" ? "할인받고 결혼운 보러가기" : "할인받고 연애운 보러가기"}
               onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
             />
           )}
@@ -3727,7 +3758,8 @@ function TeaserStep({
         buyLabel={`${formatKRW(price)} 열기`}
         onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
       />
     )}
@@ -3742,7 +3774,8 @@ function TeaserStep({
         buyLabel={`${formatKRW(price)} 열기`}
         onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
       />
     )}
@@ -3757,7 +3790,8 @@ function TeaserStep({
         buyLabel={`${formatKRW(price)} 열기`}
         onBuy={() => {
           track("buy_intent", { slug: productSlug });
-          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (onBuyClick) onBuyClick();
+          else document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
       />
     )}
@@ -4066,6 +4100,55 @@ function usePayInView(slug?: string) {
     };
   }, [slug]);
   return inView;
+}
+
+/** 결제 팝업 — 아래에서 올라오는 시트.
+ *  경쟁 2사 실측(2026-09-21): 타이트는 풀이에 결제 칸이 없고 **하단 고정 버튼 → 팝업** 하나로 끝낸다
+ *  (`TossPaymentDrawer`, 90vh). 청월당도 하단 버튼 → 별도 결제 화면. 풀이 17화면 맨 끝까지
+ *  내려와야 살 수 있던 건 우리뿐이었다.
+ *  ⚠ 포털로 body 에 붙인다 — 위저드를 감싼 `.svc-fade` 의 transform 이 position:fixed 의
+ *    기준을 뺏는다(StickyBuyBar 와 같은 이유). 세계관 클래스도 다시 붙인다. */
+function PaySheet({ open, onClose, dark, children }: { open: boolean; onClose: () => void; dark: boolean; children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // 시트가 떠 있는 동안 뒤 배경이 같이 스크롤되면 손님이 자리를 잃는다.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", esc);
+    };
+  }, [open, onClose]);
+  if (!mounted || !open) return null;
+  return createPortal(
+    <div className={`${dark ? "world-sangun" : "world-jiknyeo"} fixed inset-0 z-[60]`}>
+      <div onClick={onClose} className="absolute inset-0" style={{ background: "rgba(4,3,6,0.72)" }} />
+      <div
+        className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-md overflow-y-auto rounded-t-2xl px-5 pt-3 pb-6"
+        style={{
+          maxHeight: "92vh",
+          background: dark ? "#0b0a0f" : "#fbf8f4",
+          borderTop: "1px solid var(--gold-line)",
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.55)",
+        }}
+      >
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-myeongjo text-[15px] font-bold" style={{ color: dark ? "var(--bone)" : "#241a08" }}>
+            {dark ? "장부를 펴려면" : "결제"}
+          </span>
+          <button type="button" onClick={onClose} aria-label="닫기" className="p-2 text-[18px]" style={{ color: "var(--bone-faint)" }}>
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 function StickyBuyBar({
