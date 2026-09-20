@@ -468,7 +468,10 @@ export function TeaserSalesTail({ priceLabel }: { priceLabel: string }) {
         say="궁금한 건 묻고 가라."
       />
       <SangunFaq className="mt-6" />
-      <StoryFooter />
+      {/* ⚠ StoryFooter 는 여기 있으면 안 된다 — 이 꼬리 **뒤에 결제 칸(#pay)이 온다.**
+          약관·사업자번호·© 가 결제 칸 위 1/3 을 덮어 「페이지가 끝났다」로 읽혔다
+          (2026-09-20 실측 t18: 푸터 y=14,374~14,501 / 결제 칸 y=14,578).
+          푸터는 SajuWizard 의 #pay 블록 **아래**로 옮겼다. */}
     </div>
   );
 }

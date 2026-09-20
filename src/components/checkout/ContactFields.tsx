@@ -9,6 +9,13 @@
 //   · 휴대폰 = **선택** — 알림톡 채널이 아직 없어 필수로 받을 명분이 약하다. 채널 열리면 필수로.
 //   · 동의   = **기본 해제** — 기본 체크는 법적으로 다툼이 있는 자리다. 켜려면 defaultChecked 한 글자.
 //
+// ⚠ 순서: **결제 위젯·버튼이 먼저, 연락처가 그 아래**다 (2026-09-20).
+//    전엔 휴대폰 칸 + 소식받기가 위에 있어 결제 버튼이 y=860 — 폰 첫 화면(844) 밖으로 밀렸다.
+//    결제하러 온 손님이 도착하자마자 누를 것이 안 보였다[9/20 실측 co01].
+//    번호는 지금 아무 데도 안 쓰는데(문자 발송 미구현) 결제자의 55%가 「선택」인데도 적고 있었다.
+//    자리를 내리면 수집은 줄지만, 줄어도 잃을 것이 없는 값이다. 로직은 그대로 — 저장은
+//    여전히 결제 직전 beforePay() 에서 한다(DOM 순서와 무관한 state).
+//
 // ⚠ 이 입력 때문에 결제가 막히면 안 된다. 저장 실패는 삼키고 결제를 진행시킨다
 //    (형식이 틀린 번호만 막는다 — 그건 손님이 고칠 수 있는 것).
 import { useState } from "react";
@@ -66,43 +73,6 @@ export function CheckoutForm({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label htmlFor="checkout-phone" className="mb-1.5 block text-[13px] text-bone-soft">
-          휴대폰 번호 <span className="text-bone-faint">(선택)</span>
-        </label>
-        <input
-          id="checkout-phone"
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => {
-            setPhone(fmt(e.target.value));
-            setErr(null);
-          }}
-          placeholder="010-0000-0000"
-          className="w-full rounded-md border border-hairline px-3 py-2.5 text-[15px] text-ink outline-none focus:border-gold"
-        />
-        <p className="mt-1.5 text-[12px] text-bone-faint">
-          {/* ⚠ 「문자로 알려드려요」였다. 문자 발송이 구현돼 있지 않아(발송 라이브러리 0개, 번호는
-              저장만 된다) 손님 앞에 빈 약속이 서 있었다 — 2026-09-07 광고 발사 점검에서 잡아 뻐다.
-              알림톡·SMS 를 실제로 붙이는 날 이 문장을 되살릴 것. */}
-          {err ?? "주문에 문제가 있으면 이 번호로 연락드려요."}
-        </p>
-      </div>
-
-      <label className="flex cursor-pointer items-start gap-2 text-[13px] text-bone-soft">
-        <input
-          type="checkbox"
-          checked={optIn}
-          onChange={(e) => setOptIn(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
-        />
-        <span>
-          <span className="text-bone-faint">(선택)</span> 할인·새 풀이 소식 받기
-        </span>
-      </label>
-
       <TossWidget
         orderId={orderId}
         amount={amount}
@@ -114,6 +84,46 @@ export function CheckoutForm({
         onBeforePay={beforePay}
         ctaLabel={ctaLabel}
       />
+
+      {/* ↓ 결제 버튼 아래 — 선택 항목이 버튼을 화면 밖으로 밀지 않게 */}
+      <div className="space-y-4 pt-1">
+        <div>
+          <label htmlFor="checkout-phone" className="mb-1.5 block text-[13px] text-bone-soft">
+            휴대폰 번호 <span className="text-bone-faint">(선택)</span>
+          </label>
+          <input
+            id="checkout-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => {
+              setPhone(fmt(e.target.value));
+              setErr(null);
+            }}
+            placeholder="010-0000-0000"
+            className="w-full rounded-md border border-hairline px-3 py-2.5 text-[15px] text-ink outline-none focus:border-gold"
+          />
+          <p className="mt-1.5 text-[12px] text-bone-faint">
+            {/* ⚠ 「문자로 알려드려요」였다. 문자 발송이 구현돼 있지 않아(발송 라이브러리 0개, 번호는
+                저장만 된다) 손님 앞에 빈 약속이 서 있었다 — 2026-09-07 광고 발사 점검에서 잡아 뺐다.
+                알림톡·SMS 를 실제로 붙이는 날 이 문장을 되살릴 것. */}
+            {err ?? "주문에 문제가 있으면 이 번호로 연락드려요."}
+          </p>
+        </div>
+
+        <label className="flex cursor-pointer items-start gap-2 text-[13px] text-bone-soft">
+          <input
+            type="checkbox"
+            checked={optIn}
+            onChange={(e) => setOptIn(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
+          />
+          <span>
+            <span className="text-bone-faint">(선택)</span> 할인·새 풀이 소식 받기
+          </span>
+        </label>
+      </div>
     </div>
   );
 }

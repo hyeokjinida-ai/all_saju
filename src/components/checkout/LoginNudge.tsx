@@ -43,10 +43,13 @@ export function LoginNudge({ orderId, discount }: { orderId: string; discount: n
         </>
       ) : (
         <div className="mt-3">
+          {/* ⚠ 전엔 결제 버튼과 **같은 금색·같은 크기**라 바로 위 결제 버튼과 우열이 없었다
+              (2026-09-20 실측 co02). 미끼는 유지하되 — 1,900원은 진짜 할인이다 — 채움을
+              테두리로 낮춰 「결제」가 1번, 「로그인」이 2번으로 읽히게 한다. */}
           <Link
             href={loginHref}
             className="block w-full rounded-md py-3 text-center text-[14px] font-semibold"
-            style={{ background: "var(--gold)", color: "var(--wine-deep)" }}
+            style={{ border: "1px solid var(--gold)", color: "var(--gold-bright)" }}
           >
             로그인하고 할인받기
           </Link>

@@ -49,6 +49,7 @@ import {
   TeaserSalesTail,
   type SangunReview,
 } from "@/components/products/SangunSalesBlocks";
+import { StoryFooter } from "@/components/products/StoryFooter";
 import { SlotCut, InyeonCut, GlowBand, ScribbleLine, ScribbleStar, NeonMask, ComicSay, Hi } from "@/components/products/jiknyeo-ui";
 // 밝은 티저 조판 부품 — 청월당 실측 규격(본문16/값16·500/헤드24 서예체/자간 -0.025em 고정)
 import { T, BrushHead, BigNum, LockRow, OpenMonthCard, INK, BODY } from "@/components/products/jiknyeo-teaser-kit";
@@ -473,6 +474,10 @@ export function SajuWizard({
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
   const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
+  const guestEmailRef = useRef<HTMLInputElement>(null);
+  // 이메일 없이 결제 버튼을 눌렀을 때 뜨는 한 줄. 전엔 버튼이 꺼져 있어(disabled) 눌리지도
+  // 않았고 왜 못 누르는지 아무 데도 안 적혀 있었다(2026-09-20 ㉮-2).
+  const [payHint, setPayHint] = useState(false);
   // 직녀 전용 이메일 화면(확인 → 이메일 → 티저). 단계 인덱스를 늘리지 않는다 —
   // STEPS 배열을 건드리면 산군·존댓말 4종의 건너뛰기 계산이 통째로 밀린다.
   const [emailGate, setEmailGate] = useState(false);
@@ -1793,7 +1798,10 @@ export function SajuWizard({
                     <button
                       key={o.productId}
                       type="button"
-                      onClick={() => setSelectedId(o.productId)}
+                      onClick={() => {
+                        setSelectedId(o.productId);
+                        track("plan_select", { slug: productSlug, plan: o.productId, price: o.price });
+                      }}
                       className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
                       style={{
                         borderColor: on
@@ -1887,19 +1895,46 @@ export function SajuWizard({
             ) : (
           <div className="space-y-2.5">
             {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
+            {/* 라벨을 칸 **위에** 세운다 — 전엔 흐린 placeholder 뿐이라 입력칸인지 안 읽혔고
+                자동완성 속성이 없어 폰이 이메일을 채워 주지도 않았다(2026-09-20 ㉮-3). */}
+            <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
+              {imm ? "장부 받을 이메일" : "결과 받을 이메일"}
+            </label>
             <input
+              id="guest-email"
+              ref={guestEmailRef}
               className="ap-input text-center"
               type="email"
               inputMode="email"
-              placeholder={imm ? "결과 장부 받을 이메일" : "결과 받을 이메일 (예: you@naver.com)"}
+              autoComplete="email"
+              placeholder="you@naver.com"
               value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
+              onChange={(e) => {
+                setGuestEmail(e.target.value);
+                if (payHint) setPayHint(false);
+              }}
+              onFocus={() => track("pay_email_focus", { slug: productSlug })}
+              onBlur={() => {
+                if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim())) track("pay_email_valid", { slug: productSlug });
+              }}
               style={{ fontSize: 15 }}
             />
+            {/* ⚠ 늘 켜 둔다. 전엔 이메일이 없으면 disabled + 투명도 45% 라 **눌리지 않았고**,
+                왜 못 누르는지 알려 주는 문장도 없었다(안내는 createOrder 안에 있었는데 버튼이
+                꺼져 있어 영영 안 떴다). 이제 눌리면 이메일 칸으로 데려간다. */}
             <button
               type="button"
-              onClick={createOrder}
-              disabled={submitting || !guestEmailValid}
+              onClick={() => {
+                if (!guestEmailValid) {
+                  track("pay_blocked_tap", { slug: productSlug });
+                  setPayHint(true);
+                  guestEmailRef.current?.focus();
+                  guestEmailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  return;
+                }
+                createOrder();
+              }}
+              disabled={submitting}
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
@@ -1922,6 +1957,11 @@ export function SajuWizard({
                 에러를 보여주고 내보내는 구조였다. 개통되면 이 자리에 되살린다. */}
             {/* 11 → 13px. 구독 공포를 끄는 문장이다 — 결제 버튼 바로 아래에서 제일 작으면
                 안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
+            {payHint && (
+              <p className="text-center text-[13px]" style={{ color: "var(--gold-bright)" }}>
+                {imm ? "장부 보낼 이메일부터 적어라." : "결과 받을 이메일부터 적어 주세요."}
+              </p>
+            )}
             <p className="text-[13px] text-bone-faint text-center">
               {imm
                 ? "한 번만 받는다. 다달이 빠져나가는 것이 아니다."
@@ -1937,6 +1977,10 @@ export function SajuWizard({
           </p>
         )}
       </div>
+
+      {/* 법정 표기는 **결제 칸 아래**다. 위에 있으면 결제 칸에 닿기 전에 페이지가 끝난 것처럼
+          보인다(2026-09-20 ㉮-1). 티저 꼬리(TeaserSalesTail)에서 여기로 옮겨 왔다. */}
+      {productSlug === "sangun-sinjeom" && !teaserLoading && !emailGate && <StoryFooter />}
     </div>
   );
 }
@@ -2381,6 +2425,8 @@ function TeaserStep({
   /** 콜드오픈 감시점을 지났을 때 부모에게 알린다(헤더·고정바를 그 뒤에 연다). */
   onColdOpenDone?: () => void;
 }) {
+  // 결제 칸이 보이면 하단 고정 띠를 숨긴다(㉮-4) + 결제 칸 도달 계측(pay_view)
+  const payInView = usePayInView(productSlug);
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
@@ -3369,7 +3415,10 @@ function TeaserStep({
               // 다음 상품 떡밥 한 줄(청월당이 잠금 목록 끝에 쓰는 문법) — 값은 결제 시트의
               // 추천 번들에서 그대로 받는다. 번들이 없으면 줄 자체가 안 나온다.
               bundleLine={bundleLine}
-              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
             />
           )}
 
@@ -3411,7 +3460,10 @@ function TeaserStep({
               }
               discountLabel="첫 손님 할인"
               ctaText="할인받고 재회운 보러가기"
-              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
             />
           )}
 
@@ -3457,7 +3509,10 @@ function TeaserStep({
               }
               discountLabel="첫 손님 할인"
               ctaText={productSlug === "marriage-saju" ? "할인받고 결혼운 보러가기" : "할인받고 연애운 보러가기"}
-              onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
             />
           )}
 
@@ -3647,7 +3702,7 @@ function TeaserStep({
     {productSlug === "sangun-sinjeom" && teaser && <TeaserSalesTail priceLabel={formatKRW(price)} />}
     {/* B12 — 하단 고정 마감바. 결제 버튼이 화면 밖으로 나가도 가장 가까운 달이 따라다닌다.
         2026-09-01: 값만 말하고 살 수는 없던 자리에 버튼을 같이 태웠다(위 StickyBuyBar 주석). */}
-    {isJiknyeoWorld && teaser?.inyeon?.nearest && (
+    {isJiknyeoWorld && teaser?.inyeon?.nearest && !payInView && (
       <StickyBuyBar
         note={
           <>
@@ -3659,7 +3714,10 @@ function TeaserStep({
           </>
         }
         buyLabel={`${formatKRW(price)} 열기`}
-        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
       />
     )}
     {/* 재회판 고정바 — 유일하게 공짜로 연 값(먼저 연락하면 안 되는 달)을 그대로 데리고 다닌다.
@@ -3671,19 +3729,25 @@ function TeaserStep({
            무료로 연 달을 바에서 또 설명할 필요가 없다. 사실 한 줄 + 버튼만 남긴다. */
         note={<>나머지 열한 달은 결과지에</>}
         buyLabel={`${formatKRW(price)} 열기`}
-        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
       />
     )}
     {/* 산군은 이 바가 아예 없어 16.4화면 동안 살 자리가 없었다. 마감으로 재촉하지는 않는다 —
         가짜 타이머 대신 「이미 다 적혀 있다」는 사실만 말하고 버튼을 붙인다. */}
     {/* 콜드오픈(`?cold=1`) 동안은 이 바도 안 그린다 — 첫 화면에 가격이 서 있으면 도입이 광고가 된다.
         스위치가 없으면 옛 판대로 티저 내내 서 있다. */}
-    {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && (
+    {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && !payInView && (
       <StickyBuyBar
         dark
         note={<>네 장부 11장, 이미 다 적혀 있다</>}
         buyLabel={`${formatKRW(price)} 열기`}
-        onBuy={() => document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        onBuy={() => {
+          track("buy_intent", { slug: productSlug });
+          document.getElementById("pay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
       />
     )}
     {/* 말풍선 자리 편집 — `?edit=say` 에서만 뜬다(손님 화면엔 없다) */}
@@ -3956,6 +4020,41 @@ function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBu
   const show = useReunionBarGate(true);
   if (!show) return null;
   return <StickyBuyBar {...props} />;
+}
+
+/** 결제 칸(#pay)이 화면에 들어와 있는가 — 들어와 있으면 하단 고정 띠를 숨긴다.
+ *  전엔 재회판만 이 장치를 썼고(useReunionBarGate) 산군은 없었다. 그래서 결제 칸에
+ *  도착한 화면에서 **제일 밝은 버튼(고정 띠)이 눌러도 아무 일이 없었다** — 그 버튼은
+ *  「결제 칸으로 스크롤」이라 이미 도착한 사람에겐 할 일이 없기 때문이다(2026-09-20 ㉮-4).
+ *  처음 보인 순간에 pay_view 를 한 번 남긴다 — 결제 칸까지 온 사람 수를 세는 유일한 자. */
+function usePayInView(slug?: string) {
+  const [inView, setInView] = useState(false);
+  const fired = useRef(false);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    let io: IntersectionObserver | null = null;
+    let stop = false;
+    const attach = () => {
+      if (stop || io) return;
+      const el = document.getElementById("pay");
+      if (!el) return void setTimeout(attach, 400);
+      io = new IntersectionObserver((es) => {
+        const on = es.some((e) => e.isIntersecting);
+        setInView(on);
+        if (on && !fired.current) {
+          fired.current = true;
+          track("pay_view", { slug });
+        }
+      });
+      io.observe(el);
+    };
+    attach();
+    return () => {
+      stop = true;
+      io?.disconnect();
+    };
+  }, [slug]);
+  return inView;
 }
 
 function StickyBuyBar({
