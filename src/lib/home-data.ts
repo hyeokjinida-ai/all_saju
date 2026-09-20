@@ -143,13 +143,15 @@ export async function getHomeReviews(): Promise<HomeReview[]> {
       db.from("products").select("id, name").in("id", productIds),
       userIds.length
         ? db.from("profiles").select("id, display_name, email").in("id", userIds)
-        : Promise.resolve({ data: [] as { id: string; display_name: string | null; email: string }[] }),
+        : Promise.resolve({ data: [] as { id: string; display_name: string | null; email: string | null }[] }),
     ]);
 
     const nameById = new Map((products ?? []).map((p) => [p.id as string, p.name as string]));
     const whoById = new Map(
       (profiles ?? []).map((p) => {
-        const raw = (p.display_name as string | null) || (p.email as string).split("@")[0];
+        // ⚠ 카카오 가입은 이메일이 없을 수 있다(0014). 예전엔 email 을 무조건 문자열로 읽어
+        //    한 명만 이메일이 없어도 이 map 이 터졌고, 바깥 catch 가 **후기 전체를 빈 배열로** 돌려보냈다.
+        const raw = (p.display_name as string | null) || (p.email as string | null)?.split("@")[0] || "손님";
         return [p.id as string, mask(raw)];
       }),
     );
@@ -195,11 +197,12 @@ export async function getProductReviews(productId: string, limit = 3): Promise<P
     const userIds = [...new Set(data.map((r) => r.user_id as string).filter(Boolean))];
     const { data: profiles } = userIds.length
       ? await db.from("profiles").select("id, display_name, email").in("id", userIds)
-      : { data: [] as { id: string; display_name: string | null; email: string }[] };
+      : { data: [] as { id: string; display_name: string | null; email: string | null }[] };
 
     const whoById = new Map(
       (profiles ?? []).map((p) => {
-        const raw = (p.display_name as string | null) || (p.email as string).split("@")[0];
+        // 이메일 없는 카카오 회원 대비 — 위 getHomeReviews 와 같은 이유(0014)
+        const raw = (p.display_name as string | null) || (p.email as string | null)?.split("@")[0] || "손님";
         return [p.id as string, mask(raw)];
       }),
     );

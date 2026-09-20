@@ -31,9 +31,24 @@ export function useKakaoEnabled(): boolean | null {
   const [on, setOn] = useState<boolean | null>(cached);
   useEffect(() => {
     let alive = true;
-    fetchKakaoEnabled().then((v) => alive && setOn(v));
+    // ⚠ 답이 안 오면 **없는 것으로 친다.** 가입·로그인 화면은 이 답을 기다리는 동안
+    //   이메일 폼까지 접어 두므로, 확인이 매달리면 손님은 들어올 길이 아예 없어진다.
+    //   2.5초는 포기 선이고, 늦게 온 답은 무시한다(폼이 펼쳐졌다 다시 접히면 더 나쁘다).
+    const giveUp = setTimeout(() => {
+      if (alive) {
+        alive = false;
+        setOn(false);
+      }
+    }, 2500);
+    fetchKakaoEnabled().then((v) => {
+      if (alive) {
+        clearTimeout(giveUp);
+        setOn(v);
+      }
+    });
     return () => {
       alive = false;
+      clearTimeout(giveUp);
     };
   }, []);
   return on;
@@ -46,13 +61,10 @@ export function KakaoLoginButton({
   redirect = "/mypage",
   label = "카카오로 3초 만에 시작하기",
   onBeforeRedirect,
-  divider,
 }: {
   redirect?: string;
   label?: string;
   onBeforeRedirect?: () => void;
-  /** 버튼 아래 「또는 이메일로」 구분선 — 버튼이 숨으면 같이 숨는다(로그인·가입 페이지용) */
-  divider?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const enabled = useKakaoEnabled();
@@ -88,7 +100,6 @@ export function KakaoLoginButton({
   if (!enabled) return null;
 
   return (
-    <>
     <button type="button" onClick={handle} disabled={loading} className="btn-kakao disabled:opacity-70">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
         <path
@@ -98,13 +109,16 @@ export function KakaoLoginButton({
       </svg>
       {loading ? "카카오로 이동 중…" : label}
     </button>
-    {divider && (
-      <div className="my-5 flex items-center gap-3 text-xs text-bone-faint">
-        <span className="h-px flex-1 bg-hairline" />
-        {divider}
-        <span className="h-px flex-1 bg-hairline" />
-      </div>
-    )}
-    </>
   );
+}
+
+/**
+ * 카카오 버튼이 들어설 자리를 확인 중일 때 잡아 두는 회색 칸.
+ *
+ * 왜 필요한가: `useKakaoEnabled()` 는 첫 렌더에서 **null**(아직 모름)을 준다. 그 사이에
+ * 이메일 폼을 펼쳐 버리면, 카카오가 켜져 있는 손님은 「폼이 떴다가 접히는」 걸 매번 본다.
+ * 높이만 미리 잡아 두면 답이 와도 화면이 안 튄다.
+ */
+export function KakaoButtonSkeleton() {
+  return <div className="h-[54px] w-full animate-pulse rounded-[14px] bg-white/5" aria-hidden />;
 }

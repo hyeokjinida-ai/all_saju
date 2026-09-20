@@ -66,7 +66,11 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
         ? await service.from("profiles").select("id, display_name, email").in("id", userIds)
         : { data: [] };
       whoMap = new Map(
-        (profiles ?? []).map((p) => [p.id as string, (p.display_name as string | null) || (p.email as string)]),
+        // 카카오 가입은 이메일이 없을 수 있다(0014) — 이름이 비면 "손님" 으로 떨어뜨린다
+        (profiles ?? []).map((p) => [
+          p.id as string,
+          (p.display_name as string | null) || (p.email as string | null) || "손님",
+        ]),
       );
     }
   }
