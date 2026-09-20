@@ -13,7 +13,11 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { pageview } from "@/lib/analytics";
 
-const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
+// Clarity 프로젝트 ID 는 **비밀이 아니다** — 이 스크립트 태그로 사이트 HTML 에 그대로 실려 나간다.
+// 그래서 Vercel 환경변수(형님 로그인 필요)를 기다리지 않고 기본값을 코드에 둔다.
+// 환경변수가 있으면 그쪽이 이긴다(프로젝트를 새로 파도 코드를 안 고치게).
+// 프로젝트 「명운록」 = ylcdd16sjl (2026-09-21 형님이 생성, 데이터는 최대 2시간 뒤부터 쌓인다).
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID ?? "ylcdd16sjl";
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 function RouteChangeTracker() {
