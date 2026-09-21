@@ -91,6 +91,25 @@ export async function POST(request: NextRequest) {
     })
     .eq("id", order.id);
 
+  // 어떤 수단으로 냈는지 — 손님이 **고른 것**이 아니라 토스가 **승인한 것**을 남긴다(2026-09-21).
+  // 전엔 이걸 어디에도 안 남겨서 「계좌이체로 낸 사람이 몇이나 되나」를 끝내 못 셌다.
+  // 주문 표에 칸을 새로 파지 않고 기존 이벤트 표에 싣는다(형님 SQL 손 0). 실패해도 결제는 그대로 간다.
+  try {
+    await service.from("analytics_events").insert({
+      event: "purchase_method",
+      path: "/api/orders/confirm",
+      props: {
+        orderId,
+        method: toss.data.method ?? "",
+        easyPay: toss.data.easyPay?.provider ?? "",
+        via: toss.via,
+        amount,
+      } as never,
+    });
+  } catch {
+    /* 기록 실패는 무시 */
+  }
+
   if (!isDone) {
     return NextResponse.json({
       resultId: null,

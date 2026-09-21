@@ -20,6 +20,12 @@
 //    (형식이 틀린 번호만 막는다 — 그건 손님이 고칠 수 있는 것).
 import { useState } from "react";
 import { TossWidget } from "./TossWidget";
+import { PayMethods } from "./PayMethods";
+import { directPayEnabled } from "@/lib/toss/client";
+
+// 「API 개별 연동 키」가 배포에 들어 있으면 결제수단을 직접 그린다(몽연식 4줄 → 자체창).
+// 없으면 토스 결제위젯 그대로 — 키를 빼고 재배포하면 원복된다(2026-09-21).
+const Pay = directPayEnabled() ? PayMethods : TossWidget;
 
 const fmt = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -73,7 +79,7 @@ export function CheckoutForm({
 
   return (
     <div className="space-y-4">
-      <TossWidget
+      <Pay
         orderId={orderId}
         amount={amount}
         customerKey={customerKey}

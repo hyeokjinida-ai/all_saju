@@ -9,12 +9,17 @@
 //   운영 키는 Vercel 에만 있으므로 여기 코드의 진짜 검증은 배포 후다.
 
 import { serverEnv } from "@/lib/env";
+import { tossSecretKeys } from "@/lib/toss/confirm";
 
 const API = "https://api.tosspayments.com/v1";
 
+const basic = (sk: string) => "Basic " + Buffer.from(sk + ":").toString("base64");
+
+// ⚠ 정산은 **결제위젯 키 하나로만** 읽는다(2026-09-21). 정산은 상점(MID) 단위라 두 키 세트가 같은
+//   상점(vallsa5fpz)을 가리키면 같은 줄이 두 번 온다 — 두 키로 읽어 더하면 수수료가 두 배가 된다.
+//   자체창 결제가 이 키의 정산에 섞여 오는지는 **첫 자체창 결제가 정산된 뒤** 대조해 볼 것(미확인).
 function authHeader(): string {
-  const sk = serverEnv().TOSS_SECRET_KEY;
-  return "Basic " + Buffer.from(sk + ":").toString("base64");
+  return basic(serverEnv().TOSS_SECRET_KEY);
 }
 
 /** 라이브 키인지 — 테스트 키로 받은 숫자를 손익에 넣으면 안 된다. */
@@ -72,11 +77,16 @@ export async function fetchPaymentCancels(
 ): Promise<{ amount: number; at: string } | null> {
   if (!isTossLive()) return null;
   try {
-    const res = await fetch(`${API}/payments/${encodeURIComponent(paymentKey)}`, {
-      headers: { Authorization: authHeader() },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
+    // 결제 한 건은 그 결제를 연 키 세트로만 보일 수 있다 — 자체창 키 → 결제위젯 키 순으로 두드린다.
+    let res: Response | null = null;
+    for (const sk of tossSecretKeys()) {
+      res = await fetch(`${API}/payments/${encodeURIComponent(paymentKey)}`, {
+        headers: { Authorization: basic(sk) },
+        cache: "no-store",
+      });
+      if (res.ok) break;
+    }
+    if (!res?.ok) return null;
     const j = (await res.json()) as { cancels?: PaymentCancel[] | null };
     const cancels = j.cancels ?? [];
     if (!cancels.length) return null;
