@@ -87,9 +87,6 @@ export const CATEGORY_FALLBACK: Record<string, RowKey> = {
 export const HOME_COPY = {
   bigRowTitle: "✦ 먼저 보고 가는 풀이",
   loginChip: "💡 로그인하면 받은 결과지를 보관함에서 다시 볼 수 있어요",
-  trustPill: "정통 만세력 · 실측 검증",
-  // 근거: scripts/verify-daeun.ts — 다른 만세력 앱과 대운 간지를 실제로 대조했다.
-  trustHeadline: "다른 만세력과 대운 간지를 대조해 검증한 계산으로 풉니다",
   reviewTitle: "먼저 받아본 분들",
   metaTitle: "명운록 — 박수무당 사주 · 직녀의 연애예보",
   metaDescription:

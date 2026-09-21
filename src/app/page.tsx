@@ -11,7 +11,6 @@ import { HomeShell, type ShellTab } from "@/components/home/HomeShell";
 import { HeroCarousel, type HeroSlide } from "@/components/home/HeroCarousel";
 import { BigRow, ProductRow } from "@/components/home/ProductRow";
 import { ReviewRow } from "@/components/home/ReviewRow";
-import { TrustBlock } from "@/components/home/TrustBlock";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { getHomeProducts, getHomeReviews, type HomeProduct } from "@/lib/home-data";
 import { getCurrentUser } from "@/lib/auth";
@@ -94,10 +93,10 @@ export default async function HomePage() {
         <BigRow products={bigRow} via="home-big" />
       </section>
 
-      <div className="my-10" style={{ borderBottom: `1px solid ${T.line}` }} />
-
-      <TrustBlock />
-
+      {/* 여기 있던 권위 블록(「정통 만세력 · 실측 검증」 + 「다른 만세력과 대운 간지를 대조해…」 +
+          안전결제·환불 줄)은 2026-09-21 형님 지시로 뺐다. 위의 얇은 구분선도 같이 — 후기 줄은 3건 미만이면
+          안 그려지므로 줄이 두 개 연달아 남는다. 후기가 뜨면 ReviewRow 가 자기 윗여백(mt-16)으로 구획을 선다.
+          안전결제·환불 줄은 결제 페이지·상품 페이지의 TrustStrip 에 그대로 있다. */}
       <ReviewRow reviews={reviews} />
 
       <div className="my-12" style={{ borderBottom: `4px solid ${T.line}` }} />
