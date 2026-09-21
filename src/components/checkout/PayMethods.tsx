@@ -13,8 +13,9 @@
 // 로고는 **각 사 공식 파일만** 쓴다(내가 그리지 않는다):
 //   · 카카오페이 — 파트너센터 결제수단 로고 zip 원본(옐로우 배경 확장형, 「카카오페이」 붙여쓰기, 1순위 배치 권장)
 //   · 토스페이   — 토스 브랜드 리소스 센터 TossPay_Logo_Primary_White(어두운 바탕용 공식판)
-//   · 네이버페이 — 공식 개발자센터가 우리 도구에서 막혀 파일을 못 받았다. 가짜 로고보다 **없는 편**이 낫다.
-//                  형님이 공식 파일을 주시면 `public/pay/naverpay.png` 로 넣고 아래 logo 한 줄만 채울 것.
+//   · 네이버페이 — 네이버페이 Developers 「디자인가이드 › 이미지 다운로드」 공식 zip 의
+//                  signature/logo_npaygr_large.svg 원본(그린 #00DE5A · 배경 없음). 개발자센터가 우리 도구에서
+//                  막혀 있어 형님이 받아 주셨다(2026-09-21). N 글자는 비어 있는 게 원본이다 — 채우지 말 것.
 //   · 카드       — 브랜드가 아니라 일반 카드 아이콘(레퍼런스도 같다).
 
 import { useEffect, useRef, useState } from "react";
@@ -36,7 +37,7 @@ const METHODS: {
   logo: { src: string; w: number; h: number } | null;
 }[] = [
   { id: "kakaopay", label: "카카오페이", easyPay: "KAKAOPAY", logo: { src: "/pay/kakaopay.png", w: 58, h: 24 } },
-  { id: "naverpay", label: "네이버페이", easyPay: "NAVERPAY", logo: null },
+  { id: "naverpay", label: "네이버페이", easyPay: "NAVERPAY", logo: { src: "/pay/naverpay.svg", w: 66, h: 22 } },
   { id: "tosspay", label: "토스페이", easyPay: "TOSSPAY", logo: { src: "/pay/tosspay.png", w: 78, h: 17 } },
   { id: "card", label: "카드 · 일반결제", easyPay: null, logo: null },
 ];
