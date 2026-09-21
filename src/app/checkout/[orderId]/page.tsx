@@ -6,6 +6,7 @@ import { LoginNudge } from "@/components/checkout/LoginNudge";
 import { formatKRW } from "@/lib/utils";
 import { MEMBER_DISCOUNT, MIN_CHARGE, chargeFor } from "@/lib/pricing";
 import { worldOfSlug, worldClass, worldBg } from "@/lib/world";
+import { directPayReady } from "@/lib/toss/keys";
 
 export const metadata = { title: "결제" };
 
@@ -176,6 +177,7 @@ export default async function CheckoutPage({
             productSlug={product?.slug ?? null}
             customerEmail={email}
             defaultPhone={memberPhone}
+            directPay={directPayReady()}
             ctaLabel={
               world === "sangun"
                 ? `${formatKRW(order.amount)} 내고 내 장부 전체 열기`

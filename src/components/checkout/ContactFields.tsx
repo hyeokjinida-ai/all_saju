@@ -21,11 +21,9 @@
 import { useState } from "react";
 import { TossWidget } from "./TossWidget";
 import { PayMethods } from "./PayMethods";
-import { directPayEnabled } from "@/lib/toss/client";
 
-// 「API 개별 연동 키」가 배포에 들어 있으면 결제수단을 직접 그린다(몽연식 4줄 → 자체창).
-// 없으면 토스 결제위젯 그대로 — 키를 빼고 재배포하면 원복된다(2026-09-21).
-const Pay = directPayEnabled() ? PayMethods : TossWidget;
+// 결제수단을 직접 그릴지(몽연식 4줄 → 자체창)는 **결제 페이지(서버)** 가 두 키를 다 보고 정해 내려준다
+// (lib/toss/keys.ts). 아니면 토스 결제위젯 그대로 — 키를 빼고 재배포하면 원복된다(2026-09-21).
 
 const fmt = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -43,6 +41,7 @@ export function CheckoutForm({
   customerEmail,
   defaultPhone,
   ctaLabel,
+  directPay,
 }: {
   orderId: string;
   amount: number;
@@ -52,7 +51,9 @@ export function CheckoutForm({
   customerEmail: string | null;
   defaultPhone: string | null;
   ctaLabel: string;
+  directPay: boolean;
 }) {
+  const Pay = directPay ? PayMethods : TossWidget;
   const [phone, setPhone] = useState(fmt(defaultPhone ?? ""));
   const [optIn, setOptIn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
