@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { observePayPanel } from "@/lib/observe-pay-panel";
 import type { SajuTeaser } from "@/lib/saju/teaser";
 import type { PartnerFace } from "@/lib/saju/partner-face";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -485,7 +486,7 @@ export function SajuWizard({
   const [payHint, setPayHint] = useState(false);
   // 결제 팝업 — 풀이 어디서든 구매 버튼을 누르면 여기로 연다(맨 끝까지 안 내려가도 된다).
   const [payOpen, setPayOpen] = useState(false);
-  // 결제 칸 도달을 세는 자는 두 갈래다 — 인라인은 usePayInView(#pay 가 보임), 팝업은 여기.
+  // 인라인은 실제 결제 칸(#pay-panel), 팝업은 여기에서 별도로 센다.
   // 한쪽만 세면 팝업 전환 뒤 pay_view 가 통째로 사라져 퍼널이 끊긴다.
   const openPaySheet = useCallback(() => {
     setPayOpen(true);
@@ -2006,7 +2007,7 @@ export function SajuWizard({
             )}
           </>
         ) : payOpen ? null : (
-          renderPayPanel()
+          <div id="pay-panel">{renderPayPanel()}</div>
         )}
       </div>
 
@@ -4067,7 +4068,7 @@ function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBu
   return <StickyBuyBar {...props} />;
 }
 
-/** 결제 칸(#pay)이 화면에 들어와 있는가 — 들어와 있으면 하단 고정 띠를 숨긴다.
+/** 실제 결제 칸(#pay-panel)이 화면에 들어와 있는가 — 보이면 하단 고정 띠를 숨긴다.
  *  전엔 재회판만 이 장치를 썼고(useReunionBarGate) 산군은 없었다. 그래서 결제 칸에
  *  도착한 화면에서 **제일 밝은 버튼(고정 띠)이 눌러도 아무 일이 없었다** — 그 버튼은
  *  「결제 칸으로 스크롤」이라 이미 도착한 사람에겐 할 일이 없기 때문이다(2026-09-20 ㉮-4).
@@ -4077,27 +4078,15 @@ function usePayInView(slug?: string) {
   const fired = useRef(false);
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
-    let io: IntersectionObserver | null = null;
-    let stop = false;
-    const attach = () => {
-      if (stop || io) return;
-      const el = document.getElementById("pay");
-      if (!el) return void setTimeout(attach, 400);
-      io = new IntersectionObserver((es) => {
-        const on = es.some((e) => e.isIntersecting);
-        setInView(on);
-        if (on && !fired.current) {
-          fired.current = true;
-          track("pay_view", { slug });
-        }
-      });
-      io.observe(el);
-    };
-    attach();
-    return () => {
-      stop = true;
-      io?.disconnect();
-    };
+    fired.current = false;
+    setInView(false);
+    return observePayPanel((on) => {
+      setInView(on);
+      if (on && !fired.current) {
+        fired.current = true;
+        track("pay_view", { slug, via: "inline" });
+      }
+    });
   }, [slug]);
   return inView;
 }
