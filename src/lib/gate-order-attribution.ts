@@ -1,9 +1,10 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { gateProps, readGateAssignment } from "@/lib/gate-experiment";
+import { worldOfSlug } from "@/lib/world";
 
 // Link only an order successfully created by our server. Payment amounts/statuses are never changed.
 export async function recordGateOrder(token: string | undefined, orderId: string, slug: string) {
-  if (slug !== "sangun-sinjeom" && slug !== "bundle-sangun-inyeon") return;
+  if (worldOfSlug(slug) !== "sangun") return;
   const assignment = readGateAssignment(token);
   if (!assignment) return;
   try {
