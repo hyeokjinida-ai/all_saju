@@ -1,0 +1,206 @@
+.gate {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: #080706;
+  color: #f5eddf;
+}
+
+.frame {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.portrait {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: calc(100% - 100px);
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(8 7 6 / 28%) 0%, transparent 20%, transparent 42%, rgb(8 7 6 / 35%) 57%, #080706 82%);
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+}
+
+.ritualPortrait {
+  height: calc(100% - 265px);
+}
+
+.ritualPortrait .video {
+  object-fit: contain;
+  object-position: 50% 0;
+}
+
+/* 개발 비교본: 하단 여백·검은 덮개 없이 영상으로 화면을 채운다. */
+.fullBleed .ritualPortrait {
+  height: 100%;
+}
+
+.fullBleed .ritualPortrait .video {
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+.fullBleed .scrim {
+  background: none;
+}
+
+.fullBleed .content,
+.fullBleed .brand {
+  text-shadow: 0 2px 5px #080706, 0 0 14px rgb(8 7 6 / 80%);
+}
+
+.fullBleed .lettering {
+  filter: drop-shadow(0 2px 4px #080706);
+}
+
+.fullBleed .start {
+  text-shadow: none;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(14px, env(safe-area-inset-top)) 20px 0 26px;
+}
+
+.brand {
+  font-family: var(--font-myeongjo-nanum), serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  color: #e9ddc4;
+}
+
+.sound {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(237 219 178 / 22%);
+  border-radius: 50%;
+  background: rgb(8 7 6 / 35%);
+  color: #c6bba5;
+  cursor: pointer;
+}
+
+.sound[aria-pressed="true"] {
+  color: #f1d786;
+  border-color: rgb(241 215 134 / 65%);
+}
+
+.content {
+  margin-top: auto;
+  padding: 0 24px max(26px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+
+.lettering {
+  display: block;
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  object-fit: contain;
+}
+
+.saju {
+  margin-top: 2px;
+  font-family: var(--font-head-brush), var(--font-myeongjo-nanum), serif;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: .06em;
+  color: #edcc79;
+}
+
+.hook {
+  margin: 15px 0 0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -.03em;
+  color: #f0e6d2;
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 28px;
+  padding: 14px 20px;
+  border: 1px solid #eed48c;
+  border-radius: 8px;
+  background: linear-gradient(110deg, #f4df9d, #e9c56f);
+  color: #2b1f10;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -.02em;
+  cursor: pointer;
+}
+
+.start:hover {
+  background: #f5dfa0;
+}
+
+.start:active {
+  background: #dfb95e;
+}
+
+.start:focus-visible,
+.sound:focus-visible {
+  outline: 2px solid #fff0c6;
+  outline-offset: 4px;
+}
+
+.note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: -.025em;
+  color: #c0b5a1;
+}
+
+@media (max-height: 680px) {
+  .content { padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+  .lettering { max-width: 292px; }
+  .saju { font-size: 34px; }
+  .hook { margin-top: 10px; font-size: 16px; }
+  .start { margin-top: 20px; min-height: 52px; }
+  .note { margin-top: 10px; }
+}

@@ -10,6 +10,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { SampleCard, TocCard, SangunFaq } from "@/components/products/SangunSalesBlocks";
 import { SOCIAL_PROOF, hasSocialProof, formatCount } from "@/config/social-proof";
 import { track } from "@/lib/analytics";
+import { SangunGateExperiment } from "./SangunGateExperiment";
 
 const INK_BG = "linear-gradient(180deg,#0a0b0f 0%,#171017 100%)";
 const SCRIM =
@@ -237,6 +238,7 @@ export function SangunStory({
   priceLabel,
   wizard,
   initialStage,
+  gateExperiment = false,
 }: {
   priceLabel: string;
   wizard: React.ReactNode; // 몰입 위저드(immersive SajuWizard) — 입력 스테이지가 풀스크린으로 소유
@@ -244,6 +246,7 @@ export function SangunStory({
   // "input" = ?demo=…      — 티저 화면만 확인할 때(게이트·스토리를 건너뛴다)
   // 둘 다 page.tsx 주석 참고.
   initialStage?: "main" | "input";
+  gateExperiment?: boolean;
 }) {
   const [stage, setStage] = useState<"gate" | "story" | "main" | "input">(initialStage ?? "gate");
   const [scene, setScene] = useState(0);
@@ -265,10 +268,10 @@ export function SangunStory({
   // gate_view ÷ product_view 로 문 통과율을 우리 자로 직접 잰다.
   const gateSeen = useRef(false);
   useEffect(() => {
-    if (stage !== "gate" || gateSeen.current) return;
+    if (stage !== "gate" || gateSeen.current || gateExperiment) return;
     gateSeen.current = true;
     track("gate_view", { slug: "sangun-sinjeom" });
-  }, [stage]);
+  }, [stage, gateExperiment]);
 
   // (setStage("main") 로 가는 화면 안 경로는 없다 — 세일즈 페이지 입구는 ?view=detail 하나뿐이다)
   const toInput = () => {
@@ -288,6 +291,7 @@ export function SangunStory({
 
   // ── 입장 게이트(MZ무당사주 구조) — 입장 전에는 이것만 보인다 ──
   if (stage === "gate") {
+    if (gateExperiment) return <SangunGateExperiment onEnter={() => setStage("story")} soundOn={on} toggleSound={toggle} />;
     return (
       <div className="world-sangun story-immersive relative min-h-screen w-full overflow-hidden" style={{ background: "#070609" }}>
         {/* 문 통과 8초가 끝나면 제단 앞 아이들 루프로 갈아탄다(2026-09-07, 형님 "마지막에 서 있는데 영상으로는 못해?").

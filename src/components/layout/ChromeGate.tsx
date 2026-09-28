@@ -43,6 +43,7 @@ export function ChromeGate({
     </>
   );
   // 관리 화면은 표가 넓어야 한다 — 기둥 없이 전폭.
+  if (pathname.startsWith("/dev/gate-ab")) return children;
   if (pathname.startsWith("/admin")) return body;
   // 폰 기둥 — 전 라우트를 448(max-w-md, 홈·체크아웃과 같은 폭) 가운데로.
   // PC 에서 랜딩 그림판(w-full × object-cover)이 모니터 폭으로 부풀어 그림 한 조각만

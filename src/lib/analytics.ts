@@ -31,6 +31,7 @@ const META_STANDARD: Record<string, string> = {
 
 /** 메타 픽셀로 같은 이벤트를 흘린다. 픽셀이 없으면(로컬·미설정) 조용히 넘어간다. */
 function sendMeta(event: string, params: EventParams): void {
+  try { if (sessionStorage.getItem("mr_gate_qa") === "1" || new URLSearchParams(location.search).has("gate_qa") || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") return; } catch { /* storage may be blocked */ }
   const std = META_STANDARD[event];
   if (!std) return;
   try {
@@ -157,6 +158,7 @@ function send(event: string, params: EventParams, path?: string): void {
 
 // 커스텀 이벤트(자체 DB + Clarity 태깅).
 export function track(event: string, params: EventParams = {}): void {
+  if (typeof window !== "undefined" && (location.pathname.startsWith("/dev/") || ["localhost", "127.0.0.1"].includes(location.hostname))) return;
   send(event, params);
   sendMeta(event, params);
   try {
@@ -171,6 +173,7 @@ export function track(event: string, params: EventParams = {}): void {
 
 // 페이지뷰(라우트 변경 시 호출).
 export function pageview(path: string): void {
+  if (typeof window !== "undefined" && (location.pathname.startsWith("/dev/") || ["localhost", "127.0.0.1"].includes(location.hostname))) return;
   send("page_view", {}, path);
   // SPA 라우팅에서도 메타가 페이지뷰를 세게 한다(스크립트의 초기 1회만으로는 SPA 이동이 안 잡힌다).
   sendMeta("page_view", {});

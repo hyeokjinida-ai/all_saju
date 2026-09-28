@@ -12,6 +12,7 @@ import { SHOW_SOCIAL_PROOF } from "@/config/site";
 import { WealthStory } from "@/components/products/WealthWebtoon";
 import { InyeonStory } from "@/components/products/InyeonWebtoon";
 import { SangunStory } from "@/components/products/SangunWebtoon";
+import { gateExperimentEnabled } from "@/lib/gate-experiment";
 import { JiknyeoStory } from "@/components/products/JiknyeoStory";
 import { ProductViewBeacon } from "@/components/analytics/ProductViewBeacon";
 import { JiknyeoDetail } from "@/components/products/JiknyeoDetail";
@@ -488,6 +489,7 @@ export default async function ProductDetailPage({
         // 가격도 결과물도 없는 게이트로 광고를 받는 게 위험하다는 판단(광고소재_초안_2026-08.md).
         // 스토리를 탄 손님의 동선에서는 이 화면이 빠졌으므로, 이제 여기가 유일한 입구다.
         <SangunStory
+          gateExperiment={gateExperimentEnabled()}
           // demo 는 게이트·스토리도 건너뛴다 — 티저를 보러 온 것이지 신당에 들어오려는 게 아니다
           initialStage={demo ? "input" : view === "detail" ? "main" : undefined}
           priceLabel={formatKRW(product.price)}
