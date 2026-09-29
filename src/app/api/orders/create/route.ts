@@ -5,6 +5,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { MIN_CHARGE, chargeFor } from "@/lib/pricing";
 import { GATE_COOKIE } from "@/lib/gate-experiment";
 import { recordGateOrder } from "@/lib/gate-order-attribution";
+import { capturePurchaseContext } from "@/lib/purchase-tracking";
 
 const bodySchema = z.object({
   productId: z.string().uuid(),
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
     // 입력이 바뀌었을 수 있으니 명식 정보만 갱신하고 같은 주문 재사용.
     await service.from("saju_inputs").update(inputRow).eq("order_id", existing.id);
     await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug);
+    await capturePurchaseContext(service, request, existing.id);
     return NextResponse.json({ orderId: existing.order_id, amount });
   }
 
@@ -109,5 +111,6 @@ export async function POST(request: NextRequest) {
   }
 
   await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug);
+  await capturePurchaseContext(service, request, order.id);
   return NextResponse.json({ orderId, amount });
 }

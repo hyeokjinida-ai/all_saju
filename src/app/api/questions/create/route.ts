@@ -3,6 +3,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { EXTRA_QUESTION_SLUG, answerExtraQuestionById } from "@/lib/saju/generate-result";
+import { capturePurchaseContext } from "@/lib/purchase-tracking";
 
 // 후기 답례 질문은 여기서 **LLM 을 바로 태운다**(결제 왕복이 없으니 기다릴 곳이 여기뿐이다).
 // 유료 경로는 예전대로 주문만 만들고 끝나므로 이 값이 놀고 있어도 손해가 없다.
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest) {
   const reusableOrder = (reusable as { orders?: { order_id: string; status: string } } | null)?.orders;
   if (reusable && reusableOrder?.status === "pending") {
     await service.from("extra_questions").update({ question }).eq("id", reusable.id);
+    if (reusable.order_id) await capturePurchaseContext(service, request, reusable.order_id);
     return NextResponse.json({ orderId: reusableOrder.order_id, amount: product.price });
   }
 
@@ -140,5 +142,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "질문 저장 실패", detail: qErr.message }, { status: 500 });
   }
 
+  await capturePurchaseContext(service, request, order.id);
   return NextResponse.json({ orderId, amount: product.price });
 }

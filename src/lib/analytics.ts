@@ -7,6 +7,8 @@
 // ⚠️ 개인정보 금지: 이름·생년월일·시각·성별·이메일 등은 절대 보내지 않는다.
 //    단계 번호·상품 slug·금액(value)·통화만 보낸다(퍼널 분석용).
 
+import { isRecentPurchase, type PurchaseReceipt } from "@/lib/purchase-event";
+
 type EventParams = Record<string, string | number | boolean | undefined>;
 
 declare global {
@@ -30,19 +32,22 @@ const META_STANDARD: Record<string, string> = {
 };
 
 /** 메타 픽셀로 같은 이벤트를 흘린다. 픽셀이 없으면(로컬·미설정) 조용히 넘어간다. */
-function sendMeta(event: string, params: EventParams): void {
-  try { if (sessionStorage.getItem("mr_gate_qa") === "1" || new URLSearchParams(location.search).has("gate_qa") || process.env.NEXT_PUBLIC_VERCEL_ENV === "preview") return; } catch { /* storage may be blocked */ }
+function sendMeta(event: string, params: EventParams): boolean {
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" || new URLSearchParams(location.search).has("gate_qa")) return false;
+  try { if (sessionStorage.getItem("mr_gate_qa") === "1") return false; } catch { /* storage may be blocked */ }
   const std = META_STANDARD[event];
-  if (!std) return;
+  if (!std || !window.fbq) return false;
   try {
     // 개인정보는 위 주석대로 애초에 params 에 없다 — 금액·통화만 넘어간다.
     const payload: Record<string, unknown> = {};
     if (params.value !== undefined) payload.value = params.value;
     if (params.currency !== undefined) payload.currency = params.currency;
     if (params.slug !== undefined) payload.content_ids = [params.slug];
-    window.fbq?.("track", std, payload);
+    if (typeof params.eventId === "string") window.fbq("track", std, payload, { eventID: params.eventId });
+    else window.fbq("track", std, payload);
+    return true;
   } catch {
-    /* 픽셀 실패가 사용자 흐름을 막지 않도록 무시 */
+    return false;
   }
 }
 
@@ -132,6 +137,13 @@ function send(event: string, params: EventParams, path?: string): void {
   if (typeof window === "undefined") return;
   const cr = creative();
   try {
+    // First-party attribution survives the external payment round trip. No saju
+    // input or contact information is stored here; the server validates fields.
+    const attribution = { v: visitorId(), s: sessionId(), u: cr,
+      qa: sessionStorage.getItem("mr_gate_qa") === "1" || new URLSearchParams(location.search).has("gate_qa") };
+    document.cookie = `mr_purchase_context=${encodeURIComponent(JSON.stringify(attribution))}; Path=/; SameSite=Lax; Secure; Max-Age=86400`;
+  } catch { /* Storage/cookies may be disabled; event delivery still runs below. */ }
+  try {
     const body = JSON.stringify({
       event,
       path: path ?? location.pathname,
@@ -141,9 +153,7 @@ function send(event: string, params: EventParams, path?: string): void {
       visitorId: visitorId(),
       sessionId: sessionId(),
     });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon("/api/track", new Blob([body], { type: "application/json" }));
-    } else {
+    if (!navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }))) {
       void fetch("/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,6 +164,27 @@ function send(event: string, params: EventParams, path?: string): void {
   } catch {
     /* 분석 실패가 사용자 흐름을 막지 않도록 무시 */
   }
+}
+
+// Only a server-verified receipt can use this path. Persist the Pixel marker AFTER
+// fbq accepts/queues the call; an unavailable Pixel must not permanently mark it sent.
+export function trackConfirmedPurchase(purchase: PurchaseReceipt): boolean {
+  if (typeof window === "undefined" || !isRecentPurchase(purchase.paidAt) ||
+      location.pathname.startsWith("/dev/") || ["localhost", "127.0.0.1"].includes(location.hostname)) return false;
+  const pixelKey = `mr_purchase_${purchase.orderId}`;
+  const ownKey = `mr_purchase_own_${purchase.orderId}`;
+  const params = { value: purchase.value, currency: purchase.currency, slug: purchase.slug,
+    orderId: purchase.orderId, eventId: purchase.eventId };
+  try { if (localStorage.getItem(pixelKey)) return true; } catch { /* in-memory caller guard remains */ }
+  let ownSent = false;
+  try { ownSent = localStorage.getItem(ownKey) === "1"; } catch { /* optional storage */ }
+  if (!ownSent) {
+    send("purchase", params);
+    try { localStorage.setItem(ownKey, "1"); } catch { /* optional storage */ }
+  }
+  if (!sendMeta("purchase", params)) return false;
+  try { localStorage.setItem(pixelKey, "1"); } catch { /* optional storage */ }
+  return true;
 }
 
 // 커스텀 이벤트(자체 DB + Clarity 태깅).

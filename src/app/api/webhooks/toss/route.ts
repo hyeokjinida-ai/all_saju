@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fetchTossPayment } from "@/lib/toss/confirm";
+import { after } from "next/server";
+import { dispatchPurchases } from "@/lib/purchase-tracking";
 
 // 토스페이먼츠 웹훅 — 결제 완료의 '서버 간' 백업 신호.
 // 두 종류를 처리한다:
@@ -13,7 +15,7 @@ import { fetchTossPayment } from "@/lib/toss/confirm";
 //   주문을 paid 로 바꾼다.
 // 응답: 토스는 10초 내 2xx 가 없으면 최대 7회 재전송한다. 결과지 생성(luckyloveme+LLM,
 //   보통 10초 초과)은 await 하지 않고, 주문을 paid 로 확정한 뒤 즉시 200을 반환한다.
-//   실제 생성은 15분 주기 복구 크론(/api/cron/recover-results)이 paid·미생성 주문을
+//   실제 생성은 일 1회 복구 크론(/api/cron/recover-results)이 paid·미생성 주문을
 //   스캔해 마무리한다. (모든 처리는 멱등 — 재전송돼도 안전)
 export async function POST(request: NextRequest) {
   let payload: unknown;
@@ -57,17 +59,20 @@ export async function POST(request: NextRequest) {
 
   // 토스 API 로 진위 재확인 — 바디만 믿지 않는다.
   const verify = await fetchTossPayment(paymentKey);
-  if (!verify.ok || verify.data.status !== "DONE" || verify.data.totalAmount !== order.amount) {
+  if (!verify.ok || verify.data.status !== "DONE" || verify.data.totalAmount !== order.amount || verify.data.orderId !== orderId) {
     return NextResponse.json({ ok: true, verified: false });
   }
 
   // paid 로 확정(아직 아니면). 생성은 await 하지 않고 복구 크론에 위임 → 즉시 200.
   if (order.status !== "paid") {
-    await service
+    const { error } = await service
       .from("orders")
       .update({ status: "paid", toss_payment_key: paymentKey, paid_at: verify.data.approvedAt })
       .eq("id", order.id);
+    if (error) return NextResponse.json({ ok: false, retry: true }, { status: 503 });
   }
 
+  // The database owns the unique event. Never use the webhook sender's cookies/IP.
+  after(async () => { await dispatchPurchases(service, 1, order.id); });
   return NextResponse.json({ ok: true, paid: true });
 }

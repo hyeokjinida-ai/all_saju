@@ -200,6 +200,25 @@ type AnalyticsEventRow = {
   created_at: string;
 };
 
+export type PurchaseTrackingRow = {
+  order_id: string;
+  public_order_id: string;
+  event_id: string;
+  context: Json;
+  browser_dedup: boolean;
+  amount: number | null;
+  product_slug: string | null;
+  paid_at: string | null;
+  recorded_at: string;
+  state: "checkout" | "pending" | "sent" | "suppressed" | "expired";
+  attempts: number;
+  next_attempt_at: string;
+  lease_token: string | null;
+  lease_until: string | null;
+  sent_at: string | null;
+  last_error: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -404,6 +423,12 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<WebtoonPageVersionRow>;
+        Relationships: [];
+      };
+      purchase_tracking: {
+        Row: PurchaseTrackingRow;
+        Insert: Pick<PurchaseTrackingRow, "order_id" | "public_order_id"> & Partial<PurchaseTrackingRow>;
+        Update: Partial<PurchaseTrackingRow>;
         Relationships: [];
       };
       analytics_events: {

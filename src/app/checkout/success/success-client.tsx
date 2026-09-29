@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { track } from "@/lib/analytics";
+import { trackConfirmedPurchase } from "@/lib/analytics";
+import type { PurchaseReceipt } from "@/lib/purchase-event";
 import { AnalyzingScreen } from "@/components/saju/AnalyzingScreen";
 import { LAST_ORDER_SLUG_KEY } from "@/components/checkout/TossWidget";
 import { worldOfSlug, type World } from "@/lib/world";
@@ -57,36 +58,12 @@ export function SuccessClient({
     }
   }, [serverWorld]);
 
-  // 결제 완료 전환 추적. 금액·통화만, 개인정보 없음.
-  //
-  // ⚠️ 예전엔 resultId 가 생겨야만 보냈다. 그런데 결제는 됐는데 결과지가 보류되면
-  //    (selfHeal 64초 실패 → state "ok") resultId 가 끝내 안 잡혀 Purchase 가 **영영 안 나갔다**.
-  //    유입이 100% 메타라 이건 곧 "메타가 구매자를 못 배운다" = 광고비 손실이다.
-  //    → 돈이 잡힌 시점(confirm 200)에 보낸다. 결과지 생성은 전환과 별개 문제다.
-  //
-  // 중복 방지가 두 겹인 이유: confirm 은 멱등이라 비회원이 저장해 둔 이 주소를 나중에
-  // 다시 열면 또 200 이 온다. ref 는 같은 탭만 막으므로 orderId 키로 localStorage 에도 남긴다.
+  // Browser fallback uses the server receipt's canonical amount and event ID.
+  // The server ledger/CAPI does not depend on this tab remaining open.
   const purchaseSent = useRef(false);
-  const sendPurchase = useCallback((orderId: string, amount: number, slug?: string | null) => {
-    if (purchaseSent.current) return;
-    const key = `mr_purchase_${orderId}`;
-    try {
-      if (localStorage.getItem(key)) {
-        purchaseSent.current = true;
-        return;
-      }
-      localStorage.setItem(key, "1");
-    } catch {
-      // 스토리지 차단(프라이빗·웹뷰) — 아래 ref 로 같은 탭 중복만 막는다
-    }
-    purchaseSent.current = true;
-    // slug 를 실어야 메타가 **어느 상품이 팔렸는지** 안다(analytics.ts 가 content_ids 로 바꾼다).
-    // 성공 URL 에는 상품이 없어서 이 경로뿐이고, 메타 쪽에서는 「맞춤 전환」으로만 갈린다.
-    track("purchase", {
-      value: amount > 0 ? amount : undefined,
-      currency: "KRW",
-      slug: slug ?? undefined,
-    });
+  const sendPurchase = useCallback((purchase: PurchaseReceipt | null | undefined) => {
+    if (!purchase || purchaseSent.current) return;
+    purchaseSent.current = trackConfirmedPurchase(purchase);
   }, []);
 
   useEffect(() => {
@@ -125,26 +102,32 @@ export function SuccessClient({
       return false;
     };
 
+    // Read the receipt during slow result generation. This endpoint never generates
+    // another result or approves another payment. A pending deposit returns null.
+    let stopped = false;
+    let polling = false;
+    const receiptTimer = setInterval(async () => {
+      if (stopped || polling || purchaseSent.current) return;
+      polling = true;
+      try {
+        const response = await fetch("/api/orders/purchase-receipt", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, paymentKey }), signal: AbortSignal.timeout(4000),
+        });
+        if (response.ok && !stopped) sendPurchase((await response.json()).purchase);
+      } catch { /* CAPI and the confirm response remain independent fallbacks */ }
+      finally { polling = false; }
+    }, 5000);
     (async () => {
       try {
         const res = await fetch("/api/orders/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentKey, orderId, amount: amountNum }),
+          body: JSON.stringify({ paymentKey, orderId, amount: amountNum, purchaseTrackingVersion: 1 }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");
-        // 여기가 돈이 잡힌 시점 — 결과지 생성 성공 여부와 무관하게 전환 1회 전송.
-        //
-        // ⚠ 가상계좌는 예외다. confirm 은 200 을 주지만 토스 상태가 DONE 이 아니면
-        //   **아직 돈이 안 들어온 것**이다(reason: "awaiting_deposit"). 여기서 Purchase 를 쏘면
-        //   메타가 「입금 안 한 사람」을 구매자로 학습한다 — ROAS 가 부풀고 타깃이 틀어진다.
-        //   유입이 100% 메타라 이 거짓 신호는 광고비를 그대로 잘못된 사람에게 태운다.
-        //
-        //   입금이 실제로 들어오면 토스 웹훅·복구 크론이 마무리하는데, 그 경로엔 이 화면이 없어
-        //   그 전환은 지금 구조에선 놓친다. **놓치는 쪽이 거짓 신호보다 낫다** —
-        //   회수는 서버 CAPI 를 붙일 때 한다(주 50전환 쌓인 뒤).
-        if (json.reason !== "awaiting_deposit") sendPurchase(orderId, amountNum, json.productSlug);
+        sendPurchase(json.purchase);
         const guest = json.guest === true;
         if (guest) setIsGuest(true);
         if (json.resultId) {
@@ -165,8 +148,11 @@ export function SuccessClient({
       } catch (err) {
         setState("error");
         setMessage(err instanceof Error ? err.message : "결제 승인 중 오류가 발생했습니다.");
+      } finally {
+        clearInterval(receiptTimer);
       }
     })();
+    return () => { stopped = true; clearInterval(receiptTimer); };
   }, [paymentKey, orderId, amount, sendPurchase]);
 
   // ── 대기 화면: 분석 중 — 풀스크린. 방금 산 상품의 세계관을 그대로 이어간다 ──

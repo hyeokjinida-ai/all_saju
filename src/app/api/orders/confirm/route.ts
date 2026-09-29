@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { confirmTossPayment } from "@/lib/toss/confirm";
 import { generateResultForOrder } from "@/lib/saju/generate-result";
+import { capturePurchaseContext, dispatchPurchases, purchaseReceipt } from "@/lib/purchase-tracking";
 
 // 이 라우트는 결제 승인 + 결과지 생성(사주 API + LLM 9챕터)을 한 번에 태운다.
 // Vercel 기본 제한(15초)으로는 못 끝낸다 — 실측 gpt-4o-mini 8~19초,
@@ -16,6 +17,7 @@ const bodySchema = z.object({
   paymentKey: z.string().min(1),
   orderId: z.string().min(1),
   amount: z.number().int().nonnegative(),
+  purchaseTrackingVersion: z.literal(1).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
   // 1. DB의 주문과 amount 일치 검증 (위변조 차단)
   const { data: order, error: orderErr } = await service
     .from("orders")
-    .select("id, amount, status, product_id, user_id, guest_email")
+    .select("id, amount, status, product_id, user_id, guest_email, toss_payment_key")
     .eq("order_id", orderId)
     .maybeSingle();
 
@@ -55,16 +57,23 @@ export async function POST(request: NextRequest) {
   // 결제 성공 화면이 "마이페이지에서 확인" 같은 못 쓰는 안내를 안 준다.
   const isGuest = !order.user_id;
 
-  if (order.status === "paid") {
-    // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
-    const outcome = await generateResultForOrder(order.id, { service });
-    if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true, productSlug });
-    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason, productSlug });
-  }
   if (order.amount !== amount) {
     return NextResponse.json({ error: "금액이 일치하지 않습니다" }, { status: 400 });
   }
+  if (order.status === "paid") {
+    if (order.toss_payment_key !== paymentKey) {
+      return NextResponse.json({ error: "결제 정보를 확인할 수 없습니다" }, { status: 403 });
+    }
+    const purchase = await purchaseReceipt(service, order.id);
+    await dispatchPurchases(service, 1, order.id);
+    after(async () => { await dispatchPurchases(service, 2); });
+    // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
+    const outcome = await generateResultForOrder(order.id, { service });
+    if (outcome.ok) return NextResponse.json({ resultId: outcome.resultId, alreadyPaid: true, productSlug, purchase });
+    return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason, productSlug, purchase });
+  }
 
+  await capturePurchaseContext(service, request, order.id, parsed.data.purchaseTrackingVersion === 1);
   // 2. 토스 confirm (결제 승인)
   const toss = await confirmTossPayment({ paymentKey, orderId, amount });
   if (!toss.ok) {
@@ -72,7 +81,7 @@ export async function POST(request: NextRequest) {
     await service.from("orders").update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
     return NextResponse.json({ error: toss.error.message, code: toss.error.code }, { status: 402 });
   }
-  if (toss.data.totalAmount !== amount) {
+  if (toss.data.totalAmount !== amount || toss.data.orderId !== orderId) {
     await service.from("orders").update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
     return NextResponse.json({ error: "토스 응답 금액 불일치" }, { status: 400 });
   }
@@ -82,7 +91,7 @@ export async function POST(request: NextRequest) {
   // 이 쓰기는 무가드(여기 도달 = 토스 승인 성공) — 패배한 동시요청의 failed 쓰기가
   // 먼저 도착해도 이 paid 쓰기가 항상 이기도록(failed 쪽만 status 가드).
   const isDone = toss.data.status === "DONE";
-  await service
+  const { error: paidWriteError } = await service
     .from("orders")
     .update({
       status: isDone ? "paid" : "pending",
@@ -90,6 +99,10 @@ export async function POST(request: NextRequest) {
       paid_at: isDone ? toss.data.approvedAt : null,
     })
     .eq("id", order.id);
+  if (paidWriteError) {
+    console.error("[confirm] approved payment persistence pending", paidWriteError.code);
+    return NextResponse.json({ error: "승인된 결제 정보를 저장하는 중입니다. 잠시 후 다시 확인해 주세요." }, { status: 503 });
+  }
 
   // 어떤 수단으로 냈는지 — 손님이 **고른 것**이 아니라 토스가 **승인한 것**을 남긴다(2026-09-21).
   // 전엔 이걸 어디에도 안 남겨서 「계좌이체로 낸 사람이 몇이나 되나」를 끝내 못 셌다.
@@ -123,11 +136,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // The DB trigger has already recorded the purchase atomically with paid.
+  // Meta runs BEFORE the slow LLM; a closed result tab no longer loses the server event.
+  const purchase = await purchaseReceipt(service, order.id);
+  await dispatchPurchases(service, 1, order.id);
+  after(async () => { await dispatchPurchases(service, 2); });
   // 3. 결과 생성(멱등 공유 함수). 실패해도 결제는 이미 승인됨 → '보류'로 응답하고
   //    클라 자가복구 폴링 + 복구 크론 + 토스 웹훅이 백업으로 마무리한다.
   const outcome = await generateResultForOrder(order.id, { service });
   if (outcome.ok) {
-    return NextResponse.json({ resultId: outcome.resultId, productSlug });
+    return NextResponse.json({ resultId: outcome.resultId, productSlug, purchase });
   }
 
   console.error("[confirm] 결과 생성 보류:", order.id, outcome.reason, outcome.detail ?? "");
@@ -138,6 +156,7 @@ export async function POST(request: NextRequest) {
     guest: isGuest,
     reason: outcome.reason,
     productSlug,
+    purchase,
     message: "결제는 완료됐어요. 결과지를 마무리하는 중이에요 — 잠시만 기다려 주세요.",
   });
 }
