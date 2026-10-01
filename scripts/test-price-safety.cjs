@@ -81,6 +81,29 @@ async function main(){
   await claim(db,oldOrder(),'qa-member');assert.equal(db.tables.orders[0].amount,20000,'concurrent amount change is not overwritten');
   db=new MemoryDb(24900);db.tables.orders.push({...oldOrder(),toss_payment_key:'already_issued_deposit'});
   await claim(db,oldOrder(),'qa-member');assert.equal(db.tables.orders[0].amount,19900,'pending deposit amount cannot be changed');
+  // Execute the real payment UI handlers against SDK doubles, never Toss.
+  let effects=[],sdkAmount,paymentRequest;
+  mocks.react={useState:v=>[v,()=>{}],useRef:v=>({current:v}),useEffect:f=>effects.push(f)};
+  mocks['next/link']='test-link';mocks.sonner={toast:{error:m=>{throw Error(m)}}};
+  mocks['@/components/ui/button']={Button:'test-button'};
+  mocks['@/lib/analytics']={track:()=>{}};
+  mocks['./TossWidget']={LAST_ORDER_SLUG_KEY:'test-slug'};
+  mocks['@/lib/toss/client']={
+    loadPayment:async()=>({requestPayment:async v=>{paymentRequest=v;sdkAmount=v.amount.value}}),
+    loadWidgets:async()=>({setAmount:async v=>{sdkAmount=v.value},renderPaymentMethods:async()=>{},renderAgreement:async()=>{},requestPayment:async v=>{paymentRequest=v}}),
+  };
+  global.window={location:{origin:'https://checkout.example.invalid'}};global.sessionStorage={setItem:()=>{}};
+  function buttons(node){if(!node||typeof node!=='object')return[];if(Array.isArray(node))return node.flatMap(buttons);return[...(node.type==='test-button'?[node]:[]),...buttons(node.props?.children)]}
+  for(const component of[load('src/components/checkout/PayMethods.tsx').PayMethods,load('src/components/checkout/TossWidget.tsx').TossWidget]){
+    for(const amount of[19900,18000,26900,25000,24900,23000,31900,30000]){
+      effects=[];sdkAmount=null;paymentRequest=null;
+      const tree=component({orderId:'ord_TEST_SDK',amount,customerKey:'qa',productName:'QA',productSlug:'sangun-sinjeom',customerEmail:null});
+      effects.forEach(f=>f());await new Promise(resolve=>setImmediate(resolve));
+      await buttons(tree)[0].props.onClick();
+      assert.equal(sdkAmount,amount);assert.equal(paymentRequest.orderId,'ord_TEST_SDK');
+    }
+  }
+  console.log('PASS both actual payment UI handlers send all old/new guest/member amounts unchanged to the mocked SDK');
   console.log('PASS fresh guest/member/single/bundle prices; old pending amount and response; stale quote 409; read failure; tamper rejection; legacy tab; one-time claim; concurrent claim/payment/amount protection');
 }
 main().catch(e=>{console.error(e);process.exitCode=1});
