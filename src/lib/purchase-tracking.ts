@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { GATE_COOKIE, readGateAssignment } from "@/lib/gate-experiment";
-import { attributionCookie, isRecentPurchase, metaAccepted, metaCookie, nextRetryDelay, type PurchaseReceipt } from "@/lib/purchase-event";
+import { attributionCookie, isRecentPurchase, metaAccepted, metaCookie, metaPurchaseEvent, nextRetryDelay, type PurchaseReceipt } from "@/lib/purchase-event";
 import type { Json, PurchaseTrackingRow } from "@/types/database";
 
 type Service = ReturnType<typeof createServiceClient>;
@@ -57,11 +57,14 @@ export function receiptFor(row: PurchaseTrackingRow, now = Date.now()): Purchase
     currency: "KRW", slug: row.product_slug, paidAt: row.paid_at };
 }
 
-export async function purchaseReceipt(service: Service, orderId: string): Promise<PurchaseReceipt | null> {
+export async function purchaseReceipt(service: Service, orderId: string, trackingVersion = 1): Promise<PurchaseReceipt | null> {
   try {
     const { data, error } = await service.from("purchase_tracking").select("*")
       .eq("order_id", orderId).abortSignal(timeout()).maybeSingle();
     if (error) console.error("[purchase] receipt unavailable", error.code);
+    // Cached v1 clients send every receipt as Purchase. Do not give them an extra
+    // question receipt; the paid ledger still preserves its revenue in full.
+    if (data?.product_slug === "extra-question" && trackingVersion < 2) return null;
     return data ? receiptFor(data) : null;
   } catch { console.error("[purchase] receipt unavailable"); return null; }
 }
@@ -73,7 +76,7 @@ export function buildMetaEvent(row: PurchaseTrackingRow) {
   const subject = typeof identifier === "string" && /^[0-9a-f-]{36}$/i.test(identifier) ? identifier : undefined;
   if (!fbp && !fbc && !subject) return null;
   return {
-    event_name: "Purchase", event_id: row.event_id,
+    event_name: metaPurchaseEvent(row.product_slug).name, event_id: row.event_id,
     event_time: Math.floor(Date.parse(row.paid_at!) / 1000), action_source: "website",
     event_source_url: "https://myeongunrok.com/checkout/success",
     user_data: {

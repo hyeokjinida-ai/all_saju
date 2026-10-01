@@ -61,6 +61,12 @@ const base = (overrides={}) => ({
 async function main() {
   const rules=load('src/lib/purchase-event.ts');
   const tracking=load('src/lib/purchase-tracking.ts');
+  const extraRow=base({product_slug:'extra-question',amount:3100});
+  assert.equal(tracking.buildMetaEvent(extraRow).event_name,'ExtraQuestionPurchase');
+  assert.equal(tracking.buildMetaEvent(base()).event_name,'Purchase');
+  db=new MemoryDb([extraRow]);
+  assert.equal(await tracking.purchaseReceipt(db,extraRow.order_id,1),null,'cached old clients cannot misclassify extra questions');
+  assert.equal((await tracking.purchaseReceipt(db,extraRow.order_id,2)).value,3100,'new clients retain extra-question revenue');
   assert.equal(rules.metaAccepted(true,{events_received:0}),false);
   assert.equal(rules.metaAccepted(false,{events_received:1}),false);
   assert.equal(rules.metaAccepted(true,{events_received:1,error:{code:100}}),false);
@@ -162,7 +168,8 @@ async function main() {
   global.localStorage=storage; global.sessionStorage=storage;
   global.location={pathname:'/checkout/success',hostname:'myeongunrok.com',search:''};
   global.document={referrer:'',cookie:''}; global.window={};
-  Object.defineProperty(global,'navigator',{value:{sendBeacon:()=>true},configurable:true});
+  const own=[];
+  Object.defineProperty(global,'navigator',{value:{sendBeacon:(_url,body)=>{own.push(body);return true}},configurable:true});
   const analytics=load('src/lib/analytics.ts');
   const receipt=tracking.receiptFor(base());
   assert.equal(analytics.trackConfirmedPurchase(receipt),false,'missing Pixel remains retryable');
@@ -171,8 +178,16 @@ async function main() {
   assert.equal(analytics.trackConfirmedPurchase(receipt),true);
   assert.deepEqual(pixel[0],['track','Purchase',{value:26900,currency:'KRW',content_ids:['bundle-sangun-inyeon']},{eventID:receipt.eventId}]);
   analytics.trackConfirmedPurchase(receipt); assert.equal(pixel.length,1,'reload marker prevents replay');
+  const extraReceipt={...receipt,slug:'extra-question',value:3100,orderId:'ord_EXTRA_ONLY',eventId:'extra-event-id'};
+  assert.equal(analytics.trackConfirmedPurchase(extraReceipt),true);
+  assert.deepEqual(pixel.at(-1),['trackCustom','ExtraQuestionPurchase',{value:3100,currency:'KRW',content_ids:['extra-question']},{eventID:'extra-event-id'}]);
+  const ownExtra=JSON.parse(await own.at(-1).text());
+  assert.equal(ownExtra.event,'purchase','internal revenue ledger keeps all purchases');
+  assert.equal(ownExtra.props.value,3100);
+  assert.equal(ownExtra.props.slug,'extra-question');
+  analytics.trackConfirmedPurchase(extraReceipt); assert.equal(pixel.length,2,'extra purchase also deduplicates');
   store.clear(); store.set('mr_gate_qa','1');
-  assert.equal(analytics.trackConfirmedPurchase(receipt),false); assert.equal(pixel.length,1,'QA never emits Purchase');
+  assert.equal(analytics.trackConfirmedPurchase(receipt),false); assert.equal(pixel.length,2,'QA never emits Purchase');
   store.clear(); global.localStorage={getItem(){throw Error()},setItem(){throw Error()}};
   global.sessionStorage=global.localStorage;
   assert.equal(analytics.trackConfirmedPurchase(receipt),true,'storage denial does not block pixel');

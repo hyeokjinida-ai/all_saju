@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { chargeFor } from "@/lib/pricing";
+import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { observePayPanel } from "@/lib/observe-pay-panel";
 import type { SajuTeaser } from "@/lib/saju/teaser";
 import type { PartnerFace } from "@/lib/saju/partner-face";
@@ -879,10 +881,14 @@ export function SajuWizard({
               </div>
             )}
 
+            <PriceExposure slug={selected.slug} basePrice={effectivePrice}
+              displayedAmount={chargeFor(effectivePrice, isLoggedIn)} isMember={isLoggedIn}
+              stage={payOpen ? "sheet" : "inline"}>
             {isLoggedIn ? (
           <button
             type="button"
             onClick={createOrder}
+            data-price-amount={chargeFor(effectivePrice, true)}
             disabled={submitting}
             className="w-full min-h-[58px] border-none font-bold text-[17px] tracking-[0.15em] flex items-center justify-center gap-3 disabled:opacity-70"
             style={{
@@ -895,8 +901,8 @@ export function SajuWizard({
             {submitting
               ? "주문 생성 중…"
               : imm
-                ? `${formatKRW(Math.max(0, effectivePrice - 1900))} 내고 장부 전체 열기`
-                : `${formatKRW(Math.max(0, effectivePrice - 1900))} 결제하러 가기 (회원 할인 적용)`}
+                ? `${formatKRW(chargeFor(effectivePrice, true))} 내고 장부 전체 열기`
+                : `${formatKRW(chargeFor(effectivePrice, true))} 결제하러 가기 (회원 할인 적용)`}
             {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
           </button>
             ) : (
@@ -942,6 +948,7 @@ export function SajuWizard({
                 createOrder();
               }}
               disabled={submitting}
+              data-price-amount={effectivePrice}
               className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
               style={{
                 fontFamily: "var(--font-serif-kr), serif",
@@ -976,6 +983,7 @@ export function SajuWizard({
             </p>
           </div>
             )}
+            </PriceExposure>
           {imm && (
             <p className="mt-3 text-center text-[11px]" style={{ color: "#7a8296" }}>
               토스페이먼츠 안전결제 · 결과지가 제대로 만들어지지 않으면 전액 환불
@@ -1007,13 +1015,15 @@ export function SajuWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: selected.productId, // 단품이거나 손님이 고른 패키지
+          displayedAmount: chargeFor(effectivePrice, isLoggedIn),
           ...payload(),
           email: isLoggedIn ? undefined : guestEmail.trim(),
         }),
       });
       const json = await res.json();
+      if (json.code === "PRICE_CHANGED") router.refresh();
       if (!res.ok) throw new Error(json.error ?? "주문 생성 실패");
-      track("begin_checkout", { slug: selected.slug, value: effectivePrice, currency: "KRW" });
+      track("begin_checkout", { slug: selected.slug, value: json.amount, currency: "KRW", orderId: json.orderId });
       router.push(`/checkout/${json.orderId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");

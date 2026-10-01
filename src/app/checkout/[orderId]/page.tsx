@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { CheckoutForm } from "@/components/checkout/ContactFields";
+import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { TrustStrip } from "@/components/saju/TrustStrip";
 import { LoginNudge } from "@/components/checkout/LoginNudge";
 import { formatKRW } from "@/lib/utils";
-import { MEMBER_DISCOUNT, MIN_CHARGE, chargeFor } from "@/lib/pricing";
+import { MEMBER_DISCOUNT } from "@/lib/pricing";
+import { claimPendingOrder } from "@/lib/claim-pending-order";
 import { worldOfSlug, worldClass, worldBg } from "@/lib/world";
 import { directPayReady } from "@/lib/toss/keys";
 
@@ -49,11 +51,7 @@ export default async function CheckoutPage({
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      const { data: p } = await service.from("products").select("price").eq("id", order.product_id).maybeSingle();
-      const next = p ? chargeFor(p.price as number, true) : 0;
-      if (next >= MIN_CHARGE) {
-        await service.from("orders").update({ user_id: user.id, amount: next }).eq("id", order.id).eq("status", "pending");
-      }
+      await claimPendingOrder(service, order, user.id);
     }
     redirect(`/checkout/${orderId}`);
   }
@@ -162,7 +160,10 @@ export default async function CheckoutPage({
             />
           )}
           {memberOff > 0 && <Row k="회원 할인" v={`-${formatKRW(memberOff)}`} />}
-          <Row k="결제금액" v={formatKRW(order.amount)} strong />
+          <PriceExposure slug={slug} basePrice={baseCharge} displayedAmount={order.amount}
+            isMember={isMember} stage="checkout" orderId={order.order_id}>
+            <Row k="결제금액" v={formatKRW(order.amount)} strong />
+          </PriceExposure>
         </div>
 
         {/* 티저 유료 CTA 가 「19,900원 내고 장부 전체 열기」인데 결제 버튼만 「결제하기」라

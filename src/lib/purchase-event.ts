@@ -1,6 +1,14 @@
 // Pure conversion rules shared with tests. No credentials or customer input here.
 export const PURCHASE_RETRY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+// Extra questions are repeat purchases, not acquisitions of a main reading.
+// Browser and server must use the same event name and stable event ID.
+export function metaPurchaseEvent(slug: unknown) {
+  return slug === "extra-question"
+    ? { name: "ExtraQuestionPurchase", method: "trackCustom" as const }
+    : { name: "Purchase", method: "track" as const };
+}
+
 export type PurchaseReceipt = {
   eventId: string;
   orderId: string;

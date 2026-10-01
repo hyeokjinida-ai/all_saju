@@ -17,7 +17,7 @@ const bodySchema = z.object({
   paymentKey: z.string().min(1),
   orderId: z.string().min(1),
   amount: z.number().int().nonnegative(),
-  purchaseTrackingVersion: z.literal(1).optional(),
+  purchaseTrackingVersion: z.union([z.literal(1), z.literal(2)]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (order.toss_payment_key !== paymentKey) {
       return NextResponse.json({ error: "결제 정보를 확인할 수 없습니다" }, { status: 403 });
     }
-    const purchase = await purchaseReceipt(service, order.id);
+    const purchase = await purchaseReceipt(service, order.id, parsed.data.purchaseTrackingVersion);
     await dispatchPurchases(service, 1, order.id);
     after(async () => { await dispatchPurchases(service, 2); });
     // idempotent: 이미 결제된 주문 — 결과가 있으면 그대로, 없으면 재생성 시도(자가복구)
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ resultId: null, alreadyPaid: true, pending: true, orderId, guest: isGuest, reason: outcome.reason, productSlug, purchase });
   }
 
-  await capturePurchaseContext(service, request, order.id, parsed.data.purchaseTrackingVersion === 1);
+  await capturePurchaseContext(service, request, order.id, !!parsed.data.purchaseTrackingVersion);
   // 2. 토스 confirm (결제 승인)
   const toss = await confirmTossPayment({ paymentKey, orderId, amount });
   if (!toss.ok) {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 
   // The DB trigger has already recorded the purchase atomically with paid.
   // Meta runs BEFORE the slow LLM; a closed result tab no longer loses the server event.
-  const purchase = await purchaseReceipt(service, order.id);
+  const purchase = await purchaseReceipt(service, order.id, parsed.data.purchaseTrackingVersion);
   await dispatchPurchases(service, 1, order.id);
   after(async () => { await dispatchPurchases(service, 2); });
   // 3. 결과 생성(멱등 공유 함수). 실패해도 결제는 이미 승인됨 → '보류'로 응답하고

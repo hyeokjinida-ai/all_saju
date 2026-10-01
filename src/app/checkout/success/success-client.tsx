@@ -112,7 +112,7 @@ export function SuccessClient({
       try {
         const response = await fetch("/api/orders/purchase-receipt", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, paymentKey }), signal: AbortSignal.timeout(4000),
+          body: JSON.stringify({ orderId, paymentKey, purchaseTrackingVersion: 2 }), signal: AbortSignal.timeout(4000),
         });
         if (response.ok && !stopped) sendPurchase((await response.json()).purchase);
       } catch { /* CAPI and the confirm response remain independent fallbacks */ }
@@ -123,7 +123,7 @@ export function SuccessClient({
         const res = await fetch("/api/orders/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentKey, orderId, amount: amountNum, purchaseTrackingVersion: 1 }),
+          body: JSON.stringify({ paymentKey, orderId, amount: amountNum, purchaseTrackingVersion: 2 }),
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");

@@ -7,7 +7,7 @@
 // ⚠️ 개인정보 금지: 이름·생년월일·시각·성별·이메일 등은 절대 보내지 않는다.
 //    단계 번호·상품 slug·금액(value)·통화만 보낸다(퍼널 분석용).
 
-import { isRecentPurchase, type PurchaseReceipt } from "@/lib/purchase-event";
+import { isRecentPurchase, metaPurchaseEvent, type PurchaseReceipt } from "@/lib/purchase-event";
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 
@@ -35,7 +35,9 @@ const META_STANDARD: Record<string, string> = {
 function sendMeta(event: string, params: EventParams): boolean {
   if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" || new URLSearchParams(location.search).has("gate_qa")) return false;
   try { if (sessionStorage.getItem("mr_gate_qa") === "1") return false; } catch { /* storage may be blocked */ }
-  const std = META_STANDARD[event];
+  const conversion = event === "purchase" ? metaPurchaseEvent(params.slug) : null;
+  const std = conversion?.name ?? META_STANDARD[event];
+  const method = conversion?.method ?? "track";
   if (!std || !window.fbq) return false;
   try {
     // 개인정보는 위 주석대로 애초에 params 에 없다 — 금액·통화만 넘어간다.
@@ -43,8 +45,8 @@ function sendMeta(event: string, params: EventParams): boolean {
     if (params.value !== undefined) payload.value = params.value;
     if (params.currency !== undefined) payload.currency = params.currency;
     if (params.slug !== undefined) payload.content_ids = [params.slug];
-    if (typeof params.eventId === "string") window.fbq("track", std, payload, { eventID: params.eventId });
-    else window.fbq("track", std, payload);
+    if (typeof params.eventId === "string") window.fbq(method, std, payload, { eventID: params.eventId });
+    else window.fbq(method, std, payload);
     return true;
   } catch {
     return false;
