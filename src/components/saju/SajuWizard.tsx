@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import type { SangunPersonalData } from "@/components/products/SangunPersonalDetail";
+const SangunPersonalDetail = dynamic(() => import("@/components/products/SangunPersonalDetail"), { ssr: false });
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
@@ -402,6 +405,7 @@ export function SajuWizard({
   reviews = [],
 }: Props) {
   const imm = variant === "immersive";
+  const [personalData, setPersonalData] = useState<SangunPersonalData | null>(null);
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
@@ -428,8 +432,9 @@ export function SajuWizard({
   const optTone: OptionTone = imm ? "ban" : isNight ? "jik" : "label";
   const optLabel = (o: ProfileOption) => displayOf([o], o.value, optTone);
   const router = useRouter();
-  // 결제 시트에서 고른 것. 기본은 단품 — 패키지는 손님이 직접 고를 때만 팔린다.
-  const [selectedId, setSelectedId] = useState(productId);
+  // Sangun starts with the two-product set. Keep the customer's later selection.
+  const [selectedId, setSelectedId] = useState(() => productSlug === "sangun-sinjeom"
+    ? bundles.find(b => b.slug === "bundle-sangun-inyeon")?.productId ?? productId : productId);
   const concernOptions = CONCERN_BY_SLUG[productSlug] ?? CONCERN_OPTIONS;
   const steps = STEPS_BY_SLUG[productSlug] ?? STEPS;
   // 칸 번호는 **배열에서 뽑는다.** 재회가 문항을 여덟 개 더 얹어 길이가 상품마다 다르다.
@@ -459,6 +464,7 @@ export function SajuWizard({
   /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
    *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
   const inColdOpen = coldOpenLane && !coldOpenDone;
+  const newDetail = productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
   // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
@@ -632,6 +638,7 @@ export function SajuWizard({
   const loadTeaser = useCallback(async () => {
     const startedAt = Date.now();
     setTeaserLoading(true);
+    setPersonalData(null);
     setStep(teaserStep);
     try {
       const res = await fetch("/api/saju/chart", {
@@ -660,6 +667,7 @@ export function SajuWizard({
         setPillars(Array.isArray(json.view?.pillars) ? (json.view.pillars as Pillar[]) : null);
       }
       if (json?.ok && json.tokens) setTokens(json.tokens as Record<string, string>);
+      if (json?.ok && json.personal) setPersonalData(json.personal as SangunPersonalData);
       if (json?.ok && json.teaser) {
         setTeaser(json.teaser as SajuTeaser);
         track("teaser_view", { slug: productSlug });
@@ -807,6 +815,7 @@ export function SajuWizard({
                     <button
                       key={o.productId}
                       type="button"
+                      aria-pressed={on}
                       onClick={() => {
                         setSelectedId(o.productId);
                         track("plan_select", { slug: productSlug, plan: o.productId, price: o.price });
@@ -875,7 +884,7 @@ export function SajuWizard({
                 {/* 중복 반론 — "산군에도 인연 달이 나오잖아"에 세계관으로 답한다 */}
                 {selected.includes.length > 1 && imm && (
                   <p className="font-myeongjo pt-1 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
-                    겉장은 내가 봤다. 장부 통째는 다른 얘기다.
+                    박수무당의 인생 풀이와 직녀의 연애 풀이를 함께 받습니다.
                   </p>
                 )}
               </div>
@@ -901,7 +910,7 @@ export function SajuWizard({
             {submitting
               ? "주문 생성 중…"
               : imm
-                ? `${formatKRW(chargeFor(effectivePrice, true))} 내고 장부 전체 열기`
+                ? `${formatKRW(chargeFor(effectivePrice, true))} 결제하러 가기 (회원 할인)`
                 : `${formatKRW(chargeFor(effectivePrice, true))} 결제하러 가기 (회원 할인 적용)`}
             {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
           </button>
@@ -911,7 +920,7 @@ export function SajuWizard({
             {/* 라벨을 칸 **위에** 세운다 — 전엔 흐린 placeholder 뿐이라 입력칸인지 안 읽혔고
                 자동완성 속성이 없어 폰이 이메일을 채워 주지도 않았다(2026-09-20 ㉮-3). */}
             <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
-              {imm ? "장부 받을 이메일" : "결과 받을 이메일"}
+              결과 받을 이메일
             </label>
             <input
               id="guest-email"
@@ -962,7 +971,7 @@ export function SajuWizard({
             {submitting
                 ? "주문 생성 중…"
                 : imm
-                  ? `${formatKRW(effectivePrice)} 내고 장부 전체 열기`
+                  ? `${formatKRW(effectivePrice)} 결제하러 가기`
                   : `${formatKRW(effectivePrice)} 결제하고 전체 보기`}
             </button>
             {/* 카카오 로그인 넛지는 제거했다 — provider 가 아직 안 열려서, 누르면 고객에게
@@ -973,7 +982,7 @@ export function SajuWizard({
                 안심시켜야 할 사람이 못 읽는다(각주가 아니라 마감 문구). */}
             {payHint && (
               <p className="text-center text-[13px]" style={{ color: "var(--gold-bright)" }}>
-                {imm ? "장부 보낼 이메일부터 적어라." : "결과 받을 이메일부터 적어 주세요."}
+                결과 받을 이메일부터 적어 주세요.
               </p>
             )}
             <p className="text-[13px] text-bone-faint text-center">
@@ -1205,7 +1214,7 @@ export function SajuWizard({
           그래서 콜드오픈 판에서는 fixed 오버레이로 띄운다: 레이아웃 기여 0 → 밀림 0.
           배경은 반투명 먹색 + blur — 아래로 흐르는 글이 헤더 글자와 겹쳐 읽히면 안 된다.
           스위치 없는 판(coldOpenLane=false)은 클래스가 전과 **바이트 단위로 같다**. */}
-      {!inColdOpen && (
+      {!inColdOpen && !(newDetail && !teaserLoading) && (
       <div
         className={`${coldOpenLane ? "fixed inset-x-0 top-0 z-30" : "relative z-[2]"} w-full max-w-[560px] mx-auto px-5 ${imm ? "pt-14" : isNight ? "pt-12" : "pt-5"}`}
         style={
@@ -1278,7 +1287,7 @@ export function SajuWizard({
             ⚠ 게이트가 `coldOpenLane` 인 이유: 감시점을 지난 뒤에 이 블록을 되살리면
             콜드오픈 블록 **위**에 92px 이 새로 끼어들어 화면이 밀린다. 그리고 애초에
             제목의 일은 타이틀 드랍(박수무당 레터링)이 이미 다 했다 — 두 번 소개할 이유가 없다. */}
-        {!(coldOpenLane && !teaserLoading) && (
+        {!((coldOpenLane || newDetail) && !teaserLoading) && (
         <div className="text-center mb-7">
           {!imm && (
             <span className="font-brush glow-gold block mb-4 text-gold-bright text-[40px] leading-none">
@@ -1952,7 +1961,7 @@ export function SajuWizard({
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
         {step === teaserStep && (
-          <TeaserStep
+          newDetail && !teaserLoading ? <SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} onBuy={openPaySheet} /> : <TeaserStep
             teaser={teaser}
             pillars={pillars}
             loading={teaserLoading}

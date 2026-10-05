@@ -8,6 +8,7 @@ import { parseProfileTags } from "@/lib/saju/profile-tags";
 import { computeReunionFacts, type ReunionFacts } from "@/lib/saju/reunion";
 import { REUNION_SLUG, hasPartnerChart, parseReunionTags, partnerBirthInfo } from "@/lib/saju/reunion-input";
 import { publicEnv } from "@/lib/env";
+import { buildSangunPersonalPreview } from "@/lib/saju/sangun-personal-preview";
 
 // 무료 분석(⑥)용 — 명식 + 오행 + 영역별 점수까지(LLM 없이). 결제 후 상세 풀이는 별도.
 // 점수는 십성에서 파생되므로 만세력 16종 전체를 한 번에 받는다(호출 수는 1콜로 동일 — 한도 보호).
@@ -155,7 +156,15 @@ export async function POST(request: NextRequest) {
         tokens = {}; // 토큰이 없으면 렌더러가 해당 말풍선을 숨긴다 — 흐름은 안 막는다
       }
     }
-    return NextResponse.json({ ok: true, view, teaser, tokens });
+    let personal = null;
+    if (body.teaser && body.slug === "sangun-sinjeom") {
+      try {
+        personal = buildSangunPersonalPreview(analysis, { name: body.nickname ?? "", birthDate: body.birthDate,
+          birthTime: body.birthTime, timeUnknown: !!body.timeUnknown, gender: body.gender, calendar: body.calendar,
+          partnerSex: parseProfileTags(body.concerns).partnerSex });
+      } catch { /* The existing teaser and payment remain available if presentation data fails. */ }
+    }
+    return NextResponse.json({ ok: true, view, teaser, tokens, personal });
   } catch (e) {
     return NextResponse.json({ ok: false, reason: "api_error", detail: e instanceof Error ? e.message : String(e) });
   }
