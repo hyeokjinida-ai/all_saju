@@ -20,6 +20,9 @@ export type PreviewProfile = {
 // This adapter consumes the same calculations as /api/saju/chart. It does not
 // compute a second horoscope or treat the relationship peak year as a daeun.
 export function buildSangunPersonalPreview(analysis: SajuAnalysisResponse, profile: PreviewProfile) {
+  // The input flow also permits leaving the clock blank without checking
+  // "unknown". Match the chart API, which omits the hour in both cases.
+  profile = { ...profile, timeUnknown: profile.timeUnknown || !profile.birthTime };
   const myeongsik = ganjiToMyeongsik(analysis);
   if (!myeongsik) throw new Error('명식을 확인하지 못했습니다.');
   const view = buildResultView({myeongsik, rawAnalysis: analysis, name: profile.name,

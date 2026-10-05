@@ -884,7 +884,7 @@ export function SajuWizard({
                 {/* 중복 반론 — "산군에도 인연 달이 나오잖아"에 세계관으로 답한다 */}
                 {selected.includes.length > 1 && imm && (
                   <p className="font-myeongjo pt-1 text-center text-[11px] leading-[1.7]" style={{ color: "var(--bone-faint)" }}>
-                    박수무당의 인생 풀이와 직녀의 연애 풀이를 함께 받습니다.
+                    선택한 {selected.includes.length}가지 상품의 전체 풀이를 함께 받습니다.
                   </p>
                 )}
               </div>
