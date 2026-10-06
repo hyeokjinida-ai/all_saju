@@ -1276,10 +1276,11 @@ export function SajuWizard({
       </div>
       )}
 
-      {/* 중앙: 질문 + 컨트롤 */}
+      {/* 중앙: 질문 + 컨트롤. The detail skips the step transform so its
+          fixed purchase bar stays anchored to the viewport. */}
       <div
         key={step}
-        className={`svc-fade flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center${imm ? " overflow-y-auto" : ""}`}
+        className={`${newDetail && !teaserLoading ? "" : "svc-fade "}flex-1 relative z-[1] w-full max-w-[560px] mx-auto px-5 py-5 flex flex-col justify-center${imm ? " overflow-y-auto" : ""}`}
       >
         {/* 콜드오픈 동안에는 제목·부제도 안 그린다 — 신당 컷보다 위에 글자가 남으면
             「그림으로 시작」이 깨진다(375폰 실측: 제목 y=30 · 부제 y=74 vs 신당 y=122).
