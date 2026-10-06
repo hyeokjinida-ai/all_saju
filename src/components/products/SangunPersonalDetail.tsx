@@ -12,22 +12,24 @@ export type SangunPersonalData = ReturnType<typeof buildSangunPersonalPreview>;
 // the personalized DOM and its observers with the empty template.
 const detailMarkup = { __html: template.html };
 
-export default function SangunPersonalDetail({ data, price, onBuy, payOpen }: {
+export default function SangunPersonalDetail({ data, price, onBuy, payOpen, inlinePayVisible, onReady }: {
   data: SangunPersonalData; price: number; onBuy: () => void; payOpen: boolean;
+  inlinePayVisible: boolean; onReady: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const buyRef = useRef(onBuy);
   const payRef = useRef(payOpen);
   buyRef.current = onBuy;
-  payRef.current = payOpen;
+  payRef.current = payOpen || inlinePayVisible;
   useLayoutEffect(() => {
     const root = ref.current;
     if (!root) return;
     renderSangunDetail(root, data);
     root.querySelectorAll<HTMLElement>('[data-live-price]').forEach(e => { e.textContent = formatKRW(price); });
     document.documentElement.dataset.sangunDetail = "new";
+    onReady();
     return () => { delete document.documentElement.dataset.sangunDetail; };
-  }, [data, price]);
+  }, [data, price, onReady]);
 
   useEffect(() => {
     const root = ref.current;
@@ -35,11 +37,12 @@ export default function SangunPersonalDetail({ data, price, onBuy, payOpen }: {
     const dialog = root.querySelector<HTMLDialogElement>('#sample-dialog')!;
     const sticky = root.querySelector<HTMLElement>('[data-reference-sticky]');
     const opening = root.querySelector('section');
-    const offers = Array.from(root.querySelectorAll('.offer, .fullpage-footer'));
+    const purchaseButtons = Array.from(root.querySelectorAll('[data-open="purchase"], [data-open-purchase]'))
+      .filter(button => !sticky?.contains(button));
     const syncSticky = () => {
       if (!sticky || !opening) return;
-      const offerVisible = offers.some(e => { const r = e.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; });
-      sticky.hidden = payRef.current || dialog.open || opening.getBoundingClientRect().bottom > 0 || offerVisible;
+      const buttonVisible = purchaseButtons.some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });
+      sticky.hidden = payRef.current || dialog.open || opening.getBoundingClientRect().bottom > 0 || buttonVisible;
     };
     let opener: HTMLElement | null = null;
     let oldOverflow = "";
@@ -79,7 +82,7 @@ export default function SangunPersonalDetail({ data, price, onBuy, payOpen }: {
     window.addEventListener('scroll', syncSticky, { passive: true });
     window.addEventListener('resize', syncSticky);
     const payObserver = new MutationObserver(syncSticky);
-    payObserver.observe(root, { attributes: true, attributeFilter: ['data-pay-open'] });
+    payObserver.observe(root, { attributes: true, attributeFilter: ['data-pay-open', 'data-inline-pay-visible'] });
     syncSticky();
     track('detail_shown', { slug: 'sangun-sinjeom', version: 'personal_v1' });
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -119,6 +122,6 @@ export default function SangunPersonalDetail({ data, price, onBuy, payOpen }: {
 
   return <>
     <link rel="stylesheet" href="/products/sangun/detail-v1/detail.css" precedence="sangun-detail" />
-    <div ref={ref} className="sangun-detail-v1 mixed-page sangun-original dialogue-mix personal-page" data-pay-open={payOpen} dangerouslySetInnerHTML={detailMarkup} />
+    <div ref={ref} className="sangun-detail-v1 mixed-page sangun-original dialogue-mix personal-page" data-pay-open={payOpen} data-inline-pay-visible={inlinePayVisible} dangerouslySetInnerHTML={detailMarkup} />
   </>;
 }

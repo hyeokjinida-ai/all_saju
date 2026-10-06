@@ -406,6 +406,8 @@ export function SajuWizard({
 }: Props) {
   const imm = variant === "immersive";
   const [personalData, setPersonalData] = useState<SangunPersonalData | null>(null);
+  const [personalDetailReady, setPersonalDetailReady] = useState(false);
+  const markPersonalDetailReady = useCallback(() => setPersonalDetailReady(true), []);
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
@@ -504,6 +506,11 @@ export function SajuWizard({
   // STEPS 배열을 건드리면 산군·존댓말 4종의 건너뛰기 계산이 통째로 밀린다.
   const [emailGate, setEmailGate] = useState(false);
   const [emailSkipped, setEmailSkipped] = useState(false);
+  // Both detail renderers share the inline payment panel and its measurement.
+  // Wait for the dynamic detail to mount before exposing anything below it.
+  const personalDetailPending = newDetail && !personalDetailReady;
+  const payInView = usePayInView(productSlug,
+    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending);
   const [form, setForm] = useState<FormState>({
     // demo 가 있으면 첫 렌더부터 채워 둔다 — setState 로 나중에 넣으면 티저 요청이
     // 빈 생일로 한 번 먼저 나가서 실패한다.
@@ -639,6 +646,7 @@ export function SajuWizard({
     const startedAt = Date.now();
     setTeaserLoading(true);
     setPersonalData(null);
+    setPersonalDetailReady(false);
     setStep(teaserStep);
     try {
       const res = await fetch("/api/saju/chart", {
@@ -1962,7 +1970,7 @@ export function SajuWizard({
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
         {step === teaserStep && (
-          newDetail && !teaserLoading ? <SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} onBuy={openPaySheet} /> : <TeaserStep
+          newDetail && !teaserLoading ? <SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} inlinePayVisible={payInView} onReady={markPersonalDetailReady} onBuy={openPaySheet} /> : <TeaserStep
             teaser={teaser}
             pillars={pillars}
             loading={teaserLoading}
@@ -1987,6 +1995,7 @@ export function SajuWizard({
             coldOpenDone={coldOpenDone}
             onColdOpenDone={markColdOpenDone}
             onBuyClick={openPaySheet}
+            payInView={payInView}
           />
         )}
       </div>
@@ -1996,7 +2005,7 @@ export function SajuWizard({
           우리는 확인 화면에서 값을 뺐는데 로딩 중에 결제 버튼과 이메일 입력이 그대로 떠 있어
           "무료로 먼저 보기"를 누른 손님이 티저를 보기도 전에 19,900원을 먼저 봤다. */}
       <div id="pay" className="relative z-[2] w-full max-w-[560px] mx-auto scroll-mt-6 px-5 pb-7">
-        {teaserLoading || emailGate ? null : step < total - 1 ? (
+        {teaserLoading || emailGate || personalDetailPending ? null : step < total - 1 ? (
           <>
             <button
               type="button"
@@ -2037,7 +2046,7 @@ export function SajuWizard({
 
       {/* 법정 표기는 **결제 칸 아래**다. 위에 있으면 결제 칸에 닿기 전에 페이지가 끝난 것처럼
           보인다(2026-09-20 ㉮-1). 티저 꼬리(TeaserSalesTail)에서 여기로 옮겨 왔다. */}
-      {productSlug === "sangun-sinjeom" && !teaserLoading && !emailGate && <StoryFooter />}
+      {productSlug === "sangun-sinjeom" && !teaserLoading && !emailGate && !personalDetailPending && <StoryFooter />}
     </div>
   );
 }
@@ -2460,6 +2469,7 @@ function TeaserStep({
   coldOpenDone = true,
   onColdOpenDone,
   onBuyClick,
+  payInView,
 }: {
   teaser: SajuTeaser | null;
   pillars: Pillar[] | null;
@@ -2484,9 +2494,9 @@ function TeaserStep({
   onColdOpenDone?: () => void;
   /** 구매 버튼·고정 띠 → 결제 팝업 열기(부모가 연다). 없으면 옛 동작(맨 끝으로 스크롤). */
   onBuyClick?: () => void;
+  payInView: boolean;
 }) {
-  // 결제 칸이 보이면 하단 고정 띠를 숨긴다(㉮-4) + 결제 칸 도달 계측(pay_view)
-  const payInView = usePayInView(productSlug);
+  // The parent observes the shared panel, including when this renderer is replaced.
   // 전환점 카드의 붓 동그라미 — 손님이 그 카드에 도착했을 때 그려져야 한다.
   // 훅은 아래 `if (loading)` 조기 반환보다 위에 있어야 호출 순서가 안 깨진다.
   const { ref: inkRef, inView: inkInView } = useInView<HTMLDivElement>();
@@ -4093,13 +4103,13 @@ function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBu
  *  도착한 화면에서 **제일 밝은 버튼(고정 띠)이 눌러도 아무 일이 없었다** — 그 버튼은
  *  「결제 칸으로 스크롤」이라 이미 도착한 사람에겐 할 일이 없기 때문이다(2026-09-20 ㉮-4).
  *  처음 보인 순간에 pay_view 를 한 번 남긴다 — 결제 칸까지 온 사람 수를 세는 유일한 자. */
-function usePayInView(slug?: string) {
+function usePayInView(slug: string | undefined, enabled: boolean) {
   const [inView, setInView] = useState(false);
   const fired = useRef(false);
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
     fired.current = false;
     setInView(false);
+    if (!enabled || typeof IntersectionObserver === "undefined") return;
     return observePayPanel((on) => {
       setInView(on);
       if (on && !fired.current) {
@@ -4107,7 +4117,7 @@ function usePayInView(slug?: string) {
         track("pay_view", { slug, via: "inline" });
       }
     });
-  }, [slug]);
+  }, [slug, enabled]);
   return inView;
 }
 
