@@ -45,7 +45,10 @@ with config as (
     bool_or(v.event='detail_exposure') as rendered,
     bool_or(v.event='detail_exposure' and v.props->>'fallback'='true') as fallback
   from entries e cross join config c left join paid p on p.subject=e.subject
-    left join events v on v.subject=e.subject and v.created_at>=e.entered_at
+    -- Entry/exposure beacons from the same render can finish out of order.
+    -- Only the render acknowledgement gets a 5-second transport tolerance.
+    left join events v on v.subject=e.subject and (v.created_at>=e.entered_at
+      or (v.event='detail_exposure' and v.created_at>=e.entered_at-interval '5 seconds'))
       and v.created_at<=least(c.as_of,e.entered_at+c.conversion_window)
   group by e.subject,e.variant,e.entered_at,e.gate,e.creative,c.conversion_window,c.as_of,p.paid_orders,p.net_revenue
 ), scopes as (
