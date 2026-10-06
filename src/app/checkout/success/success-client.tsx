@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { trackConfirmedPurchase } from "@/lib/analytics";
+import { track, trackConfirmedPurchase } from "@/lib/analytics";
+import { startPurchaseReceiptPolling } from "@/lib/purchase-receipt-poller";
 import type { PurchaseReceipt } from "@/lib/purchase-event";
 import { AnalyzingScreen } from "@/components/saju/AnalyzingScreen";
 import { LAST_ORDER_SLUG_KEY } from "@/components/checkout/TossWidget";
@@ -59,11 +60,13 @@ export function SuccessClient({
   }, [serverWorld]);
 
   // Browser fallback uses the server receipt's canonical amount and event ID.
-  // The server ledger/CAPI does not depend on this tab remaining open.
+  // The server ledger is independent of this tab. Direct CAPI remains separately gated.
   const purchaseSent = useRef(false);
   const sendPurchase = useCallback((purchase: PurchaseReceipt | null | undefined) => {
-    if (!purchase || purchaseSent.current) return;
+    if (purchaseSent.current) return true;
+    if (!purchase) return false;
     purchaseSent.current = trackConfirmedPurchase(purchase);
+    return purchaseSent.current;
   }, []);
 
   useEffect(() => {
@@ -104,20 +107,19 @@ export function SuccessClient({
 
     // Read the receipt during slow result generation. This endpoint never generates
     // another result or approves another payment. A pending deposit returns null.
-    let stopped = false;
-    let polling = false;
-    const receiptTimer = setInterval(async () => {
-      if (stopped || polling || purchaseSent.current) return;
-      polling = true;
-      try {
+    const receiptPolling = startPurchaseReceiptPolling({
+      read: async () => {
         const response = await fetch("/api/orders/purchase-receipt", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, paymentKey, purchaseTrackingVersion: 2 }), signal: AbortSignal.timeout(4000),
         });
-        if (response.ok && !stopped) sendPurchase((await response.json()).purchase);
-      } catch { /* CAPI and the confirm response remain independent fallbacks */ }
-      finally { polling = false; }
-    }, 5000);
+        return response.ok ? (await response.json()).purchase : null;
+      },
+      send: sendPurchase,
+      onTimeout: (hasReceipt) => track("purchase_tracking_wait", {
+        orderId, stage: hasReceipt ? "receipt_ready" : "receipt_unavailable",
+      }),
+    });
     (async () => {
       try {
         const res = await fetch("/api/orders/confirm", {
@@ -127,7 +129,7 @@ export function SuccessClient({
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "결제 승인 실패");
-        sendPurchase(json.purchase);
+        receiptPolling.accept(json.purchase);
         const guest = json.guest === true;
         if (guest) setIsGuest(true);
         if (json.resultId) {
@@ -148,11 +150,9 @@ export function SuccessClient({
       } catch (err) {
         setState("error");
         setMessage(err instanceof Error ? err.message : "결제 승인 중 오류가 발생했습니다.");
-      } finally {
-        clearInterval(receiptTimer);
       }
     })();
-    return () => { stopped = true; clearInterval(receiptTimer); };
+    return () => { receiptPolling.stop(); };
   }, [paymentKey, orderId, amount, sendPurchase]);
 
   // ── 대기 화면: 분석 중 — 풀스크린. 방금 산 상품의 세계관을 그대로 이어간다 ──
