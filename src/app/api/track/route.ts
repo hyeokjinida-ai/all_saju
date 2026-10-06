@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 import { GATE_COOKIE, gateProps, readGateAssignment } from "@/lib/gate-experiment";
+import { DETAIL_COOKIE, detailProps, readDetailAssignment } from "@/lib/detail-experiment";
 
 // 퍼스트파티 분석 수집 — 클라이언트가 보낸 비식별 이벤트를 analytics_events 에 적재.
 // 항상 204(빈 응답)로 빠르게 끝낸다(분석이 사용자 경험을 막지 않도록).
@@ -77,10 +78,12 @@ export async function POST(request: NextRequest) {
 
   try {
     // Client-supplied order links/experiment labels cannot establish attribution.
-    if (body.event === "gate_order_link") return new NextResponse(null, { status: 204 });
+    if (["gate_order_link", "detail_order_link"].includes(body.event)) return new NextResponse(null, { status: 204 });
     const props = { ...(body.props ?? {}) };
-    for (const key of ["experiment", "variant", "subject", "qa"]) delete props[key];
+    for (const key of ["experiment", "variant", "subject", "qa", "detail_experiment", "detail_variant", "detail_subject"]) delete props[key];
     const assignment = readGateAssignment(request.cookies.get(GATE_COOKIE)?.value);
+    const detail = readDetailAssignment(request.cookies.get(DETAIL_COOKIE)?.value);
+    if (body.event === "detail_entry" && !detail) return new NextResponse(null, { status: 204 });
     if (body.event.startsWith("gate_") && !["gate_view", "gate_assignment_failed"].includes(body.event) && !assignment) {
       return new NextResponse(null, { status: 204 });
     }
@@ -89,7 +92,8 @@ export async function POST(request: NextRequest) {
       event: body.event,
       path: body.path ?? null,
       referrer: body.referrer || null,
-      props: (assignment ? { ...props, ...gateProps(assignment) } : { ...props, ...(process.env.VERCEL_ENV === "preview" ? { qa: true } : {}) }) as never,
+      props: { ...props, ...(assignment ? gateProps(assignment) : {}), ...(detail ? detailProps(detail) : {}),
+        qa: assignment?.qa === true || detail?.qa === true || process.env.VERCEL_ENV === "preview" } as never,
       visitor_id: body.visitorId ?? null,
       session_id: body.sessionId ?? null,
       ua: ua.slice(0, 300),

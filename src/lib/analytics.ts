@@ -33,8 +33,8 @@ const META_STANDARD: Record<string, string> = {
 
 /** 메타 픽셀로 같은 이벤트를 흘린다. 픽셀이 없으면(로컬·미설정) 조용히 넘어간다. */
 function sendMeta(event: string, params: EventParams): boolean {
-  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" || new URLSearchParams(location.search).has("gate_qa")) return false;
-  try { if (sessionStorage.getItem("mr_gate_qa") === "1") return false; } catch { /* storage may be blocked */ }
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" || ["gate_qa", "detail_qa", "demo"].some(k => new URLSearchParams(location.search).has(k))) return false;
+  try { if (sessionStorage.getItem("mr_gate_qa") === "1" || sessionStorage.getItem("mr_detail_qa") === "1") return false; } catch { /* storage may be blocked */ }
   const conversion = event === "purchase" ? metaPurchaseEvent(params.slug) : null;
   const std = conversion?.name ?? META_STANDARD[event];
   const method = conversion?.method ?? "track";
@@ -142,7 +142,8 @@ function send(event: string, params: EventParams, path?: string): void {
     // First-party attribution survives the external payment round trip. No saju
     // input or contact information is stored here; the server validates fields.
     const attribution = { v: visitorId(), s: sessionId(), u: cr,
-      qa: sessionStorage.getItem("mr_gate_qa") === "1" || new URLSearchParams(location.search).has("gate_qa") };
+      qa: sessionStorage.getItem("mr_gate_qa") === "1" || sessionStorage.getItem("mr_detail_qa") === "1"
+        || ["gate_qa", "detail_qa", "demo"].some(k => new URLSearchParams(location.search).has(k)) };
     document.cookie = `mr_purchase_context=${encodeURIComponent(JSON.stringify(attribution))}; Path=/; SameSite=Lax; Secure; Max-Age=86400`;
   } catch { /* Storage/cookies may be disabled; event delivery still runs below. */ }
   try {

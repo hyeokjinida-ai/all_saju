@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { MIN_CHARGE, chargeFor } from "@/lib/pricing";
 import { GATE_COOKIE } from "@/lib/gate-experiment";
+import { DETAIL_COOKIE } from "@/lib/detail-experiment";
 import { recordGateOrder } from "@/lib/gate-order-attribution";
 import { capturePurchaseContext } from "@/lib/purchase-tracking";
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
     // 입력이 바뀌었을 수 있으니 명식 정보만 갱신하고 같은 주문 재사용.
     await service.from("saju_inputs").update(inputRow).eq("order_id", existing.id);
-    await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug);
+    await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug, request.cookies.get(DETAIL_COOKIE)?.value);
     await capturePurchaseContext(service, request, existing.id);
     return NextResponse.json({ orderId: existing.order_id, amount: existing.amount });
   }
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "사주 정보 저장 실패", detail: inputErr.message }, { status: 500 });
   }
 
-  await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug);
+  await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug, request.cookies.get(DETAIL_COOKIE)?.value);
   await capturePurchaseContext(service, request, order.id);
   return NextResponse.json({ orderId, amount });
 }

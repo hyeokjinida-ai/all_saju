@@ -12,6 +12,8 @@ import { track } from "@/lib/analytics";
 import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { observePayPanel } from "@/lib/observe-pay-panel";
+import { assignDetail, type DetailChoice } from "@/lib/detail-assignment-client";
+import { DetailBoundary } from "@/components/products/DetailBoundary";
 import type { SajuTeaser } from "@/lib/saju/teaser";
 import type { PartnerFace } from "@/lib/saju/partner-face";
 import type { ResultView } from "@/lib/saju/result-view";
@@ -408,6 +410,11 @@ export function SajuWizard({
   const [personalData, setPersonalData] = useState<SangunPersonalData | null>(null);
   const [personalDetailReady, setPersonalDetailReady] = useState(false);
   const markPersonalDetailReady = useCallback(() => setPersonalDetailReady(true), []);
+  const [detailChoice, setDetailChoice] = useState<DetailChoice | null>(null);
+  const [detailFailed, setDetailFailed] = useState(false);
+  const failPersonalDetail = useCallback(() => setDetailFailed(true), []);
+  const detailEntryFired = useRef(false);
+  const detailExposureFired = useRef(false);
   // 직녀(인연)판 — 결제 시트·티저가 산군과 같은 부품을 쓰므로 색·어휘만 slug 로 가른다.
   const isInyeon = productSlug === "inyeon-saju";
   const isJiknyeoWorld = productSlug === "inyeon-saju" || productSlug === "marriage-saju";
@@ -466,7 +473,8 @@ export function SajuWizard({
   /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
    *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
   const inColdOpen = coldOpenLane && !coldOpenDone;
-  const newDetail = productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null;
+  const newDetail = productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null
+    && detailChoice?.variant !== "old" && !detailFailed;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
   // html 의 데이터 속성을 신호선으로 쓰고 CSS 한 줄이 받는다(globals.css, .sangun-brand-line).
@@ -509,6 +517,11 @@ export function SajuWizard({
   // Both detail renderers share the inline payment panel and its measurement.
   // Wait for the dynamic detail to mount before exposing anything below it.
   const personalDetailPending = newDetail && !personalDetailReady;
+  useEffect(() => {
+    if (teaserLoading || !personalDetailPending) return;
+    const timer = setTimeout(failPersonalDetail, 8000);
+    return () => clearTimeout(timer);
+  }, [teaserLoading, personalDetailPending, failPersonalDetail]);
   const payInView = usePayInView(productSlug,
     step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending);
   const [form, setForm] = useState<FormState>({
@@ -644,9 +657,11 @@ export function SajuWizard({
 
   const loadTeaser = useCallback(async () => {
     const startedAt = Date.now();
+    const assignment = productSlug === "sangun-sinjeom" ? assignDetail() : Promise.resolve(null);
     setTeaserLoading(true);
     setPersonalData(null);
     setPersonalDetailReady(false);
+    setDetailFailed(false);
     setStep(teaserStep);
     try {
       const res = await fetch("/api/saju/chart", {
@@ -685,6 +700,8 @@ export function SajuWizard({
     } catch {
       track("teaser_fail", { slug: productSlug, reason: "network" });
     } finally {
+      // The signed assignment is settled before either detail can be shown.
+      setDetailChoice(await assignment);
       // 만세력이 캐시에 걸리면 1초 만에 끝난다. 그러면 로딩 영상이 한 동작도 못 보여주고 사라지고,
       // 10단계를 답한 손님에게 "계산했다"는 실감이 안 남는다 → 최소 시간은 붙잡아 둔다.
       // 느릴 땐 그냥 통과하므로 총 대기가 늘지는 않는다.
@@ -764,6 +781,19 @@ export function SajuWizard({
     teaserShownFired.current = true;
     track("teaser_shown", { slug: productSlug });
   }, [teaserLoading, teaser, productSlug]);
+
+  useEffect(() => {
+    if (productSlug !== "sangun-sinjeom" || step !== teaserStep || teaserLoading || !teaser) return;
+    if (!detailEntryFired.current) {
+      detailEntryFired.current = true;
+      // Entry is counted before the lazy renderer: load failures stay in its assigned arm.
+      track(detailChoice ? "detail_entry" : "detail_assignment_unavailable", { slug: productSlug });
+    }
+    if (personalDetailPending || detailExposureFired.current) return;
+    detailExposureFired.current = true;
+    track("detail_exposure", { slug: productSlug, rendered: newDetail ? "new" : "old",
+      fallback: detailChoice?.variant === "new" && !newDetail });
+  }, [productSlug, step, teaserStep, teaserLoading, teaser, detailChoice, personalDetailPending, newDetail]);
 
   const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
 
@@ -1096,6 +1126,10 @@ export function SajuWizard({
             : undefined
       }
     >
+      {detailChoice?.qa && <div role="status" data-detail-qa={detailChoice.variant}
+        style={{ position: "fixed", top: 4, left: 4, zIndex: 100, background: "#fff", color: "#111", padding: "3px 8px", fontSize: 12 }}>
+        상세 검수 · {detailChoice.variant === "old" ? "이전 상세" : "새 상세"} · 통계 제외
+      </div>}
       {imm ? (
         <div className={bgHolderCls}>
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
@@ -1970,7 +2004,7 @@ export function SajuWizard({
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
         {step === teaserStep && (
-          newDetail && !teaserLoading ? <SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} inlinePayVisible={payInView} onReady={markPersonalDetailReady} onBuy={openPaySheet} /> : <TeaserStep
+          newDetail && !teaserLoading ? <DetailBoundary onFailure={failPersonalDetail}><SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} inlinePayVisible={payInView} onReady={markPersonalDetailReady} onBuy={openPaySheet} /></DetailBoundary> : <TeaserStep
             teaser={teaser}
             pillars={pillars}
             loading={teaserLoading}
