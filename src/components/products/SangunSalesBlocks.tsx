@@ -31,7 +31,7 @@ export function SampleCard({ noTitle }: { noTitle?: boolean } = {}) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/products/sangun/sample-page.webp"
-          alt="산군 장부 본문 한 쪽 — 한지에 적힌 풀이와 붉은 표시"
+          alt="산군 사주 풀이 예시 — 한지에 적힌 풀이와 붉은 표시"
           width={780}
           height={2300}
           loading="lazy"
@@ -121,7 +121,7 @@ export function TocCard({ priceLabel }: { priceLabel: string }) {
 function PriceAnchorLine({ priceLabel }: { priceLabel: string }) {
   return (
     <p className="mt-4 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-      신당에 몸소 들면 복채가 <b style={{ color: "var(--gold)" }}>5만에서 20만</b>이다. 나는 서고에서 장부를 읽어 주니{" "}
+      신당에 몸소 들면 복채가 <b style={{ color: "var(--gold)" }}>5만에서 20만</b>이다. 나는 온라인으로 사주를 풀어 주니{" "}
       <b style={{ color: "var(--gold)" }}>{priceLabel}</b>만 받는다 — 몇 분 안에 도착 · 마이페이지에 계속 보관
     </p>
   );
@@ -165,7 +165,7 @@ export function SangunBuyCard({
         지금까지는 맛보기다.
       </p>
       <p className="mt-2 text-center text-[15px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-        진짜 풀이는 지금부터다. 몇 분이면 네 장부가 나온다.
+        진짜 풀이는 지금부터다. 몇 분이면 네 사주 풀이가 나온다.
       </p>
       {/* ⚠ 「받는 것 — 11장 · 확답 일곱…」은 여기 쓰지 않는다. 꼬리의 ValueSpecCard 가 같은 말을
           하고 있어서, 넣으면 한 페이지에서 같은 문장을 두 번 읽게 된다(실측으로 확인하고 걷어냈다).
@@ -201,7 +201,7 @@ export function SangunBuyCard({
           color: "#17120c",
         }}
       >
-        내 장부 전체 열기 →
+        인생 사주 보러가기
       </button>
       <p className="mt-3 text-center text-[13px]" style={{ color: "var(--bone-faint)" }}>
         한 번만 받는다. 다달이 빠져나가는 것이 아니다.
@@ -447,15 +447,15 @@ function TailCut({
 export function TeaserSalesTail({ priceLabel }: { priceLabel: string }) {
   return (
     <div className="mt-2">
-      <TailCut src="/products/sangun/money.webp" alt="엽전 꾸러미를 든 손과 펼친 장부" sayAt="top" say="받을 것부터 세어 봐라." />
+      <TailCut src="/products/sangun/money.webp" alt="엽전 꾸러미를 든 손과 펼친 사주책" sayAt="top" say="받을 것부터 세어 봐라." />
       <ValueSpecCard priceLabel={priceLabel} />
       {/* 예시 앞은 낙관 컷(완성 증표가 찍힌 장부) — "표지" 대사에 전신 사진을 붙였다가
           말과 그림이 어긋나 교체. 전신 정면은 아래 FAQ(물음 받는 자세) 앞이 맞다. */}
       <TailCut
         src="/products/sangun/close.webp"
-        alt="장부를 덮고 낙관을 찍는 손"
+        alt="사주책을 덮고 낙관을 찍는 손"
         sayAt="top"
-        say="완성된 장부에서 한 쪽 떼 왔다."
+        say="사주를 어떻게 풀어주는지 보여주마."
       />
       <div className="mt-5">
         <SampleCard noTitle />

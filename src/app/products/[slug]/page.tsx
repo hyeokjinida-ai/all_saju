@@ -331,7 +331,7 @@ export default async function ProductDetailPage({
       <p className={`text-[13px] mb-4 text-center leading-relaxed ${storyAccent ? "" : "text-bone-soft"}`} style={storyAccent ? { color: "#9aa3b8" } : undefined}>
         <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "시각을 몰라도 된다" : "태어난 시각 몰라도 돼요"}&nbsp;&nbsp;
         <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "음력이어도 된다" : "음력 생일만 알아도 돼요"}&nbsp;&nbsp;
-        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "장부는 마이페이지에 보관된다" : "마이페이지에 보관"}
+        <span className={storyAccent ? "" : "text-gold-bright"} style={storyAccent ? { color: storyAccent } : undefined}>✓</span> {isSangun ? "사주 풀이는 마이페이지에 보관된다" : "마이페이지에 보관"}
       </p>
       <SajuWizard
         productId={product.id}

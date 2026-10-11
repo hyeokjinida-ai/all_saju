@@ -171,7 +171,7 @@ function LedgerLock({ onOpen }: { onOpen: () => void }) {
       </span>
       <div className="mb-5 text-center">
         <p className="font-myeongjo text-[17px] font-bold" style={{ color: "#efe6d2" }}>
-          장부는 이미 읽혔다 — 네 눈에만 잠겨 있을 뿐
+          네 사주 풀이, 지금 확인해라
         </p>
         <p className="mt-1 text-[13px]" style={{ color: "#7d8496" }}>
           네 생년월일로 다시 계산해, 아래 빈칸을 채운다
@@ -206,7 +206,7 @@ function SocialProofBlock() {
     <div className="px-5 py-4">
       {(totalUsers > 0 || totalReviews > 0) && (
         <p className="text-center font-myeongjo text-[13px] tracking-[0.06em]" style={{ color: "#9aa0b0" }}>
-          {totalUsers > 0 && <>지금까지 <b style={{ color: GOLD }}>{formatCount(totalUsers)}</b>명이 장부를 열었다</>}
+          {totalUsers > 0 && <>지금까지 <b style={{ color: GOLD }}>{formatCount(totalUsers)}</b>명이 사주를 봤다</>}
           {totalUsers > 0 && totalReviews > 0 && " · "}
           {totalReviews > 0 && <>후기 <b style={{ color: GOLD }}>{formatCount(totalReviews)}</b></>}
         </p>
@@ -373,11 +373,11 @@ export function SangunStory({
           <>
             …왔군.
             <br />
-            <em className="not-italic" style={P}>네 장부</em>, 내가 먼저 봤다.
+            <em className="not-italic" style={P}>네 사주</em>, 내가 먼저 봤다.
           </>
         ),
         choices: [
-          { label: "(내 장부…?) 따라 들어간다", act: () => setScene(1) },
+          { label: "(내 사주…?) 따라 들어간다", act: () => setScene(1) },
           { label: "무, 무슨 소리예요?", act: () => setScene(1) },
         ],
       },
@@ -388,7 +388,7 @@ export function SangunStory({
           <>
             몇 가지만 답해라.
             <br />
-            장부와 <em className="not-italic" style={P}>맞춰볼 것이 있다.</em>
+            네 사주와 <em className="not-italic" style={P}>맞춰볼 것이 있다.</em>
             <br />…겁먹었나.
           </>
         ),
@@ -417,7 +417,7 @@ export function SangunStory({
         video: "/products/sangun/face.mp4",
         line: (
           <>
-            됐다. 장부를 펴려면
+            됐다. 사주를 보려면
             <br />네 <em className="not-italic" style={P}>생년월일</em>이 필요하다.
           </>
         ),
@@ -537,7 +537,7 @@ export function SangunStory({
             명운록 · 박수무당 사주
           </a>
           <p className="mt-4 text-[13px]" style={{ color: "#7d8496" }}>
-            신당에 들었다 — 산군이 장부를 편다 · {priceLabel}
+            신당에 들었다 — 산군이 사주를 본다 · {priceLabel}
           </p>
         </header>
 
@@ -546,7 +546,7 @@ export function SangunStory({
           <Bubble who="박수">
             …왔군.
             <br />
-            <em className="not-italic" style={P}>네 장부</em>, 내가 먼저 봤다.
+            <em className="not-italic" style={P}>네 사주</em>, 내가 먼저 봤다.
           </Bubble>
         </Cut>
 
@@ -554,7 +554,7 @@ export function SangunStory({
           <p className="font-myeongjo text-[17px] leading-[1.75]" style={{ color: "#cfd0d8" }}>
             산군(山君) — 산신을 받든 박수.
             <br />
-            얼굴을 들지 않고 명운록 서고의 <b style={{ color: GOLD }}>운명 장부</b>를 읽는 이.
+            얼굴을 들지 않고 네 <b style={{ color: GOLD }}>사주</b>를 읽는 이.
           </p>
         </div>
 
@@ -609,10 +609,10 @@ export function SangunStory({
               </span>
               <p className="font-myeongjo text-[17px] font-semibold leading-[1.75] text-[#241d10]">
                 <em className="not-italic" style={P}>
-                  네 장부,
+                  네 사주,
                 </em>
                 <br />
-                열어 보겠나.
+                끝까지 보겠나.
               </p>
             </div>
             <button
@@ -626,7 +626,7 @@ export function SangunStory({
                 fontSize: 17,
               }}
             >
-              내 운명 장부 열기
+              인생 사주 보러가기
               <span className="mt-0.5 block text-[13px] font-normal opacity-80">
                 {priceLabel} · 2분이면 끝 · 시각·성별·인연·하는 일까지 반영
               </span>

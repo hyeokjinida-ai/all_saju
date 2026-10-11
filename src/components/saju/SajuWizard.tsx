@@ -52,6 +52,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
+import { sangunSajuCuts } from "@/lib/saju/sangun-copy";
 import { SangunFateGraph } from "@/components/saju/SangunFateGraph";
 import {
   SangunBuyCard,
@@ -239,21 +240,21 @@ const STEPS: { hanja: string; q: string; help: string; optional?: boolean }[] = 
 // 산군(신점) 전용 반말 카피 — 단계 구성·인덱스는 공용과 동일(로직 무변경), 말만 갈아끼운다.
 // 사극 어미(~하거라/~느냐)는 쓰지 않는다. 경쟁사(청월당·타이트) 둘 다 현대 하대체를 쓴다.
 const STEPS_SANGUN: typeof STEPS = [
-  { hanja: "名", q: "이름이 뭐냐", help: "장부에 이 이름으로 적어 둔다", optional: true },
+  { hanja: "名", q: "이름이 뭐냐", help: "사주 풀이에 이 이름을 쓴다", optional: true },
   { hanja: "生", q: "언제 태어났냐", help: "양력인지 음력인지도 같이 골라라" },
   { hanja: "時", q: "태어난 시각은 아나", help: "알면 더 깊이 본다 — 모르면 모른다 해도 된다" },
   { hanja: "性", q: "성별은", help: "남녀가 운의 흐름을 읽는 방향이 다르다" },
-  { hanja: "緣", q: "마음이 가는 쪽이 남자냐, 여자냐", help: "장부에서 네 짝을 찾는 자리가 달라진다" },
+  { hanja: "緣", q: "마음이 가는 쪽이 남자냐, 여자냐", help: "네가 만날 사람을 사주에서 볼 때 필요하다" },
   { hanja: "伴", q: "지금 곁에 사람이 있나", help: "있으면 그 자리부터 본다", optional: true },
   { hanja: "業", q: "무엇으로 먹고사나", help: "네가 하는 일에 맞춰 돈 얘기를 한다", optional: true },
   { hanja: "惑", q: "따로 묻고 싶은 게 있나", help: "적으면 그 물음부터 정면으로 답해준다 — 없으면 그냥 다음" },
-  { hanja: "覽", q: "이대로 네 장부를 찾겠다", help: "" },
+  { hanja: "覽", q: "이 정보로 네 사주를 보겠다", help: "" },
   // "겉장만 펴봤다"는 겉장이 뭔지 한 번 되짚게 만들었다(형님 지적 — 버튼과 같은 병).
   // 스토리에서 이미 한 말("네 장부, 내가 먼저 봤다")을 받아 해독이 필요 없는 문장으로.
   // 부제 "여기까지는 공짜로 보여주마"는 화면 맨 위에서 **뒤(이미 본 것)를 가리키는 말**이라
   // 어긋났다(형님 지적) — 아직 아무것도 안 보여줬는데 가리킬 게 없다. 앞을 가리키는 예고로
   // 바꾼다. 맨 아래 note "여기까지는 공짜다"가 그 예고를 회수하는 짝이 된다(예고→회수).
-  { hanja: "兆", q: "네 장부, 다 읽고 왔다", help: "먼저 몇 줄, 공짜로 펴 주마" },
+  { hanja: "兆", q: "네 사주, 다 보고 왔다", help: "일부는 무료로 보여주마" },
 ];
 
 // 직녀(인연) 전용 — 문항·인덱스는 공용과 똑같고 말만 갈아끼운다(엔진을 포크하지 않는다).
@@ -331,7 +332,8 @@ const STEPS_BY_SLUG: Record<string, typeof STEPS> = {
  *   2026-09-02 번들 ③(3종)이 붙으면서 「하나 더」가 거짓말이 되는 카드가 생겨 수를 세게 됐다.
  */
 const KO_COUNT: Record<number, string> = { 2: "두", 3: "세" };
-const moreLabel = (n: number, night: boolean) =>
+const moreLabel = (n: number, night: boolean, sangun = false) =>
+  sangun ? (n <= 1 ? "사주 풀이 하나 더" : `사주 풀이 ${KO_COUNT[n] ?? n} 개 더`) :
   n <= 1
     ? night ? "결과지 하나 더" : "장부 한 권 더"
     : night ? `결과지 ${KO_COUNT[n] ?? n} 개 더` : `장부 ${KO_COUNT[n] ?? n} 권 더`;
@@ -915,7 +917,7 @@ export function SajuWizard({
                           {/* ⚠ 「하나 더」를 고정으로 쓰면 3종 묶음에서 거짓말이 된다(2026-09-02 번들 ③ 신설).
                               지금 상품을 뺀 나머지 개수를 세어 말한다 — 시트에서 손님이 직접 검산하는 줄이다. */}
                           {o.includes.length > 1 &&
-                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight)}`}
+                            ` · ${formatKRW(o.price - price)} 더 내고 ${moreLabel(o.includes.length - 1, isNight, productSlug === "sangun-sinjeom")}`}
                         </p>
                       )}
                     </button>
@@ -1344,7 +1346,7 @@ export function SajuWizard({
           <p className="font-myeongjo glow-bone text-bone text-[23px] font-bold leading-[1.4]">
             {step === teaserStep && teaserLoading
               ? imm
-                ? "네 장부를 찾는 중이다"
+                ? "네 사주를 살피는 중이다"
                 : isReunion
                   ? "다리가 놓이는 달을 찾는 중입니다"
                   : isJiknyeoWorld
@@ -2078,7 +2080,7 @@ export function SajuWizard({
         )}
       </div>
 
-      <PaySheet open={payOpen} onClose={() => setPayOpen(false)} dark={imm}>
+      <PaySheet open={payOpen} onClose={() => setPayOpen(false)} dark={imm} sangun={productSlug === "sangun-sinjeom"}>
         {renderPayPanel()}
       </PaySheet>
 
@@ -2585,7 +2587,7 @@ function TeaserStep({
     return (
       <p className="font-myeongjo py-6 text-center text-[13px] text-bone-soft leading-[1.75]">
         {imm
-          ? "겉장은 지금 펴줄 수 없다. 장부는 그대로 열린다."
+          ? "미리보기는 지금 보여줄 수 없다. 전체 사주 풀이는 받을 수 있다."
           : "미리보기는 지금 준비하지 못했어요. 결과지는 정상적으로 만들어져요."}
       </p>
     );
@@ -2600,7 +2602,7 @@ function TeaserStep({
   // 같이 얹으면 그림이 두 겹으로 시작해 도입의 정적이 깨진다.
   // 스위치가 없으면 산군도 다른 상품과 똑같이 어드민 웹툰을 그대로 얹는다.
   const webtoon = !useColdOpen && cuts.length > 0 && Object.keys(tokens).length > 0
-    ? <WebtoonPage cuts={cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
+    ? <WebtoonPage cuts={isSangunWorld ? sangunSajuCuts(cuts) : cuts} tokens={tokens} className="-mx-5 mb-4 overflow-hidden" />
     : null;
 
   // ════ 콜드오픈 — 그림이 먼저다. 헤더도 제목도 진행바도 아직 없다. ════
@@ -2743,7 +2745,7 @@ function TeaserStep({
               하드코딩하지 않는다(시각 모름이면 여섯 — 바로 아래 원국 판의 「이 날에서 나온 여섯 글자」와 같은 말). */}
           <TeaserCut
             src="/products/sangun/t1-open.webp"
-            alt="옛 장부를 펴 든 손"
+            alt="옛 사주책을 펴 든 손"
             tall
             sayAt="top"
             say={
@@ -3028,7 +3030,7 @@ function TeaserStep({
             (imm ? (
               <TeaserCut
                 src="/products/sangun/stand.webp"
-                alt="장부를 덮고 정면으로 선 산군"
+                alt="사주책을 덮고 정면으로 선 산군"
                 tall
                 pos="center 16%"
                 sayAt="bottom"
@@ -3166,7 +3168,7 @@ function TeaserStep({
               "다들 그것부터 묻더군" — 수없이 봐온 사람의 말. 무당 말투의 경험담 부품. */}
           <TeaserCut
             src="/products/sangun/t4-money.webp"
-            alt="엽전 꾸러미를 장부 위로 내리는 손"
+            alt="엽전 꾸러미를 사주책 위로 내리는 손"
             tall
             sayAt="top"
             // 여기가 티저의 정점이다 — 값을 읽어 주다가 가린 자리에서 끊는 한 줄.
@@ -3186,7 +3188,7 @@ function TeaserStep({
           {/* 새끼손가락의 붉은 실 — 설명 없이 읽히는 인연의 기호(발주 t5) */}
           <TeaserCut
             src="/products/sangun/t5-thread.webp"
-            alt="손가락에 붉은 실을 감고 장부를 짚은 손"
+            alt="손가락에 붉은 실을 감고 사주책을 짚은 손"
             tall
             sayAt="top"
             say={<>네 짝 말이냐.<br />…봤다. 얼굴까지.</>}
@@ -3201,7 +3203,7 @@ function TeaserStep({
                   에이스 컷이라 대사도 제일 짧게. 짧을수록 그림이 산다. */}
               <TeaserCut
                 src="/products/sangun/t6-mark.webp"
-                alt="붉은 붓으로 장부의 한 해에 동그라미를 치는 손"
+                alt="붉은 붓으로 사주책의 한 해에 동그라미를 치는 손"
                 tall
                 sayAt="top"
                 say={<>…여기.<br />붉게 적혀 있군.</>}
@@ -3239,7 +3241,7 @@ function TeaserStep({
           >
             {/* 직녀는 "달력에 표시된 해"라고 못 쓴다 — 바로 위 열두 칸 달력에 이 해가 없어서
                 손님이 되짚으면 어긋난다. 결과지 8장 제목과 같은 말로 둬 티저→결과지가 호응한다. */}
-            {isNight ? "크게 바뀌는 해" : "장부에 붉게 표시된 해"}
+            {isNight ? "크게 바뀌는 해" : isSangunWorld ? "사주에서 짚은 중요한 해" : "장부에 붉게 표시된 해"}
           </p>
           {/* 좌우 여백(px-6)은 장식이 아니라 필수다 — 붓이 글자 **바깥**을 돌아야 동그라미로 읽힌다.
               좁히면 획이 숫자를 파고들어 취소선처럼 보인다(실측에서 2와 년이 잘렸다). */}
@@ -3366,7 +3368,7 @@ function TeaserStep({
                놓쳤다(실측 0px — min-h-[44px]와 같은 병). 재야 하는 값은 인라인으로 박는다. */
             <div style={{ marginTop: 44 }}>
               <p className="font-myeongjo text-center text-[11px] text-bone-faint tracking-[0.15em]">
-                네 장부의 차례
+                사주 풀이 내용
               </p>
               <div className="mt-2.5 space-y-3">
                 {teaser.chapters.map((c) => (
@@ -3855,8 +3857,8 @@ function TeaserStep({
     {imm && !isJiknyeoWorld && teaser && (!useColdOpen || coldOpenDone) && !payInView && (
       <StickyBuyBar
         dark
-        note={<>네 장부 11장, 이미 다 적혀 있다</>}
-        buyLabel={`${formatKRW(price)} 열기`}
+        note={<>성격부터 재물·인연까지</>}
+        buyLabel="인생 사주 보러가기"
         onBuy={() => {
           track("buy_intent", { slug: productSlug });
           if (onBuyClick) onBuyClick();
@@ -4165,7 +4167,7 @@ function usePayInView(slug: string | undefined, enabled: boolean) {
  *  내려와야 살 수 있던 건 우리뿐이었다.
  *  ⚠ 포털로 body 에 붙인다 — 위저드를 감싼 `.svc-fade` 의 transform 이 position:fixed 의
  *    기준을 뺏는다(StickyBuyBar 와 같은 이유). 세계관 클래스도 다시 붙인다. */
-function PaySheet({ open, onClose, dark, children }: { open: boolean; onClose: () => void; dark: boolean; children: React.ReactNode }) {
+function PaySheet({ open, onClose, dark, sangun = false, children }: { open: boolean; onClose: () => void; dark: boolean; sangun?: boolean; children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   // 시트가 떠 있는 동안 뒤 배경이 같이 스크롤되면 손님이 자리를 잃는다.
@@ -4195,7 +4197,7 @@ function PaySheet({ open, onClose, dark, children }: { open: boolean; onClose: (
       >
         <div className="mb-2 flex items-center justify-between">
           <span className="font-myeongjo text-[15px] font-bold" style={{ color: dark ? "var(--bone)" : "#241a08" }}>
-            {dark ? "장부를 펴려면" : "결제"}
+            {sangun ? "사주 풀이 선택" : dark ? "장부를 펴려면" : "결제"}
           </span>
           <button type="button" onClick={onClose} aria-label="닫기" className="p-2 text-[18px]" style={{ color: "var(--bone-faint)" }}>
             ✕

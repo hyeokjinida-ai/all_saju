@@ -247,9 +247,9 @@ export const SANGUN_JANG: {
   // chapterIdx 는 11장 목차(prompt.ts outline) 기준. 9장 옛 결과지는 SangunResult 의
   // LEGACY_JANG_IDX 가 따로 든다 — 여기 숫자를 옛 결과지에 대면 장이 뒤섞인다.
   { no: "一", teaseTeaser: ["착한 얼굴 말고,", "네 진짜 그릇부터 보자"], teaseResult: "네 그릇부터 본다", chapterIdx: [0, 1, 2] },
-  { no: "二", tag: "장부 기밀", teaseTeaser: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"], teaseResult: "돈 — 달까지 적었다", chapterIdx: [3, 5] },
+  { no: "二", tag: "재물·직업운", teaseTeaser: ["돈 얘기부터 하자.", "몇 월인지까지 적어 뒀다"], teaseResult: "돈 — 달까지 적었다", chapterIdx: [3, 5] },
   { no: "三", tag: "운명 카드", teaseTeaser: ["네 짝이 적힌 자리도", "넘겨 봤다"], teaseResult: "인연 — 네 짝의 자리", chapterIdx: [4, 6] },
-  { no: "四", tag: "붉은 표시", teaseTeaser: ["장부에 붉게 적힌 해가 있다.", "이것만 미리 보여주마"], teaseResult: "붉게 적힌 해, 그리고 네 물음", chapterIdx: [7, 8, 9, 10] },
+  { no: "四", tag: "붉은 표시", teaseTeaser: ["네 인생이 크게 바뀌는 해가 있다.", "이것만 미리 보여주마"], teaseResult: "붉게 적힌 해, 그리고 네 물음", chapterIdx: [7, 8, 9, 10] },
 ];
 
 export type TeaserChapterItem = {
@@ -662,7 +662,7 @@ export function buildTeaser(
 
   return {
     voice,
-    headline: voice === "sangun" ? "네 장부, 다 읽고 왔다" : "사주를 먼저 읽어봤어요",
+    headline: voice === "sangun" ? "네 사주, 다 보고 왔다" : "사주를 먼저 읽어봤어요",
     coldRead,
     chapters,
     hasPastCheck: !!past,
@@ -687,7 +687,7 @@ export function buildTeaser(
     reunion: reunionFacts ? buildReunionTeaser(reunionFacts) : null,
     note:
       voice === "sangun"
-        ? "여기까지는 공짜다. 나머지는 장부를 열어야 나온다."
+        ? "여기까지는 무료다. 나머지는 전체 사주 풀이에서 확인해라."
         : "여기까지는 무료로 보여드려요. 나머지는 결과지에 담겨요.",
   };
 }
