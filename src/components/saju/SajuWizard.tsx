@@ -13,6 +13,7 @@ import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { observePayPanel } from "@/lib/observe-pay-panel";
 import { assignDetail, type DetailChoice } from "@/lib/detail-assignment-client";
+import { SANGUN_DETAIL_AB_ACTIVE } from "@/config/sangun-detail-rollout";
 import { DetailBoundary } from "@/components/products/DetailBoundary";
 import type { SajuTeaser } from "@/lib/saju/teaser";
 import type { PartnerFace } from "@/lib/saju/partner-face";
@@ -473,7 +474,7 @@ export function SajuWizard({
   /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
    *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
   const inColdOpen = coldOpenLane && !coldOpenDone;
-  const newDetail = productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null
+  const newDetail = SANGUN_DETAIL_AB_ACTIVE && productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null
     && detailChoice?.variant !== "old" && !detailFailed;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
@@ -783,7 +784,7 @@ export function SajuWizard({
   }, [teaserLoading, teaser, productSlug]);
 
   useEffect(() => {
-    if (productSlug !== "sangun-sinjeom" || step !== teaserStep || teaserLoading || !teaser) return;
+    if (!SANGUN_DETAIL_AB_ACTIVE || productSlug !== "sangun-sinjeom" || step !== teaserStep || teaserLoading || !teaser) return;
     if (!detailEntryFired.current) {
       detailEntryFired.current = true;
       // Entry is counted before the lazy renderer: load failures stay in its assigned arm.

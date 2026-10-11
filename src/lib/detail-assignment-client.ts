@@ -12,7 +12,7 @@ export function assignDetail(): Promise<DetailChoice | null> {
     signal: AbortSignal.timeout(4000),
   }).then(async response => {
     const data = await response.json();
-    if (!response.ok || !data.enabled || !["old", "new"].includes(data.variant)) return null;
+    if (!response.ok || !["old", "new"].includes(data.variant) || (!data.enabled && data.variant !== "old")) return null;
     try { sessionStorage.setItem("mr_detail_qa", data.qa ? "1" : "0"); } catch { /* server cookie is authoritative */ }
     return { variant: data.variant, qa: data.qa === true } as DetailChoice;
   }).catch(() => null);

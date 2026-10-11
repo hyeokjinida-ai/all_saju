@@ -41,32 +41,45 @@ async function main() {
     method:'POST',headers:{host:'test.example',origin,cookie,'Content-Type':'application/json','User-Agent':'QA browser'},body:JSON.stringify(body),
   });
   assert.equal((await route(request({},'', 'https://evil.example'))).status,403);
-  const first=await route(request());const body=await first.json(), cookie=first.cookies.get(d.DETAIL_COOKIE);
-  assert.equal(body.qa,false);assert.equal(cookie.httpOnly,true);assert.equal(cookie.secure,true);
-  const repeat=await route(request({},`${d.DETAIL_COOKIE}=${cookie.value}`));
-  assert.deepEqual(await repeat.json(),body);assert.equal(repeat.cookies.get(d.DETAIL_COOKIE),undefined);
-  const gateToken=g.signGateAssignment({...g.createGateAssignment(),variant:'b'},secret);
-  // Changing gate assignment cannot change an existing detail assignment.
-  assert.equal((await (await route(request({},`${d.DETAIL_COOKIE}=${token}; ${g.GATE_COOKIE}=${gateToken}`))).json()).variant,'old');
-  const pairs=new Set();
-  for(const gv of ['a','b'])for(const dv of ['old','new']){
-    const response=await route(request({qaVariant:dv},`${g.GATE_COOKIE}=${g.signGateAssignment({...g.createGateAssignment(),variant:gv},secret)}`));
-    const choice=await response.json();assert.equal(choice.qa,true);pairs.add(gv+'-'+choice.variant);
+  for (const flag of ['1', '0', undefined]) {
+    if (flag === undefined) delete process.env.SANGUN_DETAIL_AB_ENABLED;
+    else process.env.SANGUN_DETAIL_AB_ENABLED = flag;
+    assert.equal(d.detailExperimentEnabled(), false);
+    const response = await route(request());
+    assert.deepEqual(await response.json(), {enabled:false,variant:'old',qa:false});
+    assert.equal(response.headers.get('set-cookie'), null);
   }
-  assert.equal(pairs.size,4);
-  const qaResponse=await route(request({qaVariant:'new'}));const qaCookie=qaResponse.cookies.get(d.DETAIL_COOKIE);
-  assert.equal((await (await route(request({},`${d.DETAIL_COOKIE}=${qaCookie.value}`))).json()).qa,true);
+  const gateToken=g.signGateAssignment({...g.createGateAssignment(),variant:'b'},secret);
+  for (const variant of ['old','new']) {
+    const original = {...d.createDetailAssignment(),variant};
+    const saved = d.signDetailAssignment(original,secret);
+    const response = await route(request({},`${d.DETAIL_COOKIE}=${saved}; ${g.GATE_COOKIE}=${gateToken}`));
+    assert.deepEqual(await response.json(), {enabled:false,variant:'old',qa:false});
+    assert.equal(response.headers.get('set-cookie'), null);
+    assert.deepEqual(d.readDetailAssignment(saved), original);
+  }
+  const qaResponse=await route(request({qaVariant:'new'}));
+  assert.deepEqual(await qaResponse.json(), {enabled:false,variant:'old',qa:true});
+  const qaCookie=qaResponse.cookies.get(d.DETAIL_COOKIE);
+  assert.equal(qaCookie.httpOnly,true); assert.equal(qaCookie.secure,true);
+  assert.equal(d.readDetailAssignment(qaCookie.value).qa,true);
+  const repeat=await route(request({},`${d.DETAIL_COOKIE}=${qaCookie.value}`));
+  assert.deepEqual(await repeat.json(), {enabled:false,variant:'old',qa:true});
+  assert.equal(repeat.headers.get('set-cookie'),null);
   assert.equal((await (await route(request({qa:true}))).json()).qa,true);
   process.env.VERCEL_ENV='preview';assert.equal((await (await route(request())).json()).qa,true);
-  process.env.VERCEL_ENV='production';process.env.SANGUN_DETAIL_AB_ENABLED='0';
-  assert.equal((await (await route(request())).json()).enabled,false);delete process.env.SANGUN_DETAIL_AB_ENABLED;
+  process.env.VERCEL_ENV='production';
 
   const track=load('src/app/api/track/route.ts').POST;
   inserted=[];await track(request({event:'detail_order_link',props:{orderId:'forged'}}));assert.equal(inserted.length,0);
   await track(request({event:'detail_entry'}));assert.equal(inserted.length,0);
-  await track(request({event:'detail_entry',props:{detail_variant:'new',detail_subject:'forged',qa:false}},`${d.DETAIL_COOKIE}=${token}`));
+  for (const event of ['detail_entry','detail_exposure','detail_assignment_unavailable']) {
+    await track(request({event},`${d.DETAIL_COOKIE}=${token}`));
+    assert.equal(inserted.length,0,'closed experiment must not collect new cohorts');
+  }
+  await track(request({event:'teaser_shown',props:{detail_variant:'new',detail_subject:'forged',qa:false}},`${d.DETAIL_COOKIE}=${token}`));
   assert.equal(inserted[0].props.detail_variant,'old');assert.equal(inserted[0].props.detail_subject,a.subject);
-  await track(request({event:'detail_exposure',props:{rendered:'new'}},`${d.DETAIL_COOKIE}=${qaCookie.value}; ${g.GATE_COOKIE}=${gateToken}`));
+  await track(request({event:'teaser_shown'},`${d.DETAIL_COOKIE}=${qaCookie.value}; ${g.GATE_COOKIE}=${gateToken}`));
   assert.equal(inserted.at(-1).props.qa,true,'gate qa=false cannot overwrite detail QA');
   const link=load('src/lib/gate-order-attribution.ts').recordGateOrder;
   inserted=[];await link(undefined,'ord_TEST','bundle-sangun-inyeon',token);
@@ -81,6 +94,6 @@ async function main() {
   assert.equal(captured.context.detail_variant,'old');assert.equal(captured.context.qa,false);
   await purchase.capturePurchaseContext(service,request({},`${d.DETAIL_COOKIE}=${qaCookie.value}`),'internal-test');
   assert.equal(captured.context.qa,true);
-  console.log('PASS: signed sticky 50:50; independent gate/detail; tamper, expiry, QA persistence, stop switch; server-only event labels/order links; bundles; purchase context; QA isolation');
+  console.log('PASS: old detail for all visitors; no new assignments or stale experiment beacons; historical cookie/order attribution preserved; tamper/expiry; QA isolation; bundles and purchase context');
 }
 main().catch(e=>{console.error(e);process.exitCode=1});

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 import { GATE_COOKIE, gateProps, readGateAssignment } from "@/lib/gate-experiment";
-import { DETAIL_COOKIE, detailProps, readDetailAssignment } from "@/lib/detail-experiment";
+import { DETAIL_COOKIE, detailProps, readDetailAssignment, detailExperimentEnabled } from "@/lib/detail-experiment";
 
 // 퍼스트파티 분석 수집 — 클라이언트가 보낸 비식별 이벤트를 analytics_events 에 적재.
 // 항상 204(빈 응답)로 빠르게 끝낸다(분석이 사용자 경험을 막지 않도록).
@@ -79,6 +79,8 @@ export async function POST(request: NextRequest) {
   try {
     // Client-supplied order links/experiment labels cannot establish attribution.
     if (["gate_order_link", "detail_order_link"].includes(body.event)) return new NextResponse(null, { status: 204 });
+    // Also reject late beacons from tabs running the pre-closure client bundle.
+    if (!detailExperimentEnabled() && ["detail_entry", "detail_exposure", "detail_assignment_unavailable"].includes(body.event)) return new NextResponse(null, { status: 204 });
     const props = { ...(body.props ?? {}) };
     for (const key of ["experiment", "variant", "subject", "qa", "detail_experiment", "detail_variant", "detail_subject"]) delete props[key];
     const assignment = readGateAssignment(request.cookies.get(GATE_COOKIE)?.value);

@@ -1,5 +1,6 @@
 // Server-only. Separate random subject/coin from the existing gate experiment.
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { SANGUN_DETAIL_AB_ACTIVE } from "@/config/sangun-detail-rollout";
 
 export const DETAIL_EXPERIMENT = "sangun_detail_old_new_v1";
 export const DETAIL_COOKIE = "mr_sangun_detail_v1";
@@ -7,8 +8,8 @@ export const DETAIL_MAX_AGE = 60 * 60 * 24 * 90;
 export type DetailVariant = "old" | "new";
 export type DetailAssignment = { subject: string; variant: DetailVariant; assignedAt: number; qa: boolean };
 
-// This release starts the user-approved test. Emergency stop: set to 0 and redeploy.
-export const detailExperimentEnabled = () => process.env.SANGUN_DETAIL_AB_ENABLED !== "0";
+// Signed historical assignments remain readable for delayed purchase attribution.
+export const detailExperimentEnabled = () => SANGUN_DETAIL_AB_ACTIVE && process.env.SANGUN_DETAIL_AB_ENABLED !== "0";
 export function createDetailAssignment(id = randomUUID(), now = Date.now()): DetailAssignment {
   return { subject: id, variant: parseInt(id.slice(0, 2), 16) < 128 ? "old" : "new", assignedAt: now, qa: false };
 }
