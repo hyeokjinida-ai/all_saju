@@ -2718,7 +2718,9 @@ function TeaserStep({
       className={isNight ? `teaser-light${pinkSkin ? " teaser-pink" : ""} px-4 py-10` : undefined}
       style={
         imm && !isNight
-          ? {
+          ? isSangunWorld
+            ? { background: "#070609", padding: "0 0 18px" }
+            : {
               background: "rgba(7,6,9,0.86)",
               border: "1px solid var(--gold-pale)",
               // 좌우 패딩 16 → 0. 이 16px 때문에 화면에 좌우 끝이 **세 군데**였다(형님 지적):
@@ -2743,7 +2745,39 @@ function TeaserStep({
               콜드오픈 판(`?cold=1`): 혼잣말은 **콜드오픈 나레이션이 가져간다** — 여기 남기면 같은
               문장이 한 페이지 안에 두 번 나온다. 손님에게 건네는 뒷줄만 남기고 글자 수도
               하드코딩하지 않는다(시각 모름이면 여섯 — 바로 아래 원국 판의 「이 날에서 나온 여섯 글자」와 같은 말). */}
-          <TeaserCut
+          {isSangunWorld ? (
+            <div
+              data-sangun-chart-intro
+              className="relative -mx-5 overflow-hidden"
+              style={{ aspectRatio: "4 / 5", background: "#070609", marginBottom: 24 }}
+            >
+              {/* The photograph and the chart share one dark surface. Keep hands and book visible. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/products/sangun/t1-open.webp"
+                alt="옛 사주책을 펴 든 손"
+                className="h-full w-full select-none object-cover"
+                loading="lazy"
+                draggable={false}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{ background: "linear-gradient(180deg,#070609 0%,rgba(7,6,9,0.3) 16%,transparent 40%,transparent 72%,#070609 100%)" }}
+              />
+              <div
+                className="absolute inset-x-5 font-myeongjo text-center"
+                style={{ top: "10%", textShadow: "0 2px 16px #000" }}
+              >
+                <p style={{ fontSize: 18, lineHeight: 1.7, color: "var(--bone-soft)" }}>
+                  {useColdOpen ? "네 사주다." : "가만있어 봐라."}
+                </p>
+                <p style={{ marginTop: 12, fontSize: 30, lineHeight: 1.45, fontWeight: 700, color: "var(--bone)" }}>
+                  {useColdOpen ? "여기 다 나와 있군." : "…여기 있군."}
+                </p>
+              </div>
+            </div>
+          ) : <TeaserCut
             src="/products/sangun/t1-open.webp"
             alt="옛 사주책을 펴 든 손"
             tall
@@ -2755,7 +2789,7 @@ function TeaserStep({
                 <>가만있어 봐라. …여기 있군.<br />네 여덟 글자다.</>
               )
             }
-          />
+          />}
         </>
       )}
 
@@ -2800,7 +2834,7 @@ function TeaserStep({
       )}
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
-      {name && (
+      {name && !isSangunWorld && (
         <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.15em]${imm ? " mt-4" : ""}`}
           style={isSangunWorld ? { fontSize: 23, fontWeight: 700, letterSpacing: 0, color: "var(--bone)" } : undefined}>
           {isSangunWorld ? `${name}의 사주` : name}
@@ -2812,10 +2846,17 @@ function TeaserStep({
       {/* 산군은 큰 원국 글자·신살과 운의 흐름만 보여 준다. */}
       {shown.length > 0 && (
         <div
-          className={name ? "mt-3" : ""}
+          className={name && !isSangunWorld ? "mt-3" : ""}
           data-sangun-chart={isSangunWorld ? "summary" : undefined}
           style={
-            imm
+            isSangunWorld
+              ? {
+                  background: "linear-gradient(180deg,#100e12,#09080b)",
+                  border: "1px solid rgba(232,201,106,0.16)",
+                  borderRadius: 12,
+                  padding: "28px 14px 24px",
+                }
+              : imm
               ? {
                   background: "linear-gradient(180deg,#0b0a0e,#08070a)",
                   border: "1px solid rgba(232,201,106,0.16)",
@@ -2826,6 +2867,11 @@ function TeaserStep({
               : undefined
           }
         >
+          {isSangunWorld && name && (
+            <h3 className="font-myeongjo text-center" style={{ marginBottom: 8, fontSize: 25, lineHeight: 1.4, fontWeight: 700, color: "var(--bone)", overflowWrap: "anywhere" }}>
+              {name}의 사주
+            </h3>
+          )}
           {birthDate && (
             <p
               // 11 → 13px. 표의 머리글인데 표 안 어떤 글자보다도 작았다 — 「내 생일로 계산했다」를
