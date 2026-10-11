@@ -2189,9 +2189,12 @@ function LedgerPanel({ children }: { children: React.ReactNode }) {
  *  같은 옷을 한 번 뒤집는 것만으로 「지금까지와 다른 말」이 된다 — 새 부품보다 세다.
  *  티저에서 이 자리는 **가린 값을 읽다 끊는 한 줄**(▓▓년 ▓▓월 …여기까지)이다.
  *  ⚠ 한 판에 딱 한 번. 두 번 쓰면 반전이 평상복이 되고 절단이 사라진다. */
-function CutSay({ at, children, invert = false }: { at: "top" | "bottom"; children: React.ReactNode; invert?: boolean }) {
+function CutSay({ at, children, invert = false }: { at: "top" | "bottom" | "below"; children: React.ReactNode; invert?: boolean }) {
   return (
-    <div className={`absolute inset-x-4 ${at === "top" ? "top-4" : "bottom-4"} z-10`}>
+    <div
+      className={at === "below" ? "relative z-10" : `absolute inset-x-4 ${at === "top" ? "top-4" : "bottom-4"} z-10`}
+      style={at === "below" ? { margin: "-8px 16px 16px" } : undefined}
+    >
       <div
         className="relative rounded-[5px] px-4 py-3"
         style={
@@ -2261,9 +2264,9 @@ function TeaserCut({
   /** sm=전환용 짧은 띠 · md=기본 · lg=결정적 장면(전면) */
   size?: keyof typeof CUT_H;
   tall?: boolean;
-  /** 컷 위에 얹을 대사. 주면 CutSay 로 그리고, 아래 별도 대사 띠를 세울 필요가 없어진다. */
+  /** 대사 위치. below는 사진의 손동작을 가리지 않도록 사진 바로 아래에 놓는다. */
   say?: React.ReactNode;
-  sayAt?: "top" | "bottom";
+  sayAt?: "top" | "bottom" | "below";
   /** 대사를 검정 판·흰 글자로 뒤집는다 — **티저 전체에서 딱 한 번**(가린 값을 읽다 끊는 자리) */
   invert?: boolean;
   /** 정점 앞 한 박자 — 웹툰은 결정적 컷 앞에서 여백을 크게 벌린다(칠흑 48·54화 실측).
@@ -2274,23 +2277,26 @@ function TeaserCut({
     // 위저드 컨테이너의 px-5(20px)를 되물려 컬럼 끝까지 채운다.
     // 티저 본문 판의 좌우 패딩을 0으로 걷었으므로 이제 20px 만 되물리면 된다(전엔 -mx-9 = 20+16).
     <div
-      className={`relative -mx-5 ${lead ? "mt-14" : "mt-6"} overflow-hidden ${tall ? "" : CUT_H[size]}`}
+      className={`relative -mx-5 ${lead ? "mt-14" : "mt-6"} overflow-hidden ${tall || sayAt === "below" ? "" : CUT_H[size]}`}
       // containerType: 대사(CutSay)가 이 컷의 폭을 기준으로 커지게 하는 자다.
       // 없으면 CutSay 의 cqw 가 위쪽 조상 컨테이너를 잡아 엉뚱한 크기가 된다.
-      style={{ containerType: "inline-size", ...(tall ? { aspectRatio: "4 / 5" } : {}) }}
+      style={{
+        containerType: "inline-size",
+        ...(sayAt === "below" ? { background: "#080709" } : tall ? { aspectRatio: "4 / 5" } : {}),
+      }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
-        className="h-full w-full select-none object-cover"
+        className={`block w-full select-none object-cover ${sayAt === "below" ? (tall ? "h-auto" : CUT_H[size]) : "h-full"}`}
         loading="lazy"
         draggable={false}
-        style={{ objectPosition: pos }}
+        style={{ objectPosition: pos, ...(tall && sayAt === "below" ? { aspectRatio: "4 / 5" } : {}) }}
       />
       {/* 말풍선이 앉는 쪽을 한 번 더 눌러 흰 글씨가 확실히 읽히게 한다.
           사진이 충분히 어두우면 티가 안 나고, 밝게 나온 컷에서도 대사가 안 묻힌다. */}
-      {say && (
+      {say && sayAt !== "below" && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -3068,19 +3074,17 @@ function TeaserStep({
             </div>
           )}
 
-          {/* 판정을 손님에게 넘긴다 — 틀릴 위험을 지지 않는 문장은 맞아도 소름이 안 난다.
-              콜드리딩 판 바로 밑에 말풍선을 또 세우면 글이 두 번 연속된다(형님 지적: 글·사진 교차) —
-              산군이 정면으로 선 전신 컷(stand.webp, 마스터 m1 변환) 위에 대사로 얹는다.
-              승부를 거는 순간이라 그림도 처음으로 몸 전체를 보여주는 대면이 맞다. */}
+          {/* 성향 풀이에서 재물·인연 풀이로 이어지는 대면 장면.
+              선택한 새 사진의 손동작을 살리도록 대사는 사진 바로 아래에 둔다. */}
           {teaser.judgeInvite &&
             (imm ? (
               <TeaserCut
-                src="/products/sangun/stand.webp"
-                alt="사주책을 덮고 정면으로 선 산군"
+                src="/products/sangun/t7-future-talk-v1.webp"
+                alt="탁자 너머 가까이 앉아 말을 건네는 산군"
                 tall
-                pos="center 16%"
-                sayAt="bottom"
-                say={teaser.judgeInvite}
+                pos="center"
+                sayAt="below"
+                say={<span style={{ whiteSpace: "pre-line" }}>{teaser.judgeInvite}</span>}
               />
             ) : (
               // 재회는 바로 아래 T2(이별 무렵 채점)가 같은 일을 **버튼으로** 한다 — 두 번 묻지 않는다.
