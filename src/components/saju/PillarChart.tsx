@@ -38,7 +38,7 @@ const ELEMENT_TINT: Record<string, string> = {
  *
  *  rows(십성·기운)는 없을 수 있다(티저 생성 실패, 옛 결과지의 raw_analysis 부재).
  *  그때도 한자 판은 서야 하므로 빈칸으로 둔다. */
-export function PillarChart({ shown, rows }: { shown: Pillar[]; rows: ChartRow[] }) {
+export function PillarChart({ shown, rows, compact = false }: { shown: Pillar[]; rows: ChartRow[]; compact?: boolean }) {
   if (shown.length === 0) return null;
   // shown 은 년→월→일(→시), rows 도 같은 순서로 만들어진다(teaser.ts buildChartRows).
   // 시 모름일 때 거르는 조건이 서로 달라 길이가 어긋날 수 있으므로 인덱스로만 조심해서 집는다.
@@ -50,12 +50,33 @@ export function PillarChart({ shown, rows }: { shown: Pillar[]; rows: ChartRow[]
     <span
       className="font-brush block py-1.5 text-[26px] leading-none text-gold-bright"
       style={{
+        ...(compact ? { fontSize: 36, padding: "10px 0" } : {}),
         background: ELEMENT_TINT[element] ?? "rgba(255,255,255,0.035)",
         border: `1px solid ${isDay ? "var(--gold)" : "var(--gold-pale)"}`,
       }}
     >
       {char}
     </span>
+  );
+
+  // 결제 전 산군만 간결한 판을 쓴다. 결과지와 다른 상품의 전체 표는 유지한다.
+  if (compact) return (
+    <div style={{ marginTop: 20 }}>
+      <div style={{ ...grid, gap: "8px 6px", textAlign: "center" }}>
+        {cols.map(({ p, r }, i) => (
+          <span key={"pos-" + i} className="font-myeongjo" style={{ fontSize: 17, color: p.isDay ? "var(--gold-bright)" : "var(--bone-soft)" }}>
+            {r?.pos ?? "—"}
+          </span>
+        ))}
+        {cols.map(({ p }, i) => <Glyph key={"g-" + i} char={p.gan.char} element={p.gan.element} isDay={p.isDay} />)}
+        {cols.map(({ p }, i) => <Glyph key={"j-" + i} char={p.ji.char} element={p.ji.element} isDay={p.isDay} />)}
+        {cols.map(({ p }, i) => (
+          <span key={"r-" + i} className="font-myeongjo" style={{ fontSize: 17, color: "var(--bone-soft)" }}>
+            {p.gan.read}{p.ji.read}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 
   return (

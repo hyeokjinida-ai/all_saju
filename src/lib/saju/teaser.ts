@@ -9,6 +9,7 @@
 //    (티저와 결과지가 다른 해를 말하면 그 자리에서 신뢰가 끝나므로 절대 따로 계산하지 않는다.)
 import { computeInyeonFacts, computeDaeunTimeline, type SajuAnalysisResponse, type InyeonFacts } from "./saju-api";
 import { buildPartnerFace, type PartnerFace } from "./partner-face";
+import { buildFateFlow, type FateFlow } from "./fate-flow";
 // 타입만 가져온다 — reunion.ts 가 이 파일의 gradeMonths 를 쓰므로, 값을 가져오면 런타임 순환이 된다.
 import type { ReunionFacts, ReunionMonthKind } from "./reunion";
 
@@ -31,6 +32,8 @@ export type SajuTeaser = {
   judgeInvite: string;
   chartRows: ChartRow[];
   sinsal: string[];
+  /** 산군 상세에서 공개하는 10년 단위 흐름. 상세 해석은 결과지에 남긴다. */
+  fateFlow?: FateFlow | null;
   turningYear: { year: number; age: number; line: string } | null;
   /** 짝의 얼굴 — 결과지가 여는 것과 **같은 장**. 여기선 흐리게, 결제 후엔 그대로 열린다. */
   partnerFace: PartnerFace;
@@ -674,6 +677,7 @@ export function buildTeaser(
       : "",
     chartRows: buildChartRows(analysis),
     sinsal: buildSinsal(analysis),
+    ...(voice === "sangun" ? { fateFlow: buildFateFlow(analysis) } : {}),
     turningYear,
     partnerFace: buildPartnerFace(facts),
     locked,

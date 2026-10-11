@@ -52,6 +52,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { INK_CENTERLINE, INK_STROKE } from "@/components/saju/ink-circle-path";
 import { useInView } from "@/lib/use-in-view";
 import { PillarChart } from "@/components/saju/PillarChart";
+import { SangunFateGraph } from "@/components/saju/SangunFateGraph";
 import {
   SangunBuyCard,
   SangunReviews,
@@ -1132,6 +1133,8 @@ export function SajuWizard({
         상세 검수 · {detailChoice.variant === "old" ? "이전 상세" : "새 상세"} · 통계 제외
       </div>}
       {imm ? (
+        // 산군 상세는 정적인 먹색 바탕. 입력·계산 중 영상은 그대로 둔다.
+        productSlug === "sangun-sinjeom" && step === teaserStep && !teaserLoading ? null :
         <div className={bgHolderCls}>
           {/* 타이트는 입력 중에도 캐릭터 영상이 말을 건다. 영상 파일이 없으면 이미지로 내려앉으므로
               지금 상태에서도 화면이 성립하고, 파일만 올리면 살아난다.
@@ -2796,21 +2799,19 @@ function TeaserStep({
 
       {/* 헤더가 이미 headline 을 말하므로 여기선 이름만(있을 때) */}
       {name && (
-        <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.15em]${imm ? " mt-4" : ""}`}>{name}</p>
+        <p className={`font-myeongjo text-center text-[13px] text-gold-soft tracking-[0.15em]${imm ? " mt-4" : ""}`}
+          style={isSangunWorld ? { fontSize: 23, fontWeight: 700, letterSpacing: 0, color: "var(--bone)" } : undefined}>
+          {isSangunWorld ? `${name}의 사주` : name}
+        </p>
       )}
 
       {/* 원국 4기둥 — 콜드리딩보다 먼저. "네 생일로 계산했다"는 증거가 먼저 서야 아래 세 줄이 산다.
           표시 순서는 읽기 쉬운 년→월→일→시(view.pillars 는 시→일→월→년이라 뒤집는다). */}
-      {/* 원국 구역은 **자기 바탕 위에 올린다**(몰입 화면에서만).
-          형님 지적 "배경색 때문인지 글자가 잘 안 보인다"의 실제 원인: 티저 전체가 배경 사진 위
-          rgba(7,6,9,0.86) — 14% 가 비쳐서, 사진의 밝은 부분(촛불·호피)이 지나가는 자리의
-          잔글씨(11px 회색)가 그 위로 뜬다. 대비를 재면 6.49~14.45 로 기준은 통과하지만,
-          "통과"와 "편하게 읽힌다"는 다르다. 여긴 손님이 **증거를 확인하는 화면**이라
-          분위기보다 판독이 우선이다 → 이 블록만 불투명 먹지로 깔고 테두리로 판을 세운다.
-          (배경 사진이 비치는 연출은 컷·대사 쪽에 그대로 남는다) */}
+      {/* 산군은 큰 원국 글자·신살과 운의 흐름만 보여 준다. */}
       {shown.length > 0 && (
         <div
           className={name ? "mt-3" : ""}
+          data-sangun-chart={isSangunWorld ? "summary" : undefined}
           style={
             imm
               ? {
@@ -2829,11 +2830,11 @@ function TeaserStep({
               // 증명하는 유일한 줄이라, 증거 화면에서 이게 제일 작으면 증거가 안 선다.
               className="font-myeongjo text-center text-[13px] tracking-[0.06em]"
               // 이 줄은 표의 머리글 역할(어느 날짜에서 나온 글자인지)인데 가장 흐린 색이었다.
-              style={imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
+              style={isSangunWorld ? { fontSize: 17, color: "var(--bone-soft)", letterSpacing: 0 } : imm ? { color: "rgba(215,206,188,0.82)" } : undefined}
             >
               {birthDate.replace(/-/g, ".")}
               {/* 시 모름이면 기둥이 셋이라 여섯 글자다. 증거로 내미는 화면에서 숫자가 틀리면 안 된다. */}
-              {` — 이 날에서 나온 ${GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`}${imm ? " 글자" : " 글자"}`}
+              {!isSangunWorld && ` — 이 날에서 나온 ${GLYPH_COUNT[shown.length] ?? `${shown.length * 2}`} 글자`}
             </p>
           )}
           {/* 한자와 십성·기운을 한 표로 — 타이트(MZ무당) 실측 배치를 따랐다.
@@ -2841,7 +2842,7 @@ function TeaserStep({
               어느 글자 얘긴지 알 수가 없어서 표가 붕 뜬다(형님 실사용 반응: "뭔 말인지 모르겠다").
               타이트는 戊 바로 위에 「일간(나)」, 바로 아래에 「정인」을 붙여 눈으로 잇는다.
               용어 자체는 타이트도 안 풀어준다 — 목표는 이해가 아니라 "내 생일로 진짜 계산했다"는 증거다. */}
-          <PillarChart shown={shown} rows={teaser?.chartRows ?? []} />
+          <PillarChart shown={shown} rows={teaser?.chartRows ?? []} compact={isSangunWorld} />
           {/* 재회 전용 — 12칸 격자 → 원국 → 콜드리딩 → 잠긴 줄 → 가격이 **사람 없이 2,000px 넘게**
               이어지던 자리다(2026-09-06 운영 실측). 경쟁사 티저는 상품 UI 를 1~2개 지나면
               캐릭터를 다시 세운다 — 그래야 상세페이지가 아니라 이야기로 읽힌다.
@@ -2850,7 +2851,7 @@ function TeaserStep({
           {/* 사실만 말한다 — 이름·물음까지 받아놓고 "생일 하나뿐"이라 하면 그 자리에서 신뢰가 깎인다.
               (시각을 모르면 기둥이 덜 선다는 안내는 여기서 뺐다 — 결제 직전에 열등감만 남긴다) */}
           {/* 인연·재회는 이 말을 아래 발췌 카드 각주가 하므로 여기선 뺀다 — 한 화면에서 두 번 읽히면 안 된다 */}
-          {!isNight && (
+          {!isNight && !isSangunWorld && (
             <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75] text-bone-soft">
               {imm
                 ? "아래는 네 이름도, 네 물음도 쓰지 않았다. 이 글자에서만 나왔다."
@@ -2864,9 +2865,9 @@ function TeaserStep({
             <div className="mt-3">
               {/* 라벨 11 → 13px. 바로 아래 배지가 17px 인데 「무엇의 목록인지」를 말하는 줄이
                   11px 이면, 손님은 배지만 보고 이게 뭔지 모른 채 지나간다(실측 대비도 3.0 이었다). */}
-              <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
+              {!isSangunWorld && <p className="font-myeongjo text-center text-[13px] tracking-[0.15em]" style={{ color: "var(--gold-soft)" }}>
                 {imm ? "네 글자에 붙어 있는 것" : "글자에 붙어 있는 것"}
-              </p>
+              </p>}
               {/* 배지 13 → 17px (형님: "살 부분이 더 크게 보이면 좋겠어").
                   이건 손님이 **자기 것으로 가져가는 단어**다 — 도화살·화개살은 검색해 보고
                   친구에게 옮기는 말이라, 표 안의 잔글씨가 아니라 이름표로 서야 한다.
@@ -2878,6 +2879,7 @@ function TeaserStep({
                     className="font-myeongjo rounded-[3px] px-4 py-2 text-[17px] font-bold"
                     style={{
                       border: "1px solid var(--gold-line)",
+                      ...(isSangunWorld ? { fontSize: 23, padding: "10px 18px" } : {}),
                       // 직녀는 세계관 토큰에 맡긴다(은사). 산군은 기존 금색 값을 그대로 둔다.
                       background: isNight ? "var(--gold-pale)" : "rgba(232,201,106,0.10)",
                       color: "var(--gold-bright)",
@@ -2890,7 +2892,7 @@ function TeaserStep({
             </div>
           )}
           {/* 못 읽는 게 정상이라고 먼저 말해준다 — 안 그러면 "나만 모르나" 부끄러움이 이탈이 된다 */}
-          {teaser && teaser.chartRows.length > 0 && (
+          {!isSangunWorld && teaser && teaser.chartRows.length > 0 && (
             // 11 → 13 → **15px**. "못 읽어도 된다"는 부끄러움을 걷어 주는 문장이라 실제로 읽혀야
             // 기능한다 — 가장 작고 가장 흐린 색이라 정작 안심시켜야 할 사람이 못 읽고 지나갔다.
             // 13px 도 여전히 본문(15) 아래였다. 이건 각주가 아니라 **아래 콜드리딩 전체의 근거 선언**이라
@@ -2912,6 +2914,7 @@ function TeaserStep({
           )}
         </div>
       )}
+      {isSangunWorld && <SangunFateGraph flow={teaser?.fateFlow} />}
 
       {/* 정면 컷: 몸을 앞으로 기울여 손님을 읽는다(발주 t2) — 티저에서 산군이 얼굴을 드는 첫 순간.
           대사는 아래 콜드리딩 띠 안에 합쳐 넣는다(따로 띠를 세우면 띠 3개가 연속으로 쌓인다).
