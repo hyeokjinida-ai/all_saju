@@ -8,7 +8,9 @@ export type GateVariant = "a" | "b";
 export type GateAssignment = { subject: string; variant: GateVariant; assignedAt: number; qa?: boolean };
 
 export function gateExperimentEnabled() {
-  return process.env.SANGUN_GATE_AB_ENABLED === "1";
+  // Closed on 2026-10-11: use the existing door-entry gate (B) for everyone.
+  // Retain signed assignment readers below for delayed purchase attribution.
+  return false;
 }
 
 export function createGateAssignment(id = randomUUID(), now = Date.now()): GateAssignment {

@@ -36,25 +36,32 @@ assert.equal(conflict.variants.a.paidBuyers, 0);
 assert.equal(summarizeGate(events.map(e => ({ ...e, props: { ...e.props, qa: true } })), orders, now + 8 * 86400000).allExposed, 0);
 console.log("PASS: signed/sticky 50:50 assignment; tamper/expiry; paid-order deduplication; pending/test exclusions; refunds; media failures; conversion window; attribution conflicts");
 async function testRoute() {
-  process.env.SANGUN_GATE_AB_ENABLED = "1";
   process.env.SUPABASE_SECRET_KEY = secret;
   const request = (origin: string, cookie?: string) => new NextRequest("http://localhost:3065/api/experiments/sangun-gate", { method: "POST", headers: { origin, host: "127.0.0.1:3065", ...(cookie ? { cookie } : {}) } });
   assert.equal((await POST(request("https://external.example"))).status, 403);
   assert.equal((await POST(request("not a URL"))).status, 403);
-  const response = await POST(request("http://127.0.0.1:3065"));
-  assert.equal(response.status, 200);
-  const cookie = response.cookies.get("mr_sangun_gate_v1")!;
-  assert.ok(cookie.value);
-  const initial = await response.json();
-  const returning = await POST(request("http://127.0.0.1:3065", `${cookie.name}=${cookie.value}`));
-  assert.equal((await returning.json()).variant, initial.variant);
-  assert.equal(returning.cookies.get(cookie.name), undefined);
-  const qaRequest = new NextRequest("http://localhost:3065/api/experiments/sangun-gate", { method: "POST", headers: { origin: "http://127.0.0.1:3065", host: "127.0.0.1:3065", "Content-Type": "application/json" }, body: JSON.stringify({ qaVariant: "b" }) });
+  // A stale deployment flag must not restart a completed experiment.
+  for (const flag of ["1", "0", undefined]) {
+    if (flag === undefined) delete process.env.SANGUN_GATE_AB_ENABLED;
+    else process.env.SANGUN_GATE_AB_ENABLED = flag;
+    const response = await POST(request("http://127.0.0.1:3065"));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { enabled: false });
+    assert.equal(response.headers.get("set-cookie"), null);
+  }
+  // Existing A/B assignments remain readable and are not overwritten or expired.
+  for (const variant of ["a", "b"] as const) {
+    const old = { ...createGateAssignment(undefined, Date.now()), variant };
+    const oldToken = signGateAssignment(old, secret);
+    const response = await POST(request("http://127.0.0.1:3065", `mr_sangun_gate_v1=${oldToken}`));
+    assert.deepEqual(await response.json(), { enabled: false });
+    assert.equal(response.headers.get("set-cookie"), null);
+    assert.deepEqual(readGateAssignment(oldToken, secret), old);
+  }
+  const qaRequest = new NextRequest("http://localhost:3065/api/experiments/sangun-gate", { method: "POST", headers: { origin: "http://127.0.0.1:3065", host: "127.0.0.1:3065", "Content-Type": "application/json" }, body: JSON.stringify({ qaVariant: "a" }) });
   const qaResponse = await POST(qaRequest);
-  assert.deepEqual(await qaResponse.json(), { enabled: true, variant: "b", qa: true });
-  assert.equal(readGateAssignment(qaResponse.cookies.get(cookie.name)?.value, secret)?.qa, true);
-  process.env.SANGUN_GATE_AB_ENABLED = "0";
-  assert.equal((await (await POST(request("http://127.0.0.1:3065"))).json()).enabled, false);
-  console.log("PASS: route host/proxy handling; cross-origin rejection; persistent cookie; rollout-off switch");
+  assert.deepEqual(await qaResponse.json(), { enabled: false });
+  assert.equal(qaResponse.headers.get("set-cookie"), null);
+  console.log("PASS: closed experiment stays disabled; no new or replacement cookies; delayed attribution preserved; cross-origin rejection");
 }
 void testRoute().catch(error => { console.error(error); process.exitCode = 1; });
