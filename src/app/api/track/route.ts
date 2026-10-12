@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { CTA_COOKIE, ctaProps, readCtaAssignment, ctaExperimentEnabled } from "@/lib/cta-experiment";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured, publicEnv } from "@/lib/env";
@@ -78,13 +79,15 @@ export async function POST(request: NextRequest) {
 
   try {
     // Client-supplied order links/experiment labels cannot establish attribution.
-    if (["gate_order_link", "detail_order_link"].includes(body.event)) return new NextResponse(null, { status: 204 });
+    if (["gate_order_link", "detail_order_link", "cta_order_link"].includes(body.event)) return new NextResponse(null, { status: 204 });
     // Also reject late beacons from tabs running the pre-closure client bundle.
     if (!detailExperimentEnabled() && ["detail_entry", "detail_exposure", "detail_assignment_unavailable"].includes(body.event)) return new NextResponse(null, { status: 204 });
     const props = { ...(body.props ?? {}) };
-    for (const key of ["experiment", "variant", "subject", "qa", "detail_experiment", "detail_variant", "detail_subject"]) delete props[key];
+    for (const key of ["experiment", "variant", "subject", "qa", "detail_experiment", "detail_variant", "detail_subject", "cta_experiment", "cta_variant", "cta_subject"]) delete props[key];
     const assignment = readGateAssignment(request.cookies.get(GATE_COOKIE)?.value);
     const detail = readDetailAssignment(request.cookies.get(DETAIL_COOKIE)?.value);
+    const cta = readCtaAssignment(request.cookies.get(CTA_COOKIE)?.value);
+    if (body.event.startsWith("cta_") && (!ctaExperimentEnabled() || !cta)) return new NextResponse(null, { status: 204 });
     if (body.event === "detail_entry" && !detail) return new NextResponse(null, { status: 204 });
     if (body.event.startsWith("gate_") && !["gate_view", "gate_assignment_failed"].includes(body.event) && !assignment) {
       return new NextResponse(null, { status: 204 });
@@ -94,8 +97,8 @@ export async function POST(request: NextRequest) {
       event: body.event,
       path: body.path ?? null,
       referrer: body.referrer || null,
-      props: { ...props, ...(assignment ? gateProps(assignment) : {}), ...(detail ? detailProps(detail) : {}),
-        qa: assignment?.qa === true || detail?.qa === true || process.env.VERCEL_ENV === "preview" } as never,
+      props: { ...props, ...(assignment ? gateProps(assignment) : {}), ...(detail ? detailProps(detail) : {}), ...(cta ? ctaProps(cta) : {}),
+        qa: assignment?.qa === true || detail?.qa === true || cta?.qa === true || process.env.VERCEL_ENV === "preview" } as never,
       visitor_id: body.visitorId ?? null,
       session_id: body.sessionId ?? null,
       ua: ua.slice(0, 300),

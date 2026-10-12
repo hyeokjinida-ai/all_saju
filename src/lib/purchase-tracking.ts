@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { CTA_COOKIE, ctaProps, readCtaAssignment } from "@/lib/cta-experiment";
 import { GATE_COOKIE, readGateAssignment } from "@/lib/gate-experiment";
 import { DETAIL_COOKIE, detailProps, readDetailAssignment } from "@/lib/detail-experiment";
 import { attributionCookie, isRecentPurchase, metaAccepted, metaCookie, metaPurchaseEvent, nextRetryDelay, type PurchaseReceipt } from "@/lib/purchase-event";
@@ -19,13 +20,14 @@ export async function capturePurchaseContext(service: Service, request: NextRequ
     if (!order || order.status === "paid") return;
     const gate = readGateAssignment(request.cookies.get(GATE_COOKIE)?.value);
     const detail = readDetailAssignment(request.cookies.get(DETAIL_COOKIE)?.value);
+    const cta = readCtaAssignment(request.cookies.get(CTA_COOKIE)?.value);
     const attribution = attributionCookie(request.cookies.get("mr_purchase_context")?.value);
     const context: Record<string, Json> = {
       ...attribution,
       environment: process.env.VERCEL_ENV ?? "development",
-      qa: gate?.qa === true || detail?.qa === true || attribution.qa === true,
+      qa: gate?.qa === true || detail?.qa === true || cta?.qa === true || attribution.qa === true,
       ...(gate ? { subject: gate.subject, variant: gate.variant } : {}),
-      ...(detail ? detailProps(detail) : {}),
+      ...(detail ? detailProps(detail) : {}), ...(cta ? ctaProps(cta) : {}),
     };
     const fbp = metaCookie(request.cookies.get("_fbp")?.value, "fbp");
     const fbc = metaCookie(request.cookies.get("_fbc")?.value, "fbc");

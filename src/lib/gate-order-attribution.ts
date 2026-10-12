@@ -1,21 +1,24 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { gateProps, readGateAssignment } from "@/lib/gate-experiment";
+import { ctaProps, readCtaAssignment } from "@/lib/cta-experiment";
 import { worldOfSlug } from "@/lib/world";
 import { detailProps, readDetailAssignment } from "@/lib/detail-experiment";
 
 // Link only an order successfully created by our server. Payment amounts/statuses are never changed.
-export async function recordGateOrder(token: string | undefined, orderId: string, slug: string, detailToken?: string) {
+export async function recordGateOrder(token: string | undefined, orderId: string, slug: string, detailToken?: string, ctaToken?: string) {
   if (worldOfSlug(slug) !== "sangun") return;
   const assignment = readGateAssignment(token);
   const detail = readDetailAssignment(detailToken);
-  if (!assignment && !detail) return;
+  const cta = readCtaAssignment(ctaToken);
+  if (!assignment && !detail && !cta) return;
   try {
     const common = { path: "/api/orders/create", props: {
-      ...(assignment ? gateProps(assignment) : {}), ...(detail ? detailProps(detail) : {}),
-      qa: assignment?.qa === true || detail?.qa === true || process.env.VERCEL_ENV === "preview",
+      ...(assignment ? gateProps(assignment) : {}), ...(detail ? detailProps(detail) : {}), ...(cta ? ctaProps(cta) : {}),
+      qa: assignment?.qa === true || detail?.qa === true || cta?.qa === true || process.env.VERCEL_ENV === "preview",
       orderId, slug, source: "server",
     } };
     const rows = [
+      ...(cta ? [{ ...common, event: "cta_order_link", visitor_id: cta.subject }] : []),
       ...(assignment ? [{ ...common, event: "gate_order_link", visitor_id: assignment.subject }] : []),
       ...(detail ? [{ ...common, event: "detail_order_link", visitor_id: detail.subject }] : []),
     ];

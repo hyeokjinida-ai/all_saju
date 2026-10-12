@@ -10,6 +10,7 @@ import { BgMedia } from "@/components/products/BgMedia";
 import { SampleCard, TocCard, SangunFaq } from "@/components/products/SangunSalesBlocks";
 import { SOCIAL_PROOF, hasSocialProof, formatCount } from "@/config/social-proof";
 import { track } from "@/lib/analytics";
+import { SangunCtaButton } from "./SangunCtaButton";
 import { SangunGateExperiment } from "./SangunGateExperiment";
 
 const INK_BG = "linear-gradient(180deg,#0a0b0f 0%,#171017 100%)";
@@ -344,9 +345,8 @@ export function SangunStory({
                   세계관 문장 끝에 붙은 UI 용어가 첫 화면에서 제일 먼저 읽힌다. */}
               {on ? "방울 소리가 울리는 중" : "소리를 켜면 신당이 열린다"}
             </button>
-            <button
-              type="button"
-              onClick={() => setStage("story")}
+            <SangunCtaButton
+              onEnter={() => setStage("story")}
               className="block w-full rounded-[6px] py-4 text-center font-bold tracking-[0.06em]"
               style={{
                 background: `linear-gradient(135deg,#efe6d2,${GOLD} 60%,#a9861f)`,
@@ -354,9 +354,7 @@ export function SangunStory({
                 color: "#241a08",
                 fontSize: 17,
               }}
-            >
-              신당으로 입장하기
-            </button>
+            />
           </div>
         </div>
       </div>
