@@ -4,7 +4,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { CTA_COOKIE, ctaProps, readCtaAssignment } from "@/lib/cta-experiment";
 import { GATE_COOKIE, readGateAssignment } from "@/lib/gate-experiment";
 import { DETAIL_COOKIE, detailProps, readDetailAssignment } from "@/lib/detail-experiment";
-import { attributionCookie, isRecentPurchase, metaAccepted, metaCookie, metaPurchaseEvent, nextRetryDelay, type PurchaseReceipt } from "@/lib/purchase-event";
+import { attributionCookie, isRecentPurchase, metaAccepted, metaCookie, metaPurchaseEvent, nextRetryDelay, PURCHASE_RETRY_WINDOW_MS, type PurchaseReceipt } from "@/lib/purchase-event";
 import type { Json, PurchaseTrackingRow } from "@/types/database";
 
 type Service = ReturnType<typeof createServiceClient>;
@@ -107,8 +107,19 @@ export async function dispatchPurchases(service: Service, limit = 5, onlyOrderId
   }
   try {
     let query = service.from("purchase_tracking").select("*").eq("state", "pending")
-      .lte("next_attempt_at", new Date().toISOString()).order("next_attempt_at").limit(Math.min(limit, 10));
-    if (onlyOrderId) query = query.eq("order_id", onlyOrderId);
+      .lte("next_attempt_at", new Date().toISOString());
+    if (onlyOrderId) {
+      query = query.eq("order_id", onlyOrderId);
+    } else {
+      // Filter before LIMIT: disabled-era purchases must not consume every retry
+      // slot while recent, eligible purchases age out behind them. Leave those
+      // old ledger rows intact; a targeted call still records their expiry.
+      const now = Date.now();
+      query = query.gte("paid_at", new Date(Math.max(start, now - PURCHASE_RETRY_WINDOW_MS)).toISOString())
+        .lte("paid_at", new Date(now + 60_000).toISOString())
+        .or(`lease_until.is.null,lease_until.lte.${new Date(now).toISOString()}`);
+    }
+    query = query.order("next_attempt_at").limit(Math.min(limit, 10));
     const { data, error } = await query.abortSignal(timeout());
     if (error) { console.error("[purchase] queue unavailable", error.code); return { state: "unavailable" }; }
     let sent = 0;
@@ -128,6 +139,10 @@ export async function dispatchPurchases(service: Service, limit = 5, onlyOrderId
       };
       if (!isRecentPurchase(row.paid_at) || Date.parse(row.paid_at!) < start) {
         await finish({ state: "expired", last_error: "outside_delivery_window" }); continue;
+      }
+      const context = contextOf(row);
+      if (context.environment !== "production" || context.qa === true) {
+        await finish({ state: "suppressed", last_error: context.qa === true ? "qa_order" : "non_production_order" }); continue;
       }
       if (!row.browser_dedup) {
         await finish({ state: "suppressed", last_error: "legacy_browser_without_event_id" }); continue;

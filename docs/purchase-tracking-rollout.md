@@ -52,6 +52,10 @@ value comes from the server receipt, never the success URL. No historical purcha
   This is **not a minute-by-minute retry guarantee** on the current Hobby plan. A daily run processes
   at most five rows; paid traffic provides additional bounded runs. Monitor pending/expired rows
   and token failures in the daily report. Do not silently treat backlog as successful delivery.
+- Global retry batches filter out payments before activation, payments older than 24 hours,
+  and active leases before applying the batch limit. Such historical pending rows remain
+  ledger records, not a count of eligible retries. Targeted dispatch still records expiry.
+  The dispatcher also checks production/QA context again before any network delivery.
 - `purchase_tracking` is the canonical paid-event ledger. Browser `analytics_events.purchase`
   is a delivery trace and now carries explicit orderId/eventId. Do not sum the two tables as sales.
 - Join orders for current refunds/exclude flags. Report gross payments, refunds and net paid

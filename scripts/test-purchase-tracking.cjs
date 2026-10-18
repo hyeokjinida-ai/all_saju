@@ -26,6 +26,13 @@ class MemoryDb {
   from(table) {
     const db=this; let filters=[],patch=null,limit=Infinity,single=false;
     const q={ select(){return q},eq(k,v){filters.push(r=>r[k]===v);return q},lte(k,v){filters.push(r=>r[k]<=v);return q},
+      gte(k,v){filters.push(r=>r[k]>=v);return q},
+      or(expression){
+        const prefix='lease_until.is.null,lease_until.lte.';
+        assert.ok(expression.startsWith(prefix));
+        const cutoff=expression.slice(prefix.length);
+        filters.push(r=>r.lease_until===null || r.lease_until<=cutoff);return q;
+      },
       order(){return q},limit(n){limit=n;return q},abortSignal(){return q},maybeSingle(){single=true;return q},
       upsert(){return q},insert(){return q},update(v){patch=v;return q},then(resolve,reject){
         try {
@@ -116,9 +123,28 @@ async function main() {
   global.fetch=async()=>({ok:true,status:200,json:async()=>({events_received:0})});
   await tracking.dispatchPurchases(db); assert.equal(db.rows[0].state,'pending','HTTP 200 alone is not acceptance');
   db=new MemoryDb([base({paid_at:new Date(Date.now()-25*3600000).toISOString()})]);
-  await tracking.dispatchPurchases(db); assert.equal(db.rows[0].state,'expired');
+  await tracking.dispatchPurchases(db,1,db.rows[0].order_id); assert.equal(db.rows[0].state,'expired');
   db=new MemoryDb([base({paid_at:new Date(Date.now()-2*3600000).toISOString()})]);
-  await tracking.dispatchPurchases(db); assert.equal(db.rows[0].state,'expired','activation cutoff blocks backfill');
+  await tracking.dispatchPurchases(db,1,db.rows[0].order_id); assert.equal(db.rows[0].state,'expired','activation cutoff blocks backfill');
+  // A full old backlog and active leases cannot starve an eligible retry.
+  global.fetch=async(url,options)=>{sends.push(JSON.parse(options.body).data[0]);return{ok:true,status:200,json:async()=>({events_received:1})};};
+  const stale=Array.from({length:12},(_,i)=>base({order_id:'stale-'+i,paid_at:new Date(Date.now()-25*3600000).toISOString()}));
+  const leased=base({order_id:'leased',lease_until:new Date(Date.now()+60000).toISOString()});
+  const eligible=base({order_id:'new-retry'});
+  db=new MemoryDb([...stale,leased,eligible]); let beforeSends=sends.length;
+  await tracking.dispatchPurchases(db,1);
+  assert.equal(eligible.state,'sent','filter old/leased rows before applying batch limit');
+  assert.equal(sends.length,beforeSends+1);
+  assert.ok(stale.every(r=>r.state==='pending' && r.attempts===0),'historical rows are not replayed or rewritten');
+  assert.equal(leased.attempts,0);
+  for(const context of [{environment:'production',qa:true,fbp:'fb.1.1801234567890.12345678'},
+    {environment:'preview',fbp:'fb.1.1801234567890.12345678'},
+    {fbp:'fb.1.1801234567890.12345678'}]) {
+    db=new MemoryDb([base({context})]); beforeSends=sends.length;
+    await tracking.dispatchPurchases(db);
+    assert.equal(db.rows[0].state,'suppressed');
+    assert.equal(sends.length,beforeSends,'QA, preview and missing environment never emit server conversions');
+  }
   db=new MemoryDb([base()]); db.order.exclude_from_pnl=true;
   await tracking.dispatchPurchases(db); assert.equal(db.rows[0].state,'suppressed');
   db=new MemoryDb([base({browser_dedup:false})]);
