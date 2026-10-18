@@ -8,6 +8,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+const compactVideos = new Set(["gate", "gate-idle", "altar", "face", "ritual"]);
+
+function mediaSource(source: string) {
+  const match = /^\/products\/sangun\/([^/]+)\.mp4$/.exec(source);
+  return match && compactVideos.has(match[1])
+    ? `/products/sangun/compact-v1/${match[1]}.mp4`
+    : source;
+}
+
 export function BgMedia({
   video,
   img,
@@ -15,6 +24,7 @@ export function BgMedia({
   className,
   loop = true,
   loopVideo,
+  priority = false,
 }: {
   video: string;
   img: string;
@@ -25,8 +35,11 @@ export function BgMedia({
       루프의 첫 프레임 = 인트로의 끝 프레임(같은 그림)으로 만들어야 전환이 안 보인다.
       로드 실패 시 인트로 끝 프레임 정지로 자연 강등 — 검은 화면이 나올 길이 없다. */
   loopVideo?: string;
+  priority?: boolean;
 }) {
   const [fallback, setFallback] = useState(false);
+  const [warmIdle, setWarmIdle] = useState(false);
+  const loadedSource = useRef(video);
   // "intro" 동안 루프 영상은 opacity 0 으로 미리 로드만 해둔다(전환 순간 로딩 공백 방지)
   const [phase, setPhase] = useState<"intro" | "loop">("intro");
   const ref = useRef<HTMLVideoElement>(null);
@@ -42,12 +55,16 @@ export function BgMedia({
   useEffect(() => {
     setFallback(false);
     setPhase("intro");
+    setWarmIdle(false);
     const el = ref.current;
     if (!el) return;
-    el.load();
+    if (loadedSource.current !== video) {
+      loadedSource.current = video;
+      el.load();
+    }
     // 자동재생이 막히면(저전력·데이터 절약 모드) 예외가 난다 — 그때는 poster 가 그대로 보이면 된다.
     void el.play().catch(() => {});
-  }, [video]);
+  }, [video, loopVideo]);
 
   // 관찰 콜백이 phase 를 stale 하게 잡지 않도록 거울을 둔다(옵저버는 video 가 바뀔 때만 다시 만든다).
   const phaseRef = useRef(phase);
@@ -87,6 +104,7 @@ export function BgMedia({
   }
   return (
     <>
+      {priority && <link rel="preload" as="image" href={img} fetchPriority="high" />}
       <video
         ref={ref}
         className={className}
@@ -96,20 +114,25 @@ export function BgMedia({
         muted
         loop={loopVideo ? false : loop}
         playsInline
+        preload="metadata"
         poster={img}
         aria-label={alt}
         onError={() => setFallback(true)}
+        onTimeUpdate={(event) => {
+          if (loopVideo && event.currentTarget.currentTime >= 1) setWarmIdle(true);
+        }}
         onEnded={() => {
           // 인트로가 끝나는 프레임에서 루프로 넘어간다. play() 가 거부되면 phase 를 안 바꿔
           // 인트로 마지막 프레임 정지로 남는다(loop=false 의 기본 동작).
           const lv = loopRef.current;
           if (!loopVideo || !lv) return;
-          lv.play().then(() => setPhase("loop")).catch(() => {});
+          setWarmIdle(true);
+          if (warmIdle) lv.play().then(() => setPhase("loop")).catch(() => {});
         }}
       >
         {/* <source> 를 여러 개 두면 폰에서 첫 소스를 못 읽는 동안 화면이 검게 남는다.
             src 하나만 두고, 못 읽으면 onError 로 poster/img 에 내려앉힌다. */}
-        <source src={video} type="video/mp4" />
+        <source src={mediaSource(video)} type="video/mp4" />
       </video>
       {loopVideo && (
         // 인트로와 같은 자리에 겹쳐 두고 opacity 로만 바꾼다 — DOM 상 뒤라서 보일 때 인트로를 덮는다
@@ -121,12 +144,14 @@ export function BgMedia({
           muted
           loop
           playsInline
-          preload="auto"
+          preload={warmIdle ? "auto" : "none"}
+          src={warmIdle ? mediaSource(loopVideo) : undefined}
+          onCanPlay={() => {
+            if (ref.current?.ended) void loopRef.current?.play().then(() => setPhase("loop")).catch(() => {});
+          }}
           aria-hidden
           style={phase === "intro" ? { opacity: 0 } : undefined}
-        >
-          <source src={loopVideo} type="video/mp4" />
-        </video>
+        />
       )}
       {/* 생성 툴이 우하단에 남기는 워터마크를 묻는 비네팅.
           실측(720x1280): 오른쪽 125px · 아래 129px 지점, 최대 밝기 95.

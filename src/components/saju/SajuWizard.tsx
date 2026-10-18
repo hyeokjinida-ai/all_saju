@@ -590,9 +590,6 @@ export function SajuWizard({
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
     track("wizard_step", { step: step + 1, total, slug: productSlug });
-    if (step === total - 1 && !isLoggedIn) {
-      track("checkout_login_wall", { slug: productSlug, value: price });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -661,6 +658,7 @@ export function SajuWizard({
 
   const loadTeaser = useCallback(async () => {
     const startedAt = Date.now();
+    let outcome = "failed";
     const assignment = productSlug === "sangun-sinjeom" ? assignDetail() : Promise.resolve(null);
     setTeaserLoading(true);
     setPersonalData(null);
@@ -696,6 +694,7 @@ export function SajuWizard({
       if (json?.ok && json.tokens) setTokens(json.tokens as Record<string, string>);
       if (json?.ok && json.personal) setPersonalData(json.personal as SangunPersonalData);
       if (json?.ok && json.teaser) {
+        outcome = "ok";
         setTeaser(json.teaser as SajuTeaser);
         track("teaser_view", { slug: productSlug });
       } else {
@@ -704,13 +703,14 @@ export function SajuWizard({
     } catch {
       track("teaser_fail", { slug: productSlug, reason: "network" });
     } finally {
+      const chartMs = Date.now() - startedAt;
       // The signed assignment is settled before either detail can be shown.
-      setDetailChoice(await assignment);
-      // 만세력이 캐시에 걸리면 1초 만에 끝난다. 그러면 로딩 영상이 한 동작도 못 보여주고 사라지고,
-      // 10단계를 답한 손님에게 "계산했다"는 실감이 안 남는다 → 최소 시간은 붙잡아 둔다.
-      // 느릴 땐 그냥 통과하므로 총 대기가 늘지는 않는다.
-      const left = MIN_TEASER_LOADING_MS - (Date.now() - startedAt);
+      setDetailChoice(SANGUN_DETAIL_AB_ACTIVE ? await assignment : null);
+      const minimum = productSlug === "sangun-sinjeom" ? 0 : MIN_TEASER_LOADING_MS;
+      const left = minimum - (Date.now() - startedAt);
       if (left > 0) await new Promise((r) => setTimeout(r, left));
+      track("teaser_timing", { slug: productSlug, chart_ms: chartMs,
+        total_ms: Date.now() - startedAt, outcome });
       setTeaserLoading(false);
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
@@ -853,6 +853,7 @@ export function SajuWizard({
                   // 그래서 여기서는 **단품을 키우고 묶음은 add-on 크기로** 둔다(다른 상품은 그대로).
                   const isBundleOpt = o.includes.length > 1;
                   const lead = isReunion && !isBundleOpt;
+                  const compact = productSlug === "sangun-sinjeom" && payOpen && !on;
                   return (
                     <button
                       key={o.productId}
@@ -862,7 +863,7 @@ export function SajuWizard({
                         setSelectedId(o.productId);
                         track("plan_select", { slug: productSlug, plan: o.productId, price: o.price });
                       }}
-                      className={`relative w-full border px-4 text-left ${lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
+                      className={`relative w-full border px-4 text-left ${compact ? "py-2" : lead ? "py-5" : isReunion ? "py-2" : "py-3"}`}
                       style={{
                         borderColor: on
                           ? sheetAccent
@@ -907,7 +908,7 @@ export function SajuWizard({
                       {/* 직녀 화면엔 빨강도 산군 어휘(장부)도 없다 — 같은 결제 시트를 쓰되 색과 말만 갈아낀다 */}
                       {/* 11 → 13px. 「51% 할인 · 9,000원 더 내고 결과지 하나 더」는 업셀을 파는
                           문장인데 시트에서 제일 작았다 — 묶음을 고를 이유가 여기 한 줄뿐이다. */}
-                      {pct != null && (
+                      {pct != null && !compact && (
                         <p
                           className={`mt-1 ${isReunion && isBundleOpt ? "text-[11px]" : "text-[13px]"}`}
                           // 붉은 강조는 산군의 옷이다 — 밤 무대(직녀·견우) 판에서는 쓰지 않는다.
@@ -964,6 +965,9 @@ export function SajuWizard({
             <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
               결과 받을 이메일
             </label>
+            {productSlug === "sangun-sinjeom" && <p id="guest-email-help" className="text-center text-[13px] text-bone-soft">
+              로그인 없이 이메일만 입력하면 결제할 수 있어요.
+            </p>}
             <input
               id="guest-email"
               ref={guestEmailRef}
@@ -971,6 +975,11 @@ export function SajuWizard({
               type="email"
               inputMode="email"
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-describedby={productSlug === "sangun-sinjeom" ? "guest-email-help" : undefined}
+              aria-invalid={payHint || undefined}
               placeholder="you@naver.com"
               value={guestEmail}
               onChange={(e) => {
@@ -981,7 +990,7 @@ export function SajuWizard({
               onBlur={() => {
                 if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim())) track("pay_email_valid", { slug: productSlug });
               }}
-              style={{ fontSize: 15 }}
+              style={{ fontSize: 16 }}
             />
             {/* ⚠ 늘 켜 둔다. 전엔 이메일이 없으면 disabled + 투명도 45% 라 **눌리지 않았고**,
                 왜 못 누르는지 알려 주는 문장도 없었다(안내는 createOrder 안에 있었는데 버튼이
@@ -2080,7 +2089,11 @@ export function SajuWizard({
         )}
       </div>
 
-      <PaySheet open={payOpen} onClose={() => setPayOpen(false)} dark={imm} sangun={productSlug === "sangun-sinjeom"}>
+      <PaySheet open={payOpen} onClose={() => {
+        track("pay_close", { slug: productSlug, email_started: guestEmail.length > 0,
+          email_valid: guestEmailValid, value: effectivePrice });
+        setPayOpen(false);
+      }} dark={imm} sangun={productSlug === "sangun-sinjeom"}>
         {renderPayPanel()}
       </PaySheet>
 

@@ -266,7 +266,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             </div>
             {loginWallSet.size > 0 && (
               <p className="text-xs text-mute mt-3">
-                ※ 비로그인으로 결제 직전에서 막힌 세션: <strong className="text-ink">{loginWallSet.size.toLocaleString()}</strong> — 로그인 마찰로 이탈했을 수 있어요.
+                ※ 과거 비로그인 티저 도달 기록: <strong className="text-ink">{loginWallSet.size.toLocaleString()}</strong> — 실제 로그인 차단을 뜻하지 않습니다. 비회원도 이메일로 결제할 수 있습니다.
               </p>
             )}
           </section>

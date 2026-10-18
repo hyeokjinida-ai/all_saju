@@ -302,6 +302,7 @@ export function SangunStory({
         <BgMedia
           video="/products/sangun/gate.mp4"
           loopVideo="/products/sangun/gate-idle.mp4"
+          priority
           img="/products/sangun/gate.webp"
           alt="신당 문을 지나 제단 앞으로 들어가는 장면"
           className="absolute inset-0 h-full w-full object-cover opacity-95"
