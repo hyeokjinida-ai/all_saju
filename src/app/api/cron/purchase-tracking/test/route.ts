@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
     lease_token: null, lease_until: null, sent_at: null, last_error: null,
   };
   const event = buildMetaEvent(row)!;
+  // Use an unoptimized custom event for end-to-end browser/server commissioning.
+  // A browser probe can join this event ID without creating a fake Purchase.
+  event.event_name = "CapiCommissioningTest";
   event.event_source_url = "https://myeongunrok.com/dev/capi-test";
   // An explicitly synthetic identifier: never the caller's cookies/IP or a customer.
   event.user_data.external_id = [createHash("sha256").update(`test:${id}`).digest("hex")];

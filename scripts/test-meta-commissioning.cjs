@@ -48,7 +48,7 @@ function load(file) {
   assert.equal(result.testOnly, true); assert.equal(sent.length, 2);
   assert.deepEqual(sent[0], sent[1], 'replay must preserve the entire event and test code');
   assert.equal(sent[0].body.test_event_code, 'TEST12345');
-  assert.equal(sent[0].body.data[0].event_name, 'Purchase');
+  assert.equal(sent[0].body.data[0].event_name, 'CapiCommissioningTest');
   assert.equal(sent[0].body.data[0].custom_data.value, 0);
   assert.match(result.eventId, /^capi_test_/);
   assert.equal(JSON.stringify(sent).includes('never-send'), false);
