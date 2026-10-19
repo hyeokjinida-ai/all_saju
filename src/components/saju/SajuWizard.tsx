@@ -9,9 +9,11 @@ const SangunPersonalDetail = dynamic(() => import("@/components/products/SangunP
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { fetchOrderWithDiagnostics } from "@/lib/order-create-diagnostics";
 import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { observePayPanel } from "@/lib/observe-pay-panel";
+import { observePayAction } from "@/lib/observe-pay-action";
 import { assignDetail, type DetailChoice } from "@/lib/detail-assignment-client";
 import { SANGUN_DETAIL_AB_ACTIVE } from "@/config/sangun-detail-rollout";
 import { DetailBoundary } from "@/components/products/DetailBoundary";
@@ -526,8 +528,10 @@ export function SajuWizard({
     const timer = setTimeout(failPersonalDetail, 8000);
     return () => clearTimeout(timer);
   }, [teaserLoading, personalDetailPending, failPersonalDetail]);
-  const payInView = usePayInView(productSlug,
+  usePayInView(productSlug,
     step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending);
+  const payActionInView = usePayActionInView(productSlug,
+    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending, payOpen);
   const [form, setForm] = useState<FormState>({
     // demo 가 있으면 첫 렌더부터 채워 둔다 — setState 로 나중에 넣으면 티저 요청이
     // 빈 생일로 한 번 먼저 나가서 실패한다.
@@ -1070,20 +1074,27 @@ export function SajuWizard({
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/orders/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: selected.productId, // 단품이거나 손님이 고른 패키지
-          displayedAmount: chargeFor(effectivePrice, isLoggedIn),
-          ...payload(),
-          email: isLoggedIn ? undefined : guestEmail.trim(),
+      const json = await fetchOrderWithDiagnostics({
+        slug: selected.slug,
+        displayedAmount: chargeFor(effectivePrice, isLoggedIn),
+        member: isLoggedIn,
+        track,
+        request: () => fetch("/api/orders/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: selected.productId,
+            displayedAmount: chargeFor(effectivePrice, isLoggedIn),
+            ...payload(),
+            email: isLoggedIn ? undefined : guestEmail.trim(),
+          }),
         }),
       });
-      const json = await res.json();
-      if (json.code === "PRICE_CHANGED") router.refresh();
-      if (!res.ok) throw new Error(json.error ?? "주문 생성 실패");
-      track("begin_checkout", { slug: selected.slug, value: json.amount, currency: "KRW", orderId: json.orderId });
+      if (!json.ok) {
+        if (json.code === "PRICE_CHANGED") router.refresh();
+        throw new Error(json.error ?? "주문 생성 실패");
+      }
+      try { track("begin_checkout", { slug: selected.slug, value: json.amount, currency: "KRW", orderId: json.orderId }); } catch {}
       router.push(`/checkout/${json.orderId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
@@ -2019,7 +2030,7 @@ export function SajuWizard({
 
         {/* STEP 7 — 결제 전 개인화 무료 티저 */}
         {step === teaserStep && (
-          newDetail && !teaserLoading ? <DetailBoundary onFailure={failPersonalDetail}><SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} inlinePayVisible={payInView} onReady={markPersonalDetailReady} onBuy={openPaySheet} /></DetailBoundary> : <TeaserStep
+          newDetail && !teaserLoading ? <DetailBoundary onFailure={failPersonalDetail}><SangunPersonalDetail data={personalData!} price={price} payOpen={payOpen} inlinePayVisible={payActionInView} onReady={markPersonalDetailReady} onBuy={openPaySheet} /></DetailBoundary> : <TeaserStep
             teaser={teaser}
             pillars={pillars}
             loading={teaserLoading}
@@ -2044,7 +2055,7 @@ export function SajuWizard({
             coldOpenDone={coldOpenDone}
             onColdOpenDone={markColdOpenDone}
             onBuyClick={openPaySheet}
-            payInView={payInView}
+            payInView={payActionInView}
           />
         )}
       </div>
@@ -4201,11 +4212,6 @@ function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBu
   return <StickyBuyBar {...props} />;
 }
 
-/** 실제 결제 칸(#pay-panel)이 화면에 들어와 있는가 — 보이면 하단 고정 띠를 숨긴다.
- *  전엔 재회판만 이 장치를 썼고(useReunionBarGate) 산군은 없었다. 그래서 결제 칸에
- *  도착한 화면에서 **제일 밝은 버튼(고정 띠)이 눌러도 아무 일이 없었다** — 그 버튼은
- *  「결제 칸으로 스크롤」이라 이미 도착한 사람에겐 할 일이 없기 때문이다(2026-09-20 ㉮-4).
- *  처음 보인 순간에 pay_view 를 한 번 남긴다 — 결제 칸까지 온 사람 수를 세는 유일한 자. */
 function usePayInView(slug: string | undefined, enabled: boolean) {
   const [inView, setInView] = useState(false);
   const fired = useRef(false);
@@ -4221,6 +4227,24 @@ function usePayInView(slug: string | undefined, enabled: boolean) {
       }
     });
   }, [slug, enabled]);
+  return inView;
+}
+
+function usePayActionInView(slug: string | undefined, enabled: boolean, sheetOpen: boolean) {
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    setInView(false);
+    if (!enabled || typeof IntersectionObserver === "undefined") return;
+    let fired = false;
+    const via = sheetOpen ? "sheet" : "inline";
+    return observePayAction((on) => {
+      setInView(on);
+      if (on && !fired) {
+        fired = true;
+        try { track("pay_action_view", { slug, via }); } catch {}
+      }
+    }, via);
+  }, [slug, enabled, sheetOpen]);
   return inView;
 }
 
@@ -4250,6 +4274,7 @@ function PaySheet({ open, onClose, dark, sangun = false, children }: { open: boo
     <div className={`${dark ? "world-sangun" : "world-jiknyeo"} fixed inset-0 z-[60]`}>
       <div onClick={onClose} className="absolute inset-0" style={{ background: "rgba(4,3,6,0.72)" }} />
       <div
+        id="pay-sheet"
         className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-md overflow-y-auto rounded-t-2xl px-5 pt-3 pb-6"
         style={{
           maxHeight: "92vh",

@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { loadPayment } from "@/lib/toss/client";
 import { track } from "@/lib/analytics";
 import { LAST_ORDER_SLUG_KEY } from "./TossWidget";
+import { checkoutFailureCode, checkoutFailureMessage, checkoutFailUrl, isCheckoutCancellation, safeCheckoutTrack } from "@/lib/checkout-recovery";
 
 type MethodId = "kakaopay" | "naverpay" | "tosspay" | "card";
 
@@ -86,16 +87,18 @@ export function PayMethods({
   // ⚠ 결제위젯과 달리 **버튼을 SDK 에 묶지 않는다.** 위젯은 다 뜰 때까지 버튼이 잠겼고, 뜨다 실패하면
   //    영영 잠겼다. 여기선 눌렀을 때 아직이면 기다렸다 열고, 실패했으면 그 자리에서 다시 받는다.
   useEffect(() => {
+    safeCheckoutTrack(track, "checkout_widget_start", { orderId, variant: "direct", checkout_mode: "direct" });
     const p = loadPayment(customerKey);
     sdkRef.current = p;
     p.then(
-      () => track("checkout_widget_ready", { orderId, variant: "direct" }),
-      (e) => {
+      () => safeCheckoutTrack(track, "checkout_widget_ready", { orderId, variant: "direct", checkout_mode: "direct" }),
+      (error) => {
         if (sdkRef.current === p) sdkRef.current = null;
-        track("checkout_widget_fail", {
+        safeCheckoutTrack(track, "checkout_widget_fail", {
           orderId,
           variant: "direct",
-          reason: e instanceof Error ? e.message.slice(0, 80) : "unknown",
+          checkout_mode: "direct",
+          code: checkoutFailureCode(error),
         });
       },
     );
@@ -104,22 +107,26 @@ export function PayMethods({
   async function handlePay() {
     const m = METHODS.find((x) => x.id === method) ?? METHODS[0];
     // 누른 사실 + 무엇으로 누르려 했는지 — 수단별로 어디서 돌아서는지 가르는 자
-    track("checkout_pay_click", { orderId, amount, method: m.id, ready: !!sdkRef.current });
+    safeCheckoutTrack(track, "checkout_pay_click", { orderId, amount, method: m.id, ready: !!sdkRef.current, checkout_mode: "direct" });
     setPaying(true);
+    let stage = "contact";
     try {
       if (onBeforePay && !(await onBeforePay())) {
         setPaying(false);
         return;
       }
+      stage = "sdk";
       const payment = await (sdkRef.current ?? (sdkRef.current = loadPayment(customerKey)));
       const origin = window.location.origin;
+      stage = "request";
+      safeCheckoutTrack(track, "checkout_pay_request", { orderId, method: m.id, variant: "direct", checkout_mode: "direct" });
       await payment.requestPayment({
         method: "CARD",
         amount: { currency: "KRW", value: amount },
         orderId,
         orderName: productName,
         successUrl: `${origin}/checkout/success`,
-        failUrl: `${origin}/checkout/fail`,
+        failUrl: checkoutFailUrl(origin, orderId, "direct"),
         customerEmail: customerEmail ?? undefined,
         customerMobilePhone: customerMobilePhone || undefined,
         card: m.easyPay ? { flowMode: "DIRECT", easyPay: m.easyPay } : { flowMode: "DEFAULT" },
@@ -127,14 +134,15 @@ export function PayMethods({
       // 모바일은 여기서 페이지가 넘어간다. PC 는 창이 닫히면 성공 URL 로 넘어간다.
     } catch (err) {
       setPaying(false);
-      const code = (err as { code?: string } | null)?.code ?? "";
+      if (stage === "sdk") sdkRef.current = null;
+      const code = checkoutFailureCode(err);
       // 손님이 창을 닫은 건 오류가 아니다 — 빨간 토스트를 띄우지 않고 기록만 한다.
-      if (code === "USER_CANCEL" || code === "PAY_PROCESS_CANCELED") {
-        track("checkout_pay_cancel", { orderId, method: m.id });
+      if (isCheckoutCancellation(code)) {
+        safeCheckoutTrack(track, "checkout_pay_cancel", { orderId, method: m.id, checkout_mode: "direct" });
         return;
       }
-      track("checkout_pay_error", { orderId, method: m.id, code: code || "unknown" });
-      toast.error(err instanceof Error && err.message ? err.message : "결제를 시작하지 못했습니다");
+      safeCheckoutTrack(track, "checkout_pay_error", { orderId, method: m.id, code, stage, checkout_mode: "direct" });
+      toast.error(checkoutFailureMessage(code));
     }
   }
 
@@ -152,7 +160,7 @@ export function PayMethods({
                 checked={method === m.id}
                 onChange={() => {
                   setMethod(m.id);
-                  track("checkout_method_select", { orderId, method: m.id });
+                  safeCheckoutTrack(track, "checkout_method_select", { orderId, method: m.id, checkout_mode: "direct" });
                 }}
                 disabled={paying}
                 className="h-5 w-5 shrink-0 accent-[var(--gold)]"

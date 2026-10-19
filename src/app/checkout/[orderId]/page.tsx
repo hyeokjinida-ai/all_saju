@@ -9,6 +9,7 @@ import { MEMBER_DISCOUNT } from "@/lib/pricing";
 import { claimPendingOrder } from "@/lib/claim-pending-order";
 import { worldOfSlug, worldClass, worldBg } from "@/lib/world";
 import { directPayReady } from "@/lib/toss/keys";
+import { checkoutRetryPath } from "@/lib/checkout-recovery";
 
 export const metadata = { title: "결제" };
 
@@ -39,6 +40,20 @@ export default async function CheckoutPage({
       .order("created_at", { ascending: true })
       .limit(1);
     if (results?.[0]) redirect(`/results/${results[0].id}`);
+    const refreshPath = checkoutRetryPath(orderId);
+    return (
+      <div className="mx-auto max-w-md px-5 py-16 text-center">
+        <h1 className="text-xl font-bold">결제 완료</h1>
+        <p className="mt-4 leading-relaxed">
+          결제는 완료되었습니다. 결과를 준비하고 있습니다. 다시 결제하지 마세요.
+        </p>
+        {refreshPath && (
+          <a href={refreshPath} className="mt-6 inline-block rounded-md border border-hairline px-5 py-3">
+            결과 준비 상태 다시 확인
+          </a>
+        )}
+      </div>
+    );
   }
 
   // ── 로그인하고 돌아온 손님: 게스트 주문을 회원 주문으로 이관 ──────────────

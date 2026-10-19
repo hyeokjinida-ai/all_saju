@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { loadWidgets } from "@/lib/toss/client";
 import { track } from "@/lib/analytics";
+import { checkoutFailureCode, checkoutFailureMessage, checkoutFailUrl, isCheckoutCancellation, safeCheckoutTrack } from "@/lib/checkout-recovery";
 
 // 결제 후 success 페이지는 토스 리다이렉트 파라미터(paymentKey·orderId·amount)만 받아서
 // 무슨 상품인지 모른다. 주문 조회 API 를 새로 파는 대신, 결제 시작점인 여기서 slug 를
@@ -51,6 +52,7 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
 
   useEffect(() => {
     let canceled = false;
+    safeCheckoutTrack(track, "checkout_widget_start", { orderId, variant: "widget", checkout_mode: "widget" });
     (async () => {
       const widgets = await loadWidgets(customerKey);
       if (canceled) return;
@@ -64,28 +66,29 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
         await widgets.renderPaymentMethods({ selector: "#payment-methods", variantKey: "new" });
       } catch {
         variant = "DEFAULT";
-        track("checkout_variant_fallback", { orderId });
+        safeCheckoutTrack(track, "checkout_variant_fallback", { orderId, checkout_mode: "widget" });
         await widgets.renderPaymentMethods({ selector: "#payment-methods", variantKey: "DEFAULT" });
       }
       await widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" });
       setReady(true);
       // 여기까지 와야 결제 버튼이 켜진다. 실패하면 버튼이 영구히 잠기므로(아래 disabled)
       // 미결제 손님이 「버튼을 못 찾은 것」인지 「버튼이 죽은 것」인지 이 두 줄로 갈린다.
-      track("checkout_widget_ready", { orderId, variant });
-    })().catch((e) => {
-      track("checkout_widget_fail", { orderId, reason: e instanceof Error ? e.message.slice(0, 80) : "unknown" });
-      toast.error(e instanceof Error ? e.message : "결제 위젯 로드 실패");
+      safeCheckoutTrack(track, "checkout_widget_ready", { orderId, variant, checkout_mode: "widget" });
+    })().catch((error) => {
+      if (canceled) return;
+      safeCheckoutTrack(track, "checkout_widget_fail", { orderId, variant: "widget", code: checkoutFailureCode(error), checkout_mode: "widget" });
+      toast.error("결제수단을 불러오지 못했습니다. 페이지를 새로고침해 주세요.");
     });
     return () => {
       canceled = true;
     };
-  }, [amount, customerKey]);
+  }, [amount, customerKey, orderId]);
 
   async function handlePay() {
     const widgets = widgetsRef.current;
     // 버튼을 눌렀다는 사실 자체를 먼저 남긴다 — 토스 창까지 갔는데 안 낸 사람과
     // 여기까지 와서 못 누른 사람을 가르는 유일한 자
-    track("checkout_pay_click", { orderId, amount, ready: !!widgets });
+    safeCheckoutTrack(track, "checkout_pay_click", { orderId, amount, ready: !!widgets, checkout_mode: "widget" });
     if (!widgets) return;
     setPaying(true);
     try {
@@ -96,17 +99,24 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
           return;
         }
       }
+      safeCheckoutTrack(track, "checkout_pay_request", { orderId, variant: "widget", checkout_mode: "widget" });
       await widgets.requestPayment({
         orderId,
         orderName: productName,
         successUrl: `${window.location.origin}/checkout/success`,
-        failUrl: `${window.location.origin}/checkout/fail`,
+        failUrl: checkoutFailUrl(window.location.origin, orderId, "widget"),
         customerEmail: customerEmail ?? undefined,
         customerMobilePhone: customerMobilePhone || undefined,
       });
     } catch (err) {
       setPaying(false);
-      toast.error(err instanceof Error ? err.message : "결제 요청 실패");
+      const code = checkoutFailureCode(err);
+      if (isCheckoutCancellation(code)) {
+        safeCheckoutTrack(track, "checkout_pay_cancel", { orderId, variant: "widget", checkout_mode: "widget" });
+        return;
+      }
+      safeCheckoutTrack(track, "checkout_pay_error", { orderId, variant: "widget", code, checkout_mode: "widget" });
+      toast.error(checkoutFailureMessage(code));
     }
   }
 

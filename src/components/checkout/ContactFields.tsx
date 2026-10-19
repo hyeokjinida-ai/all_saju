@@ -21,6 +21,8 @@
 import { useState } from "react";
 import { TossWidget } from "./TossWidget";
 import { PayMethods } from "./PayMethods";
+import { safeCheckoutTrack, saveOptionalCheckoutContact } from "@/lib/checkout-recovery";
+import { track } from "@/lib/analytics";
 
 // 결제수단을 직접 그릴지(몽연식 4줄 → 자체창)는 **결제 페이지(서버)** 가 두 키를 다 보고 정해 내려준다
 // (lib/toss/keys.ts). 아니면 토스 결제위젯 그대로 — 키를 빼고 재배포하면 원복된다(2026-09-21).
@@ -63,18 +65,13 @@ export function CheckoutForm({
   async function beforePay(): Promise<boolean> {
     if (digits && !/^01[016789]\d{7,8}$/.test(digits)) {
       setErr("휴대폰 번호를 다시 확인해 주세요");
+      safeCheckoutTrack(track, "checkout_validation_error", { orderId, field: "phone", checkout_mode: directPay ? "direct" : "widget" });
       return false;
     }
     setErr(null);
-    try {
-      await fetch(`/api/orders/${orderId}/contact`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: digits || null, marketingOptIn: optIn }),
-      });
-    } catch {
-      /* 저장 실패로 결제를 막지 않는다 */
-    }
+    const startedAt = Date.now();
+    const outcome = await saveOptionalCheckoutContact(orderId, { phone: digits || null, marketingOptIn: optIn });
+    safeCheckoutTrack(track, "checkout_contact_save", { orderId, outcome, durationMs: Math.max(0, Date.now() - startedAt), checkout_mode: directPay ? "direct" : "widget" });
     return true;
   }
 
