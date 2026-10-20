@@ -50,7 +50,7 @@ test('first review stays visible while two others are in a native collapsed disc
   assert.equal(nodes(tree).filter(node => node.type === 'button').length, 0);
 });
 
-test('reviews appear before product selection only in the shared Sangun purchase panel', () => {
+test('compact reviews appear before product selection only in the Sangun purchase popup', () => {
   const wizard = fs.readFileSync(path.join(root, 'src/components/saju/SajuWizard.tsx'), 'utf8');
-  assert.match(wizard, /const renderPayPanel = \(\) => \([\s\S]*?productSlug === "sangun-sinjeom" && <CheckoutReviews \/>[\s\S]*?<CheckoutOfferSelection/);
+  assert.match(wizard, /const renderPayPanel = \(\) => \([\s\S]*?productSlug === "sangun-sinjeom" && payOpen && <CheckoutReviews \/>[\s\S]*?<CheckoutOfferSelection/);
 });

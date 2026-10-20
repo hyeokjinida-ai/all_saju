@@ -716,7 +716,7 @@ export function SajuWizard({
       const chartMs = Date.now() - startedAt;
       // The signed assignment is settled before either detail can be shown.
       setDetailChoice(SANGUN_DETAIL_AB_ACTIVE ? await assignment : null);
-      const minimum = productSlug === "sangun-sinjeom" ? 0 : MIN_TEASER_LOADING_MS;
+      const minimum = productSlug === "sangun-sinjeom" ? 3000 : MIN_TEASER_LOADING_MS;
       const left = minimum - (Date.now() - startedAt);
       if (left > 0) await new Promise((r) => setTimeout(r, left));
       track("teaser_timing", { slug: productSlug, chart_ms: chartMs,
@@ -856,7 +856,7 @@ export function SajuWizard({
   //   아직 상품·티저가 없는 단계에서 터진다(실측: 에러 바운더리 「잠시 길이 엉켰어요」).
   const renderPayPanel = () => (
     <>
-            {productSlug === "sangun-sinjeom" && <CheckoutReviews />}
+            {productSlug === "sangun-sinjeom" && payOpen && <CheckoutReviews />}
             {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
                 할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
                 패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}

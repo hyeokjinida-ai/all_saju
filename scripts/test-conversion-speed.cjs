@@ -19,32 +19,34 @@ const callbackCode = ts.transpileModule(`exports.run = ${callback};`, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function fixture({ slug = 'sangun-sinjeom', active = false, failed = false, assignment = Promise.resolve(null) } = {}) {
+function fixture({ slug = 'sangun-sinjeom', active = false, failed = false, requestMs = 0, assignment = Promise.resolve(null) } = {}) {
   const events = [], timers = [], loading = [], choices = [];
+  let now = 1000;
   const context = {
-    exports: {}, Date: { now: () => 1000 }, productSlug: slug, SANGUN_DETAIL_AB_ACTIVE: active,
+    exports: {}, Date: { now: () => now }, productSlug: slug, SANGUN_DETAIL_AB_ACTIVE: active,
     MIN_TEASER_LOADING_MS: 3200, teaserStep: 9,
     form: { name: 'PRIVATE NAME', birthDate: '1990-01-15', timeUnknown: true },
     profileTags: () => [], reunionAnswerTags: () => [], assignDetail: () => assignment,
     setTeaserLoading: value => loading.push(value), setDetailChoice: value => choices.push(value),
     setPersonalData() {}, setPersonalDetailReady() {}, setDetailFailed() {}, setStep() {},
     setPillars() {}, setTokens() {}, setTeaser() {},
-    fetch: async () => { if (failed) throw new Error('offline'); return { json: async () => ({ ok: true, teaser: {}, view: {} }) }; },
+    fetch: async () => { now += requestMs; if (failed) throw new Error('offline'); return { json: async () => ({ ok: true, teaser: {}, view: {} }) }; },
     track: (event, props) => events.push({ event, props }),
-    setTimeout: (resolve, delay) => { timers.push(delay); resolve(); },
+    setTimeout: (resolve, delay) => { timers.push(delay); now += delay; resolve(); },
   };
   vm.runInNewContext(callbackCode, context);
   return { run: context.exports.run, events, timers, loading, choices };
 }
 
-test('Sangun shows a ready teaser without the former 3.2 second hold or a closed experiment response', async () => {
+test('Sangun holds its loading scene for three seconds without waiting for a closed experiment response', async () => {
   const sample = fixture({ assignment: new Promise(() => {}) });
   await sample.run();
   assert.deepEqual(sample.loading, [true, false]);
-  assert.deepEqual(sample.timers, []);
+  assert.deepEqual(sample.timers, [3000]);
   assert.deepEqual(sample.choices, [null]);
   assert.equal(sample.events.at(-1).event, 'teaser_timing');
   assert.equal(sample.events.at(-1).props.outcome, 'ok');
+  assert.equal(sample.events.at(-1).props.total_ms, 3000);
   assert.equal(JSON.stringify(sample.events).includes('PRIVATE NAME'), false);
   assert.equal(JSON.stringify(sample.events).includes('1990-01-15'), false);
 });
@@ -61,12 +63,30 @@ test('an active experiment still settles before showing its detail', async () =>
   assert.deepEqual(sample.loading, [true, false]);
 });
 
-test('a failed request releases loading and records failure without a forced wait', async () => {
+test('a failed request releases loading after the minimum scene and records failure', async () => {
   const sample = fixture({ failed: true });
   await sample.run();
   assert.deepEqual(sample.loading, [true, false]);
-  assert.deepEqual(sample.timers, []);
+  assert.deepEqual(sample.timers, [3000]);
   assert.equal(sample.events.at(-1).props.outcome, 'failed');
+});
+
+test('Sangun waits only the remaining scene time after a fast response', async () => {
+  const sample = fixture({ requestMs: 1250 });
+  await sample.run();
+  assert.deepEqual(sample.timers, [1750]);
+  assert.equal(sample.events.at(-1).props.chart_ms, 1250);
+  assert.equal(sample.events.at(-1).props.total_ms, 3000);
+});
+
+test('responses taking three seconds or longer do not add another delay', async () => {
+  for (const requestMs of [3000, 4500]) {
+    const sample = fixture({ requestMs });
+    await sample.run();
+    assert.deepEqual(sample.timers, []);
+    assert.equal(sample.events.at(-1).props.total_ms, requestMs);
+    assert.deepEqual(sample.loading, [true, false]);
+  }
 });
 
 test('other products keep their existing minimum animation time', async () => {

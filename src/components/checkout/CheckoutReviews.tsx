@@ -40,3 +40,19 @@ export function CheckoutReviews() {
     </section>
   );
 }
+
+export function SangunCustomerReviews({ className = "" }: { className?: string }) {
+  return (
+    <section aria-label="이용 후기" className={className}>
+      <h2 className="mb-5 text-center font-myeongjo text-[19px] font-bold" style={{ color: "var(--bone)" }}>먼저 받아 본 사람들의 후기</h2>
+      <div className="space-y-4">
+        {reviews.map(review => (
+          <figure key={review.author} className="m-0 rounded-xl border p-5" style={{ borderColor: "var(--gold-line)", background: "rgba(0,0,0,0.3)" }}>
+            <figcaption className="mb-3 font-myeongjo text-[14px] font-semibold" style={{ color: "var(--gold-bright)" }}>{review.author}</figcaption>
+            <blockquote className="m-0 text-[15px] leading-[1.8]" style={{ color: "var(--bone-soft)" }}>“{review.content}”</blockquote>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}

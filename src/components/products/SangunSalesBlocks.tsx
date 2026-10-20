@@ -8,6 +8,7 @@
 // 색은 하드코딩하지 않고 `.world-sangun` 토큰(globals.css:108)을 쓴다 —
 // 두 화면이 같은 world 안에 있어 값이 같고, 나중에 톤을 바꿀 때 한 곳만 고치면 된다.
 import { StoryFooter } from "@/components/products/StoryFooter";
+import { SangunCustomerReviews } from "@/components/checkout/CheckoutReviews";
 
 // 예시 결과지 — 실제 엔진 출력(1993-05-15 여) 그대로. 손으로 다듬지 않는다.
 // noTitle: 티저 꼬리에서는 바로 위 표지 컷의 말풍선이 소개를 대신하므로 제목을 뺀다(같은 말 두 번 금지).
@@ -465,9 +466,9 @@ export function TeaserSalesTail({ priceLabel }: { priceLabel: string }) {
         alt="정면으로 선 산군"
         pos="center 24%"
         sayAt="bottom"
-        say="궁금한 건 묻고 가라."
+        say="먼저 본 사람들의 말을 들어 봐라."
       />
-      <SangunFaq className="mt-6" />
+      <SangunCustomerReviews className="mt-6" />
       {/* ⚠ StoryFooter 는 여기 있으면 안 된다 — 이 꼬리 **뒤에 결제 칸(#pay)이 온다.**
           약관·사업자번호·© 가 결제 칸 위 1/3 을 덮어 「페이지가 끝났다」로 읽혔다
           (2026-09-20 실측 t18: 푸터 y=14,374~14,501 / 결제 칸 y=14,578).
