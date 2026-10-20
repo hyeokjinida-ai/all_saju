@@ -4,6 +4,7 @@ const path = require('node:path');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '..');
 const cache = new Map();
+const pureComponents = new Set();
 const orderId = 'ord_12345678901234567890';
 let effects = [], events = [], notifications = [], requests = [];
 let paymentError = null, sdkError = null, search = new URLSearchParams();
@@ -59,6 +60,7 @@ function load(file) {
 function nodes(tree) {
   if (!tree || typeof tree !== 'object') return [];
   if (Array.isArray(tree)) return tree.flatMap(nodes);
+  if (pureComponents.has(tree.type)) return [tree, ...nodes(tree.type(tree.props))];
   return [tree, ...nodes(tree.props?.children)];
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -66,6 +68,7 @@ function reset() { effects = []; events = []; notifications = []; requests = [];
 const props = { orderId, amount: 31900, customerKey: 'synthetic', productName: 'QA', productSlug: 'sangun-sinjeom', customerEmail: null };
 
 async function main() {
+  pureComponents.add(load('src/components/checkout/PayMethods.tsx').SangunPaymentActions);
   const recovery = load('src/lib/checkout-recovery.ts');
   assert.equal(recovery.CONTACT_SAVE_TIMEOUT_MS, 1500);
   assert.equal(recovery.checkoutRetryPath(orderId), `/checkout/${orderId}`);

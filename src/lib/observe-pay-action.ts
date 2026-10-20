@@ -19,6 +19,7 @@ export function observePayAction(
   };
   const sufficientlyVisible = () => {
     if (!target?.isConnected || !container?.isConnected) return false;
+    if (target.closest('[inert], [hidden], [aria-hidden="true"]')) return false;
     const rect = target.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return false;
     const viewport = window.visualViewport;
@@ -74,7 +75,7 @@ export function observePayAction(
     update();
   };
   const mutations = new MutationObserver(attach);
-  mutations.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"] });
+  mutations.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden", "inert", "aria-hidden"] });
   window.addEventListener("scroll", update, true);
   window.addEventListener("resize", update);
   window.visualViewport?.addEventListener("resize", update);

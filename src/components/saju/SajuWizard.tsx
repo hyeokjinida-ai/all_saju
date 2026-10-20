@@ -12,6 +12,9 @@ import { track } from "@/lib/analytics";
 import { fetchOrderWithDiagnostics } from "@/lib/order-create-diagnostics";
 import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
+import { CheckoutOfferSelection, CheckoutPriceSummary } from "@/components/checkout/CheckoutOfferSelection";
+import { PaySheet } from "@/components/checkout/PaySheet";
+import { checkoutSummary } from "@/lib/checkout-summary";
 import { observePayPanel } from "@/lib/observe-pay-panel";
 import { observePayAction } from "@/lib/observe-pay-action";
 import { assignDetail, type DetailChoice } from "@/lib/detail-assignment-client";
@@ -845,7 +848,21 @@ export function SajuWizard({
             {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
                 할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
                 패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
-            {bundles.length > 0 && (
+            {productSlug === "sangun-sinjeom" ? (
+              <CheckoutOfferSelection
+                options={checkoutOptions}
+                selectedId={selected.productId}
+                recommendedId={recommended?.productId}
+                isMember={isLoggedIn}
+                disabled={submitting}
+                onSelect={(productId) => {
+                  const option = checkoutOptions.find(candidate => candidate.productId === productId);
+                  if (!option) return;
+                  setSelectedId(option.productId);
+                  try { track("plan_select", { slug: productSlug, plan: option.productId, price: option.price }); } catch {}
+                }}
+              />
+            ) : bundles.length > 0 && (
               <div className="mb-4 space-y-2">
                 {checkoutOptions.map((o) => {
                   const on = o.productId === selected.productId;
@@ -940,18 +957,21 @@ export function SajuWizard({
             <PriceExposure slug={selected.slug} basePrice={effectivePrice}
               displayedAmount={chargeFor(effectivePrice, isLoggedIn)} isMember={isLoggedIn}
               stage={payOpen ? "sheet" : "inline"}>
+            {productSlug === "sangun-sinjeom" && (
+              <CheckoutPriceSummary price={effectivePrice} compareAtPrice={selected.compareAtPrice} isMember={isLoggedIn} />
+            )}
             {isLoggedIn ? (
           <button
             type="button"
             onClick={createOrder}
             data-price-amount={chargeFor(effectivePrice, true)}
             disabled={submitting}
-            className="w-full min-h-[58px] border-none font-bold text-[17px] tracking-[0.15em] flex items-center justify-center gap-3 disabled:opacity-70"
+            className={`w-full min-h-[58px] border-none font-bold text-[17px] flex items-center justify-center gap-3 disabled:opacity-70 ${productSlug === "sangun-sinjeom" ? "rounded-xl" : "tracking-[0.15em]"}`}
             style={{
-              fontFamily: "var(--font-serif-kr), serif",
-              background: ctaFill.on,
-              color: ctaFill.ink,
-              boxShadow: ctaFill.glow,
+              fontFamily: productSlug === "sangun-sinjeom" ? undefined : "var(--font-serif-kr), serif",
+              background: productSlug === "sangun-sinjeom" ? "#B9473C" : ctaFill.on,
+              color: productSlug === "sangun-sinjeom" ? "#FFFFFF" : ctaFill.ink,
+              boxShadow: productSlug === "sangun-sinjeom" ? "none" : ctaFill.glow,
             }}
           >
             {submitting
@@ -959,23 +979,23 @@ export function SajuWizard({
               : imm
                 ? `${formatKRW(chargeFor(effectivePrice, true))} 결제하러 가기 (회원 할인)`
                 : `${formatKRW(chargeFor(effectivePrice, true))} 결제하러 가기 (회원 할인 적용)`}
-            {!submitting && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
+            {!submitting && productSlug !== "sangun-sinjeom" && <span className="font-brush text-[19px]" style={{ color: ctaFill.ink }}>受</span>}
           </button>
             ) : (
           <div className="space-y-2.5">
             {/* 비회원 결제 — 이메일만 받고 바로 결제(로그인 강제 없음) */}
             {/* 라벨을 칸 **위에** 세운다 — 전엔 흐린 placeholder 뿐이라 입력칸인지 안 읽혔고
                 자동완성 속성이 없어 폰이 이메일을 채워 주지도 않았다(2026-09-20 ㉮-3). */}
-            <label htmlFor="guest-email" className="block text-center text-[13px] text-bone-soft">
+            <label htmlFor="guest-email" className={`block text-[13px] ${productSlug === "sangun-sinjeom" ? "text-left font-medium text-white" : "text-center text-bone-soft"}`}>
               결과 받을 이메일
             </label>
-            {productSlug === "sangun-sinjeom" && <p id="guest-email-help" className="text-center text-[13px] text-bone-soft">
+            {productSlug === "sangun-sinjeom" && <p id="guest-email-help" className="text-left text-[12px] text-[#929297]">
               로그인 없이 이메일만 입력하면 결제할 수 있어요.
             </p>}
             <input
               id="guest-email"
               ref={guestEmailRef}
-              className="ap-input text-center"
+              className={`ap-input ${productSlug === "sangun-sinjeom" ? "text-left focus:!border-[#E87964] focus:!ring-[#E87964]/25" : "text-center"}`}
               type="email"
               inputMode="email"
               autoComplete="email"
@@ -994,7 +1014,7 @@ export function SajuWizard({
               onBlur={() => {
                 if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim())) track("pay_email_valid", { slug: productSlug });
               }}
-              style={{ fontSize: 16 }}
+              style={{ fontSize: 16, ...(productSlug === "sangun-sinjeom" ? { background: "#111111", borderColor: "#3B3B41", borderRadius: 12, color: "#FFFFFF" } : {}) }}
             />
             {/* ⚠ 늘 켜 둔다. 전엔 이메일이 없으면 disabled + 투명도 45% 라 **눌리지 않았고**,
                 왜 못 누르는지 알려 주는 문장도 없었다(안내는 createOrder 안에 있었는데 버튼이
@@ -1013,12 +1033,12 @@ export function SajuWizard({
               }}
               disabled={submitting}
               data-price-amount={effectivePrice}
-              className="w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.15em] disabled:opacity-45"
+              className={`w-full min-h-[56px] border-none font-bold text-[17px] disabled:opacity-45 ${productSlug === "sangun-sinjeom" ? "rounded-xl" : "tracking-[0.15em]"}`}
               style={{
-                fontFamily: "var(--font-serif-kr), serif",
-                background: ctaFill.on,
-                color: ctaFill.ink,
-                boxShadow: ctaFill.glow,
+                fontFamily: productSlug === "sangun-sinjeom" ? undefined : "var(--font-serif-kr), serif",
+                background: productSlug === "sangun-sinjeom" ? "#B9473C" : ctaFill.on,
+                color: productSlug === "sangun-sinjeom" ? "#FFFFFF" : ctaFill.ink,
+                boxShadow: productSlug === "sangun-sinjeom" ? "none" : ctaFill.glow,
               }}
             >
               {/* '복채'는 뺐다 — 모의구매 5/6이 "돈 내는 게 아니라 갖다 바치는 걸로 들린다"고 했다.
@@ -2101,10 +2121,14 @@ export function SajuWizard({
       </div>
 
       <PaySheet open={payOpen} onClose={() => {
-        track("pay_close", { slug: productSlug, email_started: guestEmail.length > 0,
-          email_valid: guestEmailValid, value: effectivePrice });
+        try {
+          track("pay_close", { slug: productSlug, email_started: guestEmail.length > 0,
+            email_valid: guestEmailValid, value: effectivePrice });
+        } catch {}
         setPayOpen(false);
-      }} dark={imm} sangun={productSlug === "sangun-sinjeom"}>
+      }} dark={imm} sangun={productSlug === "sangun-sinjeom"}
+        totalDiscount={checkoutSummary(selected.price, selected.compareAtPrice, isLoggedIn).totalDiscount}
+        busy={submitting}>
         {renderPayPanel()}
       </PaySheet>
 
@@ -4246,56 +4270,6 @@ function usePayActionInView(slug: string | undefined, enabled: boolean, sheetOpe
     }, via);
   }, [slug, enabled, sheetOpen]);
   return inView;
-}
-
-/** 결제 팝업 — 아래에서 올라오는 시트.
- *  경쟁 2사 실측(2026-09-21): 타이트는 풀이에 결제 칸이 없고 **하단 고정 버튼 → 팝업** 하나로 끝낸다
- *  (`TossPaymentDrawer`, 90vh). 청월당도 하단 버튼 → 별도 결제 화면. 풀이 17화면 맨 끝까지
- *  내려와야 살 수 있던 건 우리뿐이었다.
- *  ⚠ 포털로 body 에 붙인다 — 위저드를 감싼 `.svc-fade` 의 transform 이 position:fixed 의
- *    기준을 뺏는다(StickyBuyBar 와 같은 이유). 세계관 클래스도 다시 붙인다. */
-function PaySheet({ open, onClose, dark, sangun = false, children }: { open: boolean; onClose: () => void; dark: boolean; sangun?: boolean; children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  // 시트가 떠 있는 동안 뒤 배경이 같이 스크롤되면 손님이 자리를 잃는다.
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", esc);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", esc);
-    };
-  }, [open, onClose]);
-  if (!mounted || !open) return null;
-  return createPortal(
-    <div className={`${dark ? "world-sangun" : "world-jiknyeo"} fixed inset-0 z-[60]`}>
-      <div onClick={onClose} className="absolute inset-0" style={{ background: "rgba(4,3,6,0.72)" }} />
-      <div
-        id="pay-sheet"
-        className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-md overflow-y-auto rounded-t-2xl px-5 pt-3 pb-6"
-        style={{
-          maxHeight: "92vh",
-          background: dark ? "#0b0a0f" : "#fbf8f4",
-          borderTop: "1px solid var(--gold-line)",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.55)",
-        }}
-      >
-        <div className="mb-2 flex items-center justify-between">
-          <span className="font-myeongjo text-[15px] font-bold" style={{ color: dark ? "var(--bone)" : "#241a08" }}>
-            {sangun ? "사주 풀이 선택" : dark ? "장부를 펴려면" : "결제"}
-          </span>
-          <button type="button" onClick={onClose} aria-label="닫기" className="p-2 text-[18px]" style={{ color: "var(--bone-faint)" }}>
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>,
-    document.body,
-  );
 }
 
 function StickyBuyBar({

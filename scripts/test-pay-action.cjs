@@ -12,6 +12,7 @@ function fixture(surface = 'inline') {
   let container = null;
   let button = null;
   let mutation = () => {};
+  let mutationOptions;
   let serial = 0;
   const values = [], observations = [], timers = new Map(), listeners = new Map(), viewportListeners = new Map();
   const viewport = { height: 844, width: 390, offsetTop: 0, offsetLeft: 0,
@@ -30,24 +31,40 @@ function fixture(surface = 'inline') {
       observe(target) { this.target = target; }
       disconnect() { this.disconnected = true; }
     },
-    MutationObserver: class { constructor(callback) { mutation = callback; } observe() {} disconnect() { mutation = () => {}; } },
+    MutationObserver: class { constructor(callback) { mutation = callback; } observe(target, options) { mutationOptions = options; } disconnect() { mutation = () => {}; } },
     setTimeout: (callback, delay) => { assert.equal(delay, 250); timers.set(++serial, callback); return serial; },
     clearTimeout: timer => timers.delete(timer),
   };
   vm.runInNewContext(source, context);
   const stop = context.exports.observePayAction(value => values.push(value), surface);
   const element = (top, height) => ({ isConnected: true, top, height, left: 0, width: 390,
+    parentElement: null,
+    attributes: new Map(),
+    setAttribute(name, value) { this.attributes.set(name, value); },
+    removeAttribute(name) { this.attributes.delete(name); },
+    closest(selector) {
+      assert.equal(selector, '[inert], [hidden], [aria-hidden="true"]');
+      let ancestor = this;
+      while (ancestor) {
+        if (ancestor.attributes.has('inert') || ancestor.attributes.has('hidden') || ancestor.attributes.get('aria-hidden') === 'true') return ancestor;
+        ancestor = ancestor.parentElement;
+      }
+      return null;
+    },
     getBoundingClientRect() { return { top: this.top, bottom: this.top + this.height, left: this.left, right: this.left + this.width, height: this.height, width: this.width }; },
   });
   return {
-    values, observations, stop, timers, listeners, viewportListeners, viewport,
+    values, observations, stop, timers, listeners, viewportListeners, viewport, mutationOptions,
     mount(top = 100, panelTop = 50, panelHeight = 794) {
       button = element(top, 60);
       container = { ...element(panelTop, panelHeight), querySelector: selector => { assert.equal(selector, 'button[data-price-amount]'); return button; } };
+      const ancestor = element(0, 844);
+      container.parentElement = ancestor;
+      button.parentElement = container;
       mutation();
-      return { button, container };
+      return { button, container, ancestor };
     },
-    replace(top = 100) { button.isConnected = false; button = element(top, 60); mutation(); return button; },
+    replace(top = 100) { button.isConnected = false; button = element(top, 60); button.parentElement = container; mutation(); return button; },
     remove() { button.isConnected = false; container.isConnected = false; button = null; container = null; mutation(); },
     mutate: () => mutation(),
     scroll: () => listeners.get('scroll')?.(),
@@ -96,6 +113,58 @@ test('brief entry cancels the dwell instead of counting a scroll-through', () =>
   const { button } = sample.mount();
   button.top = 900; sample.scroll(); sample.flush();
   assert.equal(sample.values.includes(true), false);
+  sample.stop();
+});
+
+test('hidden or inert ancestors cancel a pending dwell when the exit dialog appears', () => {
+  for (const [attribute, value] of [['inert', ''], ['hidden', ''], ['aria-hidden', 'true']]) {
+    const sample = fixture('sheet');
+    const { ancestor } = sample.mount();
+    assert.equal(sample.timers.size, 1);
+    ancestor.setAttribute(attribute, value);
+    sample.mutate();
+    assert.equal(sample.timers.size, 0);
+    sample.flush();
+    assert.deepEqual(sample.values, []);
+    sample.stop();
+  }
+});
+
+test('an exit dialog hides an exposed action and continuing requires a new full dwell', () => {
+  const sample = fixture('sheet');
+  const { ancestor } = sample.mount();
+  sample.flush();
+  assert.deepEqual(sample.values, [true]);
+  ancestor.setAttribute('inert', '');
+  ancestor.setAttribute('aria-hidden', 'true');
+  sample.mutate();
+  assert.deepEqual(sample.values, [true, false]);
+  sample.flush();
+  assert.deepEqual(sample.values, [true, false]);
+  ancestor.removeAttribute('inert');
+  ancestor.removeAttribute('aria-hidden');
+  sample.mutate();
+  assert.equal(sample.timers.size, 1);
+  assert.deepEqual(sample.values, [true, false]);
+  sample.flush();
+  assert.deepEqual(sample.values, [true, false, true]);
+  sample.stop();
+});
+
+test('dwell rechecks hidden state even before mutation delivery and observes all hiding attributes', () => {
+  const sample = fixture('sheet');
+  const { button } = sample.mount();
+  for (const attribute of ['inert', 'hidden', 'aria-hidden']) {
+    assert.ok(sample.mutationOptions.attributeFilter.includes(attribute));
+  }
+  button.setAttribute('aria-hidden', 'true');
+  sample.flush();
+  assert.deepEqual(sample.values, []);
+  button.setAttribute('aria-hidden', 'false');
+  sample.mutate();
+  assert.equal(sample.timers.size, 1);
+  sample.flush();
+  assert.deepEqual(sample.values, [true]);
   sample.stop();
 });
 

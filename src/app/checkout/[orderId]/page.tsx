@@ -131,50 +131,51 @@ export default async function CheckoutPage({
     "marriage-saju": "결혼하는 해와 달 · 내 고민 답변",
   };
 
-  const Row = ({ k, v, sub, strong }: { k: React.ReactNode; v: React.ReactNode; sub?: string; strong?: boolean }) => (
-    <div className="flex items-start justify-between gap-4 py-3">
+  const Row = ({ k, v, sub, strong, accent }: { k: React.ReactNode; v: React.ReactNode; sub?: string; strong?: boolean; accent?: boolean }) => (
+    <div className={`flex justify-between gap-4 ${world === "sangun" && strong ? "mt-3 border-t border-[#5B5B60] pt-4 pb-3" : "py-3"} ${world === "sangun" ? "items-center" : "items-start"} ${world === "sangun" && accent ? "text-[#E87964]" : ""}`}>
       <div className="min-w-0">
-        <p className={`text-[15px] ${strong ? "font-bold text-bone" : "text-bone-soft"}`}>{k}</p>
+        <p className={`${world === "sangun" && !strong ? "text-[13px]" : "text-[15px]"} ${strong ? "font-bold text-bone" : world === "sangun" && accent ? "" : "text-bone-soft"}`}>{k}</p>
         {sub && <p className="mt-0.5 text-[12px] text-bone-faint">{sub}</p>}
       </div>
-      <p className={`shrink-0 text-[15px] tabular-nums ${strong ? "font-bold text-bone" : "text-bone-soft"}`}>{v}</p>
+      <p className={`shrink-0 tabular-nums ${strong && world === "sangun" ? "text-[18px]" : "text-[15px]"} ${strong ? "font-bold text-bone" : world === "sangun" && accent ? "" : "text-bone-soft"}`}>{v}</p>
     </div>
   );
 
   return (
-    <div className={`${worldClass(world)} min-h-screen`} style={{ background: bg }}>
+    <div className={`${worldClass(world)} min-h-screen ${world === "sangun" ? "font-sans [--bone:#FFFFFF] [--bone-soft:#BDBDC2] [--bone-faint:#939397] [--gold:#E87964] [--gold-bright:#E87964] [--gold-soft:#BDBDC2] [--gold-pale:#2C1B18] [--gold-line:#5B5B60]" : ""}`} style={{ background: world === "sangun" ? "#111111" : bg }}>
       {/* py-10 → py-7: 결제 버튼을 폰 첫 화면(844) 안으로 올리기 위한 여백 절약(2026-09-20 ㉯-1) */}
       <div className="mx-auto max-w-md px-5 py-7">
         {/* 산군은 반말 세계다. 여기서 「결제 안내」로 받으면 신당이 갑자기 쇼핑몰이 된다(2026-09-08).
             ⚠ 바꾸는 건 **제목과 CTA 뿐**이다 — 금액·동의·연락처·토스·환불은 현실 언어로 남긴다.
             캐릭터의 말과 사업자의 약속은 섞으면 둘 다 약해진다. */}
-        <h1 className="font-myeongjo text-center text-[17px] font-bold text-bone">
-          {world === "sangun" ? "여기서부터 네 장부 전체를 연다" : `${name} 결제 안내`}
+        <h1 className={`${world === "sangun" ? "font-sans text-left text-[20px] font-bold" : "font-myeongjo text-center text-[17px] font-bold"} text-bone`}>
+          {world === "sangun" ? "결제 안내" : `${name} 결제 안내`}
         </h1>
 
         {/* 총 할인 배너 — 타이트 결제 모달의 「총 13,200원 할인받았어요!」 자리 */}
         {totalOff > 0 && (
           <p
-            className="mx-auto mt-4 w-fit rounded-full px-4 py-1.5 text-[13px] font-bold"
-            style={{ background: "var(--gold-pale)", color: "var(--gold-bright)" }}
+            className={`mt-4 w-fit text-[13px] ${world === "sangun" ? "rounded-full px-3 py-2 font-bold" : "mx-auto rounded-full px-4 py-1.5 font-bold"}`}
+            style={{ background: world === "sangun" ? "#2C1B18" : "var(--gold-pale)", color: world === "sangun" ? "#FFFFFF" : "var(--gold-bright)" }}
           >
-            총 {formatKRW(totalOff)} 할인받았어요
+            총 <span className={world === "sangun" ? "text-[#E87964]" : undefined}>{formatKRW(totalOff)}</span> 할인받았어요
           </p>
         )}
 
-        <div className="mt-5 divide-y divide-hairline border-y border-hairline">
+        <div className={`mt-5 ${world === "sangun" ? "" : "divide-y divide-hairline border-y border-hairline"}`}>
           <Row k={name} sub={desc[slug]} v={formatKRW(listPrice)} />
           {saleOff > 0 && (
             <Row
               k={
                 <>
-                  지금 결제 시 할인 <span className="ml-1 text-[12px] text-bone-faint">-{salePct}%</span>
+                  지금 결제 시 할인 <span className={`ml-1 text-[12px] ${world === "sangun" ? "text-[#E87964]" : "text-bone-faint"}`}>-{salePct}%</span>
                 </>
               }
               v={`-${formatKRW(saleOff)}`}
+              accent
             />
           )}
-          {memberOff > 0 && <Row k="회원 할인" v={`-${formatKRW(memberOff)}`} />}
+          {memberOff > 0 && <Row k="회원 할인" v={`-${formatKRW(memberOff)}`} accent />}
           <PriceExposure slug={slug} basePrice={baseCharge} displayedAmount={order.amount}
             isMember={isMember} stage="checkout" orderId={order.order_id}>
             <Row k="결제금액" v={formatKRW(order.amount)} strong />

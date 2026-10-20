@@ -20,6 +20,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import type { TossPaymentsPayment } from "@tosspayments/tosspayments-sdk";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ import { loadPayment } from "@/lib/toss/client";
 import { track } from "@/lib/analytics";
 import { LAST_ORDER_SLUG_KEY } from "./TossWidget";
 import { checkoutFailureCode, checkoutFailureMessage, checkoutFailUrl, isCheckoutCancellation, safeCheckoutTrack } from "@/lib/checkout-recovery";
+import { formatKRW } from "@/lib/utils";
+import { worldOfSlug } from "@/lib/world";
 
 type MethodId = "kakaopay" | "naverpay" | "tosspay" | "card";
 
@@ -72,6 +75,8 @@ export function PayMethods({
   const [method, setMethod] = useState<MethodId>("kakaopay");
   const [paying, setPaying] = useState(false);
   const sdkRef = useRef<Promise<TossPaymentsPayment> | null>(null);
+  const paymentLockRef = useRef(false);
+  const referenceLayout = worldOfSlug(productSlug) === "sangun";
 
   // 대기 화면 테마용 slug — TossWidget 과 같은 약속(success 화면이 읽는다)
   useEffect(() => {
@@ -104,14 +109,21 @@ export function PayMethods({
     );
   }, [customerKey, orderId]);
 
-  async function handlePay() {
-    const m = METHODS.find((x) => x.id === method) ?? METHODS[0];
+  async function handlePay(methodId: MethodId) {
+    if (paymentLockRef.current) return;
+    paymentLockRef.current = true;
+    const paymentMethod = METHODS.find((candidate) => candidate.id === methodId) ?? METHODS[0];
+    setMethod(paymentMethod.id);
+    if (referenceLayout) {
+      safeCheckoutTrack(track, "checkout_method_select", { orderId, method: paymentMethod.id, checkout_mode: "direct" });
+    }
     // 누른 사실 + 무엇으로 누르려 했는지 — 수단별로 어디서 돌아서는지 가르는 자
-    safeCheckoutTrack(track, "checkout_pay_click", { orderId, amount, method: m.id, ready: !!sdkRef.current, checkout_mode: "direct" });
+    safeCheckoutTrack(track, "checkout_pay_click", { orderId, amount, method: paymentMethod.id, ready: !!sdkRef.current, checkout_mode: "direct" });
     setPaying(true);
     let stage = "contact";
     try {
       if (onBeforePay && !(await onBeforePay())) {
+        paymentLockRef.current = false;
         setPaying(false);
         return;
       }
@@ -119,7 +131,7 @@ export function PayMethods({
       const payment = await (sdkRef.current ?? (sdkRef.current = loadPayment(customerKey)));
       const origin = window.location.origin;
       stage = "request";
-      safeCheckoutTrack(track, "checkout_pay_request", { orderId, method: m.id, variant: "direct", checkout_mode: "direct" });
+      safeCheckoutTrack(track, "checkout_pay_request", { orderId, method: paymentMethod.id, variant: "direct", checkout_mode: "direct" });
       await payment.requestPayment({
         method: "CARD",
         amount: { currency: "KRW", value: amount },
@@ -129,26 +141,27 @@ export function PayMethods({
         failUrl: checkoutFailUrl(origin, orderId, "direct"),
         customerEmail: customerEmail ?? undefined,
         customerMobilePhone: customerMobilePhone || undefined,
-        card: m.easyPay ? { flowMode: "DIRECT", easyPay: m.easyPay } : { flowMode: "DEFAULT" },
+        card: paymentMethod.easyPay ? { flowMode: "DIRECT", easyPay: paymentMethod.easyPay } : { flowMode: "DEFAULT" },
       });
       // 모바일은 여기서 페이지가 넘어간다. PC 는 창이 닫히면 성공 URL 로 넘어간다.
     } catch (err) {
+      paymentLockRef.current = false;
       setPaying(false);
       if (stage === "sdk") sdkRef.current = null;
       const code = checkoutFailureCode(err);
       // 손님이 창을 닫은 건 오류가 아니다 — 빨간 토스트를 띄우지 않고 기록만 한다.
       if (isCheckoutCancellation(code)) {
-        safeCheckoutTrack(track, "checkout_pay_cancel", { orderId, method: m.id, checkout_mode: "direct" });
+        safeCheckoutTrack(track, "checkout_pay_cancel", { orderId, method: paymentMethod.id, checkout_mode: "direct" });
         return;
       }
-      safeCheckoutTrack(track, "checkout_pay_error", { orderId, method: m.id, code, stage, checkout_mode: "direct" });
+      safeCheckoutTrack(track, "checkout_pay_error", { orderId, method: paymentMethod.id, code, stage, checkout_mode: "direct" });
       toast.error(checkoutFailureMessage(code));
     }
   }
 
   return (
     <div className="space-y-4">
-      <fieldset>
+      {!referenceLayout && <fieldset>
         <legend className="mb-1 text-[15px] font-bold text-bone">결제수단</legend>
         <div className="divide-y divide-hairline">
           {METHODS.map((m) => (
@@ -174,14 +187,18 @@ export function PayMethods({
             </label>
           ))}
         </div>
-      </fieldset>
+      </fieldset>}
 
       {beforeButton}
 
       <div>
-        <Button onClick={handlePay} disabled={paying} size="lg" className="w-full">
-          {paying ? "결제창 여는 중..." : (ctaLabel ?? "결제하기")}
-        </Button>
+        {referenceLayout ? (
+          <SangunPaymentActions amount={amount} paying={paying} method={method} onPay={handlePay} />
+        ) : (
+          <Button onClick={() => handlePay(method)} disabled={paying} size="lg" className="w-full">
+            {paying ? "결제창 여는 중..." : (ctaLabel ?? "결제하기")}
+          </Button>
+        )}
         {/* 위젯이 그리던 약관 동의 칸이 사라진 자리. 새 문장을 짓지 않고 레퍼런스 문장을 옮겼다.
             각 결제사 창 안에서 그 회사 약관 동의는 따로 받는다. */}
         <p className="mt-2.5 text-center text-[12px] leading-relaxed text-bone-faint">
@@ -191,6 +208,67 @@ export function PayMethods({
           </Link>{" "}
           및 결제 진행 필수 동의에 동의합니다.
         </p>
+      </div>
+    </div>
+  );
+}
+
+export function SangunPaymentActions({ amount, paying, method, onPay }: {
+  amount: number;
+  paying: boolean;
+  method: MethodId;
+  onPay: (methodId: MethodId) => void | Promise<void>;
+}) {
+  return (
+    <div className="space-y-3 font-sans-kr">
+      <div className="grid grid-cols-2 gap-3">
+        {METHODS.slice(0, 2).map((paymentMethod) => (
+          <Button
+            key={paymentMethod.id}
+            type="button"
+            onClick={() => onPay(paymentMethod.id)}
+            disabled={paying}
+            data-payment-method={paymentMethod.id}
+            aria-label={`${paymentMethod.label}로 ${formatKRW(amount)} 결제하기`}
+            variant="outline"
+            className="h-[60px] w-full justify-center gap-2 rounded-xl border-0 px-3 py-0 font-sans-kr shadow-none transition-[filter] hover:brightness-95 focus-visible:ring-[#E87964] focus-visible:ring-offset-[#111111] disabled:opacity-60"
+            style={{
+              background: paymentMethod.id === "kakaopay" ? "#FEE500" : "#03C75A",
+              color: "#111111",
+            }}
+          >
+            {paying && method === paymentMethod.id ? (
+              <span className="text-[12px] font-semibold">결제창 여는 중...</span>
+            ) : (
+              <>
+                {paymentMethod.logo && <Image src={paymentMethod.logo.src} alt="" width={paymentMethod.logo.w} height={paymentMethod.logo.h} className={paymentMethod.id === "naverpay" ? "shrink-0 brightness-0" : "shrink-0"} />}
+                <span className="text-[16px] font-bold">결제</span>
+              </>
+            )}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {METHODS.slice(2).map((paymentMethod) => (
+          <Button
+            key={paymentMethod.id}
+            type="button"
+            onClick={() => onPay(paymentMethod.id)}
+            disabled={paying}
+            data-payment-method={paymentMethod.id}
+            aria-label={`${paymentMethod.label}로 ${formatKRW(amount)} 결제하기`}
+            variant="outline"
+            className="h-11 w-full gap-2 rounded-xl border-[#393939] bg-[#171717] px-3 py-0 font-sans-kr text-[#E5E5E5] shadow-none hover:bg-[#222222] focus-visible:ring-[#E87964] focus-visible:ring-offset-[#111111] disabled:opacity-60"
+          >
+            {paying && method === paymentMethod.id ? (
+              <span className="text-[12px] font-medium">여는 중...</span>
+            ) : paymentMethod.logo ? (
+              <Image src={paymentMethod.logo.src} alt="" width={paymentMethod.logo.w} height={paymentMethod.logo.h} className="shrink-0" />
+            ) : (
+              <><CardIcon /><span className="text-[13px] font-medium">카드결제</span></>
+            )}
+          </Button>
+        ))}
       </div>
     </div>
   );

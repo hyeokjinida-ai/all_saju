@@ -93,8 +93,14 @@ async function main(){
     loadWidgets:async()=>({setAmount:async v=>{sdkAmount=v.value},renderPaymentMethods:async()=>{},renderAgreement:async()=>{},requestPayment:async v=>{paymentRequest=v}}),
   };
   global.window={location:{origin:'https://checkout.example.invalid'}};global.sessionStorage={setItem:()=>{}};
-  function buttons(node){if(!node||typeof node!=='object')return[];if(Array.isArray(node))return node.flatMap(buttons);return[...(node.type==='test-button'?[node]:[]),...buttons(node.props?.children)]}
-  for(const component of[load('src/components/checkout/PayMethods.tsx').PayMethods,load('src/components/checkout/TossWidget.tsx').TossWidget]){
+  const directPayment=load('src/components/checkout/PayMethods.tsx');
+  function buttons(node){
+    if(!node||typeof node!=='object')return[];
+    if(Array.isArray(node))return node.flatMap(buttons);
+    if(node.type===directPayment.SangunPaymentActions)return buttons(node.type(node.props));
+    return[...(node.type==='test-button'?[node]:[]),...buttons(node.props?.children)];
+  }
+  for(const component of[directPayment.PayMethods,load('src/components/checkout/TossWidget.tsx').TossWidget]){
     for(const amount of[19900,18000,26900,25000,24900,23000,31900,30000]){
       effects=[];sdkAmount=null;paymentRequest=null;
       const tree=component({orderId:'ord_TEST_SDK',amount,customerKey:'qa',productName:'QA',productSlug:'sangun-sinjeom',customerEmail:null});
