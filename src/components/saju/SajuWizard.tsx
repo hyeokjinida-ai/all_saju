@@ -13,6 +13,7 @@ import { fetchOrderWithDiagnostics } from "@/lib/order-create-diagnostics";
 import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
 import { CheckoutOfferSelection, CheckoutPriceSummary } from "@/components/checkout/CheckoutOfferSelection";
+import { CheckoutReviews } from "@/components/checkout/CheckoutReviews";
 import { PaySheet } from "@/components/checkout/PaySheet";
 import { checkoutSummary } from "@/lib/checkout-summary";
 import { observePayPanel } from "@/lib/observe-pay-panel";
@@ -502,6 +503,8 @@ export function SajuWizard({
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
   const [teaserLoading, setTeaserLoading] = useState(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
+  const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
+  const requiresTeaserEmail = productSlug === "sangun-sinjeom" && !isLoggedIn;
   const guestEmailRef = useRef<HTMLInputElement>(null);
   // teaser_view 는 「풀이 데이터가 도착했다」이고 그 뒤 로딩이 최소 3.2초 더 있다.
   // 손님이 **실제로 풀이를 본** 순간은 여기다 — 뜻이 다르니 이름을 따로 둔다.
@@ -728,10 +731,12 @@ export function SajuWizard({
     if (step === confirmStep) {
       // 밤 무대 상품(직녀·견우) — 결과 직전에 이메일을 폼이 아니라 대사로 한 번 묻는다(시장 1위 #45).
       // 결제까지 안 가는 손님도 여기서 남는다. 막지는 않는다 — 건너뛰면 그대로 티저로 간다.
-      if (isNight && !emailGate && !emailSkipped) {
+      if ((requiresTeaserEmail && !guestEmailValid) || (isNight && !emailGate && !emailSkipped)) {
         setEmailGate(true);
         return;
       }
+      if (emailGate && !guestEmailValid) return;
+      setGuestEmail(guestEmail.trim());
       setEmailGate(false);
       void loadTeaser();
       return;
@@ -741,13 +746,18 @@ export function SajuWizard({
       while (n < total - 1 && skipped.has(n)) n++; // 이 상품이 안 묻는 질문은 건너뛴다
       return Math.min(n, total - 1);
     });
-  }, [step, loadTeaser, skipped, isNight, emailGate, emailSkipped, confirmStep, total]);
-  const prev = () =>
+  }, [step, loadTeaser, skipped, isNight, emailGate, emailSkipped, confirmStep, total, requiresTeaserEmail, guestEmailValid, guestEmail]);
+  const prev = () => {
+    if (emailGate) {
+      setEmailGate(false);
+      return;
+    }
     setStep((s) => {
       let p = s - 1;
       while (p > 0 && skipped.has(p)) p--;
       return Math.max(0, p);
     });
+  };
 
   // ?demo= 로 들어왔으면 입력을 건너뛰고 티저를 바로 띄운다(형님 화면 확인용).
   // 마운트 1회만 — loadTeaser 를 의존성에 넣으면 form 이 바뀔 때마다 다시 호출된다.
@@ -762,11 +772,14 @@ export function SajuWizard({
   // Enter 키로 다음
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && canNext() && step < total - 1) next();
+      if (e.key === "Enter" && !e.isComposing && canNext() && step < total - 1) {
+        if (emailGate) e.preventDefault();
+        next();
+      }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [canNext, next, step]);
+  }, [canNext, next, step, emailGate]);
 
   function payload() {
     const concerns = [
@@ -806,8 +819,6 @@ export function SajuWizard({
       fallback: detailChoice?.variant === "new" && !newDetail });
   }, [productSlug, step, teaserStep, teaserLoading, teaser, detailChoice, personalDetailPending, newDetail]);
 
-  const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
-
   // ─── 결제 시트 옵션 ────────────────────────────────
   // 단품을 맨 위에 두고 패키지를 아래에 둔다. 할인율이 아래로 갈수록 커져야
   // "단품만 사면 손해"가 눈으로 읽힌다(타이트 결제 시트와 같은 배치).
@@ -845,6 +856,7 @@ export function SajuWizard({
   //   아직 상품·티저가 없는 단계에서 터진다(실측: 에러 바운더리 「잠시 길이 엉켰어요」).
   const renderPayPanel = () => (
     <>
+            {productSlug === "sangun-sinjeom" && <CheckoutReviews />}
             {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
                 할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
                 패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
@@ -990,7 +1002,7 @@ export function SajuWizard({
               결과 받을 이메일
             </label>
             {productSlug === "sangun-sinjeom" && <p id="guest-email-help" className="text-left text-[12px] text-[#929297]">
-              로그인 없이 이메일만 입력하면 결제할 수 있어요.
+              {guestEmailValid ? "앞에서 입력한 주소예요. 다른 주소로 받을 경우 수정해 주세요." : "로그인 없이 이메일만 입력하면 결제할 수 있어요."}
             </p>}
             <input
               id="guest-email"
@@ -1393,7 +1405,9 @@ export function SajuWizard({
                     ? "만나는 달을 찾는 중이에요"
                     : "명식을 계산하고 있어요"
               : emailGate
-                ? isReunion
+                ? requiresTeaserEmail
+                  ? "무료 풀이를 보기 전에"
+                  : isReunion
                   ? "마지막으로 하나만 여쭙습니다"
                   : "마지막으로 하나만요"
                 : cur.q}
@@ -1950,39 +1964,50 @@ export function SajuWizard({
           (emailGate ? (
             <div>
               <p className="font-myeongjo text-center text-[17px] leading-[1.8]" style={{ color: "var(--bone)" }}>
-                다 되면, 어디로 보내 드릴까요?
+                {requiresTeaserEmail ? "이메일 주소를 남겨 주세요" : "다 되면, 어디로 보내 드릴까요?"}
               </p>
               <p className="font-myeongjo mt-3 text-center text-[13px] leading-[1.75]" style={{ color: "var(--bone-soft)" }}>
-                {isReunion ? "지금 화면에서 바로 열립니다." : "지금 화면에서 바로 열려요."}
+                {requiresTeaserEmail ? "무료 풀이는 다음 화면에서 바로 볼 수 있어요." : isReunion ? "지금 화면에서 바로 열립니다." : "지금 화면에서 바로 열려요."}
                 <br />
-                {isReunion ? "이 주소로도 한 부 보내 두겠습니다." : "이 주소로도 한 부 보내 둘게요."}
+                {requiresTeaserEmail ? "입력한 주소는 구매 시 결과 수령 주소로 사용해요." : isReunion ? "이 주소로도 한 부 보내 두겠습니다." : "이 주소로도 한 부 보내 둘게요."}
               </p>
+              <label htmlFor="teaser-email" className="sr-only">이메일 주소</label>
               <input
+                id="teaser-email"
                 autoFocus
                 className="ap-input mt-6 text-center"
                 type="email"
                 inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                required={requiresTeaserEmail}
                 placeholder="example@gmail.com"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                style={{ fontSize: 15 }}
+                style={{ fontSize: 16 }}
               />
               <button
                 type="button"
                 onClick={next}
-                disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)}
+                disabled={!guestEmailValid}
                 className="mt-5 w-full min-h-[56px] border-none font-bold text-[17px] tracking-[0.22em] disabled:cursor-default"
                 style={{
                   fontFamily: "var(--font-serif-kr), serif",
-                  background: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.on : ctaFill.off,
-                  color: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.ink : "var(--bone-faint)",
-                  boxShadow: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail) ? ctaFill.glow : "none",
+                  background: guestEmailValid ? ctaFill.on : ctaFill.off,
+                  color: guestEmailValid ? ctaFill.ink : "var(--bone-faint)",
+                  boxShadow: guestEmailValid ? ctaFill.glow : "none",
                 }}
               >
-                여기로 보내줘
+                {requiresTeaserEmail ? "무료 사주 보기 →" : "여기로 보내줘"}
               </button>
+              {requiresTeaserEmail && <p className="mt-3 text-center text-[12px] text-bone-soft">
+                광고성 메일 수신에 동의하는 것은 아니에요.{" "}
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">개인정보처리방침</a>
+              </p>}
               {/* 막지 않는다 — 여기서 세우면 무료 티저를 보러 온 손님이 그대로 나간다 */}
-              <button
+              {!requiresTeaserEmail && <button
                 type="button"
                 onClick={() => {
                   setEmailSkipped(true);
@@ -1992,7 +2017,7 @@ export function SajuWizard({
                 className="w-full mt-2.5 font-myeongjo text-[13px] text-bone-faint tracking-[0.15em] py-2"
               >
                 그냥 볼게
-              </button>
+              </button>}
             </div>
           ) : (
             <ConfirmStep
@@ -4309,7 +4334,7 @@ function StickyBuyBar({
       // teaser-light 를 같이 붙여 토큰(값=먹색·강조=핑크)이 안에서 그대로 먹게 한다.
       // mx-auto+max-w-md: 포털이 body 로 나가 ChromeGate 폰 기둥 밖이므로 폭을 스스로 죈다
       // (fixed 는 뷰포트 기준 — 안 죄면 PC 에서 이 바만 모니터 전폭으로 뻗는다). 홈 고정 헤더와 같은 공식.
-      className={`${dark ? "world-sangun" : "world-jiknyeo teaser-light"} fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-md items-center gap-2.5 px-3 py-2.5`}
+      className={`${dark ? "world-sangun" : "world-jiknyeo teaser-light gap-2.5 px-3 py-2.5"} fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-md items-center`}
       style={
         dark
           ? { background: "rgba(10,9,14,0.96)", borderTop: "1px solid var(--gold-line)", boxShadow: "0 -2px 12px rgba(0,0,0,0.5)" }
@@ -4317,27 +4342,33 @@ function StickyBuyBar({
       }
     >
       {/* 연도는 안 쓴다 — 바로 위 B2 가 「가장 가까운 건 ○○년 ○월이에요」로 이미 못 박았고, 이 바는 리마인더다. */}
-      <span
+      {!dark && <span
         className="font-myeongjo min-w-0 flex-1 text-left text-[13px] leading-[1.45]"
         style={{ color: "var(--bone-soft)" }}
       >
         {note}
-      </span>
+      </span>}
       <button
         type="button"
         onClick={onBuy}
-        className="shrink-0 whitespace-nowrap px-3.5 text-[13px] font-bold"
+        className={`shrink-0 whitespace-nowrap font-bold ${dark ? "group grid w-full cursor-pointer grid-cols-[2rem_1fr_2rem] items-center rounded-t-xl border border-[#b79b4c] px-5 text-[17px] transition-[filter] hover:brightness-105 active:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-5px] focus-visible:outline-[#17120c] motion-reduce:transition-none" : "px-3.5 text-[13px]"}`}
         style={{
           fontFamily: "var(--font-serif-kr), serif",
-          background: "var(--gold-bright)",
+          background: dark ? "linear-gradient(180deg, #fff0ad 0%, var(--gold-bright) 55%, #dfc16e 100%)" : "var(--gold-bright)",
+          boxShadow: dark ? "inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -3px 0 rgba(117,83,22,0.25)" : undefined,
           color: dark ? "#17120c" : "#ffffff",
           // 탭 타깃 44px — 스크롤 중에 엄지로 누르는 자리라 제일 놓치기 쉽다.
           // 인라인으로 두는 이유: 유틸리티 클래스(min-h-[44px])는 이 버튼에서 실측 20px 로
           // 떨어졌다(2026-09-02 DOM 실측 minHeight:auto). 값이 확실히 서야 하는 자리다.
-          minHeight: 44,
+          minHeight: dark ? "calc(56px + env(safe-area-inset-bottom, 0px))" : 44,
+          paddingBottom: dark ? "env(safe-area-inset-bottom, 0px)" : undefined,
         }}
       >
-        {buyLabel}
+        {dark ? <>
+          <span aria-hidden="true" />
+          <span className="group-active:translate-y-px">{buyLabel}</span>
+          <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-[#17120c]/10 text-[22px] leading-none group-active:translate-y-px">→</span>
+        </> : buyLabel}
       </button>
     </div>,
     document.body,
