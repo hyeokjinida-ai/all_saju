@@ -3300,9 +3300,19 @@ function TeaserStep({
             lead
             say={
               <>
-                돈부터 볼까. 다들 그것부터 묻더군.
+                돈? 얼마 버는지 알고 싶으냐?
                 <br />
-                들어오는 달이 보인다 — <InkMask text="▓▓년 ▓▓월" />. &nbsp;…여기까지.
+                어디 보자…
+                <span className="mt-3 block">
+                  니가 평생 벌 돈은{" "}
+                  <span className="inline-flex items-center whitespace-nowrap align-middle">
+                  <span role="img" aria-label="금액은 가려져 있어요" className="relative inline-flex select-none items-center justify-center whitespace-nowrap align-middle">
+                    <span aria-hidden="true" className="inline-block px-1 text-[1.4em] font-bold tracking-[0.1em]" style={{ filter: "blur(7px)", color: "#E8C96A", textShadow: "0 0 14px rgba(243,230,207,0.55)" }}>00</span>
+                    <span aria-hidden="true" className="pointer-events-none absolute -inset-2 rounded-full" style={{ background: "radial-gradient(ellipse, rgba(243,230,207,0.32), rgba(243,230,207,0) 72%)", filter: "blur(6px)" }} />
+                  </span>
+                  <strong className="text-[1.15em]" style={{ color: "#E8C96A" }}>억</strong>
+                  </span>
+                </span>
               </>
             }
           />

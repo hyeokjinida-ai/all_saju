@@ -77,7 +77,7 @@ test('carousel exposes one active slide with manual navigation and pause control
   assert.equal(stateChanges.at(-1).value(false), true);
 });
 
-test('automatic rotation advances every five seconds, wraps and cleans up on unmount', () => {
+test('automatic rotation advances every three seconds, wraps and cleans up on unmount', () => {
   renderCarousel();
   const moves = [];
   const track = { clientWidth: 300, scrollLeft: 0, scrollTo: options => { moves.push(options.left); track.scrollLeft = options.left; } };
@@ -85,7 +85,7 @@ test('automatic rotation advances every five seconds, wraps and cleans up on unm
   refs[1].current = track;
   effects[0]();
   const cleanup = effects[1]();
-  assert.equal(interval.delay, 5000);
+  assert.equal(interval.delay, 3000);
   interval.callback(); interval.callback(); interval.callback();
   assert.deepEqual(moves, [300, 600, 0]);
   assert.deepEqual(stateChanges.filter(change => change.index === 0).map(change => change.value), [1, 2, 0]);

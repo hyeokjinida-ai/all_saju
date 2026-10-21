@@ -20,8 +20,8 @@ const reviews = [
 function Review({ author, content }: { author: string; content: string }) {
   return (
     <figure className="m-0">
-      <figcaption className="mb-1.5 text-[11px] text-[#A1A1A6]">{author}</figcaption>
-      <blockquote className="m-0 text-[13px] leading-relaxed text-[#E5E5E7]">“{content}”</blockquote>
+      <figcaption className="mb-2 text-[12px] font-semibold text-[#8C4A35]">{author}</figcaption>
+      <blockquote className="m-0 text-[14px] font-medium leading-[1.8] text-[#3D2B22]">“{content}”</blockquote>
     </figure>
   );
 }
@@ -59,7 +59,7 @@ export function CheckoutReviews() {
       if (bounds.bottom <= 0 || bounds.top >= window.innerHeight) return;
       const current = Math.round(track.scrollLeft / track.clientWidth);
       goTo((current + 1) % reviews.length);
-    }, 5000);
+    }, 3000);
     return () => window.clearInterval(timer);
   }, [paused, goTo]);
 
@@ -68,7 +68,8 @@ export function CheckoutReviews() {
       ref={sectionRef}
       aria-label="이용 후기"
       aria-roledescription="캐러셀"
-      className="mb-5 min-w-0 rounded-xl border border-[#353537] bg-[#191919] px-4 pt-3 font-sans"
+      className="relative mb-5 min-w-0 overflow-hidden rounded-2xl border border-[#D7AA7B] px-4 pt-4 font-sans"
+      style={{ background: "linear-gradient(135deg, #FFF5E5 0%, #F2D9BC 100%)", boxShadow: "0 4px 18px rgba(130,66,35,0.16)" }}
       onMouseEnter={() => { hovering.current = true; }}
       onMouseLeave={() => { hovering.current = false; interacting.current = false; }}
       onPointerDown={() => { interacting.current = true; }}
@@ -77,16 +78,17 @@ export function CheckoutReviews() {
       onFocusCapture={() => { focused.current = true; }}
       onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) focused.current = false; }}
     >
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-[12px] font-semibold text-white">이용 후기</h3>
-        <span className="text-[11px] tabular-nums text-[#A1A1A6]">{active + 1} / {reviews.length}</span>
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-[#B9473C]" />
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-[14px] font-bold text-[#86382D]"><span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B9473C] pt-1 text-[26px] leading-none text-[#FFF5E5]">“</span>이용 후기</h3>
+        <span className="rounded-full bg-[#B9473C]/10 px-2 py-1 text-[11px] font-semibold tabular-nums text-[#86382D]">{active + 1} / {reviews.length}</span>
       </div>
       <div
         ref={trackRef}
         role="group"
         aria-label="좌우로 넘겨 후기 보기"
         tabIndex={0}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E87964]"
+        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#86382D]"
         onScroll={event => {
           const track = event.currentTarget;
           if (track.clientWidth) setActive(Math.max(0, Math.min(reviews.length - 1, Math.round(track.scrollLeft / track.clientWidth))));
@@ -106,15 +108,15 @@ export function CheckoutReviews() {
       <div className="flex min-h-[44px] items-center justify-between">
         <div className="flex">
           {reviews.map((review, index) => (
-            <button key={review.author} type="button" aria-label={`${index + 1}번째 후기 보기`} aria-current={active === index ? "true" : undefined} onClick={() => goTo(index)} className="flex h-11 w-8 items-center justify-center rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E87964]">
-              <span aria-hidden="true" className={`h-1.5 rounded-full ${active === index ? "w-4 bg-[#E87964]" : "w-1.5 bg-[#66666D]"}`} />
+            <button key={review.author} type="button" aria-label={`${index + 1}번째 후기 보기`} aria-current={active === index ? "true" : undefined} onClick={() => goTo(index)} className="flex h-11 w-8 items-center justify-center rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#86382D]">
+              <span aria-hidden="true" className={`h-1.5 rounded-full ${active === index ? "w-4 bg-[#B9473C]" : "w-1.5 bg-[#C5AF95]"}`} />
             </button>
           ))}
         </div>
         <button type="button" aria-label={paused ? "후기 자동 넘김 시작" : "후기 자동 넘김 일시정지"} onClick={() => {
           setPaused(value => !value);
           if (paused) { focused.current = false; hovering.current = false; }
-        }} className="min-h-[44px] rounded px-2 text-[11px] text-[#A1A1A6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E87964]">
+        }} className="min-h-[44px] rounded px-2 text-[11px] font-medium text-[#77513C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#86382D]">
           {paused ? "자동 넘김 켜기" : "일시정지"}
         </button>
       </div>
