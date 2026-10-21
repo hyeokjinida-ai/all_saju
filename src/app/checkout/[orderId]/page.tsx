@@ -72,11 +72,30 @@ export default async function CheckoutPage({
   }
 
   // slug: 결제 후 success 대기 화면 테마(산군 등) 판별용 — TossWidget 이 sessionStorage 에 심는다.
-  const { data: product } = await service
-    .from("products")
-    .select("name, slug")
-    .eq("id", order.product_id)
-    .single();
+  const isMember = !!order.user_id;
+  const [{ data: product }, compareAt, memberPhone, savedContact] = await Promise.all([
+    service.from("products").select("name, slug").eq("id", order.product_id).single(),
+    (async () => {
+      try {
+        const { data: up } = await service.from("products").select("compare_at_price").eq("id", order.product_id).maybeSingle();
+        return (up as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
+      } catch {
+        return null;
+      }
+    })(),
+    isMember
+      ? service.from("profiles").select("phone").eq("id", order.user_id!).maybeSingle().then(({ data: prof }) => (prof?.phone as string | null) ?? null)
+      : Promise.resolve(null),
+    (async () => {
+      try {
+        const { data: contact, error } = await service.from("orders").select("phone, marketing_opt_in").eq("id", order.id).abortSignal(AbortSignal.timeout(1000)).maybeSingle();
+        if (error || !contact || typeof contact.marketing_opt_in !== "boolean") return null;
+        return { phone: typeof contact.phone === "string" ? contact.phone.replace(/\D/g, "") || null : null, marketingOptIn: contact.marketing_opt_in };
+      } catch {
+        return null;
+      }
+    })(),
+  ]);
 
   const customerKey = order.user_id ?? `guest_${order.id}`;
   const email = order.guest_email;
@@ -101,20 +120,6 @@ export default async function CheckoutPage({
   //      회원할인 전 금액 = order.amount + (회원이면 1,900)
   //      상시할인       = 정가 − 회원할인 전 금액
   //    정가(compare_at_price)는 0010 컬럼이라 따로 읽고, 없으면 할인 줄이 조용히 빠진다.
-  let compareAt: number | null = null;
-  try {
-    const { data: up } = await service.from("products").select("compare_at_price").eq("id", order.product_id).maybeSingle();
-    compareAt = (up as { compare_at_price?: number | null } | null)?.compare_at_price ?? null;
-  } catch {
-    /* 0010 미적용 */
-  }
-  const isMember = !!order.user_id;
-  // 회원이면 프로필에 저장된 휴대폰을 미리 채운다(두 번 적게 하지 않는다)
-  let memberPhone: string | null = null;
-  if (isMember) {
-    const { data: prof } = await service.from("profiles").select("phone").eq("id", order.user_id!).maybeSingle();
-    memberPhone = (prof?.phone as string | null) ?? null;
-  }
   const memberOff = isMember ? MEMBER_DISCOUNT : 0;
   const baseCharge = order.amount + memberOff; // 회원할인 전 = 그 시점의 판매가
   const listPrice = compareAt != null && compareAt > baseCharge ? compareAt : baseCharge;
@@ -194,6 +199,7 @@ export default async function CheckoutPage({
             productSlug={product?.slug ?? null}
             customerEmail={email}
             defaultPhone={memberPhone}
+            savedContact={savedContact}
             directPay={directPayReady()}
             ctaLabel={
               world === "sangun"

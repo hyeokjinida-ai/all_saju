@@ -516,6 +516,10 @@ export function SajuWizard({
   const [payHint, setPayHint] = useState(false);
   // 결제 팝업 — 풀이 어디서든 구매 버튼을 누르면 여기로 연다(맨 끝까지 안 내려가도 된다).
   const [payOpen, setPayOpen] = useState(false);
+  useEffect(() => {
+    if (!payOpen) return;
+    void import("@/lib/toss/client").then(client => client.preloadPaymentSdk()).catch(() => {});
+  }, [payOpen]);
   // 인라인은 실제 결제 칸(#pay-panel), 팝업은 여기에서 별도로 센다.
   // 한쪽만 세면 팝업 전환 뒤 pay_view 가 통째로 사라져 퍼널이 끊긴다.
   const openPaySheet = useCallback(() => {

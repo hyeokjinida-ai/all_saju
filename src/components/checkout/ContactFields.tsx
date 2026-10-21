@@ -18,7 +18,7 @@
 //
 // ⚠ 이 입력 때문에 결제가 막히면 안 된다. 저장 실패는 삼키고 결제를 진행시킨다
 //    (형식이 틀린 번호만 막는다 — 그건 손님이 고칠 수 있는 것).
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TossWidget } from "./TossWidget";
 import { PayMethods } from "./PayMethods";
 import { safeCheckoutTrack, saveOptionalCheckoutContact } from "@/lib/checkout-recovery";
@@ -44,6 +44,7 @@ export function CheckoutForm({
   defaultPhone,
   ctaLabel,
   directPay,
+  savedContact,
 }: {
   orderId: string;
   amount: number;
@@ -54,11 +55,13 @@ export function CheckoutForm({
   defaultPhone: string | null;
   ctaLabel: string;
   directPay: boolean;
+  savedContact?: { phone: string | null; marketingOptIn: boolean } | null;
 }) {
   const Pay = directPay ? PayMethods : TossWidget;
   const [phone, setPhone] = useState(fmt(defaultPhone ?? ""));
   const [optIn, setOptIn] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const savedContactRef = useRef(savedContact ? { orderId, ...savedContact } : null);
 
   const digits = phone.replace(/\D/g, "");
 
@@ -69,6 +72,12 @@ export function CheckoutForm({
       return false;
     }
     setErr(null);
+    const previous = savedContactRef.current;
+    if (previous?.orderId === orderId && previous.phone === (digits || null) && previous.marketingOptIn === optIn) {
+      safeCheckoutTrack(track, "checkout_contact_save", { orderId, outcome: "unchanged", durationMs: 0, checkout_mode: directPay ? "direct" : "widget" });
+      return true;
+    }
+    savedContactRef.current = null;
     const startedAt = Date.now();
     const outcome = await saveOptionalCheckoutContact(orderId, { phone: digits || null, marketingOptIn: optIn });
     safeCheckoutTrack(track, "checkout_contact_save", { orderId, outcome, durationMs: Math.max(0, Date.now() - startedAt), checkout_mode: directPay ? "direct" : "widget" });

@@ -5,6 +5,10 @@ import {
 } from "@tosspayments/tosspayments-sdk";
 import { publicEnv } from "@/lib/env";
 
+export async function preloadPaymentSdk(): Promise<void> {
+  await loadTossPayments(publicEnv.NEXT_PUBLIC_TOSS_API_CLIENT_KEY || publicEnv.NEXT_PUBLIC_TOSS_CLIENT_KEY);
+}
+
 export async function loadWidgets(customerKey: string): Promise<TossPaymentsWidgets> {
   const tossPayments = await loadTossPayments(publicEnv.NEXT_PUBLIC_TOSS_CLIENT_KEY);
   return tossPayments.widgets({ customerKey });

@@ -13,10 +13,12 @@ const contextOf = (row: PurchaseTrackingRow) => (row.context ?? {}) as Record<st
 
 // Called while the order is still pending, before leaving for Toss or approving it.
 // Keep matching context private. Never collect saju input, names, emails or payment keys.
-export async function capturePurchaseContext(service: Service, request: NextRequest, orderId: string, browserDedup = false) {
+export async function capturePurchaseContext(service: Service, request: NextRequest, orderId: string, browserDedup = false, newPendingOrder?: { id: string; order_id: string; status: "pending" }) {
   try {
-    const { data: order } = await service.from("orders").select("id, order_id, status")
-      .eq("id", orderId).abortSignal(timeout()).maybeSingle();
+    const { data: order } = newPendingOrder?.id === orderId
+      ? { data: newPendingOrder }
+      : await service.from("orders").select("id, order_id, status")
+        .eq("id", orderId).abortSignal(timeout()).maybeSingle();
     if (!order || order.status === "paid") return;
     const gate = readGateAssignment(request.cookies.get(GATE_COOKIE)?.value);
     const detail = readDetailAssignment(request.cookies.get(DETAIL_COOKIE)?.value);

@@ -30,8 +30,11 @@ export async function POST(request: NextRequest) {
   const body = parsed.data;
 
   // 회원이면 계정에, 비회원이면 이메일로 결과를 받는다.
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const service = createServiceClient();
+  const [{ data: { user } }, { data: product, error: productErr }] = await Promise.all([
+    createClient().then(supabase => supabase.auth.getUser()),
+    service.from("products").select("id, slug, price, is_active").eq("id", body.productId).maybeSingle(),
+  ]);
   const guestEmail = user ? null : body.email?.trim() || null;
 
   if (!user && !guestEmail) {
@@ -39,13 +42,6 @@ export async function POST(request: NextRequest) {
   }
 
   // 가격은 서버에서만 (클라 변조 방지)
-  const service = createServiceClient();
-  const { data: product, error: productErr } = await service
-    .from("products")
-    .select("id, slug, price, is_active")
-    .eq("id", body.productId)
-    .maybeSingle();
-
   if (productErr || !product || !product.is_active) {
     return NextResponse.json({ error: "상품을 찾을 수 없습니다" }, { status: 404 });
   }
@@ -90,8 +86,10 @@ export async function POST(request: NextRequest) {
     }
     // 입력이 바뀌었을 수 있으니 명식 정보만 갱신하고 같은 주문 재사용.
     await service.from("saju_inputs").update(inputRow).eq("order_id", existing.id);
-    await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value);
-    await capturePurchaseContext(service, request, existing.id);
+    await Promise.all([
+      recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value),
+      capturePurchaseContext(service, request, existing.id),
+    ]);
     return NextResponse.json({ orderId: existing.order_id, amount: existing.amount });
   }
 
@@ -127,7 +125,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "사주 정보 저장 실패", detail: inputErr.message }, { status: 500 });
   }
 
-  await recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value);
-  await capturePurchaseContext(service, request, order.id);
+  await Promise.all([
+    recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value),
+    capturePurchaseContext(service, request, order.id, false, { id: order.id, order_id: orderId, status: "pending" }),
+  ]);
   return NextResponse.json({ orderId, amount });
 }
