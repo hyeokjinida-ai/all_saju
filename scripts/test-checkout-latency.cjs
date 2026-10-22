@@ -145,7 +145,7 @@ test('checkout starts independent reads together and retains the server order am
   const page = load('src/app/checkout/[orderId]/page.tsx', {
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { notFound: () => { throw new Error('Not found'); }, redirect: () => { throw new Error('Unexpected redirect'); } },
-    '@/lib/supabase/server': { createServiceClient: () => service, createClient: () => { throw new Error('Unexpected auth lookup'); } },
+    '@/lib/supabase/server': { createServiceClient: () => service, createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'member' } } }) } }) },
     '@/components/checkout/ContactFields': { CheckoutForm: 'checkout-form' },
     '@/components/checkout/PriceExposure': { PriceExposure: 'price-exposure' },
     '@/components/saju/TrustStrip': { TrustStrip: 'trust-strip' },

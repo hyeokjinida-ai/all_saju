@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { ExtraQuestions } from "@/components/saju/ExtraQuestions";
 import { EXTRA_QUESTION_SLUG } from "@/lib/saju/generate-result";
@@ -48,12 +48,15 @@ export default async function ResultPage({
     .eq("id", result.order_id)
     .single();
 
+  if (!order) notFound();
+
   // 회원 결과지는 본인만 — 다른 로그인 사용자가 uuid로 남의 결과를 열람하는 것 차단.
   // (비회원 게스트 결과는 링크=capability 로 유지. user_id 있는 회원 주문만 검사.)
   const ownerId = (order as { user_id?: string | null } | null)?.user_id ?? null;
   if (ownerId) {
     const { data: { user } } = await (await createClient()).auth.getUser();
-    if (user && user.id !== ownerId) notFound();
+    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/results/${resultId}`)}`);
+    if (user.id !== ownerId) notFound();
   }
   // 패키지 주문은 한 주문에 결과지가 여러 장이다 — 이 결과지가 '어느 상품의 것인지'는
   // 주문의 상품(=패키지)이 아니라 결과지 행의 product_slug 가 정답이다.

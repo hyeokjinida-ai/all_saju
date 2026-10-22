@@ -31,6 +31,11 @@ export default async function CheckoutPage({
     .maybeSingle();
 
   if (!order) notFound();
+  if (order.user_id) {
+    const { data: { user } } = await (await createClient()).auth.getUser();
+    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/checkout/${orderId}`)}`);
+    if (user.id !== order.user_id) notFound();
+  }
   if (order.status === "paid") {
     // 패키지 주문은 결과지가 여러 장이라 maybeSingle() 이 터진다 — 먼저 만들어진 것으로 보낸다.
     const { data: results } = await service
