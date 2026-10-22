@@ -23,34 +23,51 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const parsed = bodySchema.safeParse(await request.json());
+  const startedAt = Date.now();
+  const timings: Record<string, number> = {};
+  async function timed<Value>(name: string, operation: () => PromiseLike<Value>): Promise<Value> {
+    const start = Date.now();
+    try {
+      return await operation();
+    } finally {
+      timings[name] = Math.max(0, Date.now() - start);
+    }
+  }
+  const respond = (body: unknown, status = 200) => {
+    timings.total = Math.max(0, Date.now() - startedAt);
+    return NextResponse.json(body, { status, headers: {
+      "Cache-Control": "no-store",
+      "Server-Timing": Object.entries(timings).map(([name, duration]) => `${name};dur=${duration}`).join(", "),
+    } });
+  };
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "잘못된 요청입니다", details: parsed.error.flatten() }, { status: 400 });
+    return respond({ error: "잘못된 요청입니다", details: parsed.error.flatten() }, 400);
   }
   const body = parsed.data;
 
   // 회원이면 계정에, 비회원이면 이메일로 결과를 받는다.
   const service = createServiceClient();
-  const [{ data: { user } }, { data: product, error: productErr }] = await Promise.all([
+  const [{ data: { user } }, { data: product, error: productErr }] = await timed("lookup", () => Promise.all([
     createClient().then(supabase => supabase.auth.getUser()),
     service.from("products").select("id, slug, price, is_active").eq("id", body.productId).maybeSingle(),
-  ]);
+  ]));
   const guestEmail = user ? null : body.email?.trim() || null;
 
   if (!user && !guestEmail) {
-    return NextResponse.json({ error: "로그인 또는 결과 받을 이메일이 필요합니다" }, { status: 400 });
+    return respond({ error: "로그인 또는 결과 받을 이메일이 필요합니다" }, 400);
   }
 
   // 가격은 서버에서만 (클라 변조 방지)
   if (productErr || !product || !product.is_active) {
-    return NextResponse.json({ error: "상품을 찾을 수 없습니다" }, { status: 404 });
+    return respond({ error: "상품을 찾을 수 없습니다" }, 404);
   }
 
   // 회원 1,900원 할인(비회원은 정가). 금액은 서버에서만 산정.
   const amount = chargeFor(product.price, !!user);
   // 토스 최소 결제금액 방어 — 가격/할인 오설정으로 0원 위젯 에러 방지.
   if (amount < MIN_CHARGE) {
-    return NextResponse.json({ error: "결제 금액이 올바르지 않습니다" }, { status: 400 });
+    return respond({ error: "결제 금액이 올바르지 않습니다" }, 400);
   }
 
   const inputRow = {
@@ -75,33 +92,34 @@ export async function POST(request: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(1);
   if (!user) pendingQuery = pendingQuery.is("user_id", null);
-  const { data: existing, error: pendingError } = await pendingQuery.maybeSingle();
+  const { data: existing, error: pendingError } = await timed("pending", () => pendingQuery.maybeSingle());
   if (pendingError) {
-    return NextResponse.json({ error: "기존 주문을 확인하지 못했습니다. 다시 시도해 주세요." }, { status: 503 });
+    return respond({ error: "기존 주문을 확인하지 못했습니다. 다시 시도해 주세요." }, 503);
   }
 
   if (existing) {
     if (!Number.isSafeInteger(existing.amount) || existing.amount < MIN_CHARGE) {
-      return NextResponse.json({ error: "기존 주문 금액을 확인해 주세요." }, { status: 409 });
+      return respond({ error: "기존 주문 금액을 확인해 주세요." }, 409);
     }
     // 입력이 바뀌었을 수 있으니 명식 정보만 갱신하고 같은 주문 재사용.
-    await service.from("saju_inputs").update(inputRow).eq("order_id", existing.id);
+    const { error: inputError } = await timed("input", () => service.from("saju_inputs").update(inputRow).eq("order_id", existing.id));
+    if (inputError) return respond({ error: "사주 정보를 저장하지 못했습니다. 다시 시도해 주세요." }, 503);
     await Promise.all([
-      recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value),
-      capturePurchaseContext(service, request, existing.id),
+      timed("gate", () => recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, existing.order_id, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value)),
+      timed("context", () => capturePurchaseContext(service, request, existing.id)),
     ]);
-    return NextResponse.json({ orderId: existing.order_id, amount: existing.amount });
+    return respond({ orderId: existing.order_id, amount: existing.amount });
   }
 
   // A quote is a comparison only. Never trust a client-supplied price for billing.
   // Existing pending orders above keep their saved amount even after a price change.
   if (body.displayedAmount !== undefined && body.displayedAmount !== amount) {
-    return NextResponse.json({ code: "PRICE_CHANGED", amount,
-      error: "가격 또는 회원 할인이 변경되었습니다. 새 금액을 확인한 뒤 다시 눌러 주세요." }, { status: 409 });
+    return respond({ code: "PRICE_CHANGED", amount,
+      error: "가격 또는 회원 할인이 변경되었습니다. 새 금액을 확인한 뒤 다시 눌러 주세요." }, 409);
   }
 
   const orderId = `ord_${nanoid(20)}`;
-  const { data: order, error: orderErr } = await service
+  const { data: order, error: orderErr } = await timed("order", () => service
     .from("orders")
     .insert({
       order_id: orderId,
@@ -112,22 +130,27 @@ export async function POST(request: NextRequest) {
       status: "pending",
     })
     .select("id")
-    .single();
+    .single());
 
   if (orderErr || !order) {
-    return NextResponse.json({ error: "주문 생성 실패", detail: orderErr?.message }, { status: 500 });
+    return respond({ error: "주문 생성 실패", detail: orderErr?.message }, 500);
   }
 
-  const { error: inputErr } = await service.from("saju_inputs").insert({ order_id: order.id, ...inputRow });
+  const [{ error: inputErr }] = await Promise.all([
+    (async () => {
+      const result = await timed("input", () => service.from("saju_inputs").insert({ order_id: order.id, ...inputRow }));
+      if (!result.error) {
+        await timed("gate", () => recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value));
+      }
+      return result;
+    })(),
+    timed("context", () => capturePurchaseContext(service, request, order.id, false, { id: order.id, order_id: orderId, status: "pending" })),
+  ]);
 
   if (inputErr) {
     await service.from("orders").delete().eq("id", order.id);
-    return NextResponse.json({ error: "사주 정보 저장 실패", detail: inputErr.message }, { status: 500 });
+    return respond({ error: "사주 정보 저장 실패", detail: inputErr.message }, 500);
   }
 
-  await Promise.all([
-    recordGateOrder(request.cookies.get(GATE_COOKIE)?.value, orderId, product.slug, request.cookies.get(DETAIL_COOKIE)?.value, request.cookies.get(CTA_COOKIE)?.value),
-    capturePurchaseContext(service, request, order.id, false, { id: order.id, order_id: orderId, status: "pending" }),
-  ]);
-  return NextResponse.json({ orderId, amount });
+  return respond({ orderId, amount });
 }

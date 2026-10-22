@@ -3,7 +3,7 @@
 // 로그인 — 가입 화면과 같은 규칙으로 카카오가 첫 얼굴이고 이메일은 접혀 있다.
 // 접는 이유·안 없애는 이유는 `(auth)/signup/page.tsx` 머리말 참고.
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KakaoLoginButton, KakaoButtonSkeleton, useKakaoEnabled } from "@/components/auth/KakaoLoginButton";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 export default function LoginPage() {
   return (
@@ -25,7 +26,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
-  const redirectTo = search.get("redirect") ?? "/mypage";
+  const redirectTo = safeAuthRedirect(search.get("redirect"));
   // /auth/callback 이 세션 교환에 실패하면 여기로 돌려보낸다. 예전엔 이 값을 아무도 안 읽어서
   // 손님은 **아무 말 없이 로그인 화면으로 되돌아온 것처럼** 보였다.
   const failed = search.get("error") === "callback";
@@ -34,22 +35,31 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const submitLock = useRef(false);
 
   const emailOpen = kakao === false || openEmail;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitLock.current) return;
+    submitLock.current = true;
     setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("로그인되었습니다");
+      router.push(redirectTo);
+      router.refresh();
+    } catch {
+      toast.error("로그인에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      submitLock.current = false;
+      setLoading(false);
     }
-    toast.success("로그인되었습니다");
-    router.push(redirectTo);
-    router.refresh();
   }
 
   return (

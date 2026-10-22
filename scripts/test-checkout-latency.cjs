@@ -28,6 +28,93 @@ function query(run) {
   return builder;
 }
 
+function orderWriteFixture(reuse = false) {
+  const input = deferred(), context = deferred();
+  const started = [];
+  const service = { from: table => {
+    let operation = 'read';
+    const builder = query(() => {
+      started.push(`${table}:${operation}`);
+      if (table === 'products') return { data: { id: 'product', slug: 'sangun-sinjeom', price: 24900, is_active: true }, error: null };
+      if (table === 'saju_inputs') return input.promise;
+      if (operation === 'delete') return { data: null, error: null };
+      if (operation === 'insert') return { data: { id: 'new-db' }, error: null };
+      return { data: reuse ? { id: 'old-db', order_id: 'ord_old', amount: 19900 } : null, error: null };
+    });
+    builder.insert = () => { operation = 'insert'; return builder; };
+    builder.update = () => { operation = 'update'; return builder; };
+    builder.delete = () => { operation = 'delete'; return builder; };
+    return builder;
+  } };
+  const create = load('src/app/api/orders/create/route.ts', {
+    'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status ?? 200, headers: init?.headers }) } },
+    nanoid: { nanoid: () => 'new_order' },
+    '@/lib/supabase/server': { createServiceClient: () => service, createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }) },
+    '@/lib/pricing': { MIN_CHARGE: 100, chargeFor: price => price },
+    '@/lib/cta-experiment': { CTA_COOKIE: 'cta' }, '@/lib/gate-experiment': { GATE_COOKIE: 'gate' }, '@/lib/detail-experiment': { DETAIL_COOKIE: 'detail' },
+    '@/lib/gate-order-attribution': { recordGateOrder: async () => { started.push('gate'); } },
+    '@/lib/purchase-tracking': { capturePurchaseContext: () => { started.push('context'); return context.promise; } },
+  }).POST;
+  const request = { json: async () => ({ productId: '10000000-0000-4000-8000-000000000001', displayedAmount: 24900, name: 'PRIVATE_NAME', birthDate: '1990-01-01', birthTime: null, timeUnknown: true, gender: 'female', calendar: 'solar', concerns: [], email: 'private@example.test' }), cookies: { get: () => undefined } };
+  return { input, context, started, run: (value = request) => create(value) };
+}
+
+test('new-order contact attribution overlaps input persistence but success waits for every write', async () => {
+  const current = orderWriteFixture();
+  let settled = false;
+  const pending = current.run().then(result => { settled = true; return result; });
+  await flush();
+  assert.ok(current.started.includes('saju_inputs:insert'));
+  assert.ok(current.started.includes('context'));
+  assert.equal(current.started.includes('gate'), false);
+  assert.equal(settled, false);
+  current.input.resolve({ data: null, error: null });
+  await flush();
+  assert.ok(current.started.includes('gate'));
+  assert.equal(settled, false);
+  current.context.resolve();
+  const result = await pending;
+  assert.equal(result.status, 200);
+  assert.equal(result.body.amount, 24900);
+  assert.equal(result.headers['Cache-Control'], 'no-store');
+  const timing = result.headers['Server-Timing'];
+  for (const stage of ['lookup', 'pending', 'order', 'input', 'gate', 'context', 'total']) assert.match(timing, new RegExp(`${stage};dur=\\d+`));
+  assert.equal(timing.includes('PRIVATE_NAME'), false);
+  assert.equal(timing.includes('private@example.test'), false);
+});
+
+test('failed input creation waits for context before cleanup and never records a successful gate order', async () => {
+  const current = orderWriteFixture();
+  const pending = current.run();
+  await flush();
+  current.input.resolve({ data: null, error: { message: 'synthetic failure' } });
+  await flush();
+  assert.equal(current.started.includes('gate'), false);
+  assert.equal(current.started.includes('orders:delete'), false);
+  current.context.resolve();
+  assert.equal((await pending).status, 500);
+  assert.ok(current.started.includes('orders:delete'));
+});
+
+test('failed input update on a reused order cannot report checkout success or delete the old order', async () => {
+  const current = orderWriteFixture(true);
+  const pending = current.run();
+  await flush();
+  current.input.resolve({ data: null, error: { message: 'synthetic failure' } });
+  assert.equal((await pending).status, 503);
+  assert.equal(current.started.includes('context'), false);
+  assert.equal(current.started.includes('gate'), false);
+  assert.equal(current.started.includes('orders:delete'), false);
+});
+
+test('invalid request JSON returns a timed 400 without touching orders', async () => {
+  const current = orderWriteFixture();
+  const result = await current.run({ json: async () => { throw new Error('invalid JSON'); } });
+  assert.equal(result.status, 400);
+  assert.match(result.headers['Server-Timing'], /^total;dur=\d+$/);
+  assert.equal(current.started.length, 0);
+});
+
 for (const reuse of [false, true]) {
   test(`order creation overlaps auth/product and waits for both attribution writes (${reuse ? 'reused' : 'new'})`, async () => {
     const auth = deferred(), product = deferred(), gate = deferred(), context = deferred();

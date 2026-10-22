@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { publicEnv } from "@/lib/env";
+import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 // ── Kakao provider 가 Supabase 에서 켜져 있는지 ─────────────────────────────
 // `/auth/v1/settings` 는 공개 엔드포인트라 anon 키로 읽힌다. 꺼져 있으면 버튼을 **아예 안 그린다.**
@@ -78,7 +79,7 @@ export function KakaoLoginButton({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "kakao",
         options: {
-          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(redirect)}`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeAuthRedirect(redirect))}`,
         },
       });
       if (error) {

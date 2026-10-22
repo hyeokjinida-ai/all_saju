@@ -6,6 +6,19 @@ type OrderCreationResult =
   | { ok: true; orderId: string; amount: number }
   | { ok: false; code?: string; error?: string };
 
+export function parseOrderServerTiming(header: string | null | undefined): string | undefined {
+  if (!header) return undefined;
+  const allowed = new Set(["lookup", "pending", "order", "input", "gate", "context", "total"]);
+  const values = new Map<string, number>();
+  for (const entry of header.split(",")) {
+    const match = entry.trim().match(/^([a-z]+);\s*dur=(\d+(?:\.\d+)?)(?:;.*)?$/);
+    if (!match || !allowed.has(match[1])) continue;
+    const duration = Number(match[2]);
+    if (Number.isFinite(duration) && duration <= 300000) values.set(match[1], Math.round(duration));
+  }
+  return values.size ? [...values].map(([name, duration]) => `${name}=${duration}`).join(";") : undefined;
+}
+
 export async function fetchOrderWithDiagnostics(options: {
   request: () => Promise<Response>;
   track: DiagnosticTrack;
@@ -17,6 +30,7 @@ export async function fetchOrderWithDiagnostics(options: {
   const now = options.now ?? (() => performance.now());
   const startedAt = now();
   let attemptId: string | undefined;
+  let serverTiming: string | undefined;
   try { attemptId = crypto.randomUUID(); } catch {}
   const context: DiagnosticParams = {
     slug: options.slug,
@@ -32,6 +46,7 @@ export async function fetchOrderWithDiagnostics(options: {
       ...context,
       outcome,
       duration_ms: Math.max(0, Math.round(now() - startedAt)),
+      ...(serverTiming ? { server_timing: serverTiming } : {}),
       ...params,
     });
   };
@@ -40,6 +55,7 @@ export async function fetchOrderWithDiagnostics(options: {
   let response: Response;
   try {
     response = await options.request();
+    serverTiming = parseOrderServerTiming(response.headers?.get("Server-Timing"));
   } catch (error) {
     finish("network_error");
     throw error;

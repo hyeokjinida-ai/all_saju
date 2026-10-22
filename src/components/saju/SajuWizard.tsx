@@ -495,6 +495,7 @@ export function SajuWizard({
     return () => root.removeAttribute("data-cold-open");
   }, [inColdOpen]);
   const [submitting, setSubmitting] = useState(false);
+  const orderCreationLockRef = useRef(false);
   const [birthRaw, setBirthRaw] = useState("");
   // 그 사람 생년월일도 같은 8자리 마스크로 받는다(네이티브 date 는 연도 칸이 6자리까지 먹는다).
   const [partnerBirthRaw, setPartnerBirthRaw] = useState("");
@@ -1099,6 +1100,7 @@ export function SajuWizard({
 
   // 단일 상품 주문 생성 → 결제 (회원=계정 수령 / 비회원=이메일 수령)
   async function createOrder() {
+    if (orderCreationLockRef.current) return;
     if (!form.birthDate) {
       toast.error("생년월일을 입력해 주세요");
       setStep(1);
@@ -1108,6 +1110,7 @@ export function SajuWizard({
       toast.error("결과 받을 이메일을 입력해 주세요");
       return;
     }
+    orderCreationLockRef.current = true;
     setSubmitting(true);
     try {
       const json = await fetchOrderWithDiagnostics({
@@ -1134,6 +1137,7 @@ export function SajuWizard({
       router.push(`/checkout/${json.orderId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+      orderCreationLockRef.current = false;
       setSubmitting(false);
     }
   }

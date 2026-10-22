@@ -153,6 +153,7 @@ function wizardFixture({ member = false, validEmail = true, birthDate = privateP
   let refreshes = 0;
   const context = {
     exports: {}, Error, form: { birthDate }, guestEmailValid: validEmail, isLoggedIn: member,
+    orderCreationLockRef: { current: false },
     selected: { productId: 'TEST_PRODUCT', slug: 'bundle-sangun-inyeon' }, effectivePrice: 31900,
     guestEmail: ` ${privatePayload.email} `, payload: () => ({ ...privatePayload }),
     chargeFor: (price, isMember) => price - (isMember ? 1900 : 0), fetchOrderWithDiagnostics,
@@ -213,4 +214,42 @@ test('actual wizard still navigates when both diagnostic and begin_checkout trac
   assert.equal(sample.requests.length, 1);
   assert.deepEqual(sample.navigation, ['/checkout/ord_TEST_ONLY']);
   assert.equal(sample.errors.length, 0);
+});
+
+test('actual wizard blocks rapid and post-navigation duplicate order requests', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const sample = wizardFixture({ reply: () => pending });
+  const first = sample.run();
+  await sample.run();
+  assert.equal(sample.requests.length, 1);
+  release(response(success));
+  await first;
+  await sample.run();
+  assert.equal(sample.requests.length, 1);
+  assert.equal(sample.navigation.length, 1);
+});
+
+test('actual wizard releases its order lock after failure for a manual retry', async () => {
+  let fail = true;
+  const sample = wizardFixture({ reply: () => fail ? response({ error: 'retry' }, 503) : response(success) });
+  await sample.run();
+  fail = false;
+  await sample.run();
+  assert.equal(sample.requests.length, 2);
+  assert.equal(sample.navigation.length, 1);
+});
+
+test('server stage timings are bounded numeric metadata without private descriptions', async () => {
+  const parse = helperContext.exports.parseOrderServerTiming;
+  assert.equal(parse('lookup;dur=12.6, pending;dur=23, total;dur=99;desc="PRIVATE_NAME"'), 'lookup=13;pending=23;total=99');
+  assert.equal(parse('PRIVATE_NAME;dur=20, input;dur=-2, order;dur=Infinity, total;dur=300001'), undefined);
+  const sample = fixture(() => new Response(JSON.stringify(success), { headers: {
+    'Server-Timing': 'lookup;dur=50;desc="private@example.invalid", input;dur=12, context;dur=14, total;dur=90',
+  } }));
+  await sample.run();
+  assert.equal(sample.events[1].params.server_timing, 'lookup=50;input=12;context=14;total=90');
+  assert.ok(Object.keys(sample.events[1].params).length + 1 <= 12);
+  assert.ok(sample.events[1].params.server_timing.length <= 120);
+  assertPrivateDataAbsent(sample.events);
 });
