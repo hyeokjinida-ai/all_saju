@@ -9,6 +9,7 @@ const SangunPersonalDetail = dynamic(() => import("@/components/products/SangunP
 import { toast } from "sonner";
 import { formatKRW } from "@/lib/utils";
 import { track } from "@/lib/analytics";
+import { ReportInput, ReportPreview, ReportFooter, reportStyles, type ReportFormValues } from "@/components/saju/SajuReportFlow";
 import { fetchOrderWithDiagnostics } from "@/lib/order-create-diagnostics";
 import { chargeFor } from "@/lib/pricing";
 import { PriceExposure } from "@/components/checkout/PriceExposure";
@@ -81,6 +82,7 @@ import type { AssetMap, SlotId } from "@/lib/jiknyeo-slots";
 
 // 티저에 띄우는 원국 4기둥 — /api/saju/chart 의 view.pillars 그대로.
 type Pillar = ResultView["pillars"][number];
+const emitWizardEvent = track;
 
 // 기둥 수 → 글자 수를 한글로. 시 모름(3기둥)이면 "여섯 글자"다.
 const GLYPH_COUNT: Record<number, string> = { 1: "두", 2: "네", 3: "여섯", 4: "여덟" };
@@ -103,6 +105,8 @@ export type BundleOption = {
 
 // 단일 상품 직접 구매 위저드 — 입력을 모아 바로 주문을 생성한다.
 type Props = {
+  /** A separately linked reading flow. Default keeps the existing story untouched. */
+  presentation?: "story" | "report";
   productId: string;
   productSlug: string;
   productName: string;
@@ -399,6 +403,7 @@ function isValidBirth(d: string) {
 }
 
 export function SajuWizard({
+  presentation = "story",
   productId,
   productSlug,
   productName,
@@ -416,7 +421,19 @@ export function SajuWizard({
   coldOpen = false,
   reviews = [],
 }: Props) {
-  const imm = variant === "immersive";
+  const isReport = presentation === "report" && productSlug === "sangun-sinjeom";
+  const track = useCallback((event: Parameters<typeof emitWizardEvent>[0], params: Parameters<typeof emitWizardEvent>[1] = {}) => {
+    if (!isReport) {
+      emitWizardEvent(event, params);
+      return;
+    }
+    const reportParams: Record<string, string | number | boolean | undefined> = { ...params, flow_variant: "report" };
+    // The collector permits 12 props, including the UTM appended by analytics.
+    // Currency is redundant on this KRW-only diagnostic; keep amount/order ID.
+    if (event === "order_create_result") delete reportParams.currency;
+    emitWizardEvent(event, reportParams);
+  }, [isReport]);
+  const imm = !isReport && variant === "immersive";
   const [personalData, setPersonalData] = useState<SangunPersonalData | null>(null);
   const [personalDetailReady, setPersonalDetailReady] = useState(false);
   const markPersonalDetailReady = useCallback(() => setPersonalDetailReady(true), []);
@@ -479,11 +496,11 @@ export function SajuWizard({
    *  구간만 있던 때는 감시점을 지나는 순간 제목·헤더가 콜드오픈 블록 **위에** 다시 끼어들어
    *  문서가 191px 늘고 스크롤 앵커링이 화면을 그만큼 밀었다(2026-09-05 실측: scrollY 1527→1718).
    *  정점 직후에 화면이 덜컥 밀리면 몰입이 깨진다 — 그래서 판 단위 게이트를 따로 둔다. */
-  const coldOpenLane = coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep;
+  const coldOpenLane = !isReport && coldOpen && productSlug === "sangun-sinjeom" && step === teaserStep;
   /** 지금이 콜드오픈 구간인가 — 콜드오픈 판에서 타이틀 드랍을 아직 안 지난 상태.
    *  이 하나가 false 면 헤더 미렌더·제목 게이트·data-cold-open 신호가 한꺼번에 풀린다. */
   const inColdOpen = coldOpenLane && !coldOpenDone;
-  const newDetail = SANGUN_DETAIL_AB_ACTIVE && productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null
+  const newDetail = !isReport && SANGUN_DETAIL_AB_ACTIVE && productSlug === "sangun-sinjeom" && step === teaserStep && personalData !== null
     && detailChoice?.variant !== "old" && !detailFailed;
   // 껍데기(SangunWebtoon)가 위저드 위에 얹는 브랜드 줄 「명운록 · 박수무당 사주」도 콜드오픈 동안 지운다.
   // 껍데기는 위저드를 ReactNode 로만 받으므로(SangunWebtoon.tsx:264) prop 을 못 내려보낸다 —
@@ -503,9 +520,13 @@ export function SajuWizard({
   const [pillars, setPillars] = useState<Pillar[] | null>(null);
   const [tokens, setTokens] = useState<Record<string, string>>({}); // 웹툰 말풍선에 꽂을 손님 값
   const [teaserLoading, setTeaserLoading] = useState(false);
+  const [reportInputError, setReportInputError] = useState<string | null>(null);
+  const [reportTeaserError, setReportTeaserError] = useState<string | null>(null);
+  const reportRequestInFlight = useRef(false);
+  const reportExposureFired = useRef(false);
   const [guestEmail, setGuestEmail] = useState(""); // 비회원 결제 — 결과 수령 이메일
   const guestEmailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(guestEmail.trim());
-  const requiresTeaserEmail = productSlug === "sangun-sinjeom" && !isLoggedIn;
+  const requiresTeaserEmail = !isReport && productSlug === "sangun-sinjeom" && !isLoggedIn;
   const guestEmailRef = useRef<HTMLInputElement>(null);
   // teaser_view 는 「풀이 데이터가 도착했다」이고 그 뒤 로딩이 최소 3.2초 더 있다.
   // 손님이 **실제로 풀이를 본** 순간은 여기다 — 뜻이 다르니 이름을 따로 둔다.
@@ -540,18 +561,18 @@ export function SajuWizard({
     return () => clearTimeout(timer);
   }, [teaserLoading, personalDetailPending, failPersonalDetail]);
   usePayInView(productSlug,
-    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending);
+    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending, isReport ? "report" : undefined);
   const payActionInView = usePayActionInView(productSlug,
-    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending, payOpen);
+    step === teaserStep && !teaserLoading && !emailGate && !personalDetailPending, payOpen, isReport ? "report" : undefined);
   const [form, setForm] = useState<FormState>({
     // demo 가 있으면 첫 렌더부터 채워 둔다 — setState 로 나중에 넣으면 티저 요청이
     // 빈 생일로 한 번 먼저 나가서 실패한다.
     name: demo?.name ?? "",
     birthDate: demo?.birthDate ?? "",
     birthTime: "",
-    timeUnknown: demo?.timeUnknown ?? false,
+    timeUnknown: demo?.timeUnknown ?? isReport,
     gender: demo?.gender ?? "",
-    calendar: demo?.calendar ?? "",
+    calendar: demo?.calendar ?? (isReport ? "solar" : ""),
     partner: demo?.partner ?? "",
     relationship: demo?.relationship ?? "",
     job: demo?.job ?? "",
@@ -604,9 +625,15 @@ export function SajuWizard({
 
   // 퍼널 추적 — 단계별 이탈 지점 파악(개인정보 없이 단계/상품/금액만 전송)
   useEffect(() => {
-    track("wizard_step", { step: step + 1, total, slug: productSlug });
+    track("wizard_step", { step: isReport ? (step === teaserStep ? 2 : 1) : step + 1, total: isReport ? 2 : total, slug: productSlug });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
+
+  useEffect(() => {
+    if (!isReport || reportExposureFired.current) return;
+    reportExposureFired.current = true;
+    track("report_flow_view", { slug: productSlug });
+  }, [isReport, productSlug, track]);
 
   // 이 상품이 안 묻는 프로필 질문 — 화면에서 통째로 건너뛰고 진행 표시에서도 뺀다
   const skipped = useMemo(() => {
@@ -672,9 +699,16 @@ export function SajuWizard({
   );
 
   const loadTeaser = useCallback(async () => {
+    if (isReport && reportRequestInFlight.current) return;
+    if (isReport) {
+      reportRequestInFlight.current = true;
+      setReportTeaserError(null);
+      setTeaser(null);
+      setPillars(null);
+    }
     const startedAt = Date.now();
     let outcome = "failed";
-    const assignment = productSlug === "sangun-sinjeom" ? assignDetail() : Promise.resolve(null);
+    const assignment = !isReport && productSlug === "sangun-sinjeom" ? assignDetail() : Promise.resolve(null);
     setTeaserLoading(true);
     setPersonalData(null);
     setPersonalDetailReady(false);
@@ -713,24 +747,27 @@ export function SajuWizard({
         setTeaser(json.teaser as SajuTeaser);
         track("teaser_view", { slug: productSlug });
       } else {
+        if (isReport) setReportTeaserError("미리보기를 불러오지 못했어요. 잠시 뒤 다시 시도하거나 입력한 정보를 확인해 주세요.");
         track("teaser_fail", { slug: productSlug, reason: String(json?.reason ?? "no_teaser") });
       }
     } catch {
+      if (isReport) setReportTeaserError("연결이 원활하지 않아 미리보기를 불러오지 못했어요. 다시 시도해 주세요.");
       track("teaser_fail", { slug: productSlug, reason: "network" });
     } finally {
       const chartMs = Date.now() - startedAt;
       // The signed assignment is settled before either detail can be shown.
-      setDetailChoice(SANGUN_DETAIL_AB_ACTIVE ? await assignment : null);
-      const minimum = productSlug === "sangun-sinjeom" ? 3000 : MIN_TEASER_LOADING_MS;
+      setDetailChoice(!isReport && SANGUN_DETAIL_AB_ACTIVE ? await assignment : null);
+      const minimum = isReport ? 0 : productSlug === "sangun-sinjeom" ? 3000 : MIN_TEASER_LOADING_MS;
       const left = minimum - (Date.now() - startedAt);
       if (left > 0) await new Promise((r) => setTimeout(r, left));
       track("teaser_timing", { slug: productSlug, chart_ms: chartMs,
         total_ms: Date.now() - startedAt, outcome });
       setTeaserLoading(false);
+      if (isReport) reportRequestInFlight.current = false;
     }
     // profileTags 를 빼면 인연 방향을 고르기 전 값이 붙잡혀 티저만 이성 기준으로 계산된다
     // → 티저와 결제 후 결과지가 다른 해를 말한다. 반드시 의존성에 남겨둘 것.
-  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags, reunionAnswerTags, teaserStep]);
+  }, [form.name, form.birthDate, form.birthTime, form.timeUnknown, form.gender, form.calendar, productSlug, profileTags, reunionAnswerTags, teaserStep, isReport, track]);
 
   const next = useCallback(() => {
     if (step === confirmStep) {
@@ -776,6 +813,7 @@ export function SajuWizard({
 
   // Enter 키로 다음
   useEffect(() => {
+    if (isReport) return;
     const h = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.isComposing && canNext() && step < total - 1) {
         if (emailGate) e.preventDefault();
@@ -784,7 +822,7 @@ export function SajuWizard({
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [canNext, next, step, emailGate]);
+  }, [canNext, next, step, emailGate, isReport]);
 
   function payload() {
     const concerns = [
@@ -812,7 +850,7 @@ export function SajuWizard({
   }, [teaserLoading, teaser, productSlug]);
 
   useEffect(() => {
-    if (!SANGUN_DETAIL_AB_ACTIVE || productSlug !== "sangun-sinjeom" || step !== teaserStep || teaserLoading || !teaser) return;
+    if (isReport || !SANGUN_DETAIL_AB_ACTIVE || productSlug !== "sangun-sinjeom" || step !== teaserStep || teaserLoading || !teaser) return;
     if (!detailEntryFired.current) {
       detailEntryFired.current = true;
       // Entry is counted before the lazy renderer: load failures stay in its assigned arm.
@@ -861,7 +899,7 @@ export function SajuWizard({
   //   아직 상품·티저가 없는 단계에서 터진다(실측: 에러 바운더리 「잠시 길이 엉켰어요」).
   const renderPayPanel = () => (
     <>
-            {productSlug === "sangun-sinjeom" && payOpen && <CheckoutReviews />}
+            {!isReport && productSlug === "sangun-sinjeom" && payOpen && <CheckoutReviews />}
             {/* 결제 시트 옵션 — 단품 위에 패키지를 세운다.
                 할인율 역전(단품 33% ↔ 패키지 44%)이 카드 두 장 사이에서 눈으로 읽혀야 한다.
                 패키지가 없으면(bundles 빈 배열) 이 블록 자체가 안 나와 예전 화면 그대로다. */}
@@ -1015,6 +1053,7 @@ export function SajuWizard({
               className={`ap-input ${productSlug === "sangun-sinjeom" ? "text-left focus:!border-[#E87964] focus:!ring-[#E87964]/25" : "text-center"}`}
               type="email"
               inputMode="email"
+              disabled={isReport && submitting}
               autoComplete="email"
               autoCapitalize="none"
               autoCorrect="off"
@@ -1158,6 +1197,78 @@ export function SajuWizard({
     step === teaserStep
       ? "pointer-events-none fixed left-1/2 top-0 z-0 h-[100svh] w-full max-w-md -translate-x-1/2 overflow-hidden"
       : "contents";
+
+  if (isReport) {
+    const updateReportField = <Key extends keyof ReportFormValues>(key: Key, value: ReportFormValues[Key]) => {
+      setForm(current => ({ ...current, [key]: value }));
+      setReportInputError(null);
+    };
+    const submitReport = () => {
+      if (reportRequestInFlight.current) return;
+      const digits = form.birthDate.replace(/\D/g, "");
+      if (!isValidBirth(digits)) {
+        setReportInputError("생년월일을 8자리로 입력해 주세요. 실제로 존재하는 날짜인지 확인해 주세요.");
+        return;
+      }
+      if (new Date(`${form.birthDate}T00:00:00`).getTime() > Date.now()) {
+        setReportInputError("생년월일은 오늘 또는 이전 날짜로 입력해 주세요.");
+        return;
+      }
+      if (!form.calendar || !form.gender) {
+        setReportInputError("양력·음력과 성별을 선택해 주세요.");
+        return;
+      }
+      if (!form.timeUnknown && !/^\d{2}:\d{2}$/.test(form.birthTime)) {
+        setReportInputError("태어난 시각을 입력하거나 ‘태어난 시각을 몰라요’를 선택해 주세요.");
+        return;
+      }
+      setReportInputError(null);
+      teaserShownFired.current = false;
+      track("report_flow_submit", { slug: productSlug });
+      void loadTeaser();
+    };
+    const editReport = () => {
+      if (submitting || orderCreationLockRef.current || reportRequestInFlight.current) return;
+      setPayOpen(false);
+      setStep(0);
+      setTeaser(null);
+      setPillars(null);
+      setPersonalData(null);
+      setReportTeaserError(null);
+      teaserShownFired.current = false;
+      track("report_flow_edit", { slug: productSlug });
+    };
+    const closeReportPay = () => {
+      track("pay_close", { slug: productSlug, email_started: guestEmail.length > 0, email_valid: guestEmailValid, value: effectivePrice });
+      setPayOpen(false);
+    };
+    return <div className={reportStyles.root} data-flow-variant="report">
+      {step === teaserStep ? <ReportPreview
+        teaser={teaser} pillars={pillars} personal={personalData} loading={teaserLoading}
+        error={reportTeaserError} name={form.name.trim()} birthDate={form.birthDate} calendar={form.calendar}
+        timeUnknown={form.timeUnknown || !form.birthTime} busy={submitting} onEdit={editReport} onRetry={submitReport}
+        onBuy={() => { track("buy_intent", { slug: productSlug }); openPaySheet(); }}
+      /> : <ReportInput
+        value={form} birthDisplay={fmtBirth(birthRaw)} concerns={concernOptions} error={reportInputError}
+        onBirthInput={value => {
+          const digits = value.replace(/\D/g, "").slice(0, 8);
+          setBirthRaw(digits);
+          setForm(current => ({ ...current, birthDate: isValidBirth(digits) ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` : "" }));
+          setReportInputError(null);
+        }}
+        onUpdate={updateReportField} onSubmit={submitReport}
+      />}
+      {step === teaserStep && teaser && !teaserLoading && !payOpen && <div id="pay-panel" className={reportStyles.paymentPanel}>
+        <h2 className={reportStyles.paymentHeading}>전체 풀이 선택</h2>
+        {renderPayPanel()}
+      </div>}
+      <PaySheet open={payOpen} onClose={closeReportPay} dark={false} sangun={false}
+        totalDiscount={checkoutSummary(selected.price, selected.compareAtPrice, isLoggedIn).totalDiscount} busy={submitting}>
+        <div className={reportStyles.paymentPanel}>{renderPayPanel()}</div>
+      </PaySheet>
+      <ReportFooter />
+    </div>;
+  }
 
   return (
     <div
@@ -4279,7 +4390,7 @@ function ReunionStickyBar(props: { note: React.ReactNode; buyLabel: string; onBu
   return <StickyBuyBar {...props} />;
 }
 
-function usePayInView(slug: string | undefined, enabled: boolean) {
+function usePayInView(slug: string | undefined, enabled: boolean, flowVariant?: "report") {
   const [inView, setInView] = useState(false);
   const fired = useRef(false);
   useEffect(() => {
@@ -4290,14 +4401,14 @@ function usePayInView(slug: string | undefined, enabled: boolean) {
       setInView(on);
       if (on && !fired.current) {
         fired.current = true;
-        track("pay_view", { slug, via: "inline" });
+        track("pay_view", { slug, via: "inline", ...(flowVariant ? { flow_variant: flowVariant } : {}) });
       }
     });
-  }, [slug, enabled]);
+  }, [slug, enabled, flowVariant]);
   return inView;
 }
 
-function usePayActionInView(slug: string | undefined, enabled: boolean, sheetOpen: boolean) {
+function usePayActionInView(slug: string | undefined, enabled: boolean, sheetOpen: boolean, flowVariant?: "report") {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     setInView(false);
@@ -4308,10 +4419,10 @@ function usePayActionInView(slug: string | undefined, enabled: boolean, sheetOpe
       setInView(on);
       if (on && !fired) {
         fired = true;
-        try { track("pay_action_view", { slug, via }); } catch {}
+        try { track("pay_action_view", { slug, via, ...(flowVariant ? { flow_variant: flowVariant } : {}) }); } catch {}
       }
     }, via);
-  }, [slug, enabled, sheetOpen]);
+  }, [slug, enabled, sheetOpen, flowVariant]);
   return inView;
 }
 

@@ -13,13 +13,13 @@
 import { useEffect, useRef } from "react";
 import { track } from "@/lib/analytics";
 
-export function ProductViewBeacon({ slug }: { slug: string }) {
+export function ProductViewBeacon({ slug, flowVariant }: { slug: string; flowVariant?: "report" }) {
   // React 18 StrictMode 는 개발에서 effect 를 두 번 돌린다 — 중복 전송을 막는다.
   const sent = useRef(false);
   useEffect(() => {
     if (sent.current) return;
     sent.current = true;
-    track("product_view", { slug });
-  }, [slug]);
+    track("product_view", { slug, ...(flowVariant ? { flow_variant: flowVariant } : {}) });
+  }, [slug, flowVariant]);
   return null;
 }
