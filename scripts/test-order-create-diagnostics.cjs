@@ -148,11 +148,11 @@ visit(syntax);
 assert.ok(createOrderSource);
 const createOrderCode = ts.transpileModule(`${createOrderSource}\nexports.run = createOrder;`, { compilerOptions }).outputText;
 
-function wizardFixture({ member = false, validEmail = true, birthDate = privatePayload.birthDate, reply = () => response(success), trackThrows = false } = {}) {
+function wizardFixture({ member = false, isReport = false, validEmail = true, birthDate = privatePayload.birthDate, reply = () => response(success), trackThrows = false } = {}) {
   const events = [], requests = [], navigation = [], submitting = [], errors = [];
   let refreshes = 0;
   const context = {
-    exports: {}, Error, form: { birthDate }, guestEmailValid: validEmail, isLoggedIn: member,
+    exports: {}, Error, form: { birthDate }, guestEmailValid: validEmail, isLoggedIn: member, isReport,
     orderCreationLockRef: { current: false },
     selected: { productId: 'TEST_PRODUCT', slug: 'bundle-sangun-inyeon' }, effectivePrice: 31900,
     guestEmail: ` ${privatePayload.email} `, payload: () => ({ ...privatePayload }),
@@ -196,6 +196,15 @@ test('actual wizard keeps client validation outside network attempt counts', asy
     assert.equal(sample.navigation.length, 0);
     assert.equal(sample.errors.length, 1);
   }
+});
+
+test('actual report wizard changes only the checkout presentation query', async () => {
+  const sample = wizardFixture({ isReport: true });
+  await sample.run();
+  assert.deepEqual(sample.navigation, ['/checkout/ord_TEST_ONLY?view=report']);
+  assert.equal(sample.requests.length, 1);
+  assert.equal(JSON.parse(sample.requests[0].init.body).displayedAmount, 31900);
+  assert.equal(sample.events.at(-1).params.value, 19900);
 });
 
 test('actual wizard refreshes a stale quote without retrying and releases loading on failure', async () => {

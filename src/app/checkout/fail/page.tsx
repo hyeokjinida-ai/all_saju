@@ -20,7 +20,8 @@ export default function CheckoutFailPage() {
 function CheckoutFailInner() {
   const search = useSearchParams();
   const code = checkoutFailureCode(search.get("code"));
-  const retryPath = checkoutRetryPath(search.get("orderId"));
+  const checkoutPath = checkoutRetryPath(search.get("orderId"));
+  const retryPath = checkoutPath && `${checkoutPath}${search.get("view") === "report" ? "?view=report" : ""}`;
   const orderId = retryPath ? search.get("orderId")! : undefined;
   const mode = checkoutMode(search.get("checkout_mode"));
 

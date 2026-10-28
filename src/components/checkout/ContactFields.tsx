@@ -45,6 +45,7 @@ export function CheckoutForm({
   ctaLabel,
   directPay,
   savedContact,
+  view,
 }: {
   orderId: string;
   amount: number;
@@ -56,6 +57,7 @@ export function CheckoutForm({
   ctaLabel: string;
   directPay: boolean;
   savedContact?: { phone: string | null; marketingOptIn: boolean } | null;
+  view?: "report";
 }) {
   const Pay = directPay ? PayMethods : TossWidget;
   const [phone, setPhone] = useState(fmt(defaultPhone ?? ""));
@@ -96,6 +98,7 @@ export function CheckoutForm({
         customerMobilePhone={digits || null}
         onBeforePay={beforePay}
         ctaLabel={ctaLabel}
+        view={view}
       />
 
       {/* ↓ 결제 버튼 아래 — 선택 항목이 버튼을 화면 밖으로 밀지 않게 */}

@@ -42,10 +42,11 @@ export function checkoutMode(value: unknown): CheckoutMode | undefined {
   return value === "direct" || value === "widget" ? value : undefined;
 }
 
-export function checkoutFailUrl(origin: string, orderId: string, mode?: CheckoutMode): string {
+export function checkoutFailUrl(origin: string, orderId: string, mode?: CheckoutMode, view?: "report"): string {
   const target = new URL("/checkout/fail", origin);
   if (checkoutRetryPath(orderId)) target.searchParams.set("orderId", orderId);
   if (checkoutMode(mode)) target.searchParams.set("checkout_mode", mode!);
+  if (view === "report") target.searchParams.set("view", "report");
   return target.toString();
 }
 

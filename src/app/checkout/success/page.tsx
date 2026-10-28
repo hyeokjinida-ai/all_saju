@@ -47,9 +47,9 @@ async function worldOfOrder(orderId?: string): Promise<World | null> {
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string }>;
+  searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string; view?: string }>;
 }) {
-  const { paymentKey, orderId, amount } = await searchParams;
+  const { paymentKey, orderId, amount, view } = await searchParams;
   const world = await worldOfOrder(orderId);
-  return <SuccessClient world={world} paymentKey={paymentKey} orderId={orderId} amount={amount} />;
+  return <SuccessClient world={world} paymentKey={paymentKey} orderId={orderId} amount={amount} view={view === "report" ? "report" : undefined} />;
 }

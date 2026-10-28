@@ -1173,7 +1173,7 @@ export function SajuWizard({
         throw new Error(json.error ?? "주문 생성 실패");
       }
       try { track("begin_checkout", { slug: selected.slug, value: json.amount, currency: "KRW", orderId: json.orderId }); } catch {}
-      router.push(`/checkout/${json.orderId}`);
+      router.push(`/checkout/${json.orderId}${isReport ? "?view=report" : ""}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
       orderCreationLockRef.current = false;

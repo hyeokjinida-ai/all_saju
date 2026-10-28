@@ -18,10 +18,12 @@ export default async function CheckoutPage({
   searchParams,
 }: {
   params: Promise<{ orderId: string }>;
-  searchParams: Promise<{ claim?: string }>;
+  searchParams: Promise<{ claim?: string; view?: string }>;
 }) {
   const { orderId } = await params;
-  const { claim } = await searchParams;
+  const { claim, view } = await searchParams;
+  const reportView = view === "report" ? "report" : undefined;
+  const viewQuery = reportView ? "?view=report" : "";
   const service = createServiceClient();
 
   const { data: order } = await service
@@ -33,7 +35,7 @@ export default async function CheckoutPage({
   if (!order) notFound();
   if (order.user_id) {
     const { data: { user } } = await (await createClient()).auth.getUser();
-    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/checkout/${orderId}`)}`);
+    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/checkout/${orderId}${viewQuery}`)}`);
     if (user.id !== order.user_id) notFound();
   }
   if (order.status === "paid") {
@@ -44,7 +46,7 @@ export default async function CheckoutPage({
       .eq("order_id", order.id)
       .order("created_at", { ascending: true })
       .limit(1);
-    if (results?.[0]) redirect(`/results/${results[0].id}`);
+    if (results?.[0]) redirect(`/results/${results[0].id}${viewQuery}`);
     const refreshPath = checkoutRetryPath(orderId);
     return (
       <div className="mx-auto max-w-md px-5 py-16 text-center">
@@ -53,7 +55,7 @@ export default async function CheckoutPage({
           결제는 완료되었습니다. 결과를 준비하고 있습니다. 다시 결제하지 마세요.
         </p>
         {refreshPath && (
-          <a href={refreshPath} className="mt-6 inline-block rounded-md border border-hairline px-5 py-3">
+          <a href={`${refreshPath}${viewQuery}`} className="mt-6 inline-block rounded-md border border-hairline px-5 py-3">
             결과 준비 상태 다시 확인
           </a>
         )}
@@ -63,7 +65,7 @@ export default async function CheckoutPage({
 
   // ── 로그인하고 돌아온 손님: 게스트 주문을 회원 주문으로 이관 ──────────────
   // 결제 직전 미끼(LoginNudge)로 로그인 → `?claim=1` 로 여기 떨어진다.
-  // 같은 order_id 를 유지한 채 주인과 금액만 바꾸고, 쿼리를 떼서 다시 들어온다
+  // 같은 order_id 를 유지한 채 주인과 금액만 바꾸고, claim 쿼리만 떼서 다시 들어온다
   // (새로고침·뒤로가기로 이관이 두 번 돌지 않게).
   if (claim && order.status === "pending" && !order.user_id) {
     const supabase = await createClient();
@@ -73,7 +75,7 @@ export default async function CheckoutPage({
     if (user) {
       await claimPendingOrder(service, order, user.id);
     }
-    redirect(`/checkout/${orderId}`);
+    redirect(`/checkout/${orderId}${viewQuery}`);
   }
 
   // slug: 결제 후 success 대기 화면 테마(산군 등) 판별용 — TossWidget 이 sessionStorage 에 심는다.
@@ -206,8 +208,9 @@ export default async function CheckoutPage({
             defaultPhone={memberPhone}
             savedContact={savedContact}
             directPay={directPayReady()}
+            view={reportView}
             ctaLabel={
-              world === "sangun"
+              reportView ? `${formatKRW(order.amount)} 결제하고 전체 보기` : world === "sangun"
                 ? `${formatKRW(order.amount)} 내고 내 장부 전체 열기`
                 : `${formatKRW(order.amount)} 결제하기`
             }
@@ -215,7 +218,7 @@ export default async function CheckoutPage({
         </div>
 
         {/* 게스트에게만 — 회원이면 이미 할인을 받았으므로 뜨지 않는다 */}
-        {!isMember && <LoginNudge orderId={order.order_id} discount={MEMBER_DISCOUNT} />}
+        {!isMember && <LoginNudge orderId={order.order_id} discount={MEMBER_DISCOUNT} view={reportView} />}
 
         <TrustStrip className="mt-5" />
       </div>

@@ -57,6 +57,7 @@ type Props = {
   onBeforePay?: () => Promise<boolean>;
   customerMobilePhone?: string | null;
   ctaLabel?: string;
+  view?: "report";
 };
 
 export function PayMethods({
@@ -70,6 +71,7 @@ export function PayMethods({
   onBeforePay,
   customerMobilePhone,
   ctaLabel,
+  view,
 }: Props) {
   // 카카오페이가 기본 — 레퍼런스와 같고, 카카오페이 가이드도 1순위 배치를 권한다.
   const [method, setMethod] = useState<MethodId>("kakaopay");
@@ -137,8 +139,8 @@ export function PayMethods({
         amount: { currency: "KRW", value: amount },
         orderId,
         orderName: productName,
-        successUrl: `${origin}/checkout/success`,
-        failUrl: checkoutFailUrl(origin, orderId, "direct"),
+        successUrl: `${origin}/checkout/success${view === "report" ? "?view=report" : ""}`,
+        failUrl: checkoutFailUrl(origin, orderId, "direct", view),
         customerEmail: customerEmail ?? undefined,
         customerMobilePhone: customerMobilePhone || undefined,
         card: paymentMethod.easyPay ? { flowMode: "DIRECT", easyPay: paymentMethod.easyPay } : { flowMode: "DEFAULT" },
