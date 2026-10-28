@@ -17,8 +17,8 @@ import Link from "next/link";
 import { KakaoLoginButton, useKakaoEnabled } from "@/components/auth/KakaoLoginButton";
 import { formatKRW } from "@/lib/utils";
 
-export function LoginNudge({ orderId, discount }: { orderId: string; discount: number }) {
-  const back = `/checkout/${orderId}?claim=1`;
+export function LoginNudge({ orderId, discount, view }: { orderId: string; discount: number; view?: "report" }) {
+  const back = `/checkout/${orderId}?claim=1${view === "report" ? "&view=report" : ""}`;
   const kakao = useKakaoEnabled();
   const loginHref = `/login?redirect=${encodeURIComponent(back)}`;
   return (

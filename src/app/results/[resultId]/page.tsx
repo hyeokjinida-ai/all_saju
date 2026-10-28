@@ -6,6 +6,7 @@ import { EXTRA_QUESTION_SLUG } from "@/lib/saju/generate-result";
 import { ResultScroll } from "@/components/saju/ResultScroll";
 import { ResultChapters } from "@/components/saju/ResultChapters";
 import { SangunResult } from "@/components/saju/SangunResult";
+import { SajuPaidReport } from "@/components/saju/SajuPaidReport";
 import { JiknyeoResult } from "@/components/saju/JiknyeoResult";
 import { CrossSell, type CrossSellInput, type CrossSellProduct } from "@/components/saju/CrossSell";
 import type { Myeongsik } from "@/lib/saju/manseryeok";
@@ -28,10 +29,13 @@ export const metadata = { title: "결과지" };
 
 export default async function ResultPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ resultId: string }>;
+  searchParams?: Promise<{ view?: string }>;
 }) {
   const { resultId } = await params;
+  const isReport = (await searchParams)?.view === "report";
   const service = createServiceClient();
 
   const { data: result } = await service
@@ -55,7 +59,7 @@ export default async function ResultPage({
   const ownerId = (order as { user_id?: string | null } | null)?.user_id ?? null;
   if (ownerId) {
     const { data: { user } } = await (await createClient()).auth.getUser();
-    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/results/${resultId}`)}`);
+    if (!user) redirect(`/login?redirect=${encodeURIComponent(`/results/${resultId}${isReport ? "?view=report" : ""}`)}`);
     if (user.id !== ownerId) notFound();
   }
   // 패키지 주문은 한 주문에 결과지가 여러 장이다 — 이 결과지가 '어느 상품의 것인지'는
@@ -184,17 +188,18 @@ export default async function ResultPage({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        background: isJiknyeo
+        background: isReport ? "#f8f7f1" : isJiknyeo
           ? "radial-gradient(ellipse 120% 42% at 50% 0%,rgba(36,28,70,.10) 0%,rgba(36,28,70,0) 60%)," +
             "linear-gradient(180deg,#F7F3EA 0%,#FBF8F1 40%,#F4EFE4 100%)"
           : isSangun
           ? "radial-gradient(85% 50% at 50% 0%,#191106,#0a0806 55%,#050403)"
           : "radial-gradient(90% 55% at 50% 0%,#16112c,#0b0816 58%,#070410)",
         padding: "30px 12px 64px",
-        color: isJiknyeo ? "#2A2434" : "#fff",
+        color: isReport ? "#192b3c" : isJiknyeo ? "#2A2434" : "#fff",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420 }}>
+      <div style={{ width: "100%", maxWidth: isReport ? 680 : 420 }}>
+        {isReport && <Link href={`/results/${resultId}`} style={{ display: "block", marginBottom: 18, color: "#376f67", fontSize: 13 }}>기존 결과지로 보기</Link>}
         {/* 패키지로 산 사람은 결과지가 두 장이다 — 한 장만 보고 나가지 않게 위에서 먼저 보여준다.
             (단품이면 형제가 1개라 이 줄은 렌더되지 않는다) */}
         {(siblings?.length ?? 0) > 1 && (
@@ -204,20 +209,20 @@ export default async function ResultPage({
               return (
                 <Link
                   key={s.id}
-                  href={`/results/${s.id}`}
+                  href={`/results/${s.id}${isReport ? "?view=report" : ""}`}
                   className="font-myeongjo flex-1 border px-3 py-2.5 text-center text-[13px] font-bold leading-[1.4]"
                   style={{
-                    borderColor: active
+                    borderColor: isReport ? (active ? "#17655c" : "#dce2df") : active
                       ? isSangun
                         ? "var(--gold-bright, #e8c96a)"
                         : "#c9a8ff"
                       : isSangun
                         ? "rgba(232,201,106,0.22)"
                         : "rgba(150,90,255,0.28)",
-                    color: active
+                    color: isReport ? (active ? "#17655c" : "#627080") : active
                       ? isSangun ? "var(--gold-bright, #e8c96a)" : isJiknyeo ? "#d9c7e8" : "#c9a8ff"
                       : isSangun ? "rgba(232,201,106,0.55)" : isJiknyeo ? "rgba(217,199,232,0.55)" : "#9a8cd0",
-                    background: active ? (isSangun ? "rgba(232,201,106,0.08)" : isJiknyeo ? "rgba(199,176,236,0.12)" : "rgba(150,90,255,0.12)") : "transparent",
+                    background: isReport ? (active ? "#edf6f1" : "transparent") : active ? (isSangun ? "rgba(232,201,106,0.08)" : isJiknyeo ? "rgba(199,176,236,0.12)" : "rgba(150,90,255,0.12)") : "transparent",
                   }}
                 >
                   {nameBySlug.get(s.product_slug) ?? "풀이"}
@@ -227,7 +232,21 @@ export default async function ResultPage({
           </nav>
         )}
 
-        {isJiknyeo ? (
+        {isReport ? (
+          <SajuPaidReport
+            view={view}
+            markdown={result.interpretation_md ?? ""}
+            displayName={displayName}
+            name={savedInput?.name ?? null}
+            recordedAt={result.created_at as string | null}
+            chartRows={rawAnalysis ? buildChartRows(rawAnalysis) : []}
+            wealth={isSangun && rawAnalysis ? computeWealthFacts(rawAnalysis) : null}
+            inyeon={rawAnalysis && (isSangun || isJiknyeo) ? computeInyeonFacts(rawAnalysis, (savedInput?.gender as "male" | "female" | null) ?? (isJiknyeo ? "female" : "male"), parseProfileTags(savedInput?.concerns ?? []).partnerSex) : null}
+            wealthYears={isSangun && rawAnalysis ? computeWealthYears(rawAnalysis) : null}
+            daeunTimeline={isSangun && rawAnalysis ? computeDaeunTimeline(rawAnalysis) : null}
+            prescription={isSangun && rawAnalysis ? computePrescription(rawAnalysis) : null}
+          />
+        ) : isJiknyeo ? (
           /* 직녀 전용 조판 — 티저에서 잠근 12칸 달력을 여기서 전부 연다.
              등급은 gradeMonths 한 곳에서만 나와 티저와 절대 어긋나지 않는다. */
           <JiknyeoResult
@@ -295,7 +314,7 @@ export default async function ResultPage({
           </>
         )}
 
-        <p className="mt-5 text-center" style={{ fontSize: 11, color: isSangun ? "rgba(232,201,106,0.42)" : isJiknyeo ? "rgba(217,199,232,0.45)" : "#9a8cd0" }}>
+        <p className="mt-5 text-center" style={{ fontSize: 11, color: isReport ? "#627080" : isSangun ? "rgba(232,201,106,0.42)" : isJiknyeo ? "rgba(217,199,232,0.45)" : "#9a8cd0" }}>
           적어주신 정보는 사주 계산과 결과지 만드는 데만 사용됩니다.
         </p>
 
@@ -313,7 +332,7 @@ export default async function ResultPage({
               question: (q.question as string) ?? "",
               answer_md: (q.answer_md as string) ?? null,
             }))}
-            tone={isSangun ? "sangun" : "saju"}
+            tone={!isReport && isSangun ? "sangun" : "saju"}
           />
         )}
 
@@ -323,7 +342,7 @@ export default async function ResultPage({
             input={crossSellInput}
             signal={crossSellSignal}
             email={(order as { guest_email?: string | null } | null)?.guest_email ?? null}
-            tone={isSangun ? "sangun" : "saju"}
+            tone={!isReport && isSangun ? "sangun" : "saju"}
           />
         )}
       </div>

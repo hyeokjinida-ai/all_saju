@@ -140,6 +140,8 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
   const { c: concernPreset, view, demo: demoParam, from, cold } = await searchParams;
+  // Explicit opt-in: the existing product URL keeps its webtoon experience.
+  const isReportFlow = slug === "sangun-sinjeom" && view === "report";
 
   // `?cold=1` — 산군 티저의 **콜드오픈 판**을 켠다(그림으로 시작 · 헤더·제목·하단 고정바는
   // 타이틀 드랍 뒤 · 「복채」 컷 대신 등장 절단). `?skin=pink` 와 같은 「두 판을 나란히 보는 문」이라,
@@ -409,10 +411,26 @@ export default async function ProductDetailPage({
           산군·직녀는 게이트를 벗어나는 시점에 컴포넌트 안에서 각자 쏜다(그게 게이트 이탈률을
           재는 유일한 자다). 그 둘만 빼면 남는 게 정확히 「게이트 없는 화면」 — 결혼·웹툰
           레지스트리·일반 템플릿이고, **빌더로 만든 새 상품은 전부 일반 템플릿**으로 온다. */}
-      {!isSangunStory && !isJiknyeoStory && <ProductViewBeacon slug={product.slug} />}
+      {((!isSangunStory && !isJiknyeoStory) || isReportFlow) && (
+        <ProductViewBeacon slug={product.slug} flowVariant={isReportFlow ? "report" : undefined} />
+      )}
 
       {/* 전용 웹툰 랜딩(페이지 전체) / 나머지: 기존 템플릿 */}
-      {isMarriage ? (
+      {isReportFlow ? (
+        <SajuWizard
+          presentation="report"
+          productId={product.id}
+          productSlug={product.slug}
+          productName={product.name}
+          price={product.price}
+          compareAtPrice={product.compare_at_price ?? null}
+          bundles={bundles}
+          isLoggedIn={!!user}
+          initialConcerns={concernPreset ? [concernPreset] : undefined}
+          demo={demo}
+          reviews={teaserReviews}
+        />
+      ) : isMarriage ? (
         // 결혼: 청월당 상세페이지 시공법(타입 대비·글로우·네온 가림·크림 밴드)을 그대로 옮긴 랜딩.
         // 위저드는 이 페이지 하단(#start)에 있고 CTA 가 거기로 내린다.
         <JiknyeoDetail

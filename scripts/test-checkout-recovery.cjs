@@ -6,12 +6,12 @@ const root = path.resolve(__dirname, '..');
 const cache = new Map();
 const pureComponents = new Set();
 const orderId = 'ord_12345678901234567890';
-let effects = [], events = [], notifications = [], requests = [];
+let effects = [], events = [], notifications = [], requests = [], stateOverrides = [];
 let paymentError = null, sdkError = null, search = new URLSearchParams();
 let checkoutOrderStatus = 'paid', checkoutResults = [], resultError = false;
 let diagnosticThrows = false;
 const mocks = {
-  react: { useState: value => [value, () => {}], useRef: value => ({ current: value }), useEffect: effect => effects.push(effect), Suspense: 'test-suspense' },
+  react: { useState: value => [stateOverrides.length ? stateOverrides.shift() : value, () => {}], useRef: value => ({ current: value }), useEffect: effect => effects.push(effect), useCallback: callback => callback, Suspense: 'test-suspense' },
   'next/link': 'test-link',
   'next/navigation': {
     useSearchParams: () => search,
@@ -21,6 +21,8 @@ const mocks = {
   sonner: { toast: { error: message => notifications.push(message) } },
   '@/components/ui/button': { Button: 'test-button', buttonVariants: () => '' },
   '@/components/ui/card': Object.fromEntries(['Card', 'CardContent', 'CardDescription', 'CardHeader', 'CardTitle'].map(name => [name, name])),
+  '@/components/auth/KakaoLoginButton': { useKakaoEnabled: () => false },
+  '@/components/saju/AnalyzingScreen': { AnalyzingScreen: 'analyzing-screen' },
   '@/lib/utils': { cn: (...values) => values.join(' '), formatKRW: value => `${value}원` },
   '@/lib/analytics': { track: (event, props) => { if (diagnosticThrows) throw new Error('diagnostic_failure'); events.push({ event, props }); } },
   '@/lib/toss/client': {
@@ -64,7 +66,7 @@ function nodes(tree) {
   return [tree, ...nodes(tree.props?.children)];
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
-function reset() { effects = []; events = []; notifications = []; requests = []; paymentError = null; sdkError = null; diagnosticThrows = false; }
+function reset() { effects = []; events = []; notifications = []; requests = []; stateOverrides = []; paymentError = null; sdkError = null; diagnosticThrows = false; }
 const props = { orderId, amount: 31900, customerKey: 'synthetic', productName: 'QA', productSlug: 'sangun-sinjeom', customerEmail: null };
 
 async function main() {
@@ -142,6 +144,7 @@ async function main() {
     assert.equal(new URL(requests[0].failUrl).searchParams.get('orderId'), orderId);
     assert.equal(new URL(requests[0].failUrl).searchParams.get('checkout_mode'), expectedMode);
     assert.equal(requests[0].orderId, orderId);
+    assert.equal(requests[0].successUrl, 'https://checkout.example.invalid/checkout/success');
     assert.ok(events.some(event => event.event === 'checkout_pay_request'));
     assert.ok(events.every(event => event.props.checkout_mode === expectedMode));
     assert.equal(events.find(event => event.event === 'checkout_widget_ready').props.variant, expectedMode === 'widget' ? 'new' : 'direct');
@@ -192,6 +195,31 @@ async function main() {
     assert.equal(requests.length, 1);
     assert.equal(requests[0].orderId, orderId);
     assert.equal(notifications.length, 0);
+
+    for (const view of ['report', 'story', '', 'REPORT', 'report&next=unsafe']) {
+      reset();
+      tree = component({ ...props, view });
+      effects.forEach(effect => effect());
+      await flush();
+      await nodes(tree).find(node => node.type === 'test-button').props.onClick();
+      const suffix = view === 'report' ? '?view=report' : '';
+      assert.equal(requests[0].successUrl, `https://checkout.example.invalid/checkout/success${suffix}`);
+      assert.equal(requests[0].failUrl, `https://checkout.example.invalid/checkout/fail?orderId=${orderId}&checkout_mode=${expectedMode}${view === 'report' ? '&view=report' : ''}`);
+      assert.equal(requests[0].orderId, orderId);
+      if (expectedMode === 'direct') assert.deepEqual(requests[0].amount, { currency: 'KRW', value: props.amount });
+    }
+  }
+
+  for (const directPay of [false, true]) {
+    tree = form({ ...props, view: 'report', defaultPhone: null, ctaLabel: '결제하기', directPay });
+    assert.equal(nodes(tree).find(node => node.props?.onBeforePay).props.view, 'report');
+  }
+
+  const loginNudge = load('src/components/checkout/LoginNudge.tsx').LoginNudge;
+  for (const view of [undefined, 'report', 'story']) {
+    tree = loginNudge({ orderId, discount: 1900, view });
+    const back = `/checkout/${orderId}?claim=1${view === 'report' ? '&view=report' : ''}`;
+    assert.equal(nodes(tree).find(node => node.type === 'test-link').props.href, `/login?redirect=${encodeURIComponent(back)}`);
   }
 
   const failPage = load('src/app/checkout/fail/page.tsx').default;
@@ -211,6 +239,11 @@ async function main() {
   tree = failPage().props.children.type();
   assert.doesNotThrow(() => effects.forEach(effect => effect()));
   assert.equal(nodes(tree).filter(node => node.type === 'test-link' && node.props.href === `/checkout/${orderId}`).length, 1);
+  for (const view of ['report', 'story', 'report&next=unsafe']) {
+    search = new URLSearchParams({ orderId, view });
+    tree = failPage().props.children.type();
+    assert.equal(nodes(tree).find(node => node.type === 'test-link').props.href, `/checkout/${orderId}${view === 'report' ? '?view=report' : ''}`);
+  }
   mocks['@/lib/supabase/server'] = {
     createClient: async () => { throw new Error('Unexpected auth lookup'); },
     createServiceClient: () => ({ from: table => {
@@ -250,6 +283,35 @@ async function main() {
   const pendingForm = nodes(tree).find(node => node.type === form);
   assert.ok(pendingForm);
   assert.equal(pendingForm.props.amount, 31900);
+
+  for (const view of ['report', 'story', 'report&next=unsafe']) {
+    const searchParams = Promise.resolve({ view });
+    const suffix = view === 'report' ? '?view=report' : '';
+    checkoutOrderStatus = 'pending';
+    tree = await checkoutPage({ params: Promise.resolve({ orderId }), searchParams });
+    assert.equal(nodes(tree).find(node => node.type === form).props.view, view === 'report' ? 'report' : undefined);
+    checkoutOrderStatus = 'paid'; checkoutResults = [];
+    tree = await checkoutPage({ params: Promise.resolve({ orderId }), searchParams });
+    assert.equal(nodes(tree).find(node => node.type === 'a').props.href, `/checkout/${orderId}${suffix}`);
+    checkoutResults = [{ id: 'synthetic-result' }];
+    await assert.rejects(() => checkoutPage({ params: Promise.resolve({ orderId }), searchParams }), error => error.message === `REDIRECT:/results/synthetic-result${suffix}`);
+  }
+
+  const successPage = load('src/app/checkout/success/page.tsx').default;
+  const successClient = load('src/app/checkout/success/success-client.tsx').SuccessClient;
+  for (const view of [undefined, 'report', 'story', 'report&next=unsafe']) {
+    const successParams = { paymentKey: 'synthetic-payment', orderId, amount: '31900', view };
+    tree = await successPage({ searchParams: Promise.resolve(successParams) });
+    assert.equal(tree.props.view, view === 'report' ? 'report' : undefined);
+    assert.equal(tree.props.paymentKey, successParams.paymentKey);
+    assert.equal(tree.props.orderId, orderId);
+    assert.equal(tree.props.amount, '31900');
+    reset();
+    stateOverrides = ['ready', '', 'synthetic-result'];
+    tree = successClient(tree.props);
+    assert.equal(nodes(tree).find(node => node.type === 'test-link').props.href, `/results/synthetic-result${view === 'report' ? '?view=report' : ''}`);
+    assert.equal(requests.length, 0);
+  }
   const persisted = [];
   mocks['next/server'] = { NextResponse: class extends Response {} };
   mocks['@/lib/env'] = { isSupabaseConfigured: () => true, publicEnv: { NEXT_PUBLIC_SITE_URL: 'https://checkout.example.invalid' } };
@@ -268,7 +330,7 @@ async function main() {
     assert.equal(persisted.at(-1).props.variant, 'a');
     assert.equal(persisted.at(-1).props.checkout_mode, mode);
   }
-  console.log('Checkout recovery: timeout, optional contact, safe retry, unchanged order, cancellation and privacy checks passed');
+  console.log('Checkout recovery: contact, safe retry, unchanged order, cancellation, privacy and report presentation checks passed');
 }
 const originalFetch = global.fetch;
 main().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => { global.fetch = originalFetch; });

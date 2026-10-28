@@ -25,11 +25,13 @@ export function SuccessClient({
   paymentKey,
   orderId,
   amount,
+  view,
 }: {
   world: World | null;
   paymentKey?: string;
   orderId?: string;
   amount?: string;
+  view?: "report";
 }) {
   const [state, setState] = useState<"loading" | "ready" | "ok" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -157,11 +159,24 @@ export function SuccessClient({
 
   // ── 대기 화면: 분석 중 — 풀스크린. 방금 산 상품의 세계관을 그대로 이어간다 ──
   if (state === "loading") {
+    if (view === "report") return (
+      <div role="status" aria-live="polite" style={{ minHeight: "100vh", background: "#f8f7f1", color: "#192b3c", padding: "80px 24px", textAlign: "center" }}>
+        <h1 style={{ fontSize: 23, fontWeight: 700 }}>전체 풀이를 준비하고 있어요</h1>
+        <p style={{ marginTop: 16, fontSize: 14, color: "#627080", lineHeight: 1.8 }}>결제 상태를 확인하고 결과를 준비하고 있어요.<br />화면이 완료될 때까지 잠시 기다려 주세요.</p>
+      </div>
+    );
     return <AnalyzingScreen variant="paid" world={world} />;
   }
 
   // ── 생성 완료 ──
   if (state === "ready" && resultId) {
+    if (view === "report") return (
+      <div style={{ minHeight: "100vh", background: "#f8f7f1", color: "#192b3c", padding: "80px 24px", textAlign: "center" }}>
+        <h1 style={{ fontSize: 23, fontWeight: 700 }}>전체 풀이가 준비됐어요</h1>
+        <p style={{ marginTop: 16, fontSize: 14, color: "#627080" }}>명식과 상세 풀이를 보고서로 확인해 주세요.</p>
+        <Link href={`/results/${resultId}?view=report`} style={{ display: "block", maxWidth: 320, margin: "28px auto 0", padding: "16px 20px", borderRadius: 10, background: "#17655c", color: "#fff", fontWeight: 700 }}>결과지 확인하기</Link>
+      </div>
+    );
     return (
       <div className="container py-20 max-w-md text-center">
         <p className="font-brush text-gold-soft/60 text-2xl tracking-[0.3em] mb-3">受</p>
@@ -174,7 +189,7 @@ export function SuccessClient({
         <div className="gold-diamond mx-auto mt-6" />
         <div className="mt-7">
           <Link
-            href={`/results/${resultId}`}
+            href={`/results/${resultId}${view === "report" ? "?view=report" : ""}`}
             className="inline-flex items-center justify-center gap-2 w-full max-w-xs mx-auto py-4 font-bold text-base tracking-[0.1em]"
             style={{
               fontFamily: "var(--font-serif-kr), serif",

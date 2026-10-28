@@ -30,9 +30,10 @@ type Props = {
   customerMobilePhone?: string | null;
   /** 버튼 글자. "결제"라는 말은 남긴다 — 세계관보다 결제 명확성이 먼저다. */
   ctaLabel?: string;
+  view?: "report";
 };
 
-export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail, beforeButton, ctaLabel, onBeforePay, customerMobilePhone }: Props) {
+export function TossWidget({ orderId, amount, customerKey, productName, productSlug, customerEmail, beforeButton, ctaLabel, onBeforePay, customerMobilePhone, view }: Props) {
   const paymentMethodsRef = useRef<HTMLDivElement>(null);
   const agreementRef = useRef<HTMLDivElement>(null);
   const widgetsRef = useRef<Awaited<ReturnType<typeof loadWidgets>> | null>(null);
@@ -103,8 +104,8 @@ export function TossWidget({ orderId, amount, customerKey, productName, productS
       await widgets.requestPayment({
         orderId,
         orderName: productName,
-        successUrl: `${window.location.origin}/checkout/success`,
-        failUrl: checkoutFailUrl(window.location.origin, orderId, "widget"),
+        successUrl: `${window.location.origin}/checkout/success${view === "report" ? "?view=report" : ""}`,
+        failUrl: checkoutFailUrl(window.location.origin, orderId, "widget", view),
         customerEmail: customerEmail ?? undefined,
         customerMobilePhone: customerMobilePhone || undefined,
       });
